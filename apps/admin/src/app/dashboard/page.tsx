@@ -1,14 +1,20 @@
 import { createClient } from '@/lib/supabase-server';
+import type { Database } from '@maithing/shared';
 import { redirect } from 'next/navigation';
 import styles from './page.module.css';
 
+type OrderStatus = Database['public']['Enums']['order_status'];
+type OrderRow = { amount_thb: number };
+
 async function getStats(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const [orgs, locations, listings, orders] = await Promise.all([
+  const [orgs, locations, listings, ordersResult] = await Promise.all([
     supabase.from('merchant_orgs').select('id', { count: 'exact', head: true }),
     supabase.from('locations').select('id', { count: 'exact', head: true }),
     supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('orders').select('amount_thb').in('status', ['paid', 'collected']),
+    supabase.from('orders').select('amount_thb').in('status', ['paid', 'collected'] as OrderStatus[]),
   ]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orders = ordersResult as unknown as { data: OrderRow[] | null };
   const gmv = orders.data?.reduce((sum, o) => sum + Number(o.amount_thb), 0) ?? 0;
   return {
     orgs: orgs.count ?? 0,

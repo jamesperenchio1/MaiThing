@@ -1,5 +1,8 @@
 import { redirect } from 'next/navigation';
+import type { Database } from '@maithing/shared';
 import { createClient } from '@/lib/supabase-server';
+
+type UserRole = Database['public']['Enums']['user_role'];
 
 export default async function AdminRoot() {
   const supabase = await createClient();
@@ -9,11 +12,13 @@ export default async function AdminRoot() {
 
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
+  const profileResult = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profile = profileResult.data as { role: UserRole } | null;
 
   if (!profile || profile.role !== 'admin') redirect('/unauthorized');
 
