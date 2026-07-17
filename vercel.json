@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd apps/admin && pnpm build",
-  "outputDirectory": "apps/admin/.next",
-  "installCommand": "pnpm install --frozen-lockfile",
-  "framework": "nextjs",
-  "ignoreCommand": "git diff HEAD^ HEAD --quiet -- apps/admin packages/shared"
+  "rootDirectory": "apps/admin",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "framework": "nextjs"
 }
