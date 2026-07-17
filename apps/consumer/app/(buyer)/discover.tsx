@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/lib/supabase';
 import { useMapStore } from '../../src/stores/map';
-import type { Bounds, ListingPin } from '@maithing/shared';
+import type { Bounds, ListingPin, Json } from '@maithing/shared';
 import { boundsSchema } from '@maithing/shared';
 import ListingMap from '../../src/components/map/ListingMap';
 import ListingList from '../../src/components/listing/ListingList';
@@ -27,7 +27,7 @@ export default function DiscoverScreen() {
         min_lng: bounds.min_lng,
         max_lat: bounds.max_lat,
         max_lng: bounds.max_lng,
-        filters: filters as Record<string, unknown>,
+        filters: filters as unknown as Json,
         lim: 200,
       });
       if (error) throw error;
