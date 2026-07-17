@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
+import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import Supercluster from 'supercluster';
 import type { ListingPin, Bounds } from '@maithing/shared';
@@ -130,6 +131,7 @@ export default function ListingMap({ listings, onRegionChange }: Props) {
             coordinate={{ latitude: listing.location_lat, longitude: listing.location_lng }}
             title={listing.title}
             description={formatThb(listing.price_thb)}
+            onPress={() => router.push(`/(buyer)/listing/${listing.id}`)}
           >
             <View style={styles.pin}>
               <Text style={styles.pinText}>{formatThb(listing.price_thb)}</Text>

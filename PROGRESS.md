@@ -30,10 +30,13 @@ Last updated: 2026-07-17
 - [x] Map with Supercluster pin clustering
 - [x] FlashList-based list view
 - [x] Debounced region change
-- [ ] Listing detail screen
+- [x] Listing detail screen (both surprise_bag + pick_your_own modes)
+- [x] SlotPicker component
+- [x] PickYourOwnBuilder component with +/− steppers + running total
+- [x] Instant detail (placeholderData from list cache)
+- [x] Map pin press → navigate to detail
 - [ ] Filters / search
 - [ ] Favorites
-- [ ] Instant detail (initialData from list cache)
 - [ ] Prefetch on viewport entry
 - [ ] Optimistic favorite toggle
 - [ ] Realtime stock updates

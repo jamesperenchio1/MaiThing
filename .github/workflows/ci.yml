@@ -30,7 +30,7 @@ jobs:
         run: pnpm lint
 
       - name: Test (shared)
-        run: pnpm --filter @maithing/shared test --passWithNoTests
+        run: pnpm --filter @maithing/shared test -- --passWithNoTests
 
       - name: Build shared
         run: pnpm --filter @maithing/shared build || true
