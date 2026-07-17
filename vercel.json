@@ -1,6 +1,5 @@
 {
+  "installCommand": "npm install -g pnpm@9 && pnpm install",
   "buildCommand": "pnpm --filter @maithing/admin build",
-  "outputDirectory": "apps/admin/.next",
-  "installCommand": "npm install -g pnpm && pnpm install --frozen-lockfile",
-  "framework": "nextjs"
+  "outputDirectory": "apps/admin/.next"
 }
