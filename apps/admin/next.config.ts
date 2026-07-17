@@ -2,9 +2,7 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   transpilePackages: ['@maithing/shared'],
-  experimental: {
-    typedRoutes: true,
-  },
+  typedRoutes: true,
 };
 
 export default config;
