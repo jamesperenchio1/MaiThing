@@ -51,12 +51,14 @@ Last updated: 2026-07-17
 - [ ] Merchant analytics
 
 ## D — Orders, Slots & Trust
-- [ ] Slot selection UI
-- [ ] Pick-your-own item builder
-- [ ] `reserve_order` RPC call + pickup code display
-- [ ] Order status tracking
-- [ ] Cancellation flow
-- [ ] Dual-rating reviews
+- [x] Slot selection UI (SlotPicker embedded in listing detail)
+- [x] Pick-your-own item builder (PickYourOwnBuilder)
+- [x] `reserve_order` RPC call + pickup code display
+- [x] Checkout screen (qty picker, total, confirm CTA)
+- [x] Orders list tab (FlashList, color-coded status badges)
+- [x] Order detail screen (large pickup code, pickup window, location, cancel)
+- [x] Cancellation flow (2h-before deadline guard)
+- [ ] Dual-rating reviews (post-collection prompt)
 - [ ] Issue reports + auto-refund
 
 ## E — Payments
@@ -91,7 +93,10 @@ Last updated: 2026-07-17
 ## Infrastructure
 - [ ] Sentry (all 3 apps)
 - [ ] EAS build profiles
-- [ ] Vercel deploy config
+- [~] Vercel deploy config (vercel.json in place; Vercel build failing — needs
+      dashboard env vars NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+      set under jamyangperenchio1/mai-thing; ENABLE_EXPERIMENTAL_COREPACK=1 may
+      also be required if pnpm detection breaks)
 - [ ] Full pgTAP test suite
 - [ ] Concurrency test for reserve_order
 - [ ] Maestro E2E (consumer)
