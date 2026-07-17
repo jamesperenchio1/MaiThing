@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+dist/
+build/
+.expo/
+*.tsbuildinfo
+
+# Environment files (IMPORTANT: keep app-level .env out of git)
+apps/**/.env
+apps/**/.env.local
+apps/**/.env.*.local
+# Root .env (if any)
+.env.local
+.env.*.local
+# The root .env (if it exists) may be committed intentionally on this private repo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+
+# Turbo
+.turbo/
+
+# Supabase local (we use cloud dev, no local DB)
+supabase/.branches
+supabase/.temp
+
+# Expo
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/

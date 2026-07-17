@@ -1,0 +1,8 @@
+node_modules
+.next
+dist
+.expo
+build
+coverage
+*.generated.ts
+packages/shared/src/types/supabase.ts
