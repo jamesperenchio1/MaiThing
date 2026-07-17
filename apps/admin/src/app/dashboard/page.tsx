@@ -13,7 +13,6 @@ async function getStats(supabase: Awaited<ReturnType<typeof createClient>>) {
     supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('orders').select('amount_thb').in('status', ['paid', 'collected'] as OrderStatus[]),
   ]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const orders = ordersResult as unknown as { data: OrderRow[] | null };
   const gmv = orders.data?.reduce((sum, o) => sum + Number(o.amount_thb), 0) ?? 0;
   return {

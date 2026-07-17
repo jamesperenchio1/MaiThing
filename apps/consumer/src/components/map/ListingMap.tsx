@@ -32,7 +32,7 @@ export default function ListingMap({ listings, onRegionChange }: Props) {
   useEffect(() => {
     void (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      if (status !== Location.PermissionStatus.GRANTED) return;
       const loc = await Location.getCurrentPositionAsync({});
       const userRegion: Region = {
         latitude: loc.coords.latitude,
@@ -66,8 +66,7 @@ export default function ListingMap({ listings, onRegionChange }: Props) {
       zoom,
     ) as Supercluster.ClusterFeature<Supercluster.AnyProps>[];
     setClusters(newClusters);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listings]);
+  }, [listings]); // region intentionally excluded from deps to avoid re-render loop
 
   const handleRegionChange = useCallback(
     (r: Region) => {

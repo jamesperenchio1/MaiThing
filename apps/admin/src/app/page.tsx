@@ -17,7 +17,6 @@ export default async function AdminRoot() {
     .select('role')
     .eq('id', user.id)
     .single();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profile = profileResult.data as { role: UserRole } | null;
 
   if (!profile || profile.role !== 'admin') redirect('/unauthorized');

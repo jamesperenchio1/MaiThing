@@ -3,8 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import type { Database } from '@maithing/shared';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+const supabaseUrl: string = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
+const supabaseKey: string = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY as string;
 
 // Custom storage using SecureStore on native, localStorage on web
 const storage = {
