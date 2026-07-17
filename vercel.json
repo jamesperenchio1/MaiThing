@@ -1,0 +1,5 @@
+{
+  "installCommand": "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install",
+  "buildCommand": "pnpm --filter @maithing/admin build",
+  "outputDirectory": "apps/admin/.next"
+}
