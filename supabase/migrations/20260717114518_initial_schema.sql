@@ -667,7 +667,7 @@ begin
   v_fee_thb   := round((v_total_thb * v_fee_bps) / 10000, 2);
 
   -- Generate pickup code
-  v_code := upper(substring(encode(gen_random_bytes(4), 'hex') from 1 for 6));
+  v_code := upper(substring(encode(extensions.gen_random_bytes(4), 'hex') from 1 for 6));
 
   -- Create order
   insert into public.orders (

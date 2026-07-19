@@ -39,7 +39,7 @@ begin
     attempts := 0;
     loop
       attempts := attempts + 1;
-      code := upper(substring(encode(gen_random_bytes(4), 'hex') from 1 for 6));
+      code := upper(substring(encode(extensions.gen_random_bytes(4), 'hex') from 1 for 6));
       begin
         update public.profiles set referral_code = code where id = p.id;
         exit;
@@ -126,7 +126,7 @@ begin
   -- was created without a code).
   loop
     attempts := attempts + 1;
-    v_code := upper(substring(encode(gen_random_bytes(4), 'hex') from 1 for 6));
+    v_code := upper(substring(encode(extensions.gen_random_bytes(4), 'hex') from 1 for 6));
     begin
       update public.profiles
       set referral_code = v_code

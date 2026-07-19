@@ -136,7 +136,7 @@ begin
     ('cccccccc-0006-0001-0001-000000000001', loc_noodle,    'เส้นหมดวัน Noodle Bag',               'restaurant', null,                          'surprise_bag',   120, 45,  4, 4, 'active', false),
     ('cccccccc-0007-0001-0001-000000000001', loc_hotel_bkk, 'Hotel Breakfast Leftover Box',         'hotel',      'Pastries, fruits, yoghurt',   'surprise_bag',   500, 189, 3, 3, 'active', true),
     ('cccccccc-0008-0001-0001-000000000001', loc_buffet,    'Buffet Rescue Bag',                    'buffet',     null,                          'surprise_bag',   350, 129, 10, 10,'active', true),
-    ('cccccccc-0009-0001-0001-000000000001', loc_deli_bkk,  'Deli Pick-Your-Own',                   'deli',       'Choose from today\'s counter', 'pick_your_own',  280, 99,  5, 5, 'active', false),
+    ('cccccccc-0009-0001-0001-000000000001', loc_deli_bkk,  'Deli Pick-Your-Own',                   'deli',       'Choose from today''s counter', 'pick_your_own',  280, 99,  5, 5, 'active', false),
     ('cccccccc-0010-0001-0001-000000000001', loc_juice,     'Juice & Smoothie Bag',                 'juice_bar',  null,                          'surprise_bag',   160, 59,  8, 8, 'active', false),
     ('cccccccc-0011-0001-0001-000000000001', loc_cm_cafe,   'Highland Coffee Bag',                  'cafe',       null,                          'surprise_bag',   140, 49,  6, 6, 'active', false),
     ('cccccccc-0012-0001-0001-000000000001', loc_cm_bake,   'Patisserie Surprise',                  'bakery',     null,                          'surprise_bag',   300, 109, 5, 5, 'active', true),
@@ -161,7 +161,7 @@ begin
     l.qty_total,
     0
   from public.listings l
-  where l.id like 'cccccccc-%'
+  where l.id::text like 'cccccccc-%'
   on conflict do nothing;
 
   -- Listing items for pick_your_own listings
