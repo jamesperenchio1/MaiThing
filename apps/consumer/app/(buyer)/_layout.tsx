@@ -39,7 +39,7 @@ export default function BuyerLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: t('order.pickupCode'),
+          title: t('order.myOrders'),
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🛍️</Text>,
         }}
       />

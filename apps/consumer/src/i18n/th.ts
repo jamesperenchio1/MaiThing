@@ -113,6 +113,7 @@ export const th = {
       no_show: 'ไม่มาตามนัด',
     },
     reservationFailed: 'การจองล้มเหลว',
+    myOrders: 'คำสั่งซื้อของฉัน',
     noOrders: 'ยังไม่มีคำสั่งซื้อ',
     cancelDeadline: 'ต้องยกเลิกก่อน {{time}}',
     timeRemaining: 'เหลือ {{time}}',

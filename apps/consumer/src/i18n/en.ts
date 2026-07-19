@@ -104,6 +104,7 @@ export const en = {
       no_show: 'No show',
     },
     reservationFailed: 'Reservation failed',
+    myOrders: 'My Orders',
     noOrders: 'No orders yet',
     cancelDeadline: 'Must cancel by {{time}}',
     timeRemaining: '{{time}} left',

@@ -1,6 +1,7 @@
 import { useEffect, Component, type ReactNode } from 'react';
 import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { supabase } from '../src/lib/supabase';
 import { initSentry, captureException } from '../src/lib/sentry';
 import { capture, identify } from '../src/lib/posthog';
@@ -8,6 +9,8 @@ import { queryClient } from '../src/lib/queryClient';
 import { useAuthStore } from '../src/stores/auth';
 import { Text, View } from 'react-native';
 import '../src/i18n';
+
+const STRIPE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -64,9 +67,11 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }} />
-      </QueryClientProvider>
+      <StripeProvider publishableKey={STRIPE_KEY}>
+        <QueryClientProvider client={queryClient}>
+          <Stack screenOptions={{ headerShown: false }} />
+        </QueryClientProvider>
+      </StripeProvider>
     </ErrorBoundary>
   );
 }
