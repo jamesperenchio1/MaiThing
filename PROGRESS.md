@@ -48,7 +48,7 @@ Last updated: 2026-07-19
 - [x] Merchant org creation
 - [x] Location creation (lat/lng + address text)
 - [x] <60s publish (both surprise_bag and pick_your_own)
-- [~] Slot templates (schema only; UI not built)
+- [x] Slot templates — full UI built: list, create, delete in `/(merchant)/listings/templates`; "Load from template" shortcut in new listing form
 - [x] Today view
 - [x] QR/manual collection confirmation
 - [x] Merchant analytics
@@ -94,7 +94,7 @@ Last updated: 2026-07-19
 
 - [x] Food Hero levels + impact display
 - [x] Referral system — schema + UI
-- [~] Demand signals (notify-me) — `demand_signals` table used in admin heatmap; consumer CTA stubbed
+- [x] Demand signals (notify-me) — CTA wired in listing detail; toggles per-listing notify-me in `demand_signals`
 - [x] PostHog integration — stubbed, no-op when key missing
 
 ## Infrastructure

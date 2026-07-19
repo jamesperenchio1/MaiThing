@@ -166,3 +166,23 @@ Format per Section 20 of the build brief.
 
 ---
 
+
+## Audit #4 — 2026-07-19 — Demand signals CTA + slot templates UI
+
+### Checks
+
+1. **tsc --noEmit** — `pnpm typecheck` green across all 3 packages. ✅
+2. **Lint + format** — `pnpm lint` green (fixed unnecessary type assertion in useSlotTemplates.ts). ✅
+3. **Tests** — `pnpm --filter @maithing/shared test` passes 19/19. ✅
+4. **RLS check** — `demand_signals` and `slot_templates` tables already have RLS with per-owner policies. No new tables. ✅
+5. **Secret scan** — No new secrets introduced. `SUPABASE_SERVICE_ROLE_KEY` still server-only. ✅
+6. **Dead code** — `pnpm knip` exits clean. ✅
+7. **Bundle sanity** — Two new hooks, one new screen. All thin Supabase clients, no heavy deps. ✅
+8. **Spec conformance** —
+   - [x] Demand signals "Notify me" CTA in `listing/[id].tsx` — shown when sold out; toggles notify-me
+   - [x] Slot templates UI in `/(merchant)/listings/templates` — list, create, delete
+   - [x] "Load from template" shortcut in new listing form
+   - [x] i18n strings in EN and TH for all new UI
+9. **Simplicity pass** — No new abstraction layers. Geohash as rounded lat/lng string (no library). Template picker is an inline Modal. ✅
+
+### Status: AUDIT PASS. Branch ready to merge to `main`.

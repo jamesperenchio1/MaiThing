@@ -15,6 +15,7 @@ import { useListingDetail } from '../../../src/hooks/useListing';
 import { useCreateThread } from '../../../src/hooks/useChat';
 import { useListingStore } from '../../../src/stores/listing';
 import { useRealtimeStock } from '../../../src/hooks/useRealtimeStock';
+import { useDemandSignal, useToggleDemandSignal } from '../../../src/hooks/useDemandSignal';
 import { formatThb, discountPercent } from '@maithing/shared';
 import type { Tables } from '@maithing/shared';
 import SlotPicker from '../../../src/components/listing/SlotPicker';
@@ -32,6 +33,18 @@ export default function ListingDetailScreen() {
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
 
   useRealtimeStock(id);
+
+  const { data: demandSignalId } = useDemandSignal(id, listing?.category ?? '');
+  const toggleDemandSignal = useToggleDemandSignal(id, listing?.category ?? '');
+
+  const handleToggleNotify = useCallback(() => {
+    toggleDemandSignal.mutate(
+      { currentId: demandSignalId ?? null },
+      {
+        onError: (err: Error) => Alert.alert(t('common.error'), err.message),
+      },
+    );
+  }, [toggleDemandSignal, demandSignalId, t]);
 
   const handleSlotSelect = useCallback(
     (slot: PickupSlot) => {
@@ -84,6 +97,7 @@ export default function ListingDetailScreen() {
   const pct = discountPercent(listing.original_value_thb, listing.price_thb);
   const isPickYourOwn = listing.fulfillment_type === 'pick_your_own';
   const availableSlots = listing.slots.filter((s) => s.reserved_count < s.capacity);
+  const isSoldOut = listing.qty_remaining === 0 || availableSlots.length === 0;
 
   return (
     <View style={styles.container}>
@@ -205,16 +219,31 @@ export default function ListingDetailScreen() {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Reserve CTA */}
+      {/* Reserve CTA / Notify-me */}
       <View style={styles.footer}>
-        <Text style={styles.cancelPolicy}>{t('order.cancelPolicy')}</Text>
-        <TouchableOpacity
-          style={[styles.reserveBtn, !selectedSlotId && styles.reserveBtnDisabled]}
-          onPress={handleReserve}
-          accessibilityRole="button"
-        >
-          <Text style={styles.reserveBtnText}>{t('listing.reserve')}</Text>
-        </TouchableOpacity>
+        {isSoldOut ? (
+          <TouchableOpacity
+            style={[styles.notifyBtn, demandSignalId ? styles.notifyBtnActive : null]}
+            onPress={handleToggleNotify}
+            disabled={toggleDemandSignal.isPending}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.notifyBtnText, demandSignalId ? styles.notifyBtnTextActive : null]}>
+              {demandSignalId ? `🔔 ${t('discover.notifyMe')}` : `🔕 ${t('discover.notifyMe')}`}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            <Text style={styles.cancelPolicy}>{t('order.cancelPolicy')}</Text>
+            <TouchableOpacity
+              style={[styles.reserveBtn, !selectedSlotId && styles.reserveBtnDisabled]}
+              onPress={handleReserve}
+              accessibilityRole="button"
+            >
+              <Text style={styles.reserveBtnText}>{t('listing.reserve')}</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -330,4 +359,14 @@ const styles = StyleSheet.create({
   },
   reserveBtnDisabled: { backgroundColor: '#d1d5db' },
   reserveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  notifyBtn: {
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#f59e0b',
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  notifyBtnActive: { backgroundColor: '#fef3c7', borderColor: '#d97706' },
+  notifyBtnText: { color: '#d97706', fontSize: 16, fontWeight: '700' },
+  notifyBtnTextActive: { color: '#92400e' },
 });
