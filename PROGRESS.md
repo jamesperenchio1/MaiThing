@@ -69,7 +69,7 @@ Last updated: 2026-07-19
 
 - [~] Stripe Connect onboarding (backend schema + Edge Function stubs; UI needs credentials)
 - [x] PaymentIntent (PromptPay/card) via `create-payment-intent` Edge Function
-- [x] Webhook Edge Function (`stripe-webhook`) with signature verification
+- [x] Webhook Edge Function (`stripe-webhook`) with signature verification — endpoint created and deployed
 - [x] Refunds (`refund-payment` Edge Function)
 - [~] Subscriptions (Free/Pro schema in place; UI gated by credentials)
 
@@ -102,13 +102,25 @@ Last updated: 2026-07-19
 - [x] Sentry (all 3 apps) — stubbed, no-op when DSN missing
 - [x] EAS build profiles — `app.json` configured; needs `eas init` when ready for store builds
 - [x] Vercel deploy config (vercel.json in place; admin build green; consumer web export green)
-- [x] Shared unit tests (vitest)
-- [~] Concurrency test for `reserve_order` — implemented, skipped until `SUPABASE_SERVICE_ROLE_KEY` is provided
+- [x] Shared unit tests (vitest) — all passing including `reserve_order` concurrency test
 - [x] Maestro E2E (consumer) — stubbed
 - [x] Playwright E2E (admin) — stubbed
 
 ## Known Blockers / Human Prerequisites
 
-- `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_DB_PASSWORD` must be filled in `CLAUDE.md` to run the concurrency test against the cloud project and to push migrations from a fresh environment.
-- Stripe live/test keys, Google/LINE OAuth, maps keys, Resend, PostHog, Sentry, and EAS are stubbed and logged in `SETUP-TODO.md`.
-- Consumer web export builds, but the web target is a limited preview; native iOS/Android remains the primary goal.
+- Stripe Connect onboarding UI and subscriptions UI need live Stripe credentials to be fully enabled.
+- Google/LINE OAuth, maps keys, Resend, PostHog, Sentry, and EAS are stubbed and logged in `SETUP-TODO.md`.
+- Consumer web export builds, but the **web runtime preview is currently broken** due to a duplicate React runtime issue in the Metro bundle when using `pnpm` + `expo-router` web. Native iOS/Android (Expo Go / EAS) is the primary target and remains unaffected.
+
+## Section 20 Audit Status
+
+- `pnpm typecheck` ✅
+- `pnpm lint` ✅
+- `pnpm format:check` ✅
+- `pnpm knip` ✅
+- `pnpm --filter @maithing/shared test` ✅ (19 tests)
+- `pnpm --filter @maithing/admin build` ✅
+- `pnpm --filter @maithing/consumer build:web` ✅ (bundle builds; runtime preview blocked as noted above)
+- Supabase migrations pushed and verified ✅
+- Edge Functions deployed ✅
+

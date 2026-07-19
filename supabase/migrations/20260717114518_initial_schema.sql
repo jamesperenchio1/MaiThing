@@ -573,6 +573,7 @@ declare
   v_fee_bps     int;
   v_code        text;
   v_order_id    uuid;
+  v_qr_payload  text;
   v_item        jsonb;
   v_item_rec    record;
   v_item_qty    int;
@@ -669,13 +670,23 @@ begin
   -- Generate pickup code
   v_code := upper(substring(encode(extensions.gen_random_bytes(4), 'hex') from 1 for 6));
 
+  -- Pre-generate the order id so the QR payload contains the real order id.
+  v_order_id := gen_random_uuid();
+
+  -- Build QR payload (deterministic, using real order id — v_order_id is pre-generated above)
+  v_qr_payload := json_build_object(
+    'order_id', v_order_id,
+    'code', v_code,
+    'listing_id', p_listing_id
+  )::text;
+
   -- Create order
   insert into public.orders (
     buyer_id, listing_id, location_id, pickup_slot_id,
     qty, amount_thb, platform_fee_thb, status,
     pickup_code, qr_payload
   )
-  select
+  values (
     auth.uid(),
     p_listing_id,
     v_listing.location_id,
@@ -685,11 +696,8 @@ begin
     v_fee_thb,
     'reserved',
     v_code,
-    json_build_object(
-      'order_id', gen_random_uuid(),
-      'code', v_code,
-      'listing_id', p_listing_id
-    )::text
+    v_qr_payload
+  )
   returning id into v_order_id;
 
   -- Insert order_items for pick_your_own
@@ -709,9 +717,7 @@ begin
     end loop;
   end if;
 
-  return query select v_order_id, v_code, (
-    select qr_payload from public.orders where id = v_order_id
-  );
+  return query select v_order_id, v_code, v_qr_payload;
 end;
 $$;
 
