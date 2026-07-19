@@ -1,12 +1,23 @@
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { useAuthStore } from '../../src/stores/auth';
 import { Redirect } from 'expo-router';
 import { Text } from 'react-native';
+import { registerForPushNotifications, addPushTokenListener } from '../../src/lib/notifications';
 
 export default function BuyerLayout() {
   const { t } = useTranslation();
   const session = useAuthStore((s) => s.session);
+
+  useEffect(() => {
+    if (!session) return;
+    void registerForPushNotifications();
+    const subscription = addPushTokenListener();
+    return () => {
+      if (subscription) subscription.remove();
+    };
+  }, [session]);
 
   if (!session) return <Redirect href="/(auth)/sign-in" />;
 

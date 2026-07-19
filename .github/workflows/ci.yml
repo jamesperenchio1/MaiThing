@@ -8,7 +8,7 @@ on:
 
 jobs:
   ci:
-    name: Typecheck · Lint · Test
+    name: Typecheck · Lint · Format · Test · Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +29,20 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Dead-code / dep check
+        run: pnpm knip
+
       - name: Test (shared)
         run: pnpm --filter @maithing/shared test -- --passWithNoTests
 
       - name: Build shared
-        run: pnpm --filter @maithing/shared build || true
+        run: pnpm --filter @maithing/shared build
+
+      - name: Build admin
+        run: pnpm --filter @maithing/admin build
+
+      - name: Build consumer web
+        run: pnpm --filter @maithing/consumer build:web

@@ -1,0 +1,18 @@
+appId: com.maithing.app
+---
+# Merchant confirms a pickup by code in the Today view.
+
+- launchApp:
+    appId: com.maithing.app
+
+- tapOn: "Sign in"
+- tapOn: "Email"
+- inputText: ${MAESTRO_MERCHANT_EMAIL}
+- tapOn: "Password"
+- inputText: ${MAESTRO_MERCHANT_PASSWORD}
+- tapOn: "Sign in"
+- tapOn: "Today"
+- tapOn: ".*pickup code.*"
+- tapOn: "Collect"
+- assertVisible: "Collected"
+- takeScreenshot: merchant-collect-success

@@ -47,3 +47,24 @@ Replaced `Math.random` with `node:crypto.randomInt` for cryptographically secure
 ### D011: Row + create schemas added for all core tables
 
 Added Zod schemas for `orders`, `pickup_slots`, `listing_items`, `favorites`, `chat_threads`, `chat_messages`, `device_tokens`, `referrals`, `subscriptions`, and `demand_signals` to keep app-level validation in sync with the generated Supabase types. Also added `issueStatusSchema` and `orderItemRowSchema` where the DB shape differs from the API shape.
+
+## 2026-07-19 — Consumer web export fix
+
+### D012: Metro web aliases for native-only modules
+
+`expo export --platform web` failed because Metro attempted to bundle native-only `react-native` internals (`TextInputState`) and native-only packages (`react-native-maps`, `@stripe/stripe-react-native`). Rather than trying to make the entire RN core web-safe, we added a targeted `apps/consumer/metro.config.js` that aliases only those modules to small web stubs when `platform === 'web'`. The native iOS/Android builds are unaffected.
+
+### D013: Web stubs for native-only packages
+
+- `apps/consumer/react-native-maps-web-stub.js` returns null map components.
+- `apps/consumer/stripe-react-native-web-stub.js` returns no-op payment sheet functions.
+
+These stubs are intentionally minimal; the web target shows a "Stripe not configured" fallback for checkout, which is acceptable for the MVP per the brief's native-first emphasis.
+
+### D014: Placeholder app assets
+
+Created simple green placeholder PNGs for `icon.png`, `favicon.png`, and `notification-icon.png` so the Expo web export and native build pipelines stop warning about missing assets. These can be replaced with brand assets later without code changes.
+
+### D015: Root `pnpm.overrides` to keep the React 18 type tree
+
+The workspace mixes React 18 (Expo consumer) and React 19 (Next.js admin). `pnpm-workspace.yaml` already had `dedupe-peer-dependents: false`, but a global `.pnpm/node_modules/@types/react` symlink still pointed to React 19 types, causing `Tabs`, `Stack`, `FlashList`, `MapView`, and `Marker` JSX errors in the consumer app. We added a root `pnpm.overrides` for `@types/react` and `@types/react-dom` to the React 18 versions used by the consumer app. Both the consumer and admin typechecks remain green, and the lockfile is simpler than a per-package override strategy.

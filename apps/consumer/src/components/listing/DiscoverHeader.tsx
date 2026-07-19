@@ -1,13 +1,27 @@
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
   viewMode: 'map' | 'list';
   onToggleView: (mode: 'map' | 'list') => void;
   isLoading: boolean;
+  hasUnread?: boolean;
 }
 
-export default function DiscoverHeader({ viewMode, onToggleView, isLoading }: Props) {
+export default function DiscoverHeader({
+  viewMode,
+  onToggleView,
+  isLoading,
+  hasUnread = false,
+}: Props) {
   const { t } = useTranslation();
 
   return (
@@ -38,6 +52,15 @@ export default function DiscoverHeader({ viewMode, onToggleView, isLoading }: Pr
         </TouchableOpacity>
       </View>
       {isLoading && <ActivityIndicator size="small" color="#16a34a" style={styles.spinner} />}
+      <TouchableOpacity
+        style={styles.bellBtn}
+        onPress={() => router.push('/(buyer)/chat')}
+        accessibilityRole="button"
+        accessibilityLabel={t('chat.title')}
+      >
+        <Text style={styles.bellIcon}>🔔</Text>
+        {hasUnread && <View style={styles.unreadDot} />}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -72,8 +95,25 @@ const styles = StyleSheet.create({
     minHeight: 32,
     justifyContent: 'center',
   },
-  toggleActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, elevation: 1 },
+  toggleActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
   toggleText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
   toggleTextActive: { color: '#111827', fontWeight: '600' },
   spinner: { marginLeft: 8 },
+  bellBtn: { marginLeft: 8, padding: 4, position: 'relative' },
+  bellIcon: { fontSize: 20 },
+  unreadDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
+  },
 });

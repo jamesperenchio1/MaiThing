@@ -7,15 +7,19 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useListingDetail } from '../../../src/hooks/useListing';
+import { useCreateThread } from '../../../src/hooks/useChat';
 import { useListingStore } from '../../../src/stores/listing';
+import { useRealtimeStock } from '../../../src/hooks/useRealtimeStock';
 import { formatThb, discountPercent } from '@maithing/shared';
 import type { Tables } from '@maithing/shared';
 import SlotPicker from '../../../src/components/listing/SlotPicker';
 import PickYourOwnBuilder from '../../../src/components/listing/PickYourOwnBuilder';
+import FavoriteButton from '../../../src/components/listing/FavoriteButton';
 
 type PickupSlot = Tables<'pickup_slots'>;
 
@@ -23,8 +27,11 @@ export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { data: listing, isLoading, error, refetch } = useListingDetail(id);
+  const createThread = useCreateThread();
   const setSelectedSlot = useListingStore((s) => s.setSelectedSlot);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+
+  useRealtimeStock(id);
 
   const handleSlotSelect = useCallback(
     (slot: PickupSlot) => {
@@ -41,6 +48,19 @@ export default function ListingDetailScreen() {
     }
     router.push(`/(buyer)/checkout/${id}`);
   }, [selectedSlotId, id, t]);
+
+  const openDirections = useCallback(() => {
+    if (!listing?.location.address_text) return;
+    const query = encodeURIComponent(listing.location.address_text);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    void Linking.openURL(url);
+  }, [listing]);
+
+  const handleMessageStore = useCallback(async () => {
+    if (!listing) return;
+    const threadId = await createThread.mutateAsync({ locationId: listing.location_id });
+    router.push(`/(buyer)/chat/${threadId}`);
+  }, [listing, createThread]);
 
   if (isLoading) {
     return (
@@ -63,18 +83,21 @@ export default function ListingDetailScreen() {
 
   const pct = discountPercent(listing.original_value_thb, listing.price_thb);
   const isPickYourOwn = listing.fulfillment_type === 'pick_your_own';
-  const availableSlots = listing.slots.filter(
-    (s) => s.reserved_count < s.capacity,
-  );
+  const availableSlots = listing.slots.filter((s) => s.reserved_count < s.capacity);
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+          >
             <Text style={styles.backText}>{'←'}</Text>
           </TouchableOpacity>
+          <FavoriteButton locationId={listing.location_id} size={26} />
         </View>
 
         {/* Store name + type badge */}
@@ -126,9 +149,7 @@ export default function ListingDetailScreen() {
           </Text>
         </View>
 
-        {listing.description ? (
-          <Text style={styles.description}>{listing.description}</Text>
-        ) : null}
+        {listing.description ? <Text style={styles.description}>{listing.description}</Text> : null}
 
         {/* Allergens */}
         {listing.allergens && listing.allergens.length > 0 && (
@@ -148,13 +169,28 @@ export default function ListingDetailScreen() {
 
         {/* Address */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📍 {listing.location.address_text}</Text>
+          <Text style={styles.sectionTitle}>📍 {t('listing.address')}</Text>
+          <Text style={styles.sectionBody}>{listing.location.address_text}</Text>
+          <View style={styles.addressActions}>
+            <TouchableOpacity
+              style={styles.directionsBtn}
+              onPress={openDirections}
+              accessibilityRole="button"
+            >
+              <Text style={styles.directionsBtnText}>{t('listing.directions')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.messageBtn}
+              onPress={() => void handleMessageStore()}
+              accessibilityRole="button"
+            >
+              <Text style={styles.messageBtnText}>{t('listing.messageStore')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Pick your own item builder */}
-        {isPickYourOwn && listing.items.length > 0 && (
-          <PickYourOwnBuilder items={listing.items} />
-        )}
+        {isPickYourOwn && listing.items.length > 0 && <PickYourOwnBuilder items={listing.items} />}
 
         {/* Slot picker */}
         <View style={styles.section}>
@@ -188,10 +224,20 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   errorText: { fontSize: 16, color: '#6b7280' },
-  retryBtn: { backgroundColor: '#16a34a', borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10 },
+  retryBtn: {
+    backgroundColor: '#16a34a',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
   retryText: { color: '#fff', fontWeight: '600' },
   scroll: { padding: 16 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   backBtn: { padding: 8, marginLeft: -8 },
   backText: { fontSize: 22, color: '#374151' },
   storeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
@@ -230,12 +276,34 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   saveBadgeText: { color: '#16a34a', fontWeight: '700', fontSize: 14 },
-  originalValue: { fontSize: 14, color: '#9ca3af', textDecorationLine: 'line-through', marginBottom: 4 },
+  originalValue: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textDecorationLine: 'line-through',
+    marginBottom: 4,
+  },
   remaining: { fontSize: 14, color: '#f59e0b', fontWeight: '600' },
   description: { fontSize: 15, color: '#374151', lineHeight: 22, marginBottom: 16 },
   section: { marginBottom: 16 },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
-  sectionBody: { fontSize: 14, color: '#6b7280' },
+  sectionBody: { fontSize: 14, color: '#6b7280', marginBottom: 8 },
+  directionsBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#eff6ff',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  directionsBtnText: { color: '#2563eb', fontWeight: '600', fontSize: 13 },
+  addressActions: { flexDirection: 'row', gap: 10 },
+  messageBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f0fdf4',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  messageBtnText: { color: '#16a34a', fontWeight: '600', fontSize: 13 },
   bottomSpacer: { height: 100 },
   footer: {
     position: 'absolute',

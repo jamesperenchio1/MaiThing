@@ -72,7 +72,9 @@ export default function SignInScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('auth.signIn')}
         >
-          <Text style={styles.primaryBtnText}>{loading ? t('common.loading') : t('auth.signIn')}</Text>
+          <Text style={styles.primaryBtnText}>
+            {loading ? t('common.loading') : t('auth.signIn')}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -84,10 +86,7 @@ export default function SignInScreen() {
           <Text style={styles.googleBtnText}>{t('auth.continueWithGoogle')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => router.push('/(auth)/sign-up')}
-          style={styles.linkBtn}
-        >
+        <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')} style={styles.linkBtn}>
           <Text style={styles.linkText}>{t('auth.signUp')}</Text>
         </TouchableOpacity>
       </View>

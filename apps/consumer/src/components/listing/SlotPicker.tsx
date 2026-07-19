@@ -1,4 +1,5 @@
 import { Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { Tables } from '@maithing/shared';
 
 type PickupSlot = Tables<'pickup_slots'>;
@@ -20,12 +21,17 @@ function formatDate(iso: string): string {
 }
 
 export default function SlotPicker({ slots, selectedSlotId, onSelect }: Props) {
+  const { t } = useTranslation();
   if (slots.length === 0) {
-    return <Text style={styles.noSlots}>No available pickup times</Text>;
+    return <Text style={styles.noSlots}>{t('listing.noSlots')}</Text>;
   }
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.row}
+    >
       {slots.map((slot) => {
         const isSelected = slot.id === selectedSlotId;
         const spotsLeft = slot.capacity - slot.reserved_count;
@@ -44,7 +50,7 @@ export default function SlotPicker({ slots, selectedSlotId, onSelect }: Props) {
               {formatTime(slot.starts_at)} – {formatTime(slot.ends_at)}
             </Text>
             <Text style={[styles.chipSpots, isSelected && styles.chipSpotsSelected]}>
-              {spotsLeft} left
+              {t('listing.remaining', { count: spotsLeft })}
             </Text>
           </TouchableOpacity>
         );

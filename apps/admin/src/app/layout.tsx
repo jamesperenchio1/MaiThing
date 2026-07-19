@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { initSentry } from '@/lib/sentry';
+import { capture } from '@/lib/posthog';
+
+initSentry();
+capture('admin_boot');
 
 export const metadata: Metadata = {
   title: 'MaiThing Admin',

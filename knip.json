@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "apps/admin": {
+      "ignoreDependencies": ["i18next", "react-i18next", "@tanstack/react-query"]
+    },
+    "apps/consumer": {
+      "ignoreDependencies": [
+        "expo-splash-screen",
+        "expo-status-bar",
+        "expo-updates",
+        "expo-system-ui",
+        "@babel/core",
+        "@opentelemetry/api"
+      ],
+      "ignore": ["react-native-maps-web-stub.js", "stripe-react-native-web-stub.js"]
+    }
+  },
+  "ignore": ["supabase/functions/**/*.ts"]
+}

@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import type { ListingPin } from '@maithing/shared';
 import { formatThb, discountPercent } from '@maithing/shared';
+import FavoriteButton from './FavoriteButton';
 
 interface Props {
   listings: ListingPin[];
@@ -39,6 +41,7 @@ export default function ListingList({ listings, isLoading, emptyText }: Props) {
 }
 
 function ListingRow({ listing }: { listing: ListingPin }) {
+  const { t } = useTranslation();
   const pct = discountPercent(listing.original_value_thb, listing.price_thb);
 
   return (
@@ -49,14 +52,21 @@ function ListingRow({ listing }: { listing: ListingPin }) {
       accessibilityLabel={`${listing.title}, ${formatThb(listing.price_thb)}`}
     >
       <View style={styles.rowLeft}>
-        <Text style={styles.rowTitle} numberOfLines={1}>{listing.title}</Text>
-        <Text style={styles.rowStore} numberOfLines={1}>{listing.location_name}</Text>
+        <Text style={styles.rowTitle} numberOfLines={1}>
+          {listing.title}
+        </Text>
+        <Text style={styles.rowStore} numberOfLines={1}>
+          {listing.location_name}
+        </Text>
         <Text style={styles.rowRating}>★ {listing.rating_avg.toFixed(1)}</Text>
       </View>
       <View style={styles.rowRight}>
+        <FavoriteButton locationId={listing.location_id} size={22} />
         <Text style={styles.rowPrice}>{formatThb(listing.price_thb)}</Text>
         {pct > 0 && <Text style={styles.rowSaved}>-{pct}%</Text>}
-        <Text style={styles.rowQty}>{listing.qty_remaining} เหลือ</Text>
+        <Text style={styles.rowQty}>
+          {t('listing.remaining', { count: listing.qty_remaining })}
+        </Text>
       </View>
     </TouchableOpacity>
   );

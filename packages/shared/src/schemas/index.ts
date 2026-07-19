@@ -16,6 +16,9 @@ export const profileSchema = z.object({
   home_lng: z.number().min(-180).max(180).nullable(),
   reliability_score: z.number().min(0).max(100),
   created_at: z.string().datetime(),
+  push_notifications_enabled: z.boolean().default(true),
+  referral_code: z.string().nullable(),
+  referred_by_code: z.string().nullable(),
 });
 export type Profile = z.infer<typeof profileSchema>;
 

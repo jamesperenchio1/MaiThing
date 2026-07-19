@@ -34,10 +34,7 @@ export default function PickYourOwnBuilder({ items }: Props) {
     [items, setPickedItems],
   );
 
-  const total = items.reduce(
-    (sum, item) => sum + item.price_thb * (quantities[item.id] ?? 0),
-    0,
-  );
+  const total = items.reduce((sum, item) => sum + item.price_thb * (quantities[item.id] ?? 0), 0);
 
   return (
     <View style={styles.container}>
@@ -55,7 +52,7 @@ export default function PickYourOwnBuilder({ items }: Props) {
                   <Text style={styles.itemOriginal}>{formatThb(item.original_price_thb)}</Text>
                 )}
               </View>
-              <Text style={styles.itemStock}>{avail} available</Text>
+              <Text style={styles.itemStock}>{t('listing.available', { count: avail })}</Text>
             </View>
             <View style={styles.stepper}>
               <TouchableOpacity
@@ -81,7 +78,7 @@ export default function PickYourOwnBuilder({ items }: Props) {
       })}
       {total > 0 && (
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalLabel}>{t('listing.total')}</Text>
           <Text style={styles.totalAmount}>{formatThb(total)}</Text>
         </View>
       )}
