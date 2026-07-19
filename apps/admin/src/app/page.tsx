@@ -12,11 +12,7 @@ export default async function AdminRoot() {
 
   if (!user) redirect('/login');
 
-  const profileResult = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  const profileResult = await supabase.from('profiles').select('role').eq('id', user.id).single();
   const profile = profileResult.data as { role: UserRole } | null;
 
   if (!profile || profile.role !== 'admin') redirect('/unauthorized');

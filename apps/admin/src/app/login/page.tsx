@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import { captureException } from '@/lib/sentry';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function LoginPage() {
     setError(null);
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError) {
+      captureException(authError);
       setError(authError.message);
       setLoading(false);
       return;
@@ -90,7 +92,14 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
   },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
-  label: { display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 500, color: '#374151' },
+  label: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    fontSize: 14,
+    fontWeight: 500,
+    color: '#374151',
+  },
   input: {
     padding: '10px 12px',
     borderRadius: 8,

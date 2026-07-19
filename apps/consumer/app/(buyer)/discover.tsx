@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/lib/supabase';
@@ -9,6 +9,8 @@ import { boundsSchema } from '@maithing/shared';
 import ListingMap from '../../src/components/map/ListingMap';
 import ListingList from '../../src/components/listing/ListingList';
 import DiscoverHeader from '../../src/components/listing/DiscoverHeader';
+import FiltersPanel from '../../src/components/listing/FiltersPanel';
+import { useHasUnreadMessages } from '../../src/hooks/useChat';
 
 const DEBOUNCE_MS = 400;
 
@@ -16,10 +18,17 @@ export default function DiscoverScreen() {
   const { t } = useTranslation();
   const { bounds, filters, setBounds } = useMapStore();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [showFilters, setShowFilters] = useState(false);
+  const [search, setSearch] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const rpcFilters = {
+    ...filters,
+    ...(search.trim() ? { search: search.trim() } : {}),
+  };
+
   const { data: listings = [], isLoading } = useQuery<ListingPin[]>({
-    queryKey: ['listings_in_bounds', bounds, filters],
+    queryKey: ['listings_in_bounds', bounds, rpcFilters],
     queryFn: async () => {
       if (!bounds) return [];
       const { data, error } = await supabase.rpc('listings_in_bounds', {
@@ -27,7 +36,7 @@ export default function DiscoverScreen() {
         min_lng: bounds.min_lng,
         max_lat: bounds.max_lat,
         max_lng: bounds.max_lng,
-        filters: filters as unknown as Json,
+        filters: rpcFilters as unknown as Json,
         lim: 200,
       });
       if (error) throw error;
@@ -36,6 +45,7 @@ export default function DiscoverScreen() {
     enabled: !!bounds,
     staleTime: 15_000,
   });
+  const hasUnread = useHasUnreadMessages();
 
   const onRegionChange = useCallback(
     (newBounds: Bounds) => {
@@ -53,16 +63,67 @@ export default function DiscoverScreen() {
         viewMode={viewMode}
         onToggleView={setViewMode}
         isLoading={isLoading}
+        hasUnread={hasUnread}
       />
+      <View style={styles.searchBar}>
+        <TextInput
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+          placeholder={t('discover.searchPlaceholder')}
+          accessibilityLabel={t('common.search')}
+        />
+        <TouchableOpacity
+          style={styles.filterBtn}
+          onPress={() => setShowFilters(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.filter')}
+        >
+          <Text style={styles.filterBtnText}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
       {viewMode === 'map' ? (
         <ListingMap listings={listings} onRegionChange={onRegionChange} />
       ) : (
-        <ListingList listings={listings} isLoading={isLoading} emptyText={t('discover.noListings')} />
+        <ListingList
+          listings={listings}
+          isLoading={isLoading}
+          emptyText={t('discover.noListings')}
+        />
       )}
+      {showFilters && <FiltersPanel onClose={() => setShowFilters(false)} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+  },
+  filterBtn: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterBtnText: { fontSize: 18 },
 });

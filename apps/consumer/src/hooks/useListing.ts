@@ -24,7 +24,9 @@ function pinToPartialDetail(pin: ListingPin): Partial<ListingDetail> {
 }
 
 function findPinInCache(listingId: string): ListingPin | undefined {
-  const cacheEntries = queryClient.getQueriesData<ListingPin[]>({ queryKey: ['listings_in_bounds'] });
+  const cacheEntries = queryClient.getQueriesData<ListingPin[]>({
+    queryKey: ['listings_in_bounds'],
+  });
   for (const [, pins] of cacheEntries) {
     if (!pins) continue;
     const found = pins.find((p) => p.id === listingId);
@@ -41,12 +43,14 @@ export function useListingDetail(listingId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('listings')
-        .select(`
+        .select(
+          `
           *,
           location:locations(*),
           items:listing_items(*),
           slots:pickup_slots(starts_at, ends_at, capacity, reserved_count, id)
-        `)
+        `,
+        )
         .eq('id', listingId)
         .single();
       if (error) throw error;
@@ -54,8 +58,6 @@ export function useListingDetail(listingId: string) {
     },
     staleTime: 30_000,
     // exactOptionalPropertyTypes forbids `undefined` as a value, so spread conditionally
-    ...(cachedPin
-      ? { placeholderData: pinToPartialDetail(cachedPin) as ListingDetail }
-      : {}),
+    ...(cachedPin ? { placeholderData: pinToPartialDetail(cachedPin) as ListingDetail } : {}),
   });
 }

@@ -13,13 +13,16 @@ import {
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/lib/supabase';
+import { useApplyReferralCode } from '../../src/hooks/useReferral';
 
 export default function SignUpScreen() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const applyReferral = useApplyReferralCode();
 
   const handleSignUp = async () => {
     if (!pdpaConsent) {
@@ -34,12 +37,23 @@ export default function SignUpScreen() {
         data: { pdpa_consented_at: new Date().toISOString() },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       Alert.alert(t('common.error'), error.message);
-    } else {
-      router.replace('/(buyer)/discover');
+      return;
     }
+
+    const trimmedCode = referralCode.trim().toUpperCase();
+    if (trimmedCode) {
+      try {
+        await applyReferral.mutateAsync(trimmedCode);
+      } catch (err) {
+        // Non-fatal: still continue to discover even if referral code fails.
+        console.warn('Referral code application failed:', err);
+      }
+    }
+    setLoading(false);
+    router.replace('/(buyer)/discover');
   };
 
   return (
@@ -66,6 +80,16 @@ export default function SignUpScreen() {
           onChangeText={setPassword}
           secureTextEntry
           accessibilityLabel={t('auth.password')}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder={t('auth.referralCode')}
+          value={referralCode}
+          onChangeText={setReferralCode}
+          autoCapitalize="characters"
+          maxLength={6}
+          accessibilityLabel={t('auth.referralCode')}
         />
 
         <View style={styles.consentRow}>

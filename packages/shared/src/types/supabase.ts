@@ -7,6 +7,36 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       chat_messages: {
@@ -636,6 +666,9 @@ export type Database = {
           locale: string
           pdpa_consented_at: string | null
           phone: string | null
+          push_notifications_enabled: boolean
+          referral_code: string | null
+          referred_by_code: string | null
           reliability_score: number
           role: Database["public"]["Enums"]["user_role"]
         }
@@ -649,6 +682,9 @@ export type Database = {
           locale?: string
           pdpa_consented_at?: string | null
           phone?: string | null
+          push_notifications_enabled?: boolean
+          referral_code?: string | null
+          referred_by_code?: string | null
           reliability_score?: number
           role?: Database["public"]["Enums"]["user_role"]
         }
@@ -662,6 +698,9 @@ export type Database = {
           locale?: string
           pdpa_consented_at?: string | null
           phone?: string | null
+          push_notifications_enabled?: boolean
+          referral_code?: string | null
+          referred_by_code?: string | null
           reliability_score?: number
           role?: Database["public"]["Enums"]["user_role"]
         }
@@ -1075,6 +1114,22 @@ export type Database = {
             }
             Returns: string
           }
+      cancel_order: {
+        Args: { p_order_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      collect_order: {
+        Args: { p_order_id: string; p_pickup_code: string }
+        Returns: undefined
+      }
+      apply_referral_code: {
+        Args: { p_code: string }
+        Returns: undefined
+      }
+      create_slot_from_template: {
+        Args: { p_date: string; p_listing_id: string; p_location_id: string }
+        Returns: string
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -2046,6 +2101,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       fulfillment_type: ["surprise_bag", "pick_your_own"],
@@ -2065,4 +2123,3 @@ export const Constants = {
     },
   },
 } as const
-

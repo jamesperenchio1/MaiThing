@@ -1,3 +1,5 @@
+import { randomInt } from 'node:crypto';
+
 // ─── Currency ────────────────────────────────────────────────────────────────
 
 export function formatThb(amount: number): string {
@@ -13,7 +15,21 @@ export function discountPercent(original: number, price: number): number {
 
 export function generatePickupCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return Array.from({ length: 6 }, () => chars[randomInt(chars.length)]).join('');
+}
+
+// ─── QR payload ───────────────────────────────────────────────────────────────
+
+export function generateQrPayload(orderId: string): string {
+  return JSON.stringify({ order_id: orderId, v: 1 });
+}
+
+// ─── Pickup window ─────────────────────────────────────────────────────────────
+
+export function isPickupWindowOpen(startsAt: string, endsAt: string, now = new Date()): boolean {
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+  return now >= start && now <= end;
 }
 
 // ─── Dates ───────────────────────────────────────────────────────────────────
@@ -33,12 +49,7 @@ export function formatDateTH(date: Date, buddhistEra = false): string {
 // ─── Distance ────────────────────────────────────────────────────────────────
 
 /** Haversine distance in metres */
-export function haversineM(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number,
-): number {
+export function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);

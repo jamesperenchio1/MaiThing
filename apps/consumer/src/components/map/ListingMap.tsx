@@ -27,7 +27,9 @@ export default function ListingMap({ listings, onRegionChange }: Props) {
   const mapRef = useRef<MapView | null>(null);
   const clusterRef = useRef(new Supercluster({ radius: 60, maxZoom: MAX_ZOOM, minZoom: MIN_ZOOM }));
   const [region, setRegion] = useState<Region>(INITIAL_REGION);
-  const [clusters, setClusters] = useState<Supercluster.ClusterFeature<Supercluster.AnyProps>[]>([]);
+  const [clusters, setClusters] = useState<Supercluster.ClusterFeature<Supercluster.AnyProps>[]>(
+    [],
+  );
 
   // Center on user location once
   useEffect(() => {
@@ -111,10 +113,7 @@ export default function ListingMap({ listings, onRegionChange }: Props) {
 
         if (isCluster) {
           return (
-            <Marker
-              key={`cluster-${i}`}
-              coordinate={{ latitude: lat ?? 0, longitude: lng ?? 0 }}
-            >
+            <Marker key={`cluster-${i}`} coordinate={{ latitude: lat ?? 0, longitude: lng ?? 0 }}>
               <View style={styles.cluster}>
                 <Text style={styles.clusterText}>{count}</Text>
               </View>

@@ -16,6 +16,9 @@ export const profileSchema = z.object({
   home_lng: z.number().min(-180).max(180).nullable(),
   reliability_score: z.number().min(0).max(100),
   created_at: z.string().datetime(),
+  push_notifications_enabled: z.boolean().default(true),
+  referral_code: z.string().nullable(),
+  referred_by_code: z.string().nullable(),
 });
 export type Profile = z.infer<typeof profileSchema>;
 
@@ -34,6 +37,8 @@ export const merchantOrgSchema = z.object({
   stripe_connect_account_id: z.string().nullable(),
   subscription_tier: subscriptionTierSchema,
   subscription_status: z.string(),
+  verified_at: z.string().datetime().nullable(),
+  suspended_at: z.string().datetime().nullable(),
   created_at: z.string().datetime(),
 });
 export type MerchantOrg = z.infer<typeof merchantOrgSchema>;
@@ -69,13 +74,19 @@ export const locationSchema = z.object({
 });
 export type Location = z.infer<typeof locationSchema>;
 
-export const createLocationSchema = z.object({
-  name: z.string().min(1).max(200),
-  address_text: z.string().min(1),
-  lat: z.number().min(5).max(21),
-  lng: z.number().min(97).max(106),
-  hours: hoursSchema.optional(),
-});
+export const createLocationSchema = z
+  .object({
+    name: z.string().min(1).max(200),
+    address_text: z.string().min(1),
+    lat: z.number().min(5).max(21),
+    lng: z.number().min(97).max(106),
+    hours: hoursSchema.optional(),
+  })
+  .transform(({ lat, lng, ...rest }) => ({
+    ...rest,
+    location: `SRID=4326;POINT(${lng} ${lat})`,
+  }));
+export type CreateLocationInput = z.input<typeof createLocationSchema>;
 
 // ─── Listings ────────────────────────────────────────────────────────────────
 
@@ -119,7 +130,49 @@ export const createListingSchema = z.object({
   auto_repeat: z.boolean().optional(),
 });
 
-// ─── Orders ──────────────────────────────────────────────────────────────────
+// ─── Listing Items ────────────────────────────────────────────────────────────
+
+export const listingItemSchema = z.object({
+  id: z.string().uuid(),
+  listing_id: z.string().uuid(),
+  name: z.string().min(1),
+  photo_url: z.string().url().nullable(),
+  available_qty: z.number().int().min(0),
+  reserved_qty: z.number().int().min(0),
+  price_thb: z.number().positive(),
+  original_price_thb: z.number().positive(),
+});
+export type ListingItem = z.infer<typeof listingItemSchema>;
+
+export const createListingItemSchema = z.object({
+  listing_id: z.string().uuid(),
+  name: z.string().min(1),
+  photo_url: z.string().url().optional(),
+  available_qty: z.number().int().min(0),
+  price_thb: z.number().positive(),
+  original_price_thb: z.number().positive(),
+});
+
+// ─── Pickup Slots ──────────────────────────────────────────────────────────────
+
+export const pickupSlotSchema = z.object({
+  id: z.string().uuid(),
+  listing_id: z.string().uuid(),
+  starts_at: z.string().datetime(),
+  ends_at: z.string().datetime(),
+  capacity: z.number().int().positive(),
+  reserved_count: z.number().int().min(0),
+});
+export type PickupSlot = z.infer<typeof pickupSlotSchema>;
+
+export const createPickupSlotSchema = z.object({
+  listing_id: z.string().uuid(),
+  starts_at: z.string().datetime(),
+  ends_at: z.string().datetime(),
+  capacity: z.number().int().positive(),
+});
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
 
 export const orderStatusSchema = z.enum([
   'reserved',
@@ -137,6 +190,35 @@ export const orderItemSchema = z.object({
 });
 export type OrderItem = z.infer<typeof orderItemSchema>;
 
+export const orderItemRowSchema = z.object({
+  id: z.string().uuid(),
+  listing_item_id: z.string().uuid(),
+  name_snapshot: z.string(),
+  order_id: z.string().uuid(),
+  qty: z.number().int().positive(),
+  unit_price_thb: z.number().positive(),
+});
+export type OrderItemRow = z.infer<typeof orderItemRowSchema>;
+
+export const orderSchema = z.object({
+  id: z.string().uuid(),
+  buyer_id: z.string().uuid(),
+  listing_id: z.string().uuid(),
+  location_id: z.string().uuid(),
+  pickup_slot_id: z.string().uuid(),
+  qty: z.number().int().positive(),
+  amount_thb: z.number().positive(),
+  platform_fee_thb: z.number().positive(),
+  status: orderStatusSchema,
+  pickup_code: z.string(),
+  qr_payload: z.string(),
+  stripe_payment_intent_id: z.string().nullable(),
+  created_at: z.string().datetime(),
+  collected_at: z.string().datetime().nullable(),
+  cancelled_at: z.string().datetime().nullable(),
+});
+export type Order = z.infer<typeof orderSchema>;
+
 export const reserveOrderSchema = z.object({
   listing_id: z.string().uuid(),
   slot_id: z.string().uuid(),
@@ -147,12 +229,15 @@ export const reserveOrderSchema = z.object({
 
 export const createReviewSchema = z.object({
   order_id: z.string().uuid(),
+  buyer_id: z.string().uuid(),
+  location_id: z.string().uuid(),
   overall_rating: z.number().int().min(1).max(5),
   value_rating: z.number().int().min(1).max(5),
   comment: z.string().max(1000).optional(),
+  photo_urls: z.array(z.string().url()).optional(),
 });
 
-// ─── Issue reports ───────────────────────────────────────────────────────────
+// ─── Issue Reports ───────────────────────────────────────────────────────────
 
 export const issueReasonSchema = z.enum([
   'missing_items',
@@ -162,13 +247,136 @@ export const issueReasonSchema = z.enum([
   'other',
 ]);
 
+export const issueStatusSchema = z.enum(['open', 'auto_refunded', 'resolved', 'rejected']);
+
 export const createIssueReportSchema = z.object({
   order_id: z.string().uuid(),
   reason: issueReasonSchema,
   detail: z.string().max(1000).optional(),
+  photo_urls: z.array(z.string().url()).optional(),
+  status: issueStatusSchema.optional(),
 });
 
-// ─── Map / discovery ─────────────────────────────────────────────────────────
+// ─── Chat ────────────────────────────────────────────────────────────────────
+
+export const chatThreadSchema = z.object({
+  id: z.string().uuid(),
+  buyer_id: z.string().uuid(),
+  location_id: z.string().uuid(),
+  order_id: z.string().uuid().nullable(),
+  last_message_at: z.string().datetime(),
+});
+export type ChatThread = z.infer<typeof chatThreadSchema>;
+
+export const createChatThreadSchema = z.object({
+  buyer_id: z.string().uuid(),
+  location_id: z.string().uuid(),
+  order_id: z.string().uuid().optional(),
+});
+
+export const chatMessageSchema = z.object({
+  id: z.string().uuid(),
+  thread_id: z.string().uuid(),
+  sender_id: z.string().uuid(),
+  body: z.string().min(1),
+  read_at: z.string().datetime().nullable(),
+  created_at: z.string().datetime(),
+});
+export type ChatMessage = z.infer<typeof chatMessageSchema>;
+
+export const createChatMessageSchema = z.object({
+  thread_id: z.string().uuid(),
+  sender_id: z.string().uuid(),
+  body: z.string().min(1),
+});
+
+// ─── Favorites ─────────────────────────────────────────────────────────────────
+
+export const favoriteSchema = z.object({
+  buyer_id: z.string().uuid(),
+  location_id: z.string().uuid(),
+  created_at: z.string().datetime(),
+});
+export type Favorite = z.infer<typeof favoriteSchema>;
+
+export const createFavoriteSchema = z.object({
+  buyer_id: z.string().uuid(),
+  location_id: z.string().uuid(),
+});
+
+// ─── Device Tokens ───────────────────────────────────────────────────────────
+
+export const deviceTokenSchema = z.object({
+  id: z.string().uuid(),
+  profile_id: z.string().uuid(),
+  expo_push_token: z.string().min(1),
+  created_at: z.string().datetime(),
+});
+export type DeviceToken = z.infer<typeof deviceTokenSchema>;
+
+export const createDeviceTokenSchema = z.object({
+  profile_id: z.string().uuid(),
+  expo_push_token: z.string().min(1),
+});
+
+// ─── Referrals ─────────────────────────────────────────────────────────────────
+
+export const referralSchema = z.object({
+  id: z.string().uuid(),
+  referrer_id: z.string().uuid(),
+  referred_id: z.string().uuid().nullable(),
+  code: z.string().min(1),
+  reward_status: z.string(),
+  created_at: z.string().datetime(),
+});
+export type Referral = z.infer<typeof referralSchema>;
+
+export const createReferralSchema = z.object({
+  referrer_id: z.string().uuid(),
+  code: z.string().min(1),
+});
+
+// ─── Subscriptions ───────────────────────────────────────────────────────────
+
+export const subscriptionSchema = z.object({
+  id: z.string().uuid(),
+  subscriber_id: z.string().uuid(),
+  subscriber_type: z.string(),
+  stripe_subscription_id: z.string().nullable(),
+  tier: subscriptionTierSchema,
+  status: z.string(),
+  current_period_end: z.string().datetime().nullable(),
+  created_at: z.string().datetime(),
+});
+export type Subscription = z.infer<typeof subscriptionSchema>;
+
+export const createSubscriptionSchema = z.object({
+  subscriber_id: z.string().uuid(),
+  subscriber_type: z.string().min(1),
+  stripe_subscription_id: z.string().optional(),
+  tier: subscriptionTierSchema,
+  status: z.string().optional(),
+  current_period_end: z.string().datetime().optional(),
+});
+
+// ─── Demand Signals ──────────────────────────────────────────────────────────
+
+export const demandSignalSchema = z.object({
+  id: z.string().uuid(),
+  buyer_id: z.string().uuid(),
+  geohash: z.string().min(1),
+  category: z.string().nullable(),
+  created_at: z.string().datetime(),
+});
+export type DemandSignal = z.infer<typeof demandSignalSchema>;
+
+export const createDemandSignalSchema = z.object({
+  buyer_id: z.string().uuid(),
+  geohash: z.string().min(1),
+  category: z.string().optional(),
+});
+
+// ─── Map / discovery ───────────────────────────────────────────────────────────
 
 export const boundsSchema = z.object({
   min_lat: z.number().min(-90).max(90),

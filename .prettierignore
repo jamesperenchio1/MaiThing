@@ -6,3 +6,8 @@ build
 coverage
 *.generated.ts
 packages/shared/src/types/supabase.ts
+RESCUEBITE-BUILD-BRIEF.md
+SETUP-TODO.md
+AUDIT.md
+PROGRESS.md
+README.md

@@ -6,7 +6,9 @@ export default function UnauthorizedPage() {
       <div style={styles.card}>
         <h1 style={styles.title}>Access denied</h1>
         <p style={styles.body}>Your account does not have admin access to this dashboard.</p>
-        <Link href="/login" style={styles.link}>Sign in with a different account</Link>
+        <Link href="/login" style={styles.link}>
+          Sign in with a different account
+        </Link>
       </div>
     </main>
   );

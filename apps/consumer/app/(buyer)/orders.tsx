@@ -24,16 +24,20 @@ function useOrders() {
   return useQuery<OrderRow[]>({
     queryKey: ['orders'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return [];
       const { data, error } = await supabase
         .from('orders')
-        .select(`
+        .select(
+          `
           id, status, amount_thb, pickup_code, created_at,
           listing:listings(title),
           location:locations(name),
           pickup_slot:pickup_slots(starts_at, ends_at)
-        `)
+        `,
+        )
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -80,7 +84,7 @@ export default function OrdersScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.emptyIcon}>🛍️</Text>
-        <Text style={styles.emptyText}>No orders yet</Text>
+        <Text style={styles.emptyText}>{t('order.noOrders')}</Text>
       </View>
     );
   }
@@ -105,14 +109,19 @@ function OrderCard({ order, t }: { order: OrderRow; t: (key: string) => string }
   return (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => isActive && router.push(`/(buyer)/order/${order.id}`)}
-      accessibilityRole={isActive ? 'button' : 'none'}
+      onPress={() => router.push(`/(buyer)/order/${order.id}`)}
+      accessibilityRole="button"
     >
       <View style={styles.cardTop}>
         <Text style={styles.listingTitle} numberOfLines={1}>
           {order.listing?.title ?? '—'}
         </Text>
-        <View style={[styles.statusBadge, { backgroundColor: statusColor + '20', borderColor: statusColor }]}>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: statusColor + '20', borderColor: statusColor },
+          ]}
+        >
           <Text style={[styles.statusText, { color: statusColor }]}>
             {t(`order.status.${order.status}`)}
           </Text>
@@ -122,8 +131,11 @@ function OrderCard({ order, t }: { order: OrderRow; t: (key: string) => string }
       {order.pickup_slot && (
         <Text style={styles.slotText}>
           {new Date(order.pickup_slot.starts_at).toLocaleString('th-TH', {
-            weekday: 'short', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit',
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
           })}
         </Text>
       )}
@@ -143,7 +155,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   errorText: { fontSize: 16, color: '#6b7280' },
-  retryBtn: { backgroundColor: '#16a34a', borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10 },
+  retryBtn: {
+    backgroundColor: '#16a34a',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
   retryText: { color: '#fff', fontWeight: '600' },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyText: { fontSize: 16, color: '#9ca3af' },
@@ -159,7 +176,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
   listingTitle: { fontSize: 15, fontWeight: '600', color: '#111827', flex: 1, marginRight: 8 },
   statusBadge: {
     borderRadius: 6,
