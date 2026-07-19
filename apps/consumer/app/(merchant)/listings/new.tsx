@@ -7,12 +7,14 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
+  Modal,
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
 import { useMerchantOrg } from '../../../src/hooks/useProfile';
+import { useSlotTemplates } from '../../../src/hooks/useSlotTemplates';
 import {
   FOOD_CATEGORIES,
   createListingSchema,
@@ -68,6 +70,9 @@ export default function NewListingScreen() {
   const [items, setItems] = useState<ItemDraft[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+
+  const { data: slotTemplates = [] } = useSlotTemplates(locationId);
 
   const addItem = () => {
     setItems((prev) => [
@@ -360,7 +365,17 @@ export default function NewListingScreen() {
         />
       </View>
 
-      <Text style={styles.label}>{t('merchant.pickupSlot')}</Text>
+      <View style={styles.slotHeader}>
+        <Text style={styles.label}>{t('merchant.pickupSlot')}</Text>
+        {slotTemplates.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setShowTemplatePicker(true)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.loadTemplateText}>{t('merchant.loadTemplate')}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       <View style={styles.row}>
         <TextInput
           style={[styles.input, styles.half]}
@@ -369,6 +384,45 @@ export default function NewListingScreen() {
         />
         <TextInput style={[styles.input, styles.half]} value={slotEnd} onChangeText={setSlotEnd} />
       </View>
+
+      {/* Template picker modal */}
+      <Modal
+        visible={showTemplatePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTemplatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <Text style={styles.modalTitle}>{t('merchant.selectTemplate')}</Text>
+            {slotTemplates.map((tmpl) => (
+              <TouchableOpacity
+                key={tmpl.id}
+                style={styles.templateRow}
+                onPress={() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  setSlotStart(`${today}T${tmpl.start_time}`);
+                  setSlotEnd(`${today}T${tmpl.end_time}`);
+                  setShowTemplatePicker(false);
+                }}
+                accessibilityRole="button"
+              >
+                <Text style={styles.templateName}>{tmpl.label}</Text>
+                <Text style={styles.templateTime}>
+                  {tmpl.start_time.slice(0, 5)} – {tmpl.end_time.slice(0, 5)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setShowTemplatePicker(false)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.modalCloseText}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {fulfillmentType === 'pick_your_own' && (
         <View style={styles.field}>
@@ -500,4 +554,39 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { backgroundColor: '#9ca3af' },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  slotHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  loadTemplateText: { fontSize: 13, color: '#16a34a', fontWeight: '600' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  templateRow: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  templateName: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  templateTime: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  modalClose: {
+    marginTop: 16,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#f3f4f6',
+  },
+  modalCloseText: { color: '#374151', fontWeight: '600', fontSize: 15 },
 });

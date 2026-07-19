@@ -30,13 +30,21 @@ export default function ListingsScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('merchant.listings')}</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/(merchant)/listings/new')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.addBtnText}>+ {t('merchant.publish')}</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push('/(merchant)/listings/templates')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.templatesLink}>{t('merchant.slotTemplates')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => router.push('/(merchant)/listings/new')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.addBtnText}>+ {t('merchant.publish')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {listings.length === 0 ? (
@@ -89,6 +97,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   addBtnText: { color: '#fff', fontWeight: '600' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  templatesLink: { fontSize: 13, color: '#16a34a', fontWeight: '600' },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   emptyText: { fontSize: 16, color: '#6b7280', textAlign: 'center' },
   ctaBtn: {
