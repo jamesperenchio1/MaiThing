@@ -1,5 +1,3 @@
-import { randomInt } from 'node:crypto';
-
 // ─── Currency ────────────────────────────────────────────────────────────────
 
 export function formatThb(amount: number): string {
@@ -15,7 +13,7 @@ export function discountPercent(original: number, price: number): number {
 
 export function generatePickupCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from({ length: 6 }, () => chars[randomInt(chars.length)]).join('');
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
 // ─── QR payload ───────────────────────────────────────────────────────────────
