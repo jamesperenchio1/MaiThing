@@ -98,6 +98,40 @@ export default function ProfileScreen() {
   const [appliedCode, setAppliedCode] = useState('');
   const [appliedMessage, setAppliedMessage] = useState('');
 
+  const DIETARY_OPTIONS = ['vegetarian', 'vegan', 'halal', 'no_pork', 'gluten_free'] as const;
+
+  const dietaryMutation = useMutation({
+    mutationFn: async (prefs: string[]) => {
+      if (!profile) throw new Error('Not signed in');
+      const { error } = await supabase
+        .from('profiles')
+        .update({ dietary_prefs: prefs })
+        .eq('id', profile.id);
+      if (error) throw error;
+    },
+    onMutate: async (prefs) => {
+      await qc.cancelQueries({ queryKey: ['profile'] });
+      const previous = qc.getQueryData<Profile>(['profile']);
+      qc.setQueryData<Profile>(['profile'], (old) => {
+        if (!old) return old;
+        return { ...old, dietary_prefs: prefs };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(['profile'], context.previous);
+    },
+  });
+
+  const toggleDietaryPref = useCallback(
+    (pref: string) => {
+      const current = profile?.dietary_prefs ?? [];
+      const next = current.includes(pref) ? current.filter((p) => p !== pref) : [...current, pref];
+      dietaryMutation.mutate(next);
+    },
+    [profile, dietaryMutation],
+  );
+
   const togglePushMutation = useMutation({
     mutationFn: async (enabled: boolean) => {
       if (!profile) throw new Error('Not signed in');
@@ -297,6 +331,29 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      {/* Dietary preferences */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{t('profile.dietaryPrefs')}</Text>
+        <View style={styles.chipRow}>
+          {DIETARY_OPTIONS.map((pref) => {
+            const active = (profile?.dietary_prefs ?? []).includes(pref);
+            return (
+              <TouchableOpacity
+                key={pref}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => toggleDietaryPref(pref)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: active }}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                  {t(`profile.dietaryPref.${pref}`)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
       {/* Language switcher */}
       <TouchableOpacity
         style={styles.rowButton}
@@ -436,6 +493,17 @@ const styles = StyleSheet.create({
   btnDisabled: { backgroundColor: '#9ca3af' },
   applyBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
   appliedMessage: { color: '#16a34a', fontSize: 13, marginTop: 8, fontWeight: '600' },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  chip: {
+    borderWidth: 1.5,
+    borderColor: '#d1d5db',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+  },
+  chipActive: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
+  chipText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
+  chipTextActive: { color: '#16a34a', fontWeight: '700' },
   logoutBtn: {
     borderRadius: 12,
     borderWidth: 1.5,

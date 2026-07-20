@@ -23,7 +23,7 @@ Last updated: 2026-07-19
 - [x] PDPA consent on signup
 - [x] Google OAuth (wired, needs API keys)
 - [~] LINE OAuth (stubbed; hidden when no credentials)
-- [~] Buyer onboarding flow (location grant wired; dietary prefs + referral stubbed)
+- [x] Buyer onboarding flow (location grant wired; referral wired in sign-up; dietary prefs toggles in profile)
 - [x] Merchant onboarding flow (org creation)
 
 ## B — Discovery & Listings (Consumer)
@@ -40,7 +40,7 @@ Last updated: 2026-07-19
 - [x] Map pin press → navigate to detail
 - [x] Filters / search UI
 - [x] Favorites + optimistic toggle
-- [~] Prefetch on viewport entry (architecture in place, not fully wired)
+- [x] Prefetch on viewport entry (FlashList onViewableItemsChanged wired; 150ms debounce, 30% threshold)
 - [x] Realtime stock updates
 
 ## C — Merchant Tools

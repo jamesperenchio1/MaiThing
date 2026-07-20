@@ -659,6 +659,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          dietary_prefs: string[]
           display_name: string | null
           home_lat: number | null
           home_lng: number | null
@@ -675,6 +676,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          dietary_prefs?: string[]
           display_name?: string | null
           home_lat?: number | null
           home_lng?: number | null
@@ -691,6 +693,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          dietary_prefs?: string[]
           display_name?: string | null
           home_lat?: number | null
           home_lng?: number | null
@@ -1114,16 +1117,13 @@ export type Database = {
             }
             Returns: string
           }
+      apply_referral_code: { Args: { p_code: string }; Returns: undefined }
       cancel_order: {
         Args: { p_order_id: string; p_reason?: string }
         Returns: undefined
       }
       collect_order: {
         Args: { p_order_id: string; p_pickup_code: string }
-        Returns: undefined
-      }
-      apply_referral_code: {
-        Args: { p_code: string }
         Returns: undefined
       }
       create_slot_from_template: {
@@ -1262,6 +1262,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
+      is_admin: { Args: never; Returns: boolean }
       listings_in_bounds: {
         Args: {
           filters?: Json

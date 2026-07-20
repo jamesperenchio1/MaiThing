@@ -161,6 +161,14 @@ export const en = {
     switchToMerchant: 'Switch to merchant',
     noFavorites: 'No favorites yet',
     guest: 'Guest',
+    dietaryPrefs: 'Dietary preferences',
+    dietaryPref: {
+      vegetarian: 'Vegetarian',
+      vegan: 'Vegan',
+      halal: 'Halal',
+      no_pork: 'No pork',
+      gluten_free: 'Gluten-free',
+    },
     level: 'Level: {{level}}',
     heroLevel: {
       seed: 'Seed',

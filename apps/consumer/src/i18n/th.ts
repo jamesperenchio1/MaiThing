@@ -173,6 +173,14 @@ export const th = {
     switchToMerchant: 'สลับไปเป็นร้านค้า',
     noFavorites: 'ยังไม่มีรายการโปรด',
     guest: 'ผู้ใช้',
+    dietaryPrefs: 'การตั้งค่าอาหาร',
+    dietaryPref: {
+      vegetarian: 'มังสวิรัติ',
+      vegan: 'วีแกน',
+      halal: 'ฮาลาล',
+      no_pork: 'ไม่กินหมู',
+      gluten_free: 'ไม่มีกลูเตน',
+    },
     level: 'ระดับ: {{level}}',
     heroLevel: {
       seed: 'เมล็ด',
