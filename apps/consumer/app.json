@@ -50,8 +50,7 @@
           "color": "#16a34a"
         }
       ],
-      "@stripe/stripe-react-native",
-      "react-native-webview"
+      ["@stripe/stripe-react-native", { "merchantIdentifier": "merchant.com.maithing", "enableGooglePay": false }]
     ],
     "experiments": {
       "typedRoutes": true
