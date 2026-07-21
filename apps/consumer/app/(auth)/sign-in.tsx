@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +23,7 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleEmailSignIn = async () => {
     console.log('[Auth] email sign-in attempt:', email);
@@ -137,14 +139,24 @@ export default function SignInScreen() {
           keyboardType="email-address"
           accessibilityLabel={t('auth.email')}
         />
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.password')}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          accessibilityLabel={t('auth.password')}
-        />
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder={t('auth.password')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            accessibilityLabel={t('auth.password')}
+          />
+          <Pressable
+            onPress={() => setShowPassword((v) => !v)}
+            style={styles.eyeBtn}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+          >
+            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+          </Pressable>
+        </View>
 
         <TouchableOpacity
           style={styles.primaryBtn}
@@ -224,4 +236,23 @@ const styles = StyleSheet.create({
   lineBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   linkBtn: { alignItems: 'center', padding: 8, minHeight: 44 },
   linkText: { color: '#16a34a', fontSize: 14 },
+  passwordRow: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    minHeight: 52,
+    alignItems: 'center',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 14,
+    fontSize: 16,
+  },
+  eyeBtn: {
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eyeText: { fontSize: 18 },
 });
