@@ -35,6 +35,7 @@ export const th = {
     password: 'รหัสผ่าน',
     continueWithGoogle: 'ดำเนินการต่อด้วย Google',
     continueWithLine: 'ดำเนินการต่อด้วย LINE',
+    lineSignInFailed: 'ลงชื่อเข้าใช้ด้วย LINE ไม่สำเร็จ กรุณาลองอีกครั้ง',
     pdpaConsent: 'ฉันยินยอมให้ MaiThing เก็บและใช้ข้อมูลส่วนบุคคลตาม PDPA',
     referralCode: 'รหัสแนะนำเพื่อน (ถ้ามี)',
   },

@@ -32,6 +32,7 @@ export const en = {
     password: 'Password',
     continueWithGoogle: 'Continue with Google',
     continueWithLine: 'Continue with LINE',
+    lineSignInFailed: 'LINE sign-in failed. Please try again.',
     pdpaConsent: 'I consent to MaiThing collecting and using my personal data under PDPA',
     referralCode: 'Referral code (optional)',
   },

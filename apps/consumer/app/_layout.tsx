@@ -1,5 +1,6 @@
 import { useEffect, Component, type ReactNode } from 'react';
 import { Stack } from 'expo-router';
+import { useURL } from 'expo-linking';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { supabase } from '../src/lib/supabase';
@@ -37,6 +38,20 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 export default function RootLayout() {
   const setSession = useAuthStore((s) => s.setSession);
   const setLoading = useAuthStore((s) => s.setLoading);
+  const url = useURL();
+
+  // Handle deep links from LINE OAuth (magic-link redirect → maithing://auth/callback#access_token=...)
+  useEffect(() => {
+    if (!url) return;
+    const parsed = new URL(url);
+    // Supabase magic-link lands with fragment params
+    const fragment = new URLSearchParams(parsed.hash.slice(1));
+    const accessToken = fragment.get('access_token');
+    const refreshToken = fragment.get('refresh_token');
+    if (accessToken && refreshToken) {
+      void supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    }
+  }, [url]);
 
   useEffect(() => {
     initSentry();

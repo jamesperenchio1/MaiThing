@@ -11,7 +11,10 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../../src/lib/supabase';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const { t } = useTranslation();
@@ -36,6 +39,22 @@ export default function SignInScreen() {
       options: { redirectTo: 'maithing://auth/callback' },
     });
     if (error) Alert.alert(t('common.error'), error.message);
+  };
+
+  const handleLineSignIn = async () => {
+    const callbackUrl = 'https://bvvsuollejcndcjjveal.supabase.co/functions/v1/line-callback';
+    const lineAuthUrl =
+      `https://access.line.me/oauth2/v2.1/authorize` +
+      `?response_type=code` +
+      `&client_id=2010768189` +
+      `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
+      `&state=${Math.random().toString(36).slice(2)}` +
+      `&scope=profile%20openid%20email`;
+    const result = await WebBrowser.openAuthSessionAsync(lineAuthUrl, 'maithing://auth/callback');
+    if ((result.type as string) === 'cancel') return;
+    if ((result.type as string) === 'success' && 'url' in result && (result as { url: string }).url.includes('error')) {
+      Alert.alert(t('common.error'), t('auth.lineSignInFailed'));
+    }
   };
 
 
@@ -87,6 +106,15 @@ export default function SignInScreen() {
           <Text style={styles.googleBtnText}>{t('auth.continueWithGoogle')}</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.lineBtn}
+          onPress={() => void handleLineSignIn()}
+          accessibilityRole="button"
+          accessibilityLabel={t('auth.continueWithLine')}
+        >
+          <Text style={styles.lineBtnText}>{t('auth.continueWithLine')}</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')} style={styles.linkBtn}>
           <Text style={styles.linkText}>{t('auth.signUp')}</Text>
         </TouchableOpacity>
@@ -125,6 +153,14 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   googleBtnText: { fontWeight: '600', fontSize: 16 },
+  lineBtn: {
+    backgroundColor: '#06C755',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    minHeight: 52,
+  },
+  lineBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   linkBtn: { alignItems: 'center', padding: 8, minHeight: 44 },
   linkText: { color: '#16a34a', fontSize: 14 },
 });

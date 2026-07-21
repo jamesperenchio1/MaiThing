@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 import type { Bounds, ListingPin } from '@maithing/shared';
 import { formatThb } from '@maithing/shared';
