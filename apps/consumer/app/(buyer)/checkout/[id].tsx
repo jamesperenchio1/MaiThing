@@ -1,13 +1,5 @@
 import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +8,9 @@ import { supabase } from '../../../src/lib/supabase';
 import { capture } from '../../../src/lib/posthog';
 import { useListingStore } from '../../../src/stores/listing';
 import { formatThb } from '@maithing/shared';
+import { Screen, Card, Button, Icon, LoadingState, ErrorState } from '../../../src/components/ui';
+import { useTheme } from '../../../src/theme';
+import { icons } from '../../../src/icons';
 
 type ReserveOrderResponse = {
   order_id: string;
@@ -26,11 +21,18 @@ type ReserveOrderResponse = {
 export default function CheckoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const { colors, spacing, fontSizes, fontWeights } = theme;
   const qc = useQueryClient();
   const { selectedSlot, pickedItems, reset } = useListingStore();
   const [orderId, setOrderId] = useState<string | null>(null);
 
-  const { data: listing, isLoading } = useQuery({
+  const {
+    data: listing,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['listing', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -109,7 +111,6 @@ export default function CheckoutScreen() {
           merchantDisplayName: 'MaiThing',
           paymentIntentClientSecret: clientSecret,
           defaultBillingDetails: { name: 'MaiThing Buyer' },
-          // Allows cards and PromptPay on supported platforms.
           allowsDelayedPaymentMethods: true,
         });
         if (initError) throw new Error(initError.message);
@@ -117,7 +118,6 @@ export default function CheckoutScreen() {
         const { error: paymentError } = await presentPaymentSheet();
         if (paymentError) throw new Error(paymentError.message);
 
-        // Payment sheet succeeded; webhook will flip order status to 'paid'.
         void qc.invalidateQueries({ queryKey: ['listing', id] });
         void qc.invalidateQueries({ queryKey: ['orders'] });
         reset();
@@ -129,7 +129,7 @@ export default function CheckoutScreen() {
         );
       }
     },
-    [id, qc, reset],
+    [id, qc, reset, t],
   );
 
   const handleConfirm = useCallback(() => {
@@ -148,11 +148,26 @@ export default function CheckoutScreen() {
     });
   }, [selectedSlot, orderId, reserveMutation, handlePayment, t]);
 
-  if (isLoading || !listing) {
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
+
+  if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
+      <Screen>
+        <LoadingState />
+      </Screen>
+    );
+  }
+
+  if (error || !listing) {
+    return (
+      <Screen>
+        <ErrorState
+          title={t('common.error')}
+          description={error?.message}
+          onRetry={() => void refetch()}
+          retryLabel={t('common.retry')}
+        />
+      </Screen>
     );
   }
 
@@ -160,32 +175,30 @@ export default function CheckoutScreen() {
   const isPending = reserveMutation.isPending;
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => router.back()}
           accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
         >
-          <Text style={styles.backText}>
-            {'← '}
-            {t('common.back')}
-          </Text>
+          <Icon name={icons.back} size={24} />
         </TouchableOpacity>
 
         <Text style={styles.heading}>{t('order.selectSlot')}</Text>
 
         {/* Listing summary */}
-        <View style={styles.card}>
+        <Card>
           <Text style={styles.listingTitle}>{listing.title}</Text>
           <Text style={styles.listingPrice}>
             {formatThb(listing.price_thb)} {t('listing.perBag')}
           </Text>
-        </View>
+        </Card>
 
         {/* Slot summary */}
         {selectedSlot && (
-          <View style={styles.card}>
+          <Card>
             <Text style={styles.slotLabel}>{t('listing.pickupWindow')}</Text>
             <Text style={styles.slotValue}>
               {new Date(selectedSlot.starts_at).toLocaleString('th-TH', {
@@ -201,14 +214,14 @@ export default function CheckoutScreen() {
                 minute: '2-digit',
               })}
             </Text>
-          </View>
+          </Card>
         )}
 
         {/* Order total */}
-        <View style={styles.totalCard}>
+        <Card style={styles.totalCard}>
           <Text style={styles.totalLabel}>{t('listing.total')}</Text>
           <Text style={styles.totalAmount}>{formatThb(total)}</Text>
-        </View>
+        </Card>
 
         <Text style={styles.cancelPolicy}>{t('order.cancelPolicy')}</Text>
 
@@ -216,80 +229,100 @@ export default function CheckoutScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.confirmBtn, (isPending || !selectedSlot) && styles.confirmBtnDisabled]}
-          onPress={handleConfirm}
-          disabled={isPending || !selectedSlot}
-          accessibilityRole="button"
-        >
-          {isPending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.confirmBtnText}>{t('order.pay', { amount: total })}</Text>
-          )}
-        </TouchableOpacity>
+        <Button size="lg" onPress={handleConfirm} loading={isPending} disabled={!selectedSlot}>
+          {t('order.pay', { amount: total })}
+        </Button>
       </View>
-    </View>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scroll: { padding: 16 },
-  backBtn: { marginBottom: 16 },
-  backText: { fontSize: 16, color: '#374151' },
-  heading: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 20 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  listingTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 4 },
-  listingPrice: { fontSize: 14, color: '#6b7280' },
-  slotLabel: { fontSize: 13, color: '#6b7280', marginBottom: 6 },
-  slotValue: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  totalCard: {
-    backgroundColor: '#dcfce7',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  totalLabel: { fontSize: 15, fontWeight: '600', color: '#15803d' },
-  totalAmount: { fontSize: 22, fontWeight: '700', color: '#15803d' },
-  cancelPolicy: { fontSize: 12, color: '#9ca3af', textAlign: 'center', marginBottom: 8 },
-  bottomSpacer: { height: 100 },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    padding: 16,
-    paddingBottom: 32,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  confirmBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  confirmBtnDisabled: { backgroundColor: '#d1d5db' },
-  confirmBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    scroll: {
+      padding: spacing[4],
+    },
+    backBtn: {
+      marginBottom: spacing[4],
+      padding: spacing[2],
+      alignSelf: 'flex-start',
+    },
+    heading: {
+      fontSize: fontSizes.xl,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[5],
+    },
+    listingTitle: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      marginBottom: spacing[1],
+    },
+    listingPrice: {
+      fontSize: fontSizes.base,
+      color: colors.textMuted,
+    },
+    slotLabel: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+      marginBottom: spacing[2],
+    },
+    slotValue: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+    },
+    totalCard: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: spacing[3],
+      backgroundColor: colors.successMuted,
+      borderColor: colors.success,
+    },
+    totalLabel: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.semibold,
+      color: colors.success,
+    },
+    totalAmount: {
+      fontSize: fontSizes.xl,
+      fontWeight: fontWeights.bold,
+      color: colors.success,
+    },
+    cancelPolicy: {
+      fontSize: fontSizes.xs,
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing[3],
+    },
+    bottomSpacer: {
+      height: spacing[8],
+    },
+    footer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: colors.surfaceElevated,
+      padding: spacing[4],
+      paddingBottom: spacing[6],
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+  });
+}

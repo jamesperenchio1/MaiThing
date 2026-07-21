@@ -1,23 +1,18 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
 import { useMerchantOrg } from '../../../src/hooks/useProfile';
 import { createLocationSchema } from '@maithing/shared';
+import { useTheme } from '../../../src/theme';
+import { Screen, Input, Button, ErrorState } from '../../../src/components/ui';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
 export default function NewLocationScreen() {
   const { t } = useTranslation();
+  const { colors, spacing, fontSizes, fontWeights } = useTheme();
   const { org, refetch } = useMerchantOrg();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -31,6 +26,7 @@ export default function NewLocationScreen() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const toggleClosed = (day: string) => {
     setHours((prev) => {
@@ -47,6 +43,8 @@ export default function NewLocationScreen() {
   };
 
   const submit = async () => {
+    setTouched({ name: true, address: true, lat: true, lng: true });
+
     if (!org) return;
     const latNum = parseFloat(lat);
     const lngNum = parseFloat(lng);
@@ -93,139 +91,213 @@ export default function NewLocationScreen() {
 
   const getDay = (day: string) => hours[day] ?? { open: '09:00', close: '20:00', closed: false };
 
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{t('merchant.addLocation')}</Text>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>{t('merchant.addLocation')}</Text>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.locationName')}</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder={t('merchant.locationNamePlaceholder')}
-        />
-      </View>
+        <View style={styles.field}>
+          <Input
+            label={t('merchant.locationName')}
+            value={name}
+            onChangeText={(v) => {
+              setName(v);
+              setError(null);
+            }}
+            placeholder={t('merchant.locationNamePlaceholder')}
+            error={touched.name && !name.trim() ? t('merchant.required') : undefined}
+            onBlur={() => setTouched((p) => ({ ...p, name: true }))}
+          />
+        </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.address')}</Text>
-        <TextInput
-          style={styles.input}
-          value={address}
-          onChangeText={setAddress}
-          placeholder={t('merchant.addressPlaceholder')}
-        />
-      </View>
+        <View style={styles.field}>
+          <Input
+            label={t('merchant.address')}
+            value={address}
+            onChangeText={(v) => {
+              setAddress(v);
+              setError(null);
+            }}
+            placeholder={t('merchant.addressPlaceholder')}
+            error={touched.address && !address.trim() ? t('merchant.required') : undefined}
+            onBlur={() => setTouched((p) => ({ ...p, address: true }))}
+          />
+        </View>
 
-      <Text style={styles.label}>{t('merchant.mapPin')}</Text>
-      <View style={styles.row}>
-        <TextInput
-          style={[styles.input, styles.half]}
-          value={lat}
-          onChangeText={setLat}
-          placeholder={t('merchant.latitude')}
-          keyboardType="decimal-pad"
-        />
-        <TextInput
-          style={[styles.input, styles.half]}
-          value={lng}
-          onChangeText={setLng}
-          placeholder={t('merchant.longitude')}
-          keyboardType="decimal-pad"
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.logoUrl')}</Text>
-        <TextInput
-          style={styles.input}
-          value={logoUrl}
-          onChangeText={setLogoUrl}
-          placeholder={t('merchant.logoUrlPlaceholder')}
-          autoCapitalize="none"
-          keyboardType="url"
-        />
-      </View>
-
-      <Text style={styles.label}>{t('merchant.hours')}</Text>
-      {DAYS.map((day) => (
-        <View key={day} style={styles.dayRow}>
-          <TouchableOpacity style={styles.dayToggle} onPress={() => toggleClosed(day)}>
-            <Text style={[styles.dayName, getDay(day).closed && styles.dayClosed]}>
-              {t(`merchant.days.${day}`)}
-            </Text>
-          </TouchableOpacity>
-          {!getDay(day).closed ? (
-            <View style={styles.dayInputs}>
-              <TextInput
-                style={[styles.input, styles.timeInput]}
-                value={getDay(day).open}
-                onChangeText={(v) => setHour(day, 'open', v)}
-              />
-              <Text style={styles.dash}>–</Text>
-              <TextInput
-                style={[styles.input, styles.timeInput]}
-                value={getDay(day).close}
-                onChangeText={(v) => setHour(day, 'close', v)}
+        <View style={styles.field}>
+          <Text style={styles.label}>{t('merchant.mapPin')}</Text>
+          <View style={styles.row}>
+            <View style={styles.half}>
+              <Input
+                value={lat}
+                onChangeText={(v) => {
+                  setLat(v);
+                  setError(null);
+                }}
+                placeholder={t('merchant.latitude')}
+                keyboardType="decimal-pad"
+                error={touched.lat && !lat ? t('merchant.required') : undefined}
+                onBlur={() => setTouched((p) => ({ ...p, lat: true }))}
               />
             </View>
-          ) : (
-            <Text style={styles.closedText}>{t('common.closed')}</Text>
-          )}
+            <View style={styles.half}>
+              <Input
+                value={lng}
+                onChangeText={(v) => {
+                  setLng(v);
+                  setError(null);
+                }}
+                placeholder={t('merchant.longitude')}
+                keyboardType="decimal-pad"
+                error={touched.lng && !lng ? t('merchant.required') : undefined}
+                onBlur={() => setTouched((p) => ({ ...p, lng: true }))}
+              />
+            </View>
+          </View>
         </View>
-      ))}
 
-      {error && <Text style={styles.error}>{error}</Text>}
+        <View style={styles.field}>
+          <Input
+            label={t('merchant.logoUrl')}
+            value={logoUrl}
+            onChangeText={setLogoUrl}
+            placeholder={t('merchant.logoUrlPlaceholder')}
+            autoCapitalize="none"
+            keyboardType="url"
+          />
+        </View>
 
-      <TouchableOpacity
-        style={[styles.btn, (!canSubmit || isSubmitting) && styles.btnDisabled]}
-        onPress={() => void submit()}
-        disabled={!canSubmit || isSubmitting}
-        accessibilityRole="button"
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.btnText}>{t('common.save')}</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.field}>
+          <Text style={styles.label}>{t('merchant.hours')}</Text>
+          {DAYS.map((day) => (
+            <View key={day} style={styles.dayRow}>
+              <View style={styles.dayToggle}>
+                <Switch
+                  value={!getDay(day).closed}
+                  onValueChange={() => toggleClosed(day)}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor={colors.surfaceElevated}
+                />
+                <Text style={[styles.dayName, getDay(day).closed && styles.dayClosed]}>
+                  {t(`merchant.days.${day}`)}
+                </Text>
+              </View>
+              {!getDay(day).closed ? (
+                <View style={styles.dayInputs}>
+                  <Input
+                    value={getDay(day).open}
+                    onChangeText={(v) => setHour(day, 'open', v)}
+                    style={styles.timeInput}
+                    textAlign="center"
+                  />
+                  <Text style={styles.dash}>–</Text>
+                  <Input
+                    value={getDay(day).close}
+                    onChangeText={(v) => setHour(day, 'close', v)}
+                    style={styles.timeInput}
+                    textAlign="center"
+                  />
+                </View>
+              ) : (
+                <Text style={styles.closedText}>{t('common.closed')}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+
+        {error && <ErrorState title={t('common.error')} description={error} style={styles.error} />}
+
+        <Button
+          onPress={() => void submit()}
+          loading={isSubmitting}
+          disabled={!canSubmit || isSubmitting}
+          size="lg"
+        >
+          {t('common.save')}
+        </Button>
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 20 },
-  field: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#111827',
-  },
-  row: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  half: { flex: 1 },
-  dayRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  dayToggle: { width: 70 },
-  dayName: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  dayClosed: { color: '#9ca3af', textDecorationLine: 'line-through' },
-  dayInputs: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  timeInput: { flex: 1, paddingVertical: 8, textAlign: 'center' },
-  dash: { color: '#6b7280' },
-  closedText: { flex: 1, textAlign: 'center', color: '#9ca3af', fontStyle: 'italic' },
-  error: { color: '#dc2626', marginBottom: 16 },
-  btn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  btnDisabled: { backgroundColor: '#9ca3af' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-});
+function makeStyles(
+  colors: ReturnType<typeof import('../../../src/theme').useTheme>['colors'],
+  spacing: ReturnType<typeof import('../../../src/theme').useTheme>['spacing'],
+  fontSizes: ReturnType<typeof import('../../../src/theme').useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof import('../../../src/theme').useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      padding: spacing[5],
+      paddingTop: spacing[7],
+      flexGrow: 1,
+    },
+    title: {
+      fontSize: fontSizes['2xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[5],
+    },
+    field: {
+      marginBottom: spacing[4],
+    },
+    label: {
+      fontSize: fontSizes.sm,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      marginBottom: spacing[2],
+    },
+    row: {
+      flexDirection: 'row',
+      gap: spacing[3],
+      alignItems: 'flex-start',
+    },
+    half: {
+      flex: 1,
+    },
+    dayRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing[3],
+    },
+    dayToggle: {
+      width: 90,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    dayName: {
+      fontSize: fontSizes.sm,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+    },
+    dayClosed: {
+      color: colors.textMuted,
+      textDecorationLine: 'line-through',
+    },
+    dayInputs: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    timeInput: {
+      flex: 1,
+      textAlign: 'center',
+    },
+    dash: {
+      color: colors.textMuted,
+    },
+    closedText: {
+      flex: 1,
+      textAlign: 'center',
+      color: colors.textMuted,
+      fontStyle: 'italic',
+    },
+    error: {
+      marginBottom: spacing[4],
+    },
+  });
+}

@@ -1,11 +1,14 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMerchantOrg } from '../../src/hooks/useProfile';
 import { useMerchantOrders } from '../../src/hooks/useMerchant';
 import { formatThb } from '@maithing/shared';
+import { useTheme } from '../../src/theme';
+import { Screen, Card, LoadingState, EmptyState, Icon, Badge } from '../../src/components/ui';
 
 export default function AnalyticsScreen() {
   const { t } = useTranslation();
+  const { colors, spacing, fontSizes, fontWeights } = useTheme();
   const { locations, isLoading: orgLoading } = useMerchantOrg();
   const locationIds = locations.map((l) => l.id);
   const { data: orders = [], isLoading: ordersLoading } = useMerchantOrders(locationIds);
@@ -20,93 +23,134 @@ export default function AnalyticsScreen() {
   const recentOrders = orders.slice(0, 5);
 
   if (orgLoading || ordersLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
+    return <LoadingState />;
   }
 
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{t('merchant.analytics')}</Text>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>{t('merchant.analytics')}</Text>
 
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{formatThb(totalSales)}</Text>
-          <Text style={styles.statLabel}>{t('merchant.totalSales')}</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{mealsSaved}</Text>
-          <Text style={styles.statLabel}>{t('merchant.mealsSaved')}</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{avgRating.toFixed(1)} ★</Text>
-          <Text style={styles.statLabel}>{t('merchant.ratingAverage')}</Text>
-        </View>
-      </View>
-
-      <Text style={styles.sectionTitle}>{t('merchant.recentOrders')}</Text>
-      {recentOrders.length === 0 ? (
-        <Text style={styles.empty}>{t('merchant.noOrdersYet')}</Text>
-      ) : (
-        recentOrders.map((order) => (
-          <View key={order.id} style={styles.orderCard}>
-            <View style={styles.orderRow}>
-              <Text style={styles.orderListing}>{order.listing?.title ?? '—'}</Text>
-              <Text style={styles.orderAmount}>{formatThb(order.amount_thb)}</Text>
+        <View style={styles.statsGrid}>
+          <Card style={styles.statCard}>
+            <Text style={styles.statValue}>{formatThb(totalSales)}</Text>
+            <Text style={styles.statLabel}>{t('merchant.totalSales')}</Text>
+          </Card>
+          <Card style={styles.statCard}>
+            <Text style={styles.statValue}>{mealsSaved}</Text>
+            <Text style={styles.statLabel}>{t('merchant.mealsSaved')}</Text>
+          </Card>
+          <Card style={styles.statCard}>
+            <View style={styles.ratingRow}>
+              <Text style={styles.statValue}>{avgRating.toFixed(1)}</Text>
+              <Icon name="star" size={18} color={colors.warning} style={styles.star} />
             </View>
-            <Text style={styles.orderMeta}>
-              {order.buyer?.display_name ?? t('merchant.anonymousBuyer')}
-            </Text>
-            <Text style={styles.orderStatus}>{t(`order.status.${order.status}`)}</Text>
-          </View>
-        ))
-      )}
-    </ScrollView>
+            <Text style={styles.statLabel}>{t('merchant.ratingAverage')}</Text>
+          </Card>
+        </View>
+
+        <Text style={styles.sectionTitle}>{t('merchant.recentOrders')}</Text>
+        {recentOrders.length === 0 ? (
+          <EmptyState title={t('merchant.noOrdersYet')} icon="receipt-outline" />
+        ) : (
+          recentOrders.map((order) => (
+            <Card key={order.id} style={styles.orderCard}>
+              <View style={styles.orderRow}>
+                <Text style={styles.orderListing}>{order.listing?.title ?? '—'}</Text>
+                <Text style={styles.orderAmount}>{formatThb(order.amount_thb)}</Text>
+              </View>
+              <Text style={styles.orderMeta}>
+                {order.buyer?.display_name ?? t('merchant.anonymousBuyer')}
+              </Text>
+              <Badge variant={order.status === 'collected' ? 'success' : 'muted'} size="sm">
+                {t(`order.status.${order.status}`)}
+              </Badge>
+            </Card>
+          ))
+        )}
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 20 },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 28 },
-  statCard: {
-    width: '30%',
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: { fontSize: 18, fontWeight: '700', color: '#16a34a', marginBottom: 4 },
-  statLabel: { fontSize: 12, color: '#6b7280' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 12 },
-  empty: { fontSize: 14, color: '#9ca3af', fontStyle: 'italic' },
-  orderCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  orderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  orderListing: { fontSize: 14, fontWeight: '600', color: '#111827', flex: 1, marginRight: 8 },
-  orderAmount: { fontSize: 14, fontWeight: '700', color: '#16a34a' },
-  orderMeta: { fontSize: 13, color: '#6b7280' },
-  orderStatus: { fontSize: 12, color: '#9ca3af', marginTop: 4 },
-});
+function makeStyles(
+  colors: ReturnType<typeof import('../../src/theme').useTheme>['colors'],
+  spacing: ReturnType<typeof import('../../src/theme').useTheme>['spacing'],
+  fontSizes: ReturnType<typeof import('../../src/theme').useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof import('../../src/theme').useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      padding: spacing[5],
+      paddingTop: spacing[7],
+      flexGrow: 1,
+    },
+    title: {
+      fontSize: fontSizes['2xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[5],
+    },
+    statsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing[3],
+      marginBottom: spacing[7],
+    },
+    statCard: {
+      flex: 1,
+      minWidth: '30%',
+    },
+    statValue: {
+      fontSize: fontSizes.lg,
+      fontWeight: fontWeights.bold,
+      color: colors.primary,
+      marginBottom: spacing[1],
+    },
+    statLabel: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+    },
+    ratingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    star: {
+      marginLeft: spacing[1],
+    },
+    sectionTitle: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[3],
+    },
+    orderCard: {
+      marginBottom: spacing[3],
+    },
+    orderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[1],
+    },
+    orderListing: {
+      fontSize: fontSizes.base,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      flex: 1,
+      marginRight: spacing[2],
+    },
+    orderAmount: {
+      fontSize: fontSizes.base,
+      fontWeight: fontWeights.bold,
+      color: colors.primary,
+    },
+    orderMeta: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+      marginBottom: spacing[2],
+    },
+  });
+}

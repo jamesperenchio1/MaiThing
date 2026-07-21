@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/lib/supabase';
@@ -11,11 +11,16 @@ import ListingList from '../../src/components/listing/ListingList';
 import DiscoverHeader from '../../src/components/listing/DiscoverHeader';
 import FiltersPanel from '../../src/components/listing/FiltersPanel';
 import { useHasUnreadMessages } from '../../src/hooks/useChat';
+import { Screen, Input, Icon } from '../../src/components/ui';
+import { useTheme } from '../../src/theme';
+import { icons } from '../../src/icons';
 
 const DEBOUNCE_MS = 400;
 
 export default function DiscoverScreen() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const { colors, spacing } = theme;
   const { bounds, filters, setBounds } = useMapStore();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [showFilters, setShowFilters] = useState(false);
@@ -57,8 +62,10 @@ export default function DiscoverScreen() {
     [setBounds],
   );
 
+  const styles = makeStyles(colors, spacing);
+
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <DiscoverHeader
         viewMode={viewMode}
         onToggleView={setViewMode}
@@ -66,12 +73,12 @@ export default function DiscoverScreen() {
         hasUnread={hasUnread}
       />
       <View style={styles.searchBar}>
-        <TextInput
-          style={styles.searchInput}
+        <Input
           value={search}
           onChangeText={setSearch}
           placeholder={t('discover.searchPlaceholder')}
           accessibilityLabel={t('common.search')}
+          style={styles.searchInput}
         />
         <TouchableOpacity
           style={styles.filterBtn}
@@ -79,7 +86,7 @@ export default function DiscoverScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('common.filter')}
         >
-          <Text style={styles.filterBtnText}>⚙️</Text>
+          <Icon name={icons.filter} size={20} />
         </TouchableOpacity>
       </View>
       {viewMode === 'map' ? (
@@ -92,38 +99,36 @@ export default function DiscoverScreen() {
         />
       )}
       {showFilters && <FiltersPanel onClose={() => setShowFilters(false)} />}
-    </View>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-  },
-  filterBtn: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterBtnText: { fontSize: 18 },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing[4],
+      paddingBottom: spacing[2],
+      gap: spacing[2],
+    },
+    searchInput: {
+      flex: 1,
+    },
+    filterBtn: {
+      backgroundColor: colors.surfaceElevated,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing[3],
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+}

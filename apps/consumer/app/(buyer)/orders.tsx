@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +6,18 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/lib/supabase';
 import { formatThb } from '@maithing/shared';
 import type { Tables } from '@maithing/shared';
+import {
+  Screen,
+  Card,
+  Badge,
+  Button,
+  EmptyState,
+  LoadingState,
+  ErrorState,
+} from '../../src/components/ui';
+import { useTheme } from '../../src/theme';
+import { icons } from '../../src/icons';
+import type { BadgeVariant } from '../../src/components/ui/Badge';
 
 type OrderStatus = Tables<'orders'>['status'];
 
@@ -18,6 +30,15 @@ type OrderRow = {
   listing: { title: string } | null;
   location: { name: string } | null;
   pickup_slot: { starts_at: string; ends_at: string } | null;
+};
+
+const STATUS_VARIANT: Record<string, BadgeVariant> = {
+  reserved: 'warning',
+  paid: 'success',
+  collected: 'muted',
+  cancelled: 'danger',
+  refunded: 'default',
+  no_show: 'danger',
 };
 
 function useOrders() {
@@ -48,84 +69,92 @@ function useOrders() {
   });
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  reserved: '#f59e0b',
-  paid: '#16a34a',
-  collected: '#6b7280',
-  cancelled: '#dc2626',
-  refunded: '#8b5cf6',
-  no_show: '#dc2626',
-};
-
 export default function OrdersScreen() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const { colors, spacing, fontSizes } = theme;
   const { data: orders = [], isLoading, error, refetch } = useOrders();
+
+  const styles = makeStyles(colors, spacing, fontSizes);
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
+      <Screen>
+        <LoadingState />
+      </Screen>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{t('common.error')}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={() => void refetch()}>
-          <Text style={styles.retryText}>{t('common.retry')}</Text>
-        </TouchableOpacity>
-      </View>
+      <Screen>
+        <ErrorState
+          title={t('common.error')}
+          description={error.message}
+          onRetry={() => void refetch()}
+          retryLabel={t('common.retry')}
+        />
+      </Screen>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.emptyIcon}>🛍️</Text>
-        <Text style={styles.emptyText}>{t('order.noOrders')}</Text>
-      </View>
+      <Screen>
+        <EmptyState
+          title={t('order.noOrders')}
+          icon={icons.bag}
+          action={{
+            label: t('discover.title'),
+            onPress: () => router.push('/(buyer)/discover'),
+          }}
+        />
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
+      <Text style={styles.title}>{t('order.myOrders')}</Text>
       <FlashList
         data={orders}
         estimatedItemSize={110}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <OrderCard order={item} t={t} />}
+        renderItem={({ item }) => (
+          <OrderCard order={item} t={t} colors={colors} spacing={spacing} fontSizes={fontSizes} />
+        )}
         contentContainerStyle={styles.list}
       />
-    </View>
+    </Screen>
   );
 }
 
-function OrderCard({ order, t }: { order: OrderRow; t: (key: string) => string }) {
-  const statusColor = STATUS_COLOR[order.status] ?? '#9ca3af';
+function OrderCard({
+  order,
+  t,
+  colors,
+  spacing,
+  fontSizes,
+}: {
+  order: OrderRow;
+  t: (key: string) => string;
+  colors: ReturnType<typeof useTheme>['colors'];
+  spacing: ReturnType<typeof useTheme>['spacing'];
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'];
+}) {
+  const styles = makeCardStyles(colors, spacing, fontSizes);
+  const variant = STATUS_VARIANT[order.status] ?? 'default';
   const isActive = order.status === 'reserved' || order.status === 'paid';
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/(buyer)/order/${order.id}`)}
-      accessibilityRole="button"
-    >
+    <Card style={styles.card}>
       <View style={styles.cardTop}>
         <Text style={styles.listingTitle} numberOfLines={1}>
           {order.listing?.title ?? '—'}
         </Text>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: statusColor + '20', borderColor: statusColor },
-          ]}
-        >
-          <Text style={[styles.statusText, { color: statusColor }]}>
-            {t(`order.status.${order.status}`)}
-          </Text>
-        </View>
+        <Badge variant={variant} size="sm">
+          {t(`order.status.${order.status}`)}
+        </Badge>
       </View>
       <Text style={styles.locationName}>{order.location?.name ?? '—'}</Text>
       {order.pickup_slot && (
@@ -141,59 +170,97 @@ function OrderCard({ order, t }: { order: OrderRow; t: (key: string) => string }
       )}
       <View style={styles.cardBottom}>
         <Text style={styles.amount}>{formatThb(order.amount_thb)}</Text>
-        {isActive && (
+        {isActive ? (
           <Text style={styles.codeLabel}>
             {t('order.pickupCode')}: <Text style={styles.code}>{order.pickup_code}</Text>
           </Text>
-        )}
+        ) : null}
       </View>
-    </TouchableOpacity>
+      <Button
+        variant="secondary"
+        size="sm"
+        onPress={() => router.push(`/(buyer)/order/${order.id}`)}
+        testID={`order-card-${order.id}`}
+      >
+        {t('common.next')}
+      </Button>
+    </Card>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  errorText: { fontSize: 16, color: '#6b7280' },
-  retryBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  retryText: { color: '#fff', fontWeight: '600' },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, color: '#9ca3af' },
-  list: { padding: 12 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
-  },
-  listingTitle: { fontSize: 15, fontWeight: '600', color: '#111827', flex: 1, marginRight: 8 },
-  statusBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderWidth: 1,
-  },
-  statusText: { fontSize: 11, fontWeight: '700' },
-  locationName: { fontSize: 13, color: '#6b7280', marginBottom: 4 },
-  slotText: { fontSize: 12, color: '#9ca3af', marginBottom: 8 },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  amount: { fontSize: 16, fontWeight: '700', color: '#16a34a' },
-  codeLabel: { fontSize: 13, color: '#6b7280' },
-  code: { fontWeight: '700', color: '#111827', letterSpacing: 2 },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    title: {
+      fontSize: fontSizes.xl,
+      fontWeight: '700',
+      color: colors.text,
+      padding: spacing[4],
+      paddingBottom: spacing[2],
+    },
+    list: {
+      padding: spacing[3],
+    },
+  });
+}
+
+function makeCardStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+) {
+  return StyleSheet.create({
+    card: {
+      marginBottom: spacing[3],
+    },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing[1],
+    },
+    listingTitle: {
+      fontSize: fontSizes.md,
+      fontWeight: '600',
+      color: colors.text,
+      flex: 1,
+      marginRight: spacing[2],
+    },
+    locationName: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+      marginBottom: spacing[1],
+    },
+    slotText: {
+      fontSize: fontSizes.xs,
+      color: colors.textMuted,
+      marginBottom: spacing[2],
+    },
+    cardBottom: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[3],
+    },
+    amount: {
+      fontSize: fontSizes.md,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    codeLabel: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+    },
+    code: {
+      fontWeight: '700',
+      color: colors.text,
+      letterSpacing: 2,
+    },
+  });
+}

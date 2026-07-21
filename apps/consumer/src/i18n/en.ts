@@ -33,7 +33,86 @@ export const en = {
     continueWithGoogle: 'Continue with Google',
     continueWithLine: 'Continue with LINE',
     pdpaConsent: 'I consent to MaiThing collecting and using my personal data under PDPA',
+    pdpaRequired: 'Please consent to our PDPA terms to continue.',
     referralCode: 'Referral code (optional)',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
+    googleSignInFailed: 'Could not start Google sign-in.',
+  },
+  onboarding: {
+    next: 'Next',
+    back: 'Back',
+    getStarted: 'Get started',
+    startDiscovering: 'Start discovering',
+    skip: 'Skip',
+    steps: 'Step {{current}} of {{total}}',
+    rescue: {
+      title: 'Rescue food near you',
+      subtitle:
+        'MaiThing connects you with local restaurants and stores selling surplus food at a discount. Save money and reduce waste.',
+    },
+    browse: {
+      title: 'Browse nearby',
+      subtitle:
+        'Discover surprise bags and reduced-price items on the map or list. Filter by category, price, and pickup time.',
+    },
+    buy: {
+      title: 'Reserve and pay',
+      subtitle:
+        'Choose a pickup slot, pay in the app, and receive a pickup code. Cancel for free up to two hours before.',
+    },
+    pickup: {
+      title: 'Collect and rate',
+      subtitle:
+        'Show your pickup code at the store during the pickup window. Rate your experience afterward.',
+    },
+    welcome: {
+      title: 'Rescue food near you',
+      description:
+        'MaiThing connects you with local restaurants and stores selling surplus food at a discount. Save money and reduce waste.',
+    },
+    howItWorks: {
+      title: 'How it works',
+      step1: {
+        title: 'Discover',
+        description:
+          'Browse nearby stores on the map or list. Filter by category, price, and dietary preferences.',
+      },
+      step2: {
+        title: 'Reserve',
+        description:
+          'Choose a surprise bag or pick your own items. Select a pickup time and pay in the app.',
+      },
+      step3: {
+        title: 'Collect',
+        description:
+          'Show your pickup code at the store during the pickup window. Rate your experience afterward.',
+      },
+    },
+    location: {
+      title: 'Find food nearby',
+      description:
+        'Allow location access to see stores closest to you. You can also search manually.',
+      allowLocation: 'Allow location',
+      searchManually: 'Search manually',
+    },
+    dietary: {
+      title: 'Dietary preferences',
+      description:
+        'Select any preferences to filter listings. You can change this later in your profile.',
+      none: 'No preference',
+    },
+    referral: {
+      title: 'Have a referral code?',
+      description: 'Enter a code from a friend.',
+      placeholder: 'e.g. ABC123',
+      apply: 'Apply',
+    },
+    done: {
+      title: 'You are ready',
+      description:
+        'Start exploring surplus food near you. Every meal you rescue helps reduce waste.',
+    },
   },
   discover: {
     title: 'Food near me',
@@ -78,6 +157,11 @@ export const en = {
     directions: 'Directions',
     favoriteAdded: 'Added to favorites',
     favoriteRemoved: 'Removed from favorites',
+    surprise_bag: 'Surprise Bag',
+    pick_your_own: 'Pick Your Own',
+    mapFallback: 'Map view is only available in the MaiThing app.',
+    mapFallbackAction: 'Open the app',
+    nearbyListings: '{{count}} listings nearby',
   },
   order: {
     selectSlot: 'Select pickup time',
@@ -119,6 +203,7 @@ export const en = {
     countdown: '{{hours}}h {{minutes}}m',
     refundProcessed: 'Refund processed',
     cancelledNoRefund: 'Order cancelled',
+    myOrders: 'My orders',
   },
   review: {
     title: 'Rate your order',
@@ -178,6 +263,7 @@ export const en = {
     title: 'Report an issue',
     reason: 'Reason',
     detail: 'Details',
+    detailRequired: 'Please provide details for "Other" issues',
     photo: 'Photo',
     submit: 'Submit report',
     reasons: {
@@ -187,6 +273,21 @@ export const en = {
       store_closed: 'Store was closed',
       other: 'Other',
     },
+  },
+  chat: {
+    title: 'Messages',
+    empty: 'No messages yet',
+    noMessages: 'No messages yet',
+    messagePlaceholder: 'Type a message...',
+    send: 'Send',
+    contactMerchant: 'Message store',
+    backToChat: 'Back to messages',
+    newMessage: 'New message',
+  },
+  notifications: {
+    title: 'Notifications',
+    enabled: 'Notifications enabled',
+    disabled: 'Notifications disabled',
   },
   merchant: {
     dashboard: 'Dashboard',
@@ -213,7 +314,7 @@ export const en = {
       freePrice: 'Higher commission',
       proPrice: 'Lower commission',
     },
-    welcome: 'Welcome back',
+    welcome: 'Merchant dashboard',
     verified: 'Verified',
     pendingVerification: 'Pending verification',
     activeListings: 'Active listings',
@@ -222,6 +323,10 @@ export const en = {
     todayView: 'Today view',
     addLocation: 'Add location',
     analytics: 'Analytics',
+    step: 'Step {{current}} of {{total}}',
+    businessDetails: 'Business details',
+    choosePlan: 'Choose your plan',
+    required: 'Required',
     locationName: 'Location name',
     locationNamePlaceholder: 'e.g. Siam Square branch',
     address: 'Address',

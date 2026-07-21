@@ -9,11 +9,15 @@ type ExpoSharing = {
  * Share a referral message.
  * Falls back through: expo-sharing → Web Share API → Alert dialog.
  */
-export async function shareReferralCode(message: string, dialogTitle: string): Promise<void> {
+export async function shareReferralCode(
+  code: string,
+  message: string,
+  dialogTitle: string,
+): Promise<void> {
   try {
     const mod = (await import('expo-sharing')) as unknown as ExpoSharing;
     if (mod.isAvailableAsync && (await mod.isAvailableAsync()) && mod.shareAsync) {
-      await mod.shareAsync(`maithing://referral?code=${encodeURIComponent(message)}`, {
+      await mod.shareAsync(`maithing://referral?code=${encodeURIComponent(code)}`, {
         dialogTitle,
       });
       return;

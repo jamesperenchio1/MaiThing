@@ -1,34 +1,37 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Switch,
-} from 'react-native';
+import { View, Text, Pressable, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/lib/supabase';
 import { useApplyReferralCode } from '../../src/hooks/useReferral';
+import { Button, Card, Icon, Input, Screen } from '../../src/components/ui';
+import { useTheme } from '../../src/theme';
+import { getIcon, icons } from '../../src/icons';
 
 export default function SignUpScreen() {
   const { t } = useTranslation();
+  const { colors, spacing, radii, fontSizes, fontWeights } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const applyReferral = useApplyReferralCode();
 
+  const styles = makeStyles({ colors, spacing, radii, fontSizes, fontWeights });
+
   const handleSignUp = async () => {
-    if (!pdpaConsent) {
-      Alert.alert(t('common.error'), t('auth.pdpaConsent'));
+    setErrorMessage(null);
+    if (!email.trim() || !password) {
+      setErrorMessage(t('common.error'));
       return;
     }
+    if (!pdpaConsent) {
+      setErrorMessage(t('auth.pdpaRequired'));
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -39,7 +42,7 @@ export default function SignUpScreen() {
     });
     if (error) {
       setLoading(false);
-      Alert.alert(t('common.error'), error.message);
+      setErrorMessage(error.message);
       return;
     }
 
@@ -47,9 +50,8 @@ export default function SignUpScreen() {
     if (trimmedCode) {
       try {
         await applyReferral.mutateAsync(trimmedCode);
-      } catch (err) {
-        // Non-fatal: still continue to discover even if referral code fails.
-        console.warn('Referral code application failed:', err);
+      } catch {
+        // Ignore referral errors so they do not block sign-up.
       }
     }
     setLoading(false);
@@ -57,94 +59,149 @@ export default function SignUpScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.inner}>
-        <Text style={styles.title}>{t('auth.signUp')}</Text>
+    <Screen>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.inner}>
+          <View style={styles.logo}>
+            <Icon name={getIcon('logo')} size={48} color={colors.primary} />
+            <Text style={styles.logoText}>MaiThing</Text>
+          </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.email')}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          accessibilityLabel={t('auth.email')}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.password')}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          accessibilityLabel={t('auth.password')}
-        />
+          <Card padding="lg" style={styles.card}>
+            <Input
+              label={t('auth.email')}
+              placeholder={t('auth.email')}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              editable={!loading}
+            />
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.referralCode')}
-          value={referralCode}
-          onChangeText={setReferralCode}
-          autoCapitalize="characters"
-          maxLength={6}
-          accessibilityLabel={t('auth.referralCode')}
-        />
+            <Input
+              label={t('auth.password')}
+              placeholder={t('auth.password')}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              textContentType="newPassword"
+              editable={!loading}
+            />
 
-        <View style={styles.consentRow}>
-          <Switch
-            value={pdpaConsent}
-            onValueChange={setPdpaConsent}
-            trackColor={{ true: '#16a34a' }}
-            accessibilityLabel={t('auth.pdpaConsent')}
-          />
-          <Text style={styles.consentText}>{t('auth.pdpaConsent')}</Text>
+            <Input
+              label={t('auth.referralCode')}
+              placeholder={t('auth.referralCode')}
+              value={referralCode}
+              onChangeText={setReferralCode}
+              autoCapitalize="characters"
+              maxLength={6}
+              editable={!loading}
+            />
+
+            <Pressable
+              onPress={() => setPdpaConsent((v) => !v)}
+              style={styles.consentRow}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: pdpaConsent }}
+              disabled={loading}
+            >
+              <View
+                style={[
+                  styles.checkbox,
+                  pdpaConsent && { backgroundColor: colors.primary, borderColor: colors.primary },
+                ]}
+              >
+                {pdpaConsent ? (
+                  <Icon name={icons.check} size={16} color={colors.textInverse} />
+                ) : null}
+              </View>
+              <Text style={styles.consentText}>{t('auth.pdpaConsent')}</Text>
+            </Pressable>
+
+            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+
+            <Button
+              onPress={() => void handleSignUp()}
+              loading={loading}
+              disabled={!pdpaConsent || !email.trim() || !password}
+            >
+              {t('auth.signUp')}
+            </Button>
+
+            <Button onPress={() => router.back()} variant="ghost" disabled={loading}>
+              {t('auth.signIn')}
+            </Button>
+          </Card>
         </View>
-
-        <TouchableOpacity
-          style={[styles.primaryBtn, !pdpaConsent && styles.primaryBtnDisabled]}
-          onPress={() => void handleSignUp()}
-          disabled={loading || !pdpaConsent}
-          accessibilityRole="button"
-          accessibilityLabel={t('auth.signUp')}
-        >
-          <Text style={styles.primaryBtnText}>
-            {loading ? t('common.loading') : t('auth.signUp')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.back()} style={styles.linkBtn}>
-          <Text style={styles.linkText}>{t('auth.signIn')}</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  inner: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 8, color: '#111827' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    minHeight: 52,
-  },
-  consentRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  consentText: { flex: 1, fontSize: 13, color: '#374151' },
-  primaryBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    minHeight: 52,
-  },
-  primaryBtnDisabled: { backgroundColor: '#d1fae5' },
-  primaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  linkBtn: { alignItems: 'center', padding: 8, minHeight: 44 },
-  linkText: { color: '#16a34a', fontSize: 14 },
-});
+function makeStyles({
+  colors,
+  spacing,
+  radii,
+  fontSizes,
+  fontWeights,
+}: {
+  colors: ReturnType<typeof import('../../src/theme').useTheme>['colors'];
+  spacing: ReturnType<typeof import('../../src/theme').useTheme>['spacing'];
+  radii: ReturnType<typeof import('../../src/theme').useTheme>['radii'];
+  fontSizes: ReturnType<typeof import('../../src/theme').useTheme>['fontSizes'];
+  fontWeights: ReturnType<typeof import('../../src/theme').useTheme>['fontWeights'];
+}) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    inner: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: spacing[6],
+      gap: spacing[6],
+    },
+    logo: {
+      alignItems: 'center',
+      gap: spacing[2],
+    },
+    logoText: {
+      fontSize: fontSizes['3xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+    },
+    card: {
+      gap: spacing[4],
+    },
+    consentRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: radii.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceElevated,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    consentText: {
+      flex: 1,
+      fontSize: fontSizes.sm,
+      color: colors.text,
+      lineHeight: 20,
+    },
+    error: {
+      color: colors.danger,
+      fontSize: fontSizes.sm,
+      textAlign: 'center',
+    },
+  });
+}

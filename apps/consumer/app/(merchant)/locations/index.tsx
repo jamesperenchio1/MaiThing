@@ -1,101 +1,134 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useMerchantOrg } from '../../../src/hooks/useProfile';
+import { useTheme } from '../../../src/theme';
+import {
+  Screen,
+  Card,
+  Button,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  Badge,
+} from '../../../src/components/ui';
+
+const statusVariant: Record<string, import('../../../src/components/ui/Badge').BadgeVariant> = {
+  active: 'success',
+  pending: 'warning',
+  paused: 'muted',
+  draft: 'default',
+  sold_out: 'danger',
+  expired: 'muted',
+  cancelled: 'danger',
+};
 
 export default function LocationsScreen() {
   const { t } = useTranslation();
-  const { locations, isLoading } = useMerchantOrg();
+  const { colors, spacing, fontSizes, fontWeights } = useTheme();
+  const { locations, isLoading, error, refetch } = useMerchantOrg();
 
   if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
+      <Screen>
+        <ErrorState
+          title={t('common.error')}
+          description={error.message ?? t('common.unknownError')}
+          onRetry={() => {
+            void refetch();
+          }}
+          retryLabel={t('common.retry')}
+        />
+      </Screen>
     );
   }
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('merchant.locations')}</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/(merchant)/locations/new')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.addBtnText}>+ {t('merchant.addLocation')}</Text>
-        </TouchableOpacity>
-      </View>
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
 
-      {locations.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>{t('merchant.noLocations')}</Text>
-          <TouchableOpacity
-            style={styles.ctaBtn}
-            onPress={() => router.push('/(merchant)/locations/new')}
-          >
-            <Text style={styles.ctaText}>{t('merchant.addFirstLocation')}</Text>
-          </TouchableOpacity>
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('merchant.locations')}</Text>
+          <Button size="sm" onPress={() => router.push('/(merchant)/locations/new')}>
+            {t('merchant.addLocation')}
+          </Button>
         </View>
-      ) : (
-        locations.map((location) => (
-          <View key={location.id} style={styles.card}>
-            <Text style={styles.cardName}>{location.name}</Text>
-            <Text style={styles.cardAddress}>{location.address_text}</Text>
-            <Text style={styles.cardStatus}>{t(`merchant.status.${location.status}`)}</Text>
-          </View>
-        ))
-      )}
-    </ScrollView>
+
+        {locations.length === 0 ? (
+          <EmptyState
+            title={t('merchant.noLocations')}
+            description={t('merchant.addFirstLocation')}
+            icon="location-outline"
+            action={{
+              label: t('merchant.addFirstLocation'),
+              onPress: () => router.push('/(merchant)/locations/new'),
+            }}
+          />
+        ) : (
+          locations.map((location) => (
+            <Card key={location.id} style={styles.card}>
+              <View style={styles.cardTop}>
+                <Text style={styles.cardName}>{location.name}</Text>
+                <Badge variant={statusVariant[location.status] ?? 'default'} size="sm">
+                  {t(`merchant.status.${location.status}`)}
+                </Badge>
+              </View>
+              <Text style={styles.cardAddress}>{location.address_text}</Text>
+            </Card>
+          ))
+        )}
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  addBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  addBtnText: { color: '#fff', fontWeight: '600' },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  emptyText: { fontSize: 16, color: '#6b7280', textAlign: 'center' },
-  ctaBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  ctaText: { color: '#fff', fontWeight: '700' },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardName: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  cardAddress: { fontSize: 13, color: '#6b7280', marginBottom: 8 },
-  cardStatus: { fontSize: 12, color: '#16a34a', fontWeight: '600' },
-});
+function makeStyles(
+  colors: ReturnType<typeof import('../../../src/theme').useTheme>['colors'],
+  spacing: ReturnType<typeof import('../../../src/theme').useTheme>['spacing'],
+  fontSizes: ReturnType<typeof import('../../../src/theme').useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof import('../../../src/theme').useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      padding: spacing[5],
+      paddingTop: spacing[7],
+      flexGrow: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[5],
+    },
+    title: {
+      fontSize: fontSizes['2xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+    },
+    card: {
+      marginBottom: spacing[3],
+    },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing[1],
+    },
+    cardName: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      flex: 1,
+      marginRight: spacing[2],
+    },
+    cardAddress: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+    },
+  });
+}

@@ -6,6 +6,7 @@ import { initSentry, captureException } from '../src/lib/sentry';
 import { capture, identify } from '../src/lib/posthog';
 import { queryClient } from '../src/lib/queryClient';
 import { useAuthStore } from '../src/stores/auth';
+import { ThemeProvider } from '../src/theme';
 import '../src/i18n';
 
 export default function RootLayout() {
@@ -40,8 +41,10 @@ export default function RootLayout() {
   }, [setSession, setLoading]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Stack screenOptions={{ headerShown: false }} />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <Stack screenOptions={{ headerShown: false }} />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

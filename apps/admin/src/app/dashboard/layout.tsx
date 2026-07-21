@@ -1,18 +1,8 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import type { Database } from '@maithing/shared';
+import { Sidebar } from './Sidebar';
 import styles from './admin.module.css';
-
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/merchants', label: 'Merchants' },
-  { href: '/dashboard/users', label: 'Users' },
-  { href: '/dashboard/listings', label: 'Listings' },
-  { href: '/dashboard/orders', label: 'Orders' },
-  { href: '/dashboard/disputes', label: 'Disputes' },
-  { href: '/dashboard', label: 'Analytics' },
-];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -27,16 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className={styles.container}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}>MaiThing Admin</div>
-        <nav className={styles.nav}>
-          {navItems.map((item) => (
-            <Link key={item.href + item.label} href={item.href} className={styles.navLink}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
+      <Sidebar />
       <main className={styles.main}>{children}</main>
     </div>
   );

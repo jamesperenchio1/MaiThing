@@ -1,126 +1,170 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useMerchantOrg } from '../../../src/hooks/useProfile';
 import { useMerchantListings } from '../../../src/hooks/useMerchant';
 import { formatThb } from '@maithing/shared';
+import { useTheme } from '../../../src/theme';
+import {
+  Screen,
+  Card,
+  Button,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  Badge,
+} from '../../../src/components/ui';
+
+const statusVariant: Record<string, import('../../../src/components/ui/Badge').BadgeVariant> = {
+  active: 'success',
+  pending: 'warning',
+  paused: 'muted',
+  draft: 'default',
+  sold_out: 'danger',
+  expired: 'muted',
+  cancelled: 'danger',
+};
 
 export default function ListingsScreen() {
   const { t } = useTranslation();
-  const { locations, isLoading: orgLoading } = useMerchantOrg();
+  const { colors, spacing, fontSizes, fontWeights } = useTheme();
+  const {
+    locations,
+    isLoading: orgLoading,
+    error: orgError,
+    refetch: refetchOrg,
+  } = useMerchantOrg();
   const locationIds = locations.map((l) => l.id);
-  const { data: listings = [], isLoading: listingsLoading } = useMerchantListings(locationIds);
+  const {
+    data: listings = [],
+    isLoading: listingsLoading,
+    error: listingsError,
+    refetch: refetchListings,
+  } = useMerchantListings(locationIds);
 
   if (orgLoading || listingsLoading) {
+    return <LoadingState />;
+  }
+
+  if (orgError || listingsError) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
+      <Screen>
+        <ErrorState
+          title={t('common.error')}
+          description={orgError?.message ?? listingsError?.message ?? t('common.unknownError')}
+          onRetry={() => {
+            void refetchOrg();
+            void refetchListings();
+          }}
+          retryLabel={t('common.retry')}
+        />
+      </Screen>
     );
   }
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('merchant.listings')}</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/(merchant)/listings/new')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.addBtnText}>+ {t('merchant.publish')}</Text>
-        </TouchableOpacity>
-      </View>
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
 
-      {listings.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>{t('merchant.noListings')}</Text>
-          <TouchableOpacity
-            style={styles.ctaBtn}
-            onPress={() => router.push('/(merchant)/listings/new')}
-          >
-            <Text style={styles.ctaText}>{t('merchant.publishFirstListing')}</Text>
-          </TouchableOpacity>
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('merchant.listings')}</Text>
+          <Button size="sm" onPress={() => router.push('/(merchant)/listings/new')}>
+            {t('merchant.publish')}
+          </Button>
         </View>
-      ) : (
-        listings.map((listing) => (
-          <View key={listing.id} style={styles.card}>
-            <View style={styles.cardTop}>
-              <Text style={styles.cardTitle}>{listing.title}</Text>
-              <View style={[styles.badge, listing.status === 'active' && styles.badgeActive]}>
-                <Text style={styles.badgeText}>{t(`merchant.status.${listing.status}`)}</Text>
+
+        {listings.length === 0 ? (
+          <EmptyState
+            title={t('merchant.noListings')}
+            description={t('merchant.publishFirstListing')}
+            icon="restaurant-outline"
+            action={{
+              label: t('merchant.publishFirstListing'),
+              onPress: () => router.push('/(merchant)/listings/new'),
+            }}
+          />
+        ) : (
+          listings.map((listing) => (
+            <Card key={listing.id} style={styles.card}>
+              <View style={styles.cardTop}>
+                <Text style={styles.cardTitle}>{listing.title}</Text>
+                <Badge variant={statusVariant[listing.status] ?? 'default'} size="sm">
+                  {t(`merchant.status.${listing.status}`)}
+                </Badge>
               </View>
-            </View>
-            <Text style={styles.cardType}>{t(`listing.${listing.fulfillment_type}`)}</Text>
-            <View style={styles.cardBottom}>
-              <Text style={styles.cardPrice}>{formatThb(listing.price_thb)}</Text>
-              <Text style={styles.cardRemaining}>
-                {t('listing.remaining', { count: listing.qty_remaining })}
-              </Text>
-            </View>
-          </View>
-        ))
-      )}
-    </ScrollView>
+              <Text style={styles.cardType}>{t(`listing.${listing.fulfillment_type}`)}</Text>
+              <View style={styles.cardBottom}>
+                <Text style={styles.cardPrice}>{formatThb(listing.price_thb)}</Text>
+                <Text style={styles.cardRemaining}>
+                  {t('listing.remaining', { count: listing.qty_remaining })}
+                </Text>
+              </View>
+            </Card>
+          ))
+        )}
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  addBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  addBtnText: { color: '#fff', fontWeight: '600' },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  emptyText: { fontSize: 16, color: '#6b7280', textAlign: 'center' },
-  ctaBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  ctaText: { color: '#fff', fontWeight: '700' },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
-  },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', flex: 1, marginRight: 8 },
-  badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#e5e7eb' },
-  badgeActive: { backgroundColor: '#dcfce7' },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#374151' },
-  cardType: { fontSize: 13, color: '#6b7280', marginBottom: 8 },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardPrice: { fontSize: 16, fontWeight: '700', color: '#16a34a' },
-  cardRemaining: { fontSize: 13, color: '#6b7280' },
-});
+function makeStyles(
+  colors: ReturnType<typeof import('../../../src/theme').useTheme>['colors'],
+  spacing: ReturnType<typeof import('../../../src/theme').useTheme>['spacing'],
+  fontSizes: ReturnType<typeof import('../../../src/theme').useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof import('../../../src/theme').useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      padding: spacing[5],
+      paddingTop: spacing[7],
+      flexGrow: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[5],
+    },
+    title: {
+      fontSize: fontSizes['2xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+    },
+    card: {
+      marginBottom: spacing[3],
+    },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing[1],
+    },
+    cardTitle: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      flex: 1,
+      marginRight: spacing[2],
+    },
+    cardType: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+      marginBottom: spacing[3],
+    },
+    cardBottom: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    cardPrice: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.bold,
+      color: colors.primary,
+    },
+    cardRemaining: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+    },
+  });
+}

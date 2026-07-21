@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, Linking } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import type { ListingPin, Bounds } from '@maithing/shared';
 import { formatThb } from '@maithing/shared';
+import { useTheme } from '../../theme';
+import { Card, Button, Icon } from '../ui';
+import { getIcon } from '../../icons';
 
 interface Props {
   listings: ListingPin[];
@@ -17,18 +21,38 @@ const THAILAND_BOUNDS: Bounds = {
 };
 
 export default function ListingMap({ listings, onRegionChange }: Props) {
+  const { t } = useTranslation();
+  const { colors, spacing, radii, fontSizes, fontWeights } = useTheme();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     onRegionChange(THAILAND_BOUNDS);
   }, [onRegionChange]);
 
+  const styles = makeStyles(colors, spacing, radii, fontSizes, fontWeights);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Map view</Text>
-      <Text style={styles.subtitle}>
-        {listings.length} rescue bags nearby. Use the native app for the full map experience.
-      </Text>
+      <Card style={styles.fallbackCard}>
+        <View style={styles.fallbackHeader}>
+          <Icon name={getIcon('mapPin')} size={32} color={colors.primary} />
+          <View style={styles.fallbackText}>
+            <Text style={styles.title}>{t('listing.mapFallback')}</Text>
+            <Text style={styles.subtitle}>
+              {t('listing.nearbyListings', { count: listings.length })}
+            </Text>
+          </View>
+        </View>
+        <Button
+          variant="secondary"
+          onPress={() => {
+            void Linking.openURL('https://maithing.app');
+          }}
+        >
+          {t('listing.mapFallbackAction')}
+        </Button>
+      </Card>
+
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {listings.map((listing) => (
           <Pressable
@@ -50,26 +74,63 @@ export default function ListingMap({ listings, onRegionChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f8fafc' },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#64748b', marginBottom: 16 },
-  list: { flex: 1 },
-  listContent: { paddingBottom: 16 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardSelected: { borderColor: '#16a34a', borderWidth: 2 },
-  cardTitle: { flex: 1, fontSize: 15, fontWeight: '600', marginRight: 12 },
-  cardPrice: { fontSize: 15, fontWeight: '700', color: '#16a34a' },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  radii: ReturnType<typeof useTheme>['radii'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: { flex: 1, padding: spacing[4], backgroundColor: colors.background },
+    fallbackCard: {
+      marginBottom: spacing[4],
+    },
+    fallbackHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[3],
+      marginBottom: spacing[4],
+    },
+    fallbackText: { flex: 1 },
+    title: {
+      fontSize: fontSizes.lg,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[1],
+    },
+    subtitle: {
+      fontSize: fontSizes.base,
+      color: colors.textMuted,
+    },
+    list: { flex: 1 },
+    listContent: { paddingBottom: spacing[4] },
+    card: {
+      backgroundColor: colors.surfaceElevated,
+      borderRadius: radii.lg,
+      padding: spacing[4],
+      marginBottom: spacing[2],
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cardSelected: {
+      borderColor: colors.primary,
+      borderWidth: 2,
+    },
+    cardTitle: {
+      flex: 1,
+      fontSize: fontSizes.base,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      marginRight: spacing[3],
+    },
+    cardPrice: {
+      fontSize: fontSizes.base,
+      fontWeight: fontWeights.bold,
+      color: colors.primary,
+    },
+  });
+}

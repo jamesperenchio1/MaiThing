@@ -8,6 +8,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../theme';
+import { Icon } from '../ui';
+import { getIcon } from '../../icons';
 
 interface Props {
   viewMode: 'map' | 'list';
@@ -23,6 +26,8 @@ export default function DiscoverHeader({
   hasUnread = false,
 }: Props) {
   const { t } = useTranslation();
+  const { colors, spacing, radii, fontSizes, fontWeights } = useTheme();
+  const styles = makeStyles(colors, spacing, radii, fontSizes, fontWeights);
 
   return (
     <View style={styles.header}>
@@ -51,69 +56,90 @@ export default function DiscoverHeader({
           </Text>
         </TouchableOpacity>
       </View>
-      {isLoading && <ActivityIndicator size="small" color="#16a34a" style={styles.spinner} />}
+      {isLoading && (
+        <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
+      )}
       <TouchableOpacity
         style={styles.bellBtn}
         onPress={() => router.push('/(buyer)/chat')}
         accessibilityRole="button"
         accessibilityLabel={t('chat.title')}
       >
-        <Text style={styles.bellIcon}>🔔</Text>
+        <Icon name={getIcon('bell')} size={20} color={colors.text} />
         {hasUnread && <View style={styles.unreadDot} />}
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'ios' ? 56 : 16,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  title: { flex: 1, fontSize: 18, fontWeight: '700', color: '#111827' },
-  toggle: {
-    flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    padding: 2,
-  },
-  toggleBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    minHeight: 32,
-    justifyContent: 'center',
-  },
-  toggleActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  toggleText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
-  toggleTextActive: { color: '#111827', fontWeight: '600' },
-  spinner: { marginLeft: 8 },
-  bellBtn: { marginLeft: 8, padding: 4, position: 'relative' },
-  bellIcon: { fontSize: 20 },
-  unreadDot: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ef4444',
-  },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  radii: ReturnType<typeof useTheme>['radii'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    header: {
+      backgroundColor: colors.surfaceElevated,
+      paddingTop: Platform.OS === 'ios' ? 56 : spacing[4],
+      paddingHorizontal: spacing[4],
+      paddingBottom: spacing[3],
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSubtle,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 1,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    title: {
+      flex: 1,
+      fontSize: fontSizes.lg,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+    },
+    toggle: {
+      flexDirection: 'row',
+      backgroundColor: colors.borderSubtle,
+      borderRadius: radii.md,
+      padding: 2,
+    },
+    toggleBtn: {
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[1],
+      borderRadius: radii.sm,
+      minHeight: 32,
+      justifyContent: 'center',
+    },
+    toggleActive: {
+      backgroundColor: colors.surfaceElevated,
+      shadowColor: colors.shadow,
+      shadowOpacity: 1,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    toggleText: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+      fontWeight: fontWeights.medium,
+    },
+    toggleTextActive: {
+      color: colors.text,
+      fontWeight: fontWeights.semibold,
+    },
+    spinner: { marginLeft: spacing[2] },
+    bellBtn: { marginLeft: spacing[2], padding: spacing[1], position: 'relative' },
+    unreadDot: {
+      position: 'absolute',
+      top: spacing[0],
+      right: spacing[0],
+      width: spacing[2],
+      height: spacing[2],
+      borderRadius: spacing[1],
+      backgroundColor: colors.danger,
+    },
+  });
+}

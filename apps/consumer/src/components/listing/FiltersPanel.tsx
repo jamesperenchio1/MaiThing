@@ -1,14 +1,8 @@
 import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Switch,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../theme';
+import { Card, Input, Button, Badge } from '../ui';
 import { useMapStore } from '../../stores/map';
 import { FOOD_CATEGORIES } from '@maithing/shared';
 
@@ -21,6 +15,7 @@ interface Props {
 
 export default function FiltersPanel({ onClose }: Props) {
   const { t } = useTranslation();
+  const { colors, spacing, radii, fontSizes, fontWeights } = useTheme();
   const { filters, setFilters } = useMapStore();
   const [search, setSearch] = useState('');
   const [maxPrice, setMaxPrice] = useState(filters.max_price_thb ?? MAX_PRICE_LIMIT);
@@ -29,6 +24,8 @@ export default function FiltersPanel({ onClose }: Props) {
     filters.fulfillment_type ?? 'all',
   );
   const [availableNow, setAvailableNow] = useState(filters.available_now ?? false);
+
+  const styles = makeStyles(colors, spacing, radii, fontSizes, fontWeights);
 
   const apply = useCallback(() => {
     setFilters({
@@ -55,26 +52,23 @@ export default function FiltersPanel({ onClose }: Props) {
   }, [setFilters]);
 
   return (
-    <View style={styles.container}>
+    <Card style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('common.filter')}</Text>
-        <TouchableOpacity onPress={clear} accessibilityRole="button">
-          <Text style={styles.clear}>{t('common.clear')}</Text>
-        </TouchableOpacity>
+        <Button variant="ghost" size="sm" onPress={clear}>
+          {t('common.clear')}
+        </Button>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Text search */}
-        <Text style={styles.sectionTitle}>{t('common.search')}</Text>
-        <TextInput
-          style={styles.searchInput}
+        <Input
+          label={t('common.search')}
           value={search}
           onChangeText={setSearch}
           placeholder={t('discover.searchPlaceholder')}
           accessibilityLabel={t('common.search')}
         />
 
-        {/* Category chips */}
         <Text style={styles.sectionTitle}>{t('discover.filters.category')}</Text>
         <View style={styles.chipRow}>
           <Chip
@@ -92,30 +86,28 @@ export default function FiltersPanel({ onClose }: Props) {
           ))}
         </View>
 
-        {/* Max price */}
         <Text style={styles.sectionTitle}>
           {t('discover.filters.maxPrice')}:{' '}
           {t('discover.filters.maxPriceValue', { price: maxPrice })}
         </Text>
         <View style={styles.priceRow}>
-          <TouchableOpacity
-            style={styles.priceBtn}
+          <Button
+            size="sm"
             onPress={() => setMaxPrice((p) => Math.max(10, p - MAX_PRICE_STEP))}
-            accessibilityRole="button"
+            testID="decrease-price"
           >
-            <Text style={styles.priceBtnText}>−</Text>
-          </TouchableOpacity>
+            −
+          </Button>
           <Text style={styles.priceValue}>฿{maxPrice}</Text>
-          <TouchableOpacity
-            style={styles.priceBtn}
+          <Button
+            size="sm"
             onPress={() => setMaxPrice((p) => Math.min(MAX_PRICE_LIMIT, p + MAX_PRICE_STEP))}
-            accessibilityRole="button"
+            testID="increase-price"
           >
-            <Text style={styles.priceBtnText}>+</Text>
-          </TouchableOpacity>
+            +
+          </Button>
         </View>
 
-        {/* Fulfillment type */}
         <Text style={styles.sectionTitle}>{t('discover.filters.fulfillmentType')}</Text>
         <View style={styles.chipRow}>
           <Chip
@@ -135,21 +127,22 @@ export default function FiltersPanel({ onClose }: Props) {
           />
         </View>
 
-        {/* Available now */}
         <View style={styles.toggleRow}>
           <Text style={styles.sectionTitle}>{t('discover.filters.availableNow')}</Text>
           <Switch
             value={availableNow}
             onValueChange={setAvailableNow}
-            trackColor={{ true: '#16a34a' }}
+            trackColor={{ true: colors.primary, false: colors.border }}
+            thumbColor={availableNow ? colors.primary : colors.surfaceElevated}
+            ios_backgroundColor={colors.border}
           />
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.applyBtn} onPress={apply} accessibilityRole="button">
-        <Text style={styles.applyBtnText}>{t('common.apply')}</Text>
-      </TouchableOpacity>
-    </View>
+      <Button size="lg" onPress={apply} testID="apply-filters">
+        {t('common.apply')}
+      </Button>
+    </Card>
   );
 }
 
@@ -164,92 +157,70 @@ function Chip({
 }) {
   return (
     <TouchableOpacity
-      style={[styles.chip, selected && styles.chipSelected]}
       onPress={onPress}
+      activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityState={{ selected }}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+      <Badge variant={selected ? 'primary' : 'default'}>{label}</Badge>
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-    maxHeight: 480,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  clear: { fontSize: 14, color: '#16a34a', fontWeight: '600' },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
-  },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 4,
-  },
-  chipSelected: { backgroundColor: '#dcfce7' },
-  chipText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
-  chipTextSelected: { color: '#15803d', fontWeight: '600' },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    marginBottom: 8,
-  },
-  priceBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#16a34a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  priceBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    minWidth: 60,
-    textAlign: 'center',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  applyBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  applyBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  radii: ReturnType<typeof useTheme>['radii'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      maxHeight: 480,
+      padding: spacing[4],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[4],
+    },
+    title: {
+      fontSize: fontSizes.lg,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+    },
+    sectionTitle: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      marginTop: spacing[4],
+      marginBottom: spacing[2],
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing[2],
+    },
+    priceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[4],
+      marginBottom: spacing[2],
+    },
+    priceValue: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      minWidth: 60,
+      textAlign: 'center',
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: spacing[2],
+      marginBottom: spacing[4],
+    },
+  });
+}

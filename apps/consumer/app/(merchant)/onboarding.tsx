@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -15,18 +7,38 @@ import { useProfile } from '../../src/hooks/useProfile';
 import { capture } from '../../src/lib/posthog';
 import { FOOD_CATEGORIES, subscriptionTierSchema } from '@maithing/shared';
 import type { z } from 'zod';
+import { useTheme } from '../../src/theme';
+import { Screen, Input, Button, Card, ErrorState } from '../../src/components/ui';
 
 type SubscriptionTier = z.infer<typeof subscriptionTierSchema>;
 
+const TOTAL_STEPS = 2;
+
 export default function MerchantOnboardingScreen() {
   const { t } = useTranslation();
+  const { colors, spacing, fontSizes, fontWeights } = useTheme();
   const { data: profile, refetch } = useProfile();
+  const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [tier, setTier] = useState<SubscriptionTier>('free');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const nameError = touched.name && !name.trim() ? t('merchant.required') : undefined;
+  const categoryError = touched.category && !category ? t('merchant.required') : undefined;
+
+  const goToNext = () => {
+    setTouched({ name: true, category: true });
+    if (!name.trim() || !category) return;
+    setStep(2);
+  };
+
+  const goBack = () => {
+    setStep(1);
+  };
 
   const submit = async () => {
     if (!name.trim() || !category) return;
@@ -73,140 +85,265 @@ export default function MerchantOnboardingScreen() {
     router.replace('/(merchant)/dashboard');
   };
 
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{t('merchant.onboardingTitle')}</Text>
-      <Text style={styles.subtitle}>{t('merchant.onboardingSubtitle')}</Text>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.stepIndicator}>
+          {t('merchant.step', { current: step, total: TOTAL_STEPS })}
+        </Text>
+        <Text style={styles.title}>{t('merchant.onboardingTitle')}</Text>
+        <Text style={styles.subtitle}>{t('merchant.onboardingSubtitle')}</Text>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.orgName')}</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder={t('merchant.orgNamePlaceholder')}
-          accessibilityLabel={t('merchant.orgName')}
-        />
-      </View>
+        {step === 1 && (
+          <Card style={styles.stepCard}>
+            <Text style={styles.stepTitle}>{t('merchant.businessDetails')}</Text>
+            <Text style={styles.stepDescription}>{t('merchant.descriptionPlaceholder')}</Text>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.description')}</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder={t('merchant.descriptionPlaceholder')}
-          multiline
-          numberOfLines={4}
-          accessibilityLabel={t('merchant.description')}
-        />
-      </View>
+            <View style={styles.field}>
+              <Input
+                label={t('merchant.orgName')}
+                value={name}
+                onChangeText={(v) => {
+                  setName(v);
+                  setError(null);
+                }}
+                placeholder={t('merchant.orgNamePlaceholder')}
+                error={nameError}
+                onBlur={() => setTouched((p) => ({ ...p, name: true }))}
+                accessibilityLabel={t('merchant.orgName')}
+              />
+            </View>
 
-      <Text style={styles.label}>{t('merchant.category')}</Text>
-      <View style={styles.chipRow}>
-        {FOOD_CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            style={[styles.chip, category === cat && styles.chipSelected]}
-            onPress={() => setCategory(cat)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: category === cat }}
-          >
-            <Text style={[styles.chipText, category === cat && styles.chipTextSelected]}>
-              {t(`categories.${cat}`)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+            <View style={styles.field}>
+              <Input
+                label={t('merchant.description')}
+                value={description}
+                onChangeText={setDescription}
+                placeholder={t('merchant.descriptionPlaceholder')}
+                multiline
+                numberOfLines={4}
+                style={styles.textArea}
+                accessibilityLabel={t('merchant.description')}
+              />
+            </View>
 
-      <Text style={styles.label}>{t('merchant.subscriptionTier')}</Text>
-      <View style={styles.tierRow}>
-        {(['free', 'pro'] as SubscriptionTier[]).map((tierOption) => (
-          <TouchableOpacity
-            key={tierOption}
-            style={[styles.tierCard, tier === tierOption && styles.tierCardSelected]}
-            onPress={() => setTier(tierOption)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: tier === tierOption }}
-          >
-            <Text style={[styles.tierTitle, tier === tierOption && styles.tierTextSelected]}>
-              {t(`merchant.tier.${tierOption}`)}
-            </Text>
-            <Text style={styles.tierPrice}>
-              {tierOption === 'free' ? t('merchant.tier.freePrice') : t('merchant.tier.proPrice')}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {error && <Text style={styles.error}>{error}</Text>}
-
-      <TouchableOpacity
-        style={[styles.btn, (!name.trim() || !category || isSubmitting) && styles.btnDisabled]}
-        onPress={() => void submit()}
-        disabled={!name.trim() || !category || isSubmitting}
-        accessibilityRole="button"
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.btnText}>{t('common.save')}</Text>
+            <Text style={styles.label}>{t('merchant.category')}</Text>
+            <View style={styles.chipRow}>
+              {FOOD_CATEGORIES.map((cat) => (
+                <Chip
+                  key={cat}
+                  selected={category === cat}
+                  onPress={() => setCategory(cat)}
+                  label={t(`categories.${cat}`)}
+                />
+              ))}
+            </View>
+            {categoryError ? <Text style={styles.inlineError}>{categoryError}</Text> : null}
+          </Card>
         )}
-      </TouchableOpacity>
-    </ScrollView>
+
+        {step === 2 && (
+          <Card style={styles.stepCard}>
+            <Text style={styles.stepTitle}>{t('merchant.choosePlan')}</Text>
+            <Text style={styles.stepDescription}>{t('merchant.tier.freePrice')}</Text>
+
+            <View style={styles.tierRow}>
+              {(['free', 'pro'] as SubscriptionTier[]).map((tierOption) => (
+                <Pressable
+                  key={tierOption}
+                  onPress={() => setTier(tierOption)}
+                  style={[styles.tierCard, tier === tierOption && styles.tierCardSelected]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: tier === tierOption }}
+                >
+                  <Text style={[styles.tierTitle, tier === tierOption && styles.tierTextSelected]}>
+                    {t(`merchant.tier.${tierOption}`)}
+                  </Text>
+                  <Text style={styles.tierPrice}>
+                    {tierOption === 'free'
+                      ? t('merchant.tier.freePrice')
+                      : t('merchant.tier.proPrice')}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Card>
+        )}
+
+        {error && <ErrorState title={t('common.error')} description={error} style={styles.error} />}
+
+        <View style={styles.actions}>
+          {step === 1 ? (
+            <Button onPress={goToNext} size="lg">
+              {t('common.next')}
+            </Button>
+          ) : (
+            <View style={styles.buttonRow}>
+              <Button variant="secondary" onPress={goBack} size="lg">
+                {t('common.back')}
+              </Button>
+              <Button
+                onPress={() => void submit()}
+                loading={isSubmitting}
+                disabled={isSubmitting}
+                size="lg"
+              >
+                {t('common.save')}
+              </Button>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  title: { fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  subtitle: { fontSize: 14, color: '#6b7280', marginBottom: 24 },
-  field: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#111827',
-  },
-  textArea: { height: 90, textAlignVertical: 'top' },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
-  chip: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  chipSelected: { backgroundColor: '#dcfce7', borderColor: '#16a34a' },
-  chipText: { fontSize: 13, color: '#374151' },
-  chipTextSelected: { color: '#15803d', fontWeight: '600' },
-  tierRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  tierCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-  },
-  tierCardSelected: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
-  tierTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  tierPrice: { fontSize: 13, color: '#6b7280' },
-  tierTextSelected: { color: '#15803d' },
-  error: { color: '#dc2626', marginBottom: 16 },
-  btn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  btnDisabled: { backgroundColor: '#9ca3af' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-});
+function Chip({
+  selected,
+  onPress,
+  label,
+}: {
+  selected: boolean;
+  onPress: () => void;
+  label: string;
+}) {
+  const { colors, spacing, radii, fontSizes, fontWeights } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        {
+          borderRadius: radii.full,
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[2],
+          borderWidth: 1,
+          borderColor: selected ? colors.primary : colors.border,
+          backgroundColor: selected ? colors.primaryMuted : colors.surfaceElevated,
+        },
+      ]}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+    >
+      <Text
+        style={{
+          fontSize: fontSizes.sm,
+          fontWeight: selected ? fontWeights.semibold : fontWeights.normal,
+          color: selected ? colors.primaryHover : colors.text,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function makeStyles(
+  colors: ReturnType<typeof import('../../src/theme').useTheme>['colors'],
+  spacing: ReturnType<typeof import('../../src/theme').useTheme>['spacing'],
+  fontSizes: ReturnType<typeof import('../../src/theme').useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof import('../../src/theme').useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      padding: spacing[5],
+      paddingTop: spacing[7],
+      flexGrow: 1,
+    },
+    stepIndicator: {
+      fontSize: fontSizes.sm,
+      color: colors.primary,
+      fontWeight: fontWeights.semibold,
+      marginBottom: spacing[2],
+    },
+    title: {
+      fontSize: fontSizes['2xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[2],
+    },
+    subtitle: {
+      fontSize: fontSizes.base,
+      color: colors.textMuted,
+      marginBottom: spacing[5],
+    },
+    stepCard: {
+      marginBottom: spacing[5],
+    },
+    stepTitle: {
+      fontSize: fontSizes.lg,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[1],
+    },
+    stepDescription: {
+      fontSize: fontSizes.base,
+      color: colors.textMuted,
+      marginBottom: spacing[4],
+    },
+    field: {
+      marginBottom: spacing[4],
+    },
+    label: {
+      fontSize: fontSizes.sm,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      marginBottom: spacing[2],
+    },
+    textArea: {
+      height: 90,
+      textAlignVertical: 'top',
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing[2],
+      marginBottom: spacing[2],
+    },
+    inlineError: {
+      fontSize: fontSizes.sm,
+      color: colors.danger,
+    },
+    tierRow: {
+      flexDirection: 'row',
+      gap: spacing[3],
+    },
+    tierCard: {
+      flex: 1,
+      borderRadius: 12,
+      padding: spacing[4],
+      borderWidth: 2,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceElevated,
+    },
+    tierCardSelected: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primaryMuted,
+    },
+    tierTitle: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[1],
+    },
+    tierPrice: {
+      fontSize: fontSizes.sm,
+      color: colors.textMuted,
+    },
+    tierTextSelected: {
+      color: colors.primaryHover,
+    },
+    error: {
+      marginBottom: spacing[4],
+    },
+    actions: {
+      marginTop: 'auto',
+      paddingBottom: spacing[5],
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: spacing[3],
+    },
+  });
+}

@@ -1,14 +1,5 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Switch,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
@@ -20,6 +11,8 @@ import {
   fulfillmentTypeSchema,
 } from '@maithing/shared';
 import type { z } from 'zod';
+import { useTheme } from '../../../src/theme';
+import { Screen, Card, Input, Button, ErrorState, LoadingState } from '../../../src/components/ui';
 
 type FulfillmentType = z.infer<typeof fulfillmentTypeSchema>;
 
@@ -50,7 +43,8 @@ function addHours(iso: string, hours: number): string {
 
 export default function NewListingScreen() {
   const { t } = useTranslation();
-  const { locations } = useMerchantOrg();
+  const { colors, spacing, fontSizes, fontWeights } = useTheme();
+  const { locations, isLoading: orgLoading } = useMerchantOrg();
   const [locationId, setLocationId] = useState(locations[0]?.id ?? '');
   const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>('surprise_bag');
   const [title, setTitle] = useState('');
@@ -68,6 +62,7 @@ export default function NewListingScreen() {
   const [items, setItems] = useState<ItemDraft[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const addItem = () => {
     setItems((prev) => [
@@ -85,6 +80,16 @@ export default function NewListingScreen() {
   };
 
   const submit = async () => {
+    setTouched({
+      locationId: true,
+      title: true,
+      category: true,
+      originalValue: true,
+      price: true,
+      quantity: true,
+      slotCapacity: true,
+    });
+
     if (!locationId) {
       setError(t('merchant.selectLocation'));
       return;
@@ -113,7 +118,7 @@ export default function NewListingScreen() {
     }
 
     const slotParsed = createPickupSlotSchema.safeParse({
-      listing_id: '', // will be set after listing insert
+      listing_id: '',
       starts_at: new Date(slotStart).toISOString(),
       ends_at: new Date(slotEnd).toISOString(),
       capacity: parseInt(slotCapacity, 10) || parseInt(quantity, 10),
@@ -212,292 +217,343 @@ export default function NewListingScreen() {
   const canSubmit =
     locationId && title.trim() && category && originalValue && price && quantity && slotCapacity;
 
+  if (orgLoading) {
+    return <LoadingState />;
+  }
+
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{t('merchant.publishListing')}</Text>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>{t('merchant.publishListing')}</Text>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.location')}</Text>
-        <View style={styles.chipRow}>
-          {locations.map((loc) => (
-            <TouchableOpacity
-              key={loc.id}
-              style={[styles.chip, locationId === loc.id && styles.chipSelected]}
-              onPress={() => setLocationId(loc.id)}
-            >
-              <Text style={[styles.chipText, locationId === loc.id && styles.chipTextSelected]}>
-                {loc.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.fulfillmentType')}</Text>
-        <View style={styles.chipRow}>
-          {(['surprise_bag', 'pick_your_own'] as FulfillmentType[]).map((type) => (
-            <TouchableOpacity
-              key={type}
-              style={[styles.chip, fulfillmentType === type && styles.chipSelected]}
-              onPress={() => setFulfillmentType(type)}
-            >
-              <Text style={[styles.chipText, fulfillmentType === type && styles.chipTextSelected]}>
-                {t(`listing.${type}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.listingTitle')}</Text>
-        <TextInput
-          style={styles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder={t('merchant.listingTitlePlaceholder')}
-        />
-      </View>
-
-      <Text style={styles.label}>{t('merchant.category')}</Text>
-      <View style={styles.chipRow}>
-        {FOOD_CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            style={[styles.chip, category === cat && styles.chipSelected]}
-            onPress={() => setCategory(cat)}
-          >
-            <Text style={[styles.chipText, category === cat && styles.chipTextSelected]}>
-              {t(`categories.${cat}`)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.description')}</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder={t('merchant.descriptionPlaceholder')}
-          multiline
-          numberOfLines={3}
-        />
-      </View>
-
-      <View style={styles.row}>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('merchant.originalValue')}</Text>
-          <TextInput
-            style={styles.input}
-            value={originalValue}
-            onChangeText={setOriginalValue}
-            placeholder="฿"
-            keyboardType="decimal-pad"
-          />
-        </View>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('merchant.price')}</Text>
-          <TextInput
-            style={styles.input}
-            value={price}
-            onChangeText={setPrice}
-            placeholder="฿"
-            keyboardType="decimal-pad"
-          />
-        </View>
-      </View>
-
-      <View style={styles.row}>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('merchant.quantity')}</Text>
-          <TextInput
-            style={styles.input}
-            value={quantity}
-            onChangeText={setQuantity}
-            keyboardType="number-pad"
-          />
-        </View>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('merchant.slotCapacity')}</Text>
-          <TextInput
-            style={styles.input}
-            value={slotCapacity}
-            onChangeText={setSlotCapacity}
-            keyboardType="number-pad"
-          />
-        </View>
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.allergens')}</Text>
-        <TextInput
-          style={styles.input}
-          value={allergens}
-          onChangeText={setAllergens}
-          placeholder={t('merchant.allergensPlaceholder')}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>{t('merchant.bestBefore')}</Text>
-        <TextInput
-          style={styles.input}
-          value={bestBefore}
-          onChangeText={setBestBefore}
-          placeholder={t('merchant.bestBeforePlaceholder')}
-        />
-      </View>
-
-      <View style={styles.rowSwitch}>
-        <Text style={styles.label}>{t('merchant.autoRepeat')}</Text>
-        <Switch
-          value={autoRepeat}
-          onValueChange={setAutoRepeat}
-          thumbColor={autoRepeat ? '#16a34a' : '#f3f4f6'}
-        />
-      </View>
-
-      <Text style={styles.label}>{t('merchant.pickupSlot')}</Text>
-      <View style={styles.row}>
-        <TextInput
-          style={[styles.input, styles.half]}
-          value={slotStart}
-          onChangeText={setSlotStart}
-        />
-        <TextInput style={[styles.input, styles.half]} value={slotEnd} onChangeText={setSlotEnd} />
-      </View>
-
-      {fulfillmentType === 'pick_your_own' && (
         <View style={styles.field}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.label}>{t('merchant.items')}</Text>
-            <TouchableOpacity style={styles.addItemBtn} onPress={addItem}>
-              <Text style={styles.addItemText}>+ {t('merchant.addItem')}</Text>
-            </TouchableOpacity>
-          </View>
-          {items.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
-              <TextInput
-                style={[styles.input, styles.itemInput]}
-                value={item.name}
-                onChangeText={(v) => updateItem(item.id, 'name', v)}
-                placeholder={t('merchant.itemName')}
+          <Text style={styles.label}>{t('merchant.location')}</Text>
+          <View style={styles.chipRow}>
+            {locations.map((loc) => (
+              <Chip
+                key={loc.id}
+                selected={locationId === loc.id}
+                onPress={() => setLocationId(loc.id)}
+                label={loc.name}
               />
-              <View style={styles.itemRow}>
-                <TextInput
-                  style={[styles.input, styles.itemSmall]}
-                  value={item.available_qty}
-                  onChangeText={(v) => updateItem(item.id, 'available_qty', v)}
-                  placeholder={t('merchant.itemQty')}
-                  keyboardType="number-pad"
-                />
-                <TextInput
-                  style={[styles.input, styles.itemSmall]}
-                  value={item.price_thb}
-                  onChangeText={(v) => updateItem(item.id, 'price_thb', v)}
-                  placeholder={t('merchant.itemPrice')}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={[styles.input, styles.itemSmall]}
-                  value={item.original_price_thb}
-                  onChangeText={(v) => updateItem(item.id, 'original_price_thb', v)}
-                  placeholder={t('merchant.itemOriginalPrice')}
-                  keyboardType="decimal-pad"
-                />
-              </View>
-              <TouchableOpacity onPress={() => removeItem(item.id)}>
-                <Text style={styles.removeItem}>{t('common.remove')}</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+            ))}
+          </View>
         </View>
-      )}
 
-      {error && <Text style={styles.error}>{error}</Text>}
+        <View style={styles.field}>
+          <Text style={styles.label}>{t('merchant.fulfillmentType')}</Text>
+          <View style={styles.chipRow}>
+            {(['surprise_bag', 'pick_your_own'] as FulfillmentType[]).map((type) => (
+              <Chip
+                key={type}
+                selected={fulfillmentType === type}
+                onPress={() => setFulfillmentType(type)}
+                label={t(`listing.${type}`)}
+              />
+            ))}
+          </View>
+        </View>
 
-      <TouchableOpacity
-        style={[styles.btn, (!canSubmit || isSubmitting) && styles.btnDisabled]}
-        onPress={() => void submit()}
-        disabled={!canSubmit || isSubmitting}
-        accessibilityRole="button"
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.btnText}>{t('merchant.publish')}</Text>
+        <View style={styles.field}>
+          <Input
+            label={t('merchant.listingTitle')}
+            value={title}
+            onChangeText={(v) => {
+              setTitle(v);
+              setError(null);
+            }}
+            placeholder={t('merchant.listingTitlePlaceholder')}
+            error={touched.title && !title.trim() ? t('merchant.required') : undefined}
+            onBlur={() => setTouched((p) => ({ ...p, title: true }))}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>{t('merchant.category')}</Text>
+          <View style={styles.chipRow}>
+            {FOOD_CATEGORIES.map((cat) => (
+              <Chip
+                key={cat}
+                selected={category === cat}
+                onPress={() => setCategory(cat)}
+                label={t(`categories.${cat}`)}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.field}>
+          <Input
+            label={t('merchant.description')}
+            value={description}
+            onChangeText={setDescription}
+            placeholder={t('merchant.descriptionPlaceholder')}
+            multiline
+            numberOfLines={3}
+            style={styles.textArea}
+          />
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <Input
+              label={t('merchant.originalValue')}
+              value={originalValue}
+              onChangeText={setOriginalValue}
+              placeholder="฿"
+              keyboardType="decimal-pad"
+              error={touched.originalValue && !originalValue ? t('merchant.required') : undefined}
+              onBlur={() => setTouched((p) => ({ ...p, originalValue: true }))}
+            />
+          </View>
+          <View style={styles.half}>
+            <Input
+              label={t('merchant.price')}
+              value={price}
+              onChangeText={setPrice}
+              placeholder="฿"
+              keyboardType="decimal-pad"
+              error={touched.price && !price ? t('merchant.required') : undefined}
+              onBlur={() => setTouched((p) => ({ ...p, price: true }))}
+            />
+          </View>
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <Input
+              label={t('merchant.quantity')}
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="number-pad"
+              error={touched.quantity && !quantity ? t('merchant.required') : undefined}
+              onBlur={() => setTouched((p) => ({ ...p, quantity: true }))}
+            />
+          </View>
+          <View style={styles.half}>
+            <Input
+              label={t('merchant.slotCapacity')}
+              value={slotCapacity}
+              onChangeText={setSlotCapacity}
+              keyboardType="number-pad"
+              error={touched.slotCapacity && !slotCapacity ? t('merchant.required') : undefined}
+              onBlur={() => setTouched((p) => ({ ...p, slotCapacity: true }))}
+            />
+          </View>
+        </View>
+
+        <View style={styles.field}>
+          <Input
+            label={t('merchant.allergens')}
+            value={allergens}
+            onChangeText={setAllergens}
+            placeholder={t('merchant.allergensPlaceholder')}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Input
+            label={t('merchant.bestBefore')}
+            value={bestBefore}
+            onChangeText={setBestBefore}
+            placeholder={t('merchant.bestBeforePlaceholder')}
+          />
+        </View>
+
+        <View style={styles.rowSwitch}>
+          <Text style={styles.label}>{t('merchant.autoRepeat')}</Text>
+          <Switch
+            value={autoRepeat}
+            onValueChange={setAutoRepeat}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.surfaceElevated}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>{t('merchant.pickupSlot')}</Text>
+          <View style={styles.row}>
+            <Input value={slotStart} onChangeText={setSlotStart} style={styles.half} />
+            <Input value={slotEnd} onChangeText={setSlotEnd} style={styles.half} />
+          </View>
+        </View>
+
+        {fulfillmentType === 'pick_your_own' && (
+          <View style={styles.field}>
+            <View style={styles.itemHeader}>
+              <Text style={styles.label}>{t('merchant.items')}</Text>
+              <Button size="sm" onPress={addItem}>
+                {t('merchant.addItem')}
+              </Button>
+            </View>
+            {items.map((item) => (
+              <Card key={item.id} style={styles.itemCard}>
+                <Input
+                  value={item.name}
+                  onChangeText={(v) => updateItem(item.id, 'name', v)}
+                  placeholder={t('merchant.itemName')}
+                  style={styles.itemInput}
+                />
+                <View style={styles.itemRow}>
+                  <Input
+                    value={item.available_qty}
+                    onChangeText={(v) => updateItem(item.id, 'available_qty', v)}
+                    placeholder={t('merchant.itemQty')}
+                    keyboardType="number-pad"
+                    style={styles.itemSmall}
+                  />
+                  <Input
+                    value={item.price_thb}
+                    onChangeText={(v) => updateItem(item.id, 'price_thb', v)}
+                    placeholder={t('merchant.itemPrice')}
+                    keyboardType="decimal-pad"
+                    style={styles.itemSmall}
+                  />
+                  <Input
+                    value={item.original_price_thb}
+                    onChangeText={(v) => updateItem(item.id, 'original_price_thb', v)}
+                    placeholder={t('merchant.itemOriginalPrice')}
+                    keyboardType="decimal-pad"
+                    style={styles.itemSmall}
+                  />
+                </View>
+                <Button variant="ghost" size="sm" onPress={() => removeItem(item.id)}>
+                  {t('common.remove')}
+                </Button>
+              </Card>
+            ))}
+          </View>
         )}
-      </TouchableOpacity>
-    </ScrollView>
+
+        {error && <ErrorState title={t('common.error')} description={error} style={styles.error} />}
+
+        <Button
+          onPress={() => void submit()}
+          loading={isSubmitting}
+          disabled={!canSubmit || isSubmitting}
+          size="lg"
+        >
+          {t('merchant.publish')}
+        </Button>
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 20 },
-  field: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#111827',
-  },
-  textArea: { height: 80, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  half: { flex: 1 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  chip: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  chipSelected: { backgroundColor: '#dcfce7', borderColor: '#16a34a' },
-  chipText: { fontSize: 13, color: '#374151' },
-  chipTextSelected: { color: '#15803d', fontWeight: '600' },
-  rowSwitch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  addItemBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  addItemText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  itemCard: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 12 },
-  itemInput: { marginBottom: 8 },
-  itemRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  itemSmall: { flex: 1 },
-  removeItem: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
-  error: { color: '#dc2626', marginBottom: 16 },
-  btn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 40,
-  },
-  btnDisabled: { backgroundColor: '#9ca3af' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-});
+function Chip({
+  selected,
+  onPress,
+  label,
+}: {
+  selected: boolean;
+  onPress: () => void;
+  label: string;
+}) {
+  const { colors, spacing, radii, fontSizes, fontWeights } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        {
+          borderRadius: radii.full,
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[2],
+          borderWidth: 1,
+          borderColor: selected ? colors.primary : colors.border,
+          backgroundColor: selected ? colors.primaryMuted : colors.surfaceElevated,
+        },
+      ]}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+    >
+      <Text
+        style={{
+          fontSize: fontSizes.sm,
+          fontWeight: selected ? fontWeights.semibold : fontWeights.normal,
+          color: selected ? colors.primaryHover : colors.text,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function makeStyles(
+  colors: ReturnType<typeof import('../../../src/theme').useTheme>['colors'],
+  spacing: ReturnType<typeof import('../../../src/theme').useTheme>['spacing'],
+  fontSizes: ReturnType<typeof import('../../../src/theme').useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof import('../../../src/theme').useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      padding: spacing[5],
+      paddingTop: spacing[7],
+      flexGrow: 1,
+    },
+    title: {
+      fontSize: fontSizes['2xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[5],
+    },
+    field: {
+      marginBottom: spacing[4],
+    },
+    label: {
+      fontSize: fontSizes.sm,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      marginBottom: spacing[2],
+    },
+    textArea: {
+      height: 80,
+      textAlignVertical: 'top',
+    },
+    row: {
+      flexDirection: 'row',
+      gap: spacing[3],
+      marginBottom: spacing[4],
+      alignItems: 'flex-start',
+    },
+    half: {
+      flex: 1,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing[2],
+    },
+    rowSwitch: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing[4],
+    },
+    itemHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[3],
+    },
+    itemCard: {
+      marginBottom: spacing[3],
+    },
+    itemInput: {
+      marginBottom: spacing[2],
+    },
+    itemRow: {
+      flexDirection: 'row',
+      gap: spacing[2],
+      marginBottom: spacing[2],
+    },
+    itemSmall: {
+      flex: 1,
+    },
+    error: {
+      marginBottom: spacing[4],
+    },
+  });
+}

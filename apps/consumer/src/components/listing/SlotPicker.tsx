@@ -1,5 +1,6 @@
 import { Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../theme';
 import type { Tables } from '@maithing/shared';
 
 type PickupSlot = Tables<'pickup_slots'>;
@@ -22,6 +23,10 @@ function formatDate(iso: string): string {
 
 export default function SlotPicker({ slots, selectedSlotId, onSelect }: Props) {
   const { t } = useTranslation();
+  const { colors, spacing, radii, fontSizes, fontWeights } = useTheme();
+
+  const styles = makeStyles(colors, spacing, radii, fontSizes, fontWeights);
+
   if (slots.length === 0) {
     return <Text style={styles.noSlots}>{t('listing.noSlots')}</Text>;
   }
@@ -59,26 +64,50 @@ export default function SlotPicker({ slots, selectedSlotId, onSelect }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: { gap: 10, paddingVertical: 4 },
-  noSlots: { fontSize: 14, color: '#9ca3af', fontStyle: 'italic' },
-  chip: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    minWidth: 110,
-  },
-  chipSelected: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#16a34a',
-  },
-  chipDate: { fontSize: 12, color: '#6b7280', marginBottom: 2 },
-  chipTime: { fontSize: 13, fontWeight: '600', color: '#111827' },
-  chipSpots: { fontSize: 11, color: '#9ca3af', marginTop: 4 },
-  chipTextSelected: { color: '#15803d' },
-  chipSpotsSelected: { color: '#16a34a' },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  radii: ReturnType<typeof useTheme>['radii'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    row: { gap: spacing[2], paddingVertical: spacing[1] },
+    noSlots: {
+      fontSize: fontSizes.base,
+      color: colors.textMuted,
+      fontStyle: 'italic',
+    },
+    chip: {
+      backgroundColor: colors.borderSubtle,
+      borderRadius: radii.lg,
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[2],
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: 'transparent',
+      minWidth: 110,
+    },
+    chipSelected: {
+      backgroundColor: colors.primaryMuted,
+      borderColor: colors.primary,
+    },
+    chipDate: {
+      fontSize: fontSizes.xs,
+      color: colors.textMuted,
+      marginBottom: spacing[0],
+    },
+    chipTime: {
+      fontSize: fontSizes.sm,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+    },
+    chipSpots: {
+      fontSize: fontSizes.xs,
+      color: colors.textMuted,
+      marginTop: spacing[1],
+    },
+    chipTextSelected: { color: colors.primaryHover },
+    chipSpotsSelected: { color: colors.primary },
+  });
+}

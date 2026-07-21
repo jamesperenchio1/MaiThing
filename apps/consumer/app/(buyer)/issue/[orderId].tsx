@@ -1,20 +1,23 @@
 import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../src/lib/supabase';
 import type { Tables } from '@maithing/shared';
 import { issueReasonSchema } from '@maithing/shared';
+import {
+  Screen,
+  Card,
+  Button,
+  Input,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  Icon,
+} from '../../../src/components/ui';
+import { useTheme } from '../../../src/theme';
+import { icons } from '../../../src/icons';
 
 type OrderWithLocation = Tables<'orders'> & {
   listing: { title: string } | null;
@@ -43,16 +46,22 @@ function useOrderForIssue(orderId: string) {
 export default function IssueReportScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const { colors, spacing, fontSizes, fontWeights } = theme;
   const qc = useQueryClient();
-  const { data: order, isLoading } = useOrderForIssue(orderId);
+  const { data: order, isLoading, error, refetch } = useOrderForIssue(orderId);
   const [reason, setReason] = useState<string>(ISSUE_REASONS[0]);
   const [detail, setDetail] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
       if (!order) throw new Error('Order not found');
+      if (reason === 'other' && !detail.trim()) {
+        throw new Error(t('issue.detailRequired'));
+      }
       const { error } = await supabase.from('issue_reports').insert({
         order_id: orderId,
         reason,
@@ -71,164 +80,200 @@ export default function IssueReportScreen() {
   });
 
   const handleSubmit = useCallback(() => {
+    if (reason === 'other' && !detail.trim()) {
+      setDetailError(t('issue.detailRequired'));
+      return;
+    }
+    setDetailError(null);
     submitMutation.mutate();
-  }, [submitMutation]);
+  }, [reason, detail, submitMutation, t]);
+
+  const styles = makeStyles(colors, spacing, fontSizes, fontWeights);
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
+      <Screen>
+        <LoadingState />
+      </Screen>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <Screen>
+        <ErrorState
+          title={t('common.error')}
+          description={error?.message}
+          onRetry={() => void refetch()}
+          retryLabel={t('common.retry')}
+        />
+      </Screen>
     );
   }
 
   if (submitted) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.thankYou}>{t('issue.submit')}</Text>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-        >
-          <Text style={styles.backBtnText}>{t('common.back')}</Text>
-        </TouchableOpacity>
-      </View>
+      <Screen>
+        <EmptyState
+          title={t('issue.submit')}
+          icon={icons.success}
+          action={{
+            label: t('common.back'),
+            onPress: () => router.back(),
+          }}
+        />
+      </Screen>
     );
   }
 
+  const isValid = reason !== 'other' || detail.trim().length > 0;
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
-      <TouchableOpacity
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backText}>
-          {'← '}
-          {t('common.back')}
-        </Text>
-      </TouchableOpacity>
+    <Screen style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <TouchableOpacity
+          style={styles.backRow}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
+          <Icon name={icons.back} size={24} />
+          <Text style={styles.backText}>{t('common.back')}</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.title}>{t('issue.title')}</Text>
+        <Text style={styles.title}>{t('issue.title')}</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.orderLabel}>{order?.listing?.title ?? '—'}</Text>
-        <Text style={styles.orderSub}>{order?.location?.name ?? '—'}</Text>
-      </View>
+        <Card>
+          <Text style={styles.orderLabel}>{order?.listing?.title ?? '—'}</Text>
+          <Text style={styles.orderSub}>{order?.location?.name ?? '—'}</Text>
+        </Card>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>{t('issue.reason')}</Text>
-        {ISSUE_REASONS.map((r) => (
-          <TouchableOpacity
-            key={r}
-            style={[styles.reasonRow, reason === r && styles.reasonRowSelected]}
-            onPress={() => setReason(r)}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: reason === r }}
-          >
-            <Text style={[styles.reasonText, reason === r && styles.reasonTextSelected]}>
-              {t(`issue.reasons.${r}`)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        <Card>
+          <Text style={styles.label}>{t('issue.reason')}</Text>
+          {ISSUE_REASONS.map((r) => (
+            <TouchableOpacity
+              key={r}
+              style={[styles.reasonRow, reason === r && styles.reasonRowSelected]}
+              onPress={() => setReason(r)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: reason === r }}
+            >
+              <Text style={[styles.reasonText, reason === r && styles.reasonTextSelected]}>
+                {t(`issue.reasons.${r}`)}
+              </Text>
+              {reason === r && <Icon name={icons.check} size={16} color={colors.primary} />}
+            </TouchableOpacity>
+          ))}
+        </Card>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>{t('issue.detail')}</Text>
-        <TextInput
-          style={styles.detailInput}
-          value={detail}
-          onChangeText={setDetail}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-          accessibilityLabel={t('issue.detail')}
-        />
-      </View>
+        <Card>
+          <Input
+            label={t('issue.detail')}
+            value={detail}
+            onChangeText={(text) => {
+              setDetail(text);
+              if (detailError) setDetailError(null);
+            }}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            accessibilityLabel={t('issue.detail')}
+            error={detailError ?? undefined}
+            style={styles.detailInput}
+          />
+        </Card>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>{t('issue.photo')}</Text>
-        <TextInput
-          style={styles.photoInput}
-          value={photoUrl}
-          onChangeText={setPhotoUrl}
-          placeholder="https://..."
-          accessibilityLabel={t('issue.photo')}
-        />
-      </View>
+        <Card>
+          <Input
+            label={t('issue.photo')}
+            value={photoUrl}
+            onChangeText={setPhotoUrl}
+            placeholder="https://..."
+            accessibilityLabel={t('issue.photo')}
+          />
+        </Card>
 
-      <TouchableOpacity
-        style={[styles.submitBtn, submitMutation.isPending && styles.submitBtnDisabled]}
-        onPress={handleSubmit}
-        disabled={submitMutation.isPending}
-        accessibilityRole="button"
-      >
-        {submitMutation.isPending ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitBtnText}>{t('issue.submit')}</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        <Button
+          size="lg"
+          onPress={handleSubmit}
+          loading={submitMutation.isPending}
+          disabled={!isValid || submitMutation.isPending}
+        >
+          {t('issue.submit')}
+        </Button>
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  scroll: { padding: 16, paddingBottom: 48 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  backRow: { marginBottom: 16 },
-  backText: { fontSize: 16, color: '#374151' },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 16 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  orderLabel: { fontSize: 16, fontWeight: '600', color: '#111827' },
-  orderSub: { fontSize: 14, color: '#6b7280', marginTop: 2 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 10 },
-  reasonRow: {
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-    backgroundColor: '#f9fafb',
-  },
-  reasonRowSelected: { backgroundColor: '#dcfce7' },
-  reasonText: { fontSize: 15, color: '#374151' },
-  reasonTextSelected: { color: '#15803d', fontWeight: '600' },
-  detailInput: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
-    minHeight: 100,
-  },
-  photoInput: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
-  },
-  submitBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitBtnDisabled: { backgroundColor: '#d1d5db' },
-  submitBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
-  thankYou: { fontSize: 18, fontWeight: '600', color: '#16a34a', textAlign: 'center' },
-  backBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  backBtnText: { color: '#fff', fontWeight: '600' },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  spacing: ReturnType<typeof useTheme>['spacing'],
+  fontSizes: ReturnType<typeof useTheme>['fontSizes'],
+  fontWeights: ReturnType<typeof useTheme>['fontWeights'],
+) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    scroll: {
+      padding: spacing[4],
+      paddingBottom: spacing[9],
+    },
+    backRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing[2],
+      marginBottom: spacing[4],
+    },
+    backText: {
+      fontSize: fontSizes.md,
+      color: colors.text,
+    },
+    title: {
+      fontSize: fontSizes['2xl'],
+      fontWeight: fontWeights.bold,
+      color: colors.text,
+      marginBottom: spacing[4],
+    },
+    orderLabel: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+    },
+    orderSub: {
+      fontSize: fontSizes.base,
+      color: colors.textMuted,
+      marginTop: spacing[1],
+    },
+    label: {
+      fontSize: fontSizes.md,
+      fontWeight: fontWeights.semibold,
+      color: colors.text,
+      marginBottom: spacing[3],
+    },
+    reasonRow: {
+      borderRadius: 12,
+      padding: spacing[3],
+      marginBottom: spacing[2],
+      backgroundColor: colors.surface,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    reasonRowSelected: {
+      backgroundColor: colors.primaryMuted,
+    },
+    reasonText: {
+      fontSize: fontSizes.base,
+      color: colors.text,
+    },
+    reasonTextSelected: {
+      color: colors.primaryHover,
+      fontWeight: fontWeights.semibold,
+    },
+    detailInput: {
+      minHeight: 100,
+    },
+  });
+}
