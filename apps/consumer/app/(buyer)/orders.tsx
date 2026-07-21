@@ -93,7 +93,7 @@ export default function OrdersScreen() {
     <View style={styles.container}>
       <FlashList
         data={orders}
-        estimatedItemSize={110}
+
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <OrderCard order={item} t={t} />}
         contentContainerStyle={styles.list}

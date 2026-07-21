@@ -63,7 +63,7 @@ export default function ListingList({ listings, isLoading, emptyText }: Props) {
   return (
     <FlashList
       data={listings}
-      estimatedItemSize={88}
+
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => <ListingRow listing={item} />}
       contentContainerStyle={styles.list}
