@@ -50,7 +50,8 @@
           "color": "#16a34a"
         }
       ],
-      "@stripe/stripe-react-native"
+      "@stripe/stripe-react-native",
+      "react-native-webview"
     ],
     "experiments": {
       "typedRoutes": true

@@ -38,6 +38,16 @@ export default function SignInScreen() {
     if (error) Alert.alert(t('common.error'), error.message);
   };
 
+  const handleLineSignIn = async () => {
+    // 'line' is a valid Supabase provider but not yet in auth-js 2.110.7 types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'line' as any,
+      options: { redirectTo: 'maithing://auth/callback' },
+    });
+    if (error) Alert.alert(t('common.error'), error.message);
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -86,6 +96,15 @@ export default function SignInScreen() {
           <Text style={styles.googleBtnText}>{t('auth.continueWithGoogle')}</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.lineBtn}
+          onPress={() => void handleLineSignIn()}
+          accessibilityRole="button"
+          accessibilityLabel={t('auth.continueWithLine')}
+        >
+          <Text style={styles.lineBtnText}>{t('auth.continueWithLine')}</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')} style={styles.linkBtn}>
           <Text style={styles.linkText}>{t('auth.signUp')}</Text>
         </TouchableOpacity>
@@ -124,6 +143,14 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   googleBtnText: { fontWeight: '600', fontSize: 16 },
+  lineBtn: {
+    backgroundColor: '#06C755',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    minHeight: 52,
+  },
+  lineBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   linkBtn: { alignItems: 'center', padding: 8, minHeight: 44 },
   linkText: { color: '#16a34a', fontSize: 14 },
 });
