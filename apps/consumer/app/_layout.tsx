@@ -40,16 +40,21 @@ export default function RootLayout() {
   const setLoading = useAuthStore((s) => s.setLoading);
   const url = useURL();
 
-  // Handle deep links from LINE OAuth (magic-link redirect → maithing://auth/callback#access_token=...)
+  // Handle deep links from OAuth (maithing://auth/callback#access_token=... or exp://...)
   useEffect(() => {
     if (!url) return;
-    const parsed = new URL(url);
-    // Supabase magic-link lands with fragment params
-    const fragment = new URLSearchParams(parsed.hash.slice(1));
-    const accessToken = fragment.get('access_token');
-    const refreshToken = fragment.get('refresh_token');
-    if (accessToken && refreshToken) {
-      void supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    console.log('[DeepLink] received URL:', url);
+    try {
+      const parsed = new URL(url);
+      const fragment = new URLSearchParams(parsed.hash.slice(1));
+      const accessToken = fragment.get('access_token');
+      const refreshToken = fragment.get('refresh_token');
+      console.log('[DeepLink] access_token present:', !!accessToken, 'refresh_token present:', !!refreshToken);
+      if (accessToken && refreshToken) {
+        void supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      }
+    } catch (e) {
+      console.error('[DeepLink] failed to parse URL:', e);
     }
   }, [url]);
 
