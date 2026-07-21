@@ -1,6 +1,6 @@
 --- a/src/messageSocket.native.ts
 +++ b/src/messageSocket.native.ts
-@@ -1,7 +1,8 @@
+@@ -1,9 +1,11 @@
  /* eslint-env browser */
 
  function createWebSocketConnection(path: string = '/message') {
@@ -10,3 +10,13 @@
    const devServer = getDevServer();
    if (!devServer.bundleLoadedFromServer) {
      throw new Error('Cannot create devtools websocket connections in embedded environments.');
+   }
+
+   const devServerUrl = new URL(devServer.url);
+   const serverScheme = devServerUrl.protocol === 'https:' ? 'wss' : 'ws';
+-  const WebSocket = require('react-native/Libraries/WebSocket/WebSocket');
+-  return new WebSocket(`${serverScheme}://${devServerUrl.host}${path}`);
++  const _WebSocketMod = require('react-native/Libraries/WebSocket/WebSocket');
++  const WebSocket = _WebSocketMod.__esModule ? _WebSocketMod.default : _WebSocketMod;
++  return new WebSocket(`${serverScheme}://${devServerUrl.host}${path}`);
+ }
