@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { useAuthStore } from '../../src/stores/auth';
 import { Redirect } from 'expo-router';
-import { Text } from 'react-native';
+import { Icon } from '../../src/components/ui';
 import { registerForPushNotifications, addPushTokenListener } from '../../src/lib/notifications';
 
 export default function BuyerLayout() {
@@ -33,21 +33,21 @@ export default function BuyerLayout() {
         name="discover"
         options={{
           title: t('discover.title'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🗺️</Text>,
+          tabBarIcon: ({ color }) => <Icon name="map-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: t('order.myOrders'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🛍️</Text>,
+          tabBarIcon: ({ color }) => <Icon name="bag-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: t('profile.title'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>👤</Text>,
+          tabBarIcon: ({ color }) => <Icon name="person-outline" size={24} color={color} />,
         }}
       />
     </Tabs>

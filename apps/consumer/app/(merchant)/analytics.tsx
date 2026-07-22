@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Icon, LoadingState } from '../../src/components/ui';
 import { useMerchantOrg } from '../../src/hooks/useProfile';
 import { useMerchantOrders } from '../../src/hooks/useMerchant';
 import { formatThb } from '@maithing/shared';
@@ -20,11 +21,7 @@ export default function AnalyticsScreen() {
   const recentOrders = orders.slice(0, 5);
 
   if (orgLoading || ordersLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   return (
@@ -41,7 +38,10 @@ export default function AnalyticsScreen() {
           <Text style={styles.statLabel}>{t('merchant.mealsSaved')}</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{avgRating.toFixed(1)} ★</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={styles.statValue}>{avgRating.toFixed(1)}</Text>
+            <Icon name="star" size={16} color="#f59e0b" />
+          </View>
           <Text style={styles.statLabel}>{t('merchant.ratingAverage')}</Text>
         </View>
       </View>
@@ -69,7 +69,6 @@ export default function AnalyticsScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 20 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 28 },
   statCard: {

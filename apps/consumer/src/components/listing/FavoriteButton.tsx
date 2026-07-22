@@ -1,6 +1,7 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useFavorites } from '../../hooks/useFavorites';
+import { Icon } from '../ui/Icon';
 
 interface Props {
   locationId: string;
@@ -19,11 +20,7 @@ export default function FavoriteButton({ locationId, size = 24 }: Props) {
       accessibilityLabel={active ? t('listing.unfavorite') : t('listing.favorite')}
       disabled={toggle.isPending}
     >
-      <Text style={[styles.heart, { fontSize: size }]}>{active ? '♥' : '♡'}</Text>
+      <Icon name={active ? 'heart' : 'heart-outline'} size={size} color="#ef4444" />
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  heart: { color: '#ef4444' },
-});

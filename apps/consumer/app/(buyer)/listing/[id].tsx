@@ -1,14 +1,5 @@
 import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Linking,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useListingDetail } from '../../../src/hooks/useListing';
@@ -21,6 +12,7 @@ import type { Tables } from '@maithing/shared';
 import SlotPicker from '../../../src/components/listing/SlotPicker';
 import PickYourOwnBuilder from '../../../src/components/listing/PickYourOwnBuilder';
 import FavoriteButton from '../../../src/components/listing/FavoriteButton';
+import { Icon, LoadingState, ErrorState } from '../../../src/components/ui';
 
 type PickupSlot = Tables<'pickup_slots'>;
 
@@ -76,21 +68,16 @@ export default function ListingDetailScreen() {
   }, [listing, createThread]);
 
   if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   if (error || !listing) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{t('common.error')}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={() => void refetch()}>
-          <Text style={styles.retryText}>{t('common.retry')}</Text>
-        </TouchableOpacity>
-      </View>
+      <ErrorState
+        title={t('common.error')}
+        onRetry={() => void refetch()}
+        retryLabel={t('common.retry')}
+      />
     );
   }
 
@@ -109,7 +96,7 @@ export default function ListingDetailScreen() {
             onPress={() => router.back()}
             accessibilityRole="button"
           >
-            <Text style={styles.backText}>{'←'}</Text>
+            <Icon name="chevron-back" size={28} color="#374151" />
           </TouchableOpacity>
           <FavoriteButton locationId={listing.location_id} size={26} />
         </View>
@@ -129,15 +116,21 @@ export default function ListingDetailScreen() {
         {/* Ratings */}
         {listing.location.rating_count > 0 && (
           <View style={styles.ratingsRow}>
-            <Text style={styles.ratingItem}>
-              ★ {listing.location.rating_avg.toFixed(1)}{' '}
-              <Text style={styles.ratingLabel}>{t('listing.overallRating')}</Text>
-            </Text>
+            <View style={styles.ratingItem}>
+              <Icon name="star" size={13} color="#f59e0b" />
+              <Text style={styles.ratingText}>
+                {listing.location.rating_avg.toFixed(1)}{' '}
+                <Text style={styles.ratingLabel}>{t('listing.overallRating')}</Text>
+              </Text>
+            </View>
             <Text style={styles.ratingDot}>·</Text>
-            <Text style={styles.ratingItem}>
-              💰 {listing.location.value_rating_avg.toFixed(1)}{' '}
-              <Text style={styles.ratingLabel}>{t('listing.valueRating')}</Text>
-            </Text>
+            <View style={styles.ratingItem}>
+              <Icon name="card-outline" size={13} color="#16a34a" />
+              <Text style={styles.ratingText}>
+                {listing.location.value_rating_avg.toFixed(1)}{' '}
+                <Text style={styles.ratingLabel}>{t('listing.valueRating')}</Text>
+              </Text>
+            </View>
             <Text style={styles.ratingDot}>·</Text>
             <Text style={styles.ratingCount}>({listing.location.rating_count})</Text>
           </View>
@@ -183,7 +176,10 @@ export default function ListingDetailScreen() {
 
         {/* Address */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📍 {t('listing.address')}</Text>
+          <View style={styles.sectionTitleRow}>
+            <Icon name="location-outline" size={14} color="#374151" />
+            <Text style={styles.sectionTitle}>{t('listing.address')}</Text>
+          </View>
           <Text style={styles.sectionBody}>{listing.location.address_text}</Text>
           <View style={styles.addressActions}>
             <TouchableOpacity
@@ -228,8 +224,10 @@ export default function ListingDetailScreen() {
             disabled={toggleDemandSignal.isPending}
             accessibilityRole="button"
           >
-            <Text style={[styles.notifyBtnText, demandSignalId ? styles.notifyBtnTextActive : null]}>
-              {demandSignalId ? `🔔 ${t('discover.notifyMe')}` : `🔕 ${t('discover.notifyMe')}`}
+            <Text
+              style={[styles.notifyBtnText, demandSignalId ? styles.notifyBtnTextActive : null]}
+            >
+              {t('discover.notifyMe')}
             </Text>
           </TouchableOpacity>
         ) : (
@@ -251,15 +249,6 @@ export default function ListingDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  errorText: { fontSize: 16, color: '#6b7280' },
-  retryBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  retryText: { color: '#fff', fontWeight: '600' },
   scroll: { padding: 16 },
   headerRow: {
     flexDirection: 'row',
@@ -281,7 +270,8 @@ const styles = StyleSheet.create({
   typeBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 8 },
   ratingsRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-  ratingItem: { fontSize: 13, color: '#374151' },
+  ratingItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  ratingText: { fontSize: 13, color: '#374151' },
   ratingLabel: { color: '#9ca3af', fontWeight: '400' },
   ratingDot: { color: '#d1d5db' },
   ratingCount: { fontSize: 12, color: '#9ca3af' },
@@ -314,7 +304,8 @@ const styles = StyleSheet.create({
   remaining: { fontSize: 14, color: '#f59e0b', fontWeight: '600' },
   description: { fontSize: 15, color: '#374151', lineHeight: 22, marginBottom: 16 },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#374151' },
   sectionBody: { fontSize: 14, color: '#6b7280', marginBottom: 8 },
   directionsBtn: {
     alignSelf: 'flex-start',

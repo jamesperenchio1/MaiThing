@@ -5,6 +5,7 @@
       "ignoreDependencies": ["i18next", "react-i18next", "@tanstack/react-query"]
     },
     "apps/consumer": {
+      "entry": ["src/components/ui/index.ts"],
       "ignoreDependencies": [
         "expo-splash-screen",
         "expo-status-bar",
@@ -13,7 +14,7 @@
         "@babel/core",
         "@opentelemetry/api"
       ],
-      "ignore": ["react-native-maps-web-stub.js", "stripe-react-native-web-stub.js"]
+      "ignore": ["stripe-react-native-web-stub.js"]
     }
   },
   "ignore": ["supabase/functions/**/*.ts"]

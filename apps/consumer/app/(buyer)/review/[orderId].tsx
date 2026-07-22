@@ -12,6 +12,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Icon, LoadingState } from '../../../src/components/ui';
 import { supabase } from '../../../src/lib/supabase';
 import type { Tables } from '@maithing/shared';
 
@@ -57,7 +58,11 @@ function StarRating({
             accessibilityRole="button"
             accessibilityLabel={`${star}`}
           >
-            <Text style={[styles.star, star <= value && styles.starFilled]}>★</Text>
+            <Icon
+              name={star <= value ? 'star' : 'star-outline'}
+              size={28}
+              color={star <= value ? '#f59e0b' : '#d1d5db'}
+            />
           </TouchableOpacity>
         ))}
       </View>
@@ -107,11 +112,7 @@ export default function ReviewScreen() {
   }, [overall, value, submitMutation, t]);
 
   if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   if (submitted) {
@@ -136,10 +137,10 @@ export default function ReviewScreen() {
         onPress={() => router.back()}
         accessibilityRole="button"
       >
-        <Text style={styles.backText}>
-          {'← '}
-          {t('common.back')}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Icon name="chevron-back" size={18} color="#374151" />
+          <Text style={styles.backText}>{t('common.back')}</Text>
+        </View>
       </TouchableOpacity>
 
       <Text style={styles.title}>{t('review.title')}</Text>
@@ -207,8 +208,6 @@ const styles = StyleSheet.create({
   },
   starLabel: { fontSize: 15, color: '#374151', fontWeight: '500' },
   stars: { flexDirection: 'row', gap: 8 },
-  star: { fontSize: 28, color: '#d1d5db' },
-  starFilled: { color: '#f59e0b' },
   divider: { height: 1, backgroundColor: '#f3f4f6', marginVertical: 12 },
   label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
   commentInput: {

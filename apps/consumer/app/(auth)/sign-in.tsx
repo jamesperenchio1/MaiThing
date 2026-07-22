@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { supabase } from '../../src/lib/supabase';
+import { Icon } from '../../src/components/ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -26,78 +27,56 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleEmailSignIn = async () => {
-    console.log('[Auth] email sign-in attempt:', email);
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      console.error('[Auth] email sign-in error:', error.message, error.status);
       Alert.alert(t('common.error'), error.message);
     } else {
-      console.log('[Auth] email sign-in success, user:', data.user?.id);
       router.replace('/(buyer)/discover');
     }
   };
 
   const handleGoogleSignIn = async () => {
-    // In Expo Go, Linking.createURL gives exp://IP:PORT/--/...
-    // In a dev/prod build it gives maithing://...
     const redirectTo = Linking.createURL('auth/callback');
-    console.log('[Auth] Google OAuth redirectTo:', redirectTo);
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo,
-        skipBrowserRedirect: true, // We open the browser manually below
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
-      console.error('[Auth] Google OAuth URL error:', error.message);
       Alert.alert(t('common.error'), error.message);
       return;
     }
 
     const authUrl = data?.url;
     if (!authUrl) {
-      console.error('[Auth] Google OAuth: no URL returned from Supabase');
       Alert.alert(t('common.error'), 'Could not start Google sign-in.');
       return;
     }
 
-    console.log('[Auth] Opening Google auth URL in browser...');
     const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo);
-    console.log('[Auth] WebBrowser result type:', result.type);
 
     if (result.type === 'success' && 'url' in result) {
-      console.log('[Auth] OAuth callback URL:', result.url);
-      // Parse tokens from fragment (#access_token=...&refresh_token=...)
       const parsed = new URL(result.url);
       const params = new URLSearchParams(parsed.hash.slice(1));
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
       if (accessToken && refreshToken) {
-        console.log('[Auth] Setting session from OAuth tokens');
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
         if (sessionError) {
-          console.error('[Auth] setSession error:', sessionError.message);
           Alert.alert(t('common.error'), sessionError.message);
         } else {
-          console.log('[Auth] Google sign-in success');
           router.replace('/(buyer)/discover');
         }
-      } else {
-        // Supabase PKCE flow — the auth state change listener will pick it up
-        console.log('[Auth] No fragment tokens; relying on onAuthStateChange');
       }
-    } else if (result.type === 'cancel') {
-      console.log('[Auth] Google OAuth cancelled by user');
-    } else {
-      console.log('[Auth] Google OAuth unexpected result:', JSON.stringify(result));
     }
   };
 
@@ -111,15 +90,16 @@ export default function SignInScreen() {
       `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
       `&state=${Math.random().toString(36).slice(2)}` +
       `&scope=profile%20openid%20email`;
-    console.log('[Auth] Opening LINE auth URL...');
     const result = await WebBrowser.openAuthSessionAsync(lineAuthUrl, redirectTo);
-    console.log('[Auth] LINE WebBrowser result type:', result.type);
     if ((result.type as string) === 'cancel') return;
-    if ((result.type as string) === 'success' && 'url' in result && (result as { url: string }).url.includes('error')) {
+    if (
+      (result.type as string) === 'success' &&
+      'url' in result &&
+      (result as { url: string }).url.includes('error')
+    ) {
       Alert.alert(t('common.error'), t('auth.lineSignInFailed'));
     }
   };
-
 
   return (
     <KeyboardAvoidingView
@@ -127,8 +107,11 @@ export default function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
-        <Text style={styles.logo}>🌿 MaiThing</Text>
-        <Text style={styles.tagline}>ช่วยโลก ประหยัดเงิน อร่อยมาก</Text>
+        <View style={styles.logoRow}>
+          <Icon name="leaf-outline" size={36} color="#16a34a" />
+          <Text style={styles.logo}>MaiThing</Text>
+        </View>
+        <Text style={styles.tagline}>{t('auth.tagline')}</Text>
 
         <TextInput
           style={styles.input}
@@ -154,7 +137,11 @@ export default function SignInScreen() {
             accessibilityRole="button"
             accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
           >
-            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+            <Icon
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color="#6b7280"
+            />
           </Pressable>
         </View>
 
@@ -199,6 +186,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   logo: { fontSize: 32, fontWeight: '700', textAlign: 'center', color: '#16a34a' },
   tagline: { fontSize: 14, textAlign: 'center', color: '#6b7280', marginBottom: 8 },
   input: {
@@ -254,5 +242,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  eyeText: { fontSize: 18 },
 });

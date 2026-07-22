@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/lib/supabase';
 import { formatThb } from '@maithing/shared';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/ui';
 import type { Tables } from '@maithing/shared';
 
 type OrderStatus = Tables<'orders'>['status'];
@@ -62,31 +63,22 @@ export default function OrdersScreen() {
   const { data: orders = [], isLoading, error, refetch } = useOrders();
 
   if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{t('common.error')}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={() => void refetch()}>
-          <Text style={styles.retryText}>{t('common.retry')}</Text>
-        </TouchableOpacity>
-      </View>
+      <ErrorState
+        title={t('common.error')}
+        description={error.message}
+        onRetry={() => void refetch()}
+        retryLabel={t('common.retry')}
+      />
     );
   }
 
   if (orders.length === 0) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.emptyIcon}>🛍️</Text>
-        <Text style={styles.emptyText}>{t('order.noOrders')}</Text>
-      </View>
-    );
+    return <EmptyState title={t('order.noOrders')} icon="bag-outline" />;
   }
 
   return (
@@ -153,17 +145,6 @@ function OrderCard({ order, t }: { order: OrderRow; t: (key: string) => string }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  errorText: { fontSize: 16, color: '#6b7280' },
-  retryBtn: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  retryText: { color: '#fff', fontWeight: '600' },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, color: '#9ca3af' },
   list: { padding: 12 },
   card: {
     backgroundColor: '#fff',

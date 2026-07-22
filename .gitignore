@@ -32,6 +32,12 @@ Thumbs.db
 # Test coverage
 coverage/
 
+# Browser automation artifacts
+.playwright-mcp/
+
+# Claude Code session artifacts
+.claude/
+
 # Turbo
 .turbo/
 

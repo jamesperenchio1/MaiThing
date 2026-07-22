@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Icon } from '../../src/components/ui';
 import { supabase } from '../../src/lib/supabase';
 import { useMapStore } from '../../src/stores/map';
 import type { Bounds, ListingPin, Json } from '@maithing/shared';
@@ -79,7 +80,7 @@ export default function DiscoverScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('common.filter')}
         >
-          <Text style={styles.filterBtnText}>⚙️</Text>
+          <Icon name="options-outline" size={20} color="#374151" />
         </TouchableOpacity>
       </View>
       {viewMode === 'map' ? (
@@ -125,5 +126,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  filterBtnText: { fontSize: 18 },
 });

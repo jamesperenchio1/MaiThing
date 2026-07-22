@@ -1,15 +1,10 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useMerchantOrg } from '../../src/hooks/useProfile';
 import { useMerchantListings, useMerchantOrders } from '../../src/hooks/useMerchant';
+import { Icon, LoadingState } from '../../src/components/ui';
+import type { IconName } from '../../src/components/ui';
 
 function isToday(iso: string): boolean {
   const d = new Date(iso);
@@ -35,11 +30,7 @@ export default function MerchantDashboardScreen() {
   ).length;
 
   if (orgLoading || listingsLoading || ordersLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   return (
@@ -64,22 +55,22 @@ export default function MerchantDashboardScreen() {
       <Text style={styles.sectionTitle}>{t('merchant.quickActions')}</Text>
       <View style={styles.actionsGrid}>
         <ActionTile
-          icon="🍱"
+          icon="restaurant-outline"
           label={t('merchant.publishListing')}
           onPress={() => router.push('/(merchant)/listings/new')}
         />
         <ActionTile
-          icon="📅"
+          icon="calendar-outline"
           label={t('merchant.todayView')}
           onPress={() => router.push('/(merchant)/today')}
         />
         <ActionTile
-          icon="📍"
+          icon="location-outline"
           label={t('merchant.addLocation')}
           onPress={() => router.push('/(merchant)/locations/new')}
         />
         <ActionTile
-          icon="📊"
+          icon="bar-chart-outline"
           label={t('merchant.analytics')}
           onPress={() => router.push('/(merchant)/analytics')}
         />
@@ -93,13 +84,13 @@ function ActionTile({
   label,
   onPress,
 }: {
-  icon: string;
+  icon: IconName;
   label: string;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity style={styles.actionTile} onPress={onPress} accessibilityRole="button">
-      <Text style={styles.actionIcon}>{icon}</Text>
+      <Icon name={icon} size={28} color="#16a34a" style={{ marginBottom: 8 }} />
       <Text style={styles.actionLabel}>{label}</Text>
     </TouchableOpacity>
   );
@@ -107,7 +98,6 @@ function ActionTile({
 
 const styles = StyleSheet.create({
   container: { padding: 20, paddingTop: 60, backgroundColor: '#f9fafb', flexGrow: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   greeting: { fontSize: 14, color: '#6b7280', marginBottom: 4 },
   orgName: { fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 6 },
   orgStatus: { fontSize: 13, color: '#16a34a', marginBottom: 24 },
@@ -139,6 +129,5 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  actionIcon: { fontSize: 28, marginBottom: 8 },
   actionLabel: { fontSize: 13, fontWeight: '600', color: '#374151', textAlign: 'center' },
 });

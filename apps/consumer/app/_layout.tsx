@@ -8,6 +8,7 @@ import { initSentry, captureException } from '../src/lib/sentry';
 import { capture, identify } from '../src/lib/posthog';
 import { queryClient } from '../src/lib/queryClient';
 import { useAuthStore } from '../src/stores/auth';
+import { ThemeProvider } from '../src/theme';
 import { Text, View } from 'react-native';
 import '../src/i18n';
 
@@ -19,7 +20,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
     this.state = { error: null };
   }
   static getDerivedStateFromError(error: Error) {
-    console.error('ErrorBoundary caught:', error);
     return { error };
   }
   override render() {
@@ -27,7 +27,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
       return (
         <View style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
           <Text style={{ fontSize: 16, color: 'red' }}>{this.state.error.message}</Text>
-          <Text style={{ fontSize: 12, marginTop: 10 }}>{this.state.error.stack}</Text>
         </View>
       );
     }
@@ -40,21 +39,18 @@ export default function RootLayout() {
   const setLoading = useAuthStore((s) => s.setLoading);
   const url = useURL();
 
-  // Handle deep links from OAuth (maithing://auth/callback#access_token=... or exp://...)
   useEffect(() => {
     if (!url) return;
-    console.log('[DeepLink] received URL:', url);
     try {
       const parsed = new URL(url);
       const fragment = new URLSearchParams(parsed.hash.slice(1));
       const accessToken = fragment.get('access_token');
       const refreshToken = fragment.get('refresh_token');
-      console.log('[DeepLink] access_token present:', !!accessToken, 'refresh_token present:', !!refreshToken);
       if (accessToken && refreshToken) {
         void supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
       }
-    } catch (e) {
-      console.error('[DeepLink] failed to parse URL:', e);
+    } catch {
+      // Ignore malformed deep links.
     }
   }, [url]);
 
@@ -87,11 +83,13 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <StripeProvider publishableKey={STRIPE_KEY}>
-        <QueryClientProvider client={queryClient}>
-          <Stack screenOptions={{ headerShown: false }} />
-        </QueryClientProvider>
-      </StripeProvider>
+      <ThemeProvider>
+        <StripeProvider publishableKey={STRIPE_KEY}>
+          <QueryClientProvider client={queryClient}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </QueryClientProvider>
+        </StripeProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
