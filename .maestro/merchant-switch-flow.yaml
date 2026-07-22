@@ -1,0 +1,65 @@
+appId: com.jamyangperenchio.maithing
+---
+# Switch to merchant role and verify merchant dashboard
+- runFlow: customer-welcome-flow.yaml
+
+# Navigate to Profile
+- tapOn:
+    id: "profile-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 10000
+
+# Switch to merchant role
+- tapOn:
+    id: "switch-role-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-dashboard-screen"
+    timeout: 10000
+
+- assertVisible:
+    id: "merchant-dashboard-title"
+- assertVisible:
+    id: "create-listing-button"
+- assertVisible:
+    id: "manage-inventory-button"
+
+# Check merchant tabs
+- tapOn:
+    id: "merchant-orders-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "orders-screen"
+    timeout: 10000
+- assertVisible:
+    id: "orders-title"
+
+- tapOn:
+    id: "merchant-inventory-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "inventory-screen"
+    timeout: 10000
+- assertVisible:
+    id: "inventory-title"
+- assertVisible:
+    id: "new-listing-button"
+
+- tapOn:
+    id: "merchant-settings-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+- assertVisible:
+    id: "merchant-settings-title"
+- assertVisible:
+    id: "switch-to-customer-button"

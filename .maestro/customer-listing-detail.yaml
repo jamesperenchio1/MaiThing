@@ -1,0 +1,41 @@
+appId: com.jamyangperenchio.maithing
+---
+# Open a listing detail from the customer home
+- runFlow: customer-welcome-flow.yaml
+
+# Scroll the home screen until the first nearby listing is fully visible
+- scrollUntilVisible:
+    element:
+      id: "first-nearby-listing"
+    direction: DOWN
+    timeout: 10000
+
+# Tap the first nearby listing card by its testID
+- tapOn:
+    id: "first-nearby-listing"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "listing-detail-screen"
+    timeout: 10000
+
+- assertVisible:
+    id: "listing-detail-header"
+- assertVisible:
+    id: "listing-description-section"
+- assertVisible:
+    id: "listing-description-title"
+- assertVisible:
+    id: "buy-now-button"
+
+# Go back to home
+- tapOn:
+    id: "home-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000
+- assertVisible:
+    id: "home-hero-title"

@@ -1,0 +1,43 @@
+import { Pressable, type PressableProps } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { cn } from '@/src/lib/utils';
+
+interface PressableScaleProps extends PressableProps {
+  children: React.ReactNode;
+  className?: string;
+  scale?: number;
+}
+
+export function PressableScale({
+  children,
+  className,
+  scale = 0.97,
+  onPressIn,
+  onPressOut,
+  ...props
+}: PressableScaleProps) {
+  const sharedValue = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: sharedValue.value }],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        className={className}
+        onPressIn={(e) => {
+          sharedValue.value = withSpring(scale, { damping: 15, stiffness: 300 });
+          onPressIn?.(e);
+        }}
+        onPressOut={(e) => {
+          sharedValue.value = withSpring(1, { damping: 15, stiffness: 300 });
+          onPressOut?.(e);
+        }}
+        {...props}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+}

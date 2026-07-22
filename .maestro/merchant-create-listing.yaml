@@ -1,0 +1,118 @@
+appId: com.jamyangperenchio.maithing
+---
+# Merchant create listing flow
+- runFlow: merchant-switch-flow.yaml
+
+# Already on merchant dashboard after switch; start create listing
+- tapOn:
+    id: "create-listing-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "create-listing-screen"
+    timeout: 10000
+
+- assertVisible:
+    id: "create-listing-header"
+- assertVisible:
+    id: "mystery-box-option"
+- assertVisible:
+    id: "fixed-item-option"
+
+# Choose Mystery Box
+- tapOn:
+    id: "mystery-box-option"
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Box Size"
+- assertVisible:
+    text: "Photos"
+- assertVisible:
+    text: "Title"
+- assertVisible:
+    text: "Description"
+- assertVisible:
+    text: "Category"
+- assertVisible:
+    text: "Original Price"
+- assertVisible:
+    text: "Sale Price"
+- assertVisible:
+    text: "Quantity"
+- assertVisible:
+    text: "Start Time"
+- assertVisible:
+    text: "End Time"
+- assertVisible:
+    text: "Tags"
+- assertVisible:
+    text: "Allergens"
+- assertVisible:
+    id: "publish-button"
+
+# Select box size (default is medium, but explicitly select for stability)
+- tapOn:
+    id: "box-size-medium"
+
+# Fill listing title
+- tapOn:
+    id: "listing-title-input"
+- inputText: "Maestro Test Mystery Box"
+
+# Fill description
+- tapOn:
+    id: "listing-description-input"
+- inputText: "A delicious test mystery box created by Maestro end-to-end testing."
+
+# Scroll until category section is visible and select Bakery
+- scrollUntilVisible:
+    element:
+      id: "category-bakery"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "category-bakery"
+
+# Fill pricing and quantity
+- tapOn:
+    id: "original-price-input"
+- inputText: "300"
+
+- tapOn:
+    id: "sale-price-input"
+- inputText: "99"
+
+- tapOn:
+    id: "quantity-input"
+- inputText: "5"
+
+# Fill pickup window
+- tapOn:
+    id: "start-time-input"
+- inputText: "2025-07-22 18:00"
+
+- tapOn:
+    id: "end-time-input"
+- inputText: "2025-07-22 20:00"
+
+# Scroll to publish button and submit
+- scrollUntilVisible:
+    element:
+      id: "publish-button"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "publish-button"
+- waitForAnimationToEnd
+
+# Verify we land on the inventory screen after successful publish
+- extendedWaitUntil:
+    visible:
+      id: "inventory-screen"
+    timeout: 10000
+- assertVisible:
+    id: "inventory-title"
+- assertVisible:
+    id: "new-listing-button"

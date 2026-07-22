@@ -1,0 +1,39 @@
+appId: com.jamyangperenchio.maithing
+---
+# Customer onboarding: open app, continue as test customer, verify home loads
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: "welcome-screen"
+- assertVisible:
+    id: "welcome-title"
+- extendedWaitUntil:
+    visible:
+      id: "test-customer-button"
+    timeout: 10000
+
+- tapOn:
+    id: "test-customer-button"
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000
+
+# Verify customer home loads
+- assertVisible:
+    id: "home-hero-title"
+- assertVisible:
+    id: "home-hero-subtitle"
+- assertVisible:
+    id: "home-featured-section"
+- assertVisible:
+    id: "home-near-you-section"
+- assertVisible:
+    id: "first-featured-merchant"
+- assertVisible:
+    id: "first-nearby-listing"

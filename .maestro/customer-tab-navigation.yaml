@@ -1,0 +1,77 @@
+appId: com.jamyangperenchio.maithing
+---
+# Customer tab navigation: Home, Discover, Map, Wallet, Orders, Profile
+- runFlow: customer-welcome-flow.yaml
+
+# Navigate to Discover
+- tapOn:
+    id: "discover-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "discover-screen"
+    timeout: 10000
+- assertVisible:
+    id: "discover-title"
+- assertVisible:
+    id: "discover-search-bar"
+
+# Navigate to Map
+- tapOn:
+    id: "map-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "map-screen"
+    timeout: 10000
+- assertVisible:
+    id: "map-title"
+
+# Navigate to Wallet
+- tapOn:
+    id: "wallet-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "wallet-screen"
+    timeout: 10000
+- assertVisible:
+    id: "wallet-title"
+- assertVisible:
+    id: "balance-card"
+- assertVisible:
+    id: "top-up-button"
+
+# Navigate to Orders
+- tapOn:
+    id: "orders-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "orders-screen"
+    timeout: 10000
+- assertVisible:
+    id: "orders-title"
+- assertVisible:
+    id: "active-orders-tab"
+- assertVisible:
+    id: "history-orders-tab"
+
+# Navigate to Profile
+- tapOn:
+    id: "profile-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 10000
+- assertVisible:
+    id: "profile-title"
+- assertVisible:
+    id: "edit-profile-menu-item"
+- assertVisible:
+    id: "language-menu-item"
+- assertVisible:
+    id: "dark-mode-menu-item"
+- assertVisible:
+    id: "logout-button"

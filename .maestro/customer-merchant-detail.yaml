@@ -1,0 +1,38 @@
+appId: com.jamyangperenchio.maithing
+---
+# Open a merchant detail page and verify information
+- runFlow: customer-welcome-flow.yaml
+
+# Make sure the first featured merchant card is visible
+- assertVisible:
+    id: "first-featured-merchant"
+
+# Tap the first featured merchant card
+- tapOn:
+    id: "first-featured-merchant"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-detail-screen"
+    timeout: 10000
+
+- assertVisible:
+    id: "merchant-detail-header"
+- assertVisible:
+    id: "merchant-about-section"
+- assertVisible:
+    id: "merchant-pickup-section"
+- assertVisible:
+    id: "merchant-listings-section"
+
+# Go back to home
+- tapOn:
+    id: "home-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000
+- assertVisible:
+    id: "home-hero-title"
