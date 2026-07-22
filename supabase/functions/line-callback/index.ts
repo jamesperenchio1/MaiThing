@@ -10,7 +10,9 @@ Deno.serve(async (req: Request) => {
   const error = url.searchParams.get('error');
 
   if (error || !code) {
-    return Response.redirect(`${REDIRECT_SCHEME}?error=${encodeURIComponent(error ?? 'missing_code')}`);
+    return Response.redirect(
+      `${REDIRECT_SCHEME}?error=${encodeURIComponent(error ?? 'missing_code')}`,
+    );
   }
 
   const channelId = Deno.env.get('LINE_CHANNEL_ID');
@@ -41,7 +43,7 @@ Deno.serve(async (req: Request) => {
     return Response.redirect(`${REDIRECT_SCHEME}?error=token_exchange_failed`);
   }
 
-  const tokens = await tokenRes.json() as { access_token: string; id_token?: string };
+  const tokens = (await tokenRes.json()) as { access_token: string; id_token?: string };
 
   // Get LINE profile
   const profileRes = await fetch(LINE_PROFILE_URL, {
@@ -52,7 +54,11 @@ Deno.serve(async (req: Request) => {
     return Response.redirect(`${REDIRECT_SCHEME}?error=profile_fetch_failed`);
   }
 
-  const profile = await profileRes.json() as { userId: string; displayName: string; pictureUrl?: string };
+  const profile = (await profileRes.json()) as {
+    userId: string;
+    displayName: string;
+    pictureUrl?: string;
+  };
 
   // Derive email — LINE doesn't always provide one; use a stable synthetic address
   let email: string | null = null;

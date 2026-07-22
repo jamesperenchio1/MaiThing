@@ -87,7 +87,13 @@ setTimeout(function(){
 </body>
 </html>`;
 
-export default function LeafletMap({ listings, onRegionChange, onPinPress, initialLat, initialLng }: Props) {
+export default function LeafletMap({
+  listings,
+  onRegionChange,
+  onPinPress,
+  initialLat,
+  initialLng,
+}: Props) {
   const webViewRef = useRef<WebView>(null);
   const flyToSentRef = useRef(false);
 
@@ -95,9 +101,7 @@ export default function LeafletMap({ listings, onRegionChange, onPinPress, initi
   useEffect(() => {
     if (!initialLat || !initialLng || flyToSentRef.current) return;
     flyToSentRef.current = true;
-    webViewRef.current?.injectJavaScript(
-      `window.flyTo(${initialLat},${initialLng},14);true;`
-    );
+    webViewRef.current?.injectJavaScript(`window.flyTo(${initialLat},${initialLng},14);true;`);
   }, [initialLat, initialLng]);
 
   // Push pin updates into the WebView
@@ -108,17 +112,14 @@ export default function LeafletMap({ listings, onRegionChange, onPinPress, initi
       lng: l.location_lng,
       label: formatThb(l.price_thb),
     }));
-    webViewRef.current?.injectJavaScript(
-      `window.updatePins(${JSON.stringify(pins)});true;`
-    );
+    webViewRef.current?.injectJavaScript(`window.updatePins(${JSON.stringify(pins)});true;`);
   }, [listings]);
 
   const onMessage = useCallback(
     (e: WebViewMessageEvent) => {
       try {
         const msg = JSON.parse(e.nativeEvent.data) as
-          | { type: 'regionChange'; bounds: Bounds }
-          | { type: 'pinPress'; listingId: string };
+          { type: 'regionChange'; bounds: Bounds } | { type: 'pinPress'; listingId: string };
         if (msg.type === 'regionChange') onRegionChange(msg.bounds);
         else if (msg.type === 'pinPress') onPinPress(msg.listingId);
       } catch {

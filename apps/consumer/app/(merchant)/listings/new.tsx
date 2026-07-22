@@ -368,10 +368,7 @@ export default function NewListingScreen() {
       <View style={styles.slotHeader}>
         <Text style={styles.label}>{t('merchant.pickupSlot')}</Text>
         {slotTemplates.length > 0 && (
-          <TouchableOpacity
-            onPress={() => setShowTemplatePicker(true)}
-            accessibilityRole="button"
-          >
+          <TouchableOpacity onPress={() => setShowTemplatePicker(true)} accessibilityRole="button">
             <Text style={styles.loadTemplateText}>{t('merchant.loadTemplate')}</Text>
           </TouchableOpacity>
         )}

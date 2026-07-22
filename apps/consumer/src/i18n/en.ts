@@ -35,6 +35,28 @@ export const en = {
     lineSignInFailed: 'LINE sign-in failed. Please try again.',
     pdpaConsent: 'I consent to MaiThing collecting and using my personal data under PDPA',
     referralCode: 'Referral code (optional)',
+    tagline: 'Save food, save money.',
+  },
+  onboarding: {
+    rescue: {
+      title: 'Rescue surplus food',
+      subtitle: 'Save quality meals from local stores at lower prices.',
+    },
+    browse: {
+      title: 'Browse nearby',
+      subtitle: 'Find surprise bags and pick-your-own items near you.',
+    },
+    buy: {
+      title: 'Reserve and pay',
+      subtitle: 'Pay securely, then pick up during the listed window.',
+    },
+    pickup: {
+      title: 'Pick up',
+      subtitle: 'Show your code to staff and collect your food.',
+    },
+    skip: 'Skip',
+    next: 'Next',
+    getStarted: 'Start exploring',
   },
   discover: {
     title: 'Food near me',
@@ -223,7 +245,7 @@ export const en = {
       freePrice: 'Higher commission',
       proPrice: 'Lower commission',
     },
-    welcome: 'Welcome back',
+    welcome: 'Merchant',
     verified: 'Verified',
     pendingVerification: 'Pending verification',
     activeListings: 'Active listings',
@@ -311,6 +333,9 @@ export const en = {
     ratingAverage: 'Rating average',
     recentOrders: 'Recent orders',
     noOrdersYet: 'No orders yet',
+  },
+  notifications: {
+    title: 'Notifications',
   },
   categories: {
     bakery: 'Bakery',

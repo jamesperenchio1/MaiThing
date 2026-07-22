@@ -1,9 +1,10 @@
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth';
 import { useProfile } from '../../src/hooks/useProfile';
+import { Icon } from '../../src/components/ui';
 
 export default function MerchantLayout() {
   const { t } = useTranslation();
@@ -33,35 +34,35 @@ export default function MerchantLayout() {
         name="dashboard"
         options={{
           title: t('merchant.dashboard'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🏠</Text>,
+          tabBarIcon: ({ color }) => <Icon name="home-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="today"
         options={{
           title: t('merchant.today'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📅</Text>,
+          tabBarIcon: ({ color }) => <Icon name="calendar-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="listings/index"
         options={{
           title: t('merchant.listings'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🍱</Text>,
+          tabBarIcon: ({ color }) => <Icon name="restaurant-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="locations/index"
         options={{
           title: t('merchant.locations'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📍</Text>,
+          tabBarIcon: ({ color }) => <Icon name="location-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: t('merchant.settings'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>⚙️</Text>,
+          tabBarIcon: ({ color }) => <Icon name="settings-outline" size={24} color={color} />,
         }}
       />
     </Tabs>

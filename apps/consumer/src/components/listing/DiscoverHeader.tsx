@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Icon } from '../ui/Icon';
 
 interface Props {
   viewMode: 'map' | 'list';
@@ -58,7 +59,7 @@ export default function DiscoverHeader({
         accessibilityRole="button"
         accessibilityLabel={t('chat.title')}
       >
-        <Text style={styles.bellIcon}>🔔</Text>
+        <Icon name="notifications-outline" size={22} color="#111827" />
         {hasUnread && <View style={styles.unreadDot} />}
       </TouchableOpacity>
     </View>

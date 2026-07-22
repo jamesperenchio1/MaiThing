@@ -9,7 +9,6 @@ const config = getDefaultConfig(__dirname);
 // avoiding duplicate React copies in the web bundle.
 const webAliases = {
   'react-native': path.resolve(__dirname, 'node_modules/react-native-web'),
-  'react-native-maps': path.resolve(__dirname, 'react-native-maps-web-stub.js'),
   '@stripe/stripe-react-native': path.resolve(__dirname, 'stripe-react-native-web-stub.js'),
 };
 

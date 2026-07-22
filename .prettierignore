@@ -11,3 +11,8 @@ SETUP-TODO.md
 AUDIT.md
 PROGRESS.md
 README.md
+.claude
+.turbo
+pnpm-lock.yaml
+expo-env.d.ts
+.playwright-mcp

@@ -56,7 +56,13 @@ export default function SlotTemplatesScreen() {
       return;
     }
     createTemplate.mutate(
-      { location_id: locationId, label: trimmed, start_time: startTime, end_time: endTime, weekdays },
+      {
+        location_id: locationId,
+        label: trimmed,
+        start_time: startTime,
+        end_time: endTime,
+        weekdays,
+      },
       {
         onSuccess: () => {
           setLabel('');
@@ -71,22 +77,18 @@ export default function SlotTemplatesScreen() {
   };
 
   const handleDelete = (template: SlotTemplate) => {
-    Alert.alert(
-      t('merchant.slotTemplateDelete'),
-      template.label,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('merchant.slotTemplateDelete'),
-          style: 'destructive',
-          onPress: () =>
-            deleteTemplate.mutate(
-              { id: template.id, locationId: template.location_id },
-              { onError: (err: Error) => Alert.alert(t('common.error'), err.message) },
-            ),
-        },
-      ],
-    );
+    Alert.alert(t('merchant.slotTemplateDelete'), template.label, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('merchant.slotTemplateDelete'),
+        style: 'destructive',
+        onPress: () =>
+          deleteTemplate.mutate(
+            { id: template.id, locationId: template.location_id },
+            { onError: (err: Error) => Alert.alert(t('common.error'), err.message) },
+          ),
+      },
+    ]);
   };
 
   return (
@@ -188,9 +190,7 @@ export default function SlotTemplatesScreen() {
                 onPress={() => toggleWeekday(idx + 1)}
                 accessibilityRole="checkbox"
               >
-                <Text
-                  style={[styles.dayText, weekdays.includes(idx + 1) && styles.dayTextActive]}
-                >
+                <Text style={[styles.dayText, weekdays.includes(idx + 1) && styles.dayTextActive]}>
                   {lbl}
                 </Text>
               </TouchableOpacity>
@@ -205,7 +205,10 @@ export default function SlotTemplatesScreen() {
               <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.saveBtn, (!label.trim() || createTemplate.isPending) && styles.saveBtnDisabled]}
+              style={[
+                styles.saveBtn,
+                (!label.trim() || createTemplate.isPending) && styles.saveBtnDisabled,
+              ]}
               onPress={handleCreate}
               disabled={!label.trim() || createTemplate.isPending}
               accessibilityRole="button"
@@ -261,7 +264,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   cardLabel: { fontSize: 15, fontWeight: '700', color: '#111827' },
   deleteText: { fontSize: 13, color: '#dc2626', fontWeight: '600' },
   cardTime: { fontSize: 14, color: '#6b7280', marginBottom: 10 },

@@ -20,6 +20,7 @@ import { shareReferralCode } from '../../src/lib/share';
 import i18n from '../../src/i18n';
 import type { Tables } from '@maithing/shared';
 import { heroLevel } from '@maithing/shared';
+import { Icon } from '../../src/components/ui';
 
 type Profile = Tables<'profiles'>;
 type UserImpact = Tables<'user_impact'>;
@@ -215,7 +216,12 @@ export default function ProfileScreen() {
 
       {/* Profile header */}
       <View style={styles.card}>
-        <Text style={styles.avatar}>👤</Text>
+        <Icon
+          name="person-circle-outline"
+          size={64}
+          color="#6b7280"
+          style={{ alignSelf: 'center', marginBottom: 8 }}
+        />
         <Text style={styles.name}>{displayName}</Text>
       </View>
 
@@ -254,7 +260,7 @@ export default function ProfileScreen() {
               accessibilityRole="button"
             >
               <Text style={styles.rowButtonText}>{t('profile.shareReferralCode')}</Text>
-              <Text style={styles.rowButtonArrow}>→</Text>
+              <Icon name="chevron-forward" size={18} color="#9ca3af" />
             </TouchableOpacity>
           </>
         ) : (
@@ -309,7 +315,7 @@ export default function ProfileScreen() {
         accessibilityRole="button"
       >
         <Text style={styles.rowButtonText}>{t('profile.orderHistory')}</Text>
-        <Text style={styles.rowButtonArrow}>→</Text>
+        <Icon name="chevron-forward" size={18} color="#9ca3af" />
       </TouchableOpacity>
 
       {/* Favorites */}
@@ -383,7 +389,7 @@ export default function ProfileScreen() {
           accessibilityRole="button"
         >
           <Text style={styles.rowButtonText}>{t('profile.switchToMerchant')}</Text>
-          <Text style={styles.rowButtonArrow}>→</Text>
+          <Icon name="chevron-forward" size={18} color="#9ca3af" />
         </TouchableOpacity>
       )}
 
@@ -424,7 +430,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  avatar: { fontSize: 48, textAlign: 'center', marginBottom: 8 },
   name: { fontSize: 18, fontWeight: '700', textAlign: 'center', color: '#111827' },
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 4 },
   level: { fontSize: 14, color: '#16a34a', fontWeight: '600', marginBottom: 12 },
@@ -459,7 +464,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   rowButtonText: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  rowButtonArrow: { fontSize: 18, color: '#9ca3af' },
   rowButtonValue: { fontSize: 14, color: '#16a34a', fontWeight: '600' },
   codeLabel: { fontSize: 12, color: '#6b7280', marginBottom: 4 },
   referralCodeValue: {
