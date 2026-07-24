@@ -6,11 +6,13 @@ interface PressableScaleProps extends PressableProps {
   children: React.ReactNode;
   className?: string;
   scale?: number;
+  containerClassName?: string;
 }
 
 export function PressableScale({
   children,
   className,
+  containerClassName,
   scale = 0.97,
   onPressIn,
   onPressOut,
@@ -23,10 +25,17 @@ export function PressableScale({
     transform: [{ scale: sharedValue.value }],
   }));
 
+  // Propagate flex-1 to the Animated.View wrapper so layout works correctly
+  const hasFlex1 = typeof className === 'string' && /\bflex-1\b/.test(className);
+
   return (
-    <Animated.View style={animatedStyle} testID={testID}>
+    <Animated.View
+      style={[animatedStyle, hasFlex1 ? { flex: 1 } : undefined]}
+      testID={testID}
+      className={containerClassName}
+    >
       <Pressable
-        className={className}
+        className={cn(hasFlex1 ? 'flex-1' : '', className)}
         onPressIn={(e) => {
           sharedValue.value = withSpring(scale, { damping: 15, stiffness: 300 });
           onPressIn?.(e);
