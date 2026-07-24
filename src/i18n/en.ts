@@ -96,6 +96,13 @@ export default {
       pickupInstructions: 'Pickup instructions',
       openUntil: 'Open until {{time}}',
     },
+    map: {
+      myLocation: 'My location',
+      directions: 'Get directions',
+      distanceAway: '{{distance}} away',
+      enableLocation: 'Enable location',
+      locationDenied: 'Location access is off. Using default location.',
+    },
     orders: {
       active: 'Active',
       history: 'History',

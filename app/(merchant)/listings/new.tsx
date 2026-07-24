@@ -95,7 +95,7 @@ export default function CreateListingScreen() {
         type: data.type,
         title: data.title,
         description: data.description,
-        images: images.length ? images : [`https://placehold.co/600x400/10B981/FFFFFF/png?text=${encodeURIComponent(data.title)}`],
+        images: images.length ? images : [`https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent(data.title)}`],
         category: data.category,
         originalPrice: data.originalPrice,
         salePrice: data.salePrice,
@@ -122,7 +122,7 @@ export default function CreateListingScreen() {
   const addImage = () => {
     setImages((prev) => [
       ...prev,
-      `https://placehold.co/600x400/10B981/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
+      `https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
     ]);
   };
 

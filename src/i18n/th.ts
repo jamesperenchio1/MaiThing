@@ -96,6 +96,13 @@ export default {
       pickupInstructions: 'คำแนะนำการรับสินค้า',
       openUntil: 'เปิดถึง {{time}}',
     },
+    map: {
+      myLocation: 'ตำแหน่งของฉัน',
+      directions: 'นำทาง',
+      distanceAway: 'ห่าง {{distance}}',
+      enableLocation: 'เปิดตำแหน่ง',
+      locationDenied: 'ไม่ได้รับสิทธิ์ตำแหน่ง ใช้ตำแหน่งเริ่มต้นแทน',
+    },
     orders: {
       active: 'กำลังดำเนินการ',
       history: 'ประวัติ',

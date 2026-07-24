@@ -5,31 +5,31 @@
 @layer base {
   :root {
     color-scheme: light;
-    --background: #FFFFFF;
-    --foreground: #111827;
+    --background: #FFFBF7;
+    --foreground: #1F2937;
     --card: #FFFFFF;
-    --border: #E5E7EB;
-    --muted: #6B7280;
+    --border: #F0EAE3;
+    --muted: #7C6F64;
     --danger: #EF4444;
     --warning: #F59E0B;
     --info: #3B82F6;
-    --primary: #10B981;
+    --primary: #16A34A;
     --primary-foreground: #FFFFFF;
-    --success: #10B981;
+    --success: #16A34A;
   }
 
   .dark {
     color-scheme: dark;
-    --background: #0B1220;
+    --background: #0F1419;
     --foreground: #F9FAFB;
-    --card: #111827;
-    --border: #1F2937;
+    --card: #1A1F24;
+    --border: #2A2F35;
     --muted: #9CA3AF;
     --danger: #F87171;
     --warning: #FBBF24;
     --info: #60A5FA;
-    --primary: #34D399;
-    --primary-foreground: #0B1220;
-    --success: #34D399;
+    --primary: #4ADE80;
+    --primary-foreground: #0F1419;
+    --success: #4ADE80;
   }
 }

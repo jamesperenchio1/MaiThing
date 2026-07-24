@@ -67,6 +67,7 @@ export interface Merchant {
   pickupInstructions?: string;
   followers: number;
   createdAt: string;
+  distance?: number;
 }
 
 export type ListingType = 'mystery_box' | 'fixed_item';
@@ -90,6 +91,7 @@ export interface ListingBase {
   allergens: string[];
   status: ListingStatus;
   createdAt: string;
+  distance?: number;
 }
 
 export interface MysteryBoxListing extends ListingBase {
@@ -152,6 +154,7 @@ export interface WalletTransaction {
   type: 'top_up' | 'purchase' | 'refund' | 'payout';
   amount: number;
   description: string;
+  orderId?: string;
   createdAt: string;
 }
 

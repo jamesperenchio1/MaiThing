@@ -1,19 +1,24 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image } from 'react-native';
-import { Heart, MapPin, Star, Clock } from 'lucide-react-native';
+import { Heart, MapPin, Star, Clock, Phone, Navigation, AlertCircle } from 'lucide-react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
+import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { ListingCard } from '@/src/components/composite/ListingCard';
+import { MerchantMap } from '@/src/components/map/MerchantMap';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useListings } from '@/src/hooks/useListings';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { formatDistance, calculateDistance } from '@/src/lib/utils';
+import { openDirections } from '@/src/lib/maps';
+import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 
 export default function MerchantDetailScreen() {
   const router = useRouter();
@@ -64,11 +69,7 @@ export default function MerchantDetailScreen() {
                 </Text>
               </View>
             </View>
-            <PressableScale
-              onPress={() => {}}
-              className="rounded-full bg-muted/10 p-3"
-              scale={0.9}
-            >
+            <PressableScale onPress={() => {}} className="rounded-full bg-muted/10 p-3" scale={0.9}>
               <Heart size={20} color={colors.foreground} />
             </PressableScale>
           </View>
@@ -80,12 +81,89 @@ export default function MerchantDetailScreen() {
             </Text>
           </View>
 
+          <View className="mb-4 flex-row items-center">
+            <Navigation size={16} color={colors.primary} />
+            <Text variant="body-sm" className="ml-2 text-primary">
+              {formatDistance(calculateDistance(DEFAULT_USER_LOCATION, merchant.coordinates))} away
+            </Text>
+          </View>
+
+          <View className="mb-4 flex-row items-center">
+            <Phone size={16} color={colors.muted} />
+            <Text variant="body-sm" className="ml-2 text-muted">
+              {merchant.phone}
+            </Text>
+          </View>
+
+          <Button
+            variant="secondary"
+            className="mb-6"
+            leftIcon={<Navigation size={18} color={colors.primary} />}
+            onPress={() => openDirections(merchant.coordinates, merchant.name)}
+          >
+            {t('customer.map.directions')}
+          </Button>
+
           <View className="mb-6 flex-row flex-wrap">
             {merchant.categories.map((cat) => (
               <Badge key={cat} variant="muted" className="mr-2 mb-2">
                 {cat}
               </Badge>
             ))}
+          </View>
+
+          <View testID="merchant-map-section" className="mb-6 overflow-hidden rounded-3xl bg-card">
+            <MerchantMap merchant={merchant} />
+          </View>
+
+          <View testID="merchant-hours-section" className="mb-6">
+            <Text testID="merchant-hours-title" variant="h3" className="mb-2">
+              Business Hours
+            </Text>
+            <Card variant="outlined">
+              {merchant.businessHours.map((hours, index) => {
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                return (
+                  <View
+                    key={hours.day}
+                    className={`flex-row items-center justify-between py-2 ${index !== merchant.businessHours.length - 1 ? 'border-b border-border' : ''}`}
+                  >
+                    <Text
+                      variant="body-sm"
+                      className={
+                        hours.day === new Date().getDay()
+                          ? 'font-semibold text-foreground'
+                          : 'text-muted'
+                      }
+                    >
+                      {days[hours.day]}
+                    </Text>
+                    <Text
+                      variant="body-sm"
+                      className={
+                        hours.day === new Date().getDay()
+                          ? 'font-semibold text-foreground'
+                          : 'text-muted'
+                      }
+                    >
+                      {hours.open} - {hours.close}
+                    </Text>
+                  </View>
+                );
+              })}
+            </Card>
+          </View>
+
+          <View testID="merchant-pickup-section" className="mb-6 rounded-2xl bg-primary/10 p-4">
+            <View className="mb-2 flex-row items-center">
+              <AlertCircle size={18} color={colors.primary} className="mr-3" />
+              <Text variant="body-sm" className="font-semibold text-foreground">
+                Pickup Information
+              </Text>
+            </View>
+            <Text testID="merchant-pickup-text" variant="body-sm" className="text-muted">
+              {merchant.pickupInstructions}
+            </Text>
           </View>
 
           <View testID="merchant-about-section" className="mb-6">
@@ -95,18 +173,6 @@ export default function MerchantDetailScreen() {
             <Text testID="merchant-about-text" variant="body" className="text-muted">
               {merchant.description}
             </Text>
-          </View>
-
-          <View testID="merchant-pickup-section" className="mb-6">
-            <Text testID="merchant-pickup-title" variant="h3" className="mb-2">
-              Pickup Information
-            </Text>
-            <View className="flex-row items-start">
-              <Clock size={18} color="#6B7280" className="mr-3 mt-0.5" />
-              <Text testID="merchant-pickup-text" variant="body-sm" className="flex-1 text-muted">
-                {merchant.pickupInstructions}
-              </Text>
-            </View>
           </View>
 
           <View testID="merchant-listings-section" className="mb-6">

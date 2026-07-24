@@ -46,3 +46,12 @@ expo-env.d.ts
 
 # OS
 Thumbs.db
+
+# local agent / IDE artifacts
+.claude/
+.claire/
+.playwright-mcp/
+
+# screenshots / test artifacts
+/*.png
+snapshot-landing.yml

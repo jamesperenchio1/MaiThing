@@ -1,8 +1,8 @@
 import { Image, View } from 'react-native';
-import { Heart } from 'lucide-react-native';
+import { Heart, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { cn, formatCurrency } from '@/src/lib/utils';
+import { cn, formatCurrency, formatDistance } from '@/src/lib/utils';
 import { Card } from '@/src/components/ui/Card';
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
@@ -33,7 +33,7 @@ export function ListingCard({ listing, variant = 'vertical', className, testID }
       scale={0.98}
     >
       <Card variant="elevated" className={cn('overflow-hidden p-0', variant === 'horizontal' && 'flex-row')}>
-        <View className={cn('relative', variant === 'vertical' ? 'h-40 w-full' : 'h-full w-32')}>
+        <View className={cn('relative bg-muted', variant === 'vertical' ? 'h-40 w-full' : 'h-full w-32')}>
           <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
           <View className="absolute left-2 top-2">
             <Badge variant={isMystery ? 'warning' : 'info'}>
@@ -72,6 +72,7 @@ export function ListingCard({ listing, variant = 'vertical', className, testID }
           </View>
           <Text variant="caption" className="text-muted">
             {listing.quantityRemaining} left · Pickup {new Date(listing.pickupWindowStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {listing.distance != null ? ` · ${formatDistance(listing.distance)}` : ''}
           </Text>
         </View>
       </Card>

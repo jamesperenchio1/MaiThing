@@ -5,6 +5,7 @@ import type {
   Merchant,
   MerchantAnalytics,
   Notification,
+  NotificationPreferences,
   Order,
   User,
   Wallet,
@@ -25,10 +26,22 @@ export interface UserRepository {
   updateProfile(userId: string, data: Partial<User>): Promise<User>;
   updateCustomerProfile(userId: string, data: Partial<CustomerProfile>): Promise<CustomerProfile>;
   getCustomerProfile(userId: string): Promise<CustomerProfile>;
+  addFavorite(userId: string, merchantId: string): Promise<void>;
+  removeFavorite(userId: string, merchantId: string): Promise<void>;
+  updateNotificationPreferences(
+    userId: string,
+    preferences: NotificationPreferences
+  ): Promise<NotificationPreferences>;
 }
 
 export interface MerchantRepository {
-  getMerchants(params?: { lat?: number; lng?: number; radius?: number; category?: string; query?: string }): Promise<Merchant[]>;
+  getMerchants(params?: {
+    lat?: number;
+    lng?: number;
+    radius?: number;
+    category?: string;
+    query?: string;
+  }): Promise<Merchant[]>;
   getMerchant(id: string): Promise<Merchant | null>;
   getCategories(): Promise<Category[]>;
   followMerchant(userId: string, merchantId: string): Promise<void>;
@@ -36,7 +49,15 @@ export interface MerchantRepository {
 }
 
 export interface ListingRepository {
-  getListings(params?: { merchantId?: string; category?: string; query?: string; lat?: number; lng?: number; radius?: number; type?: string }): Promise<Listing[]>;
+  getListings(params?: {
+    merchantId?: string;
+    category?: string;
+    query?: string;
+    lat?: number;
+    lng?: number;
+    radius?: number;
+    type?: string;
+  }): Promise<Listing[]>;
   getListing(id: string): Promise<Listing | null>;
   createListing(data: Omit<Listing, 'id' | 'createdAt'>): Promise<Listing>;
   updateListing(id: string, data: Partial<Listing>): Promise<Listing>;

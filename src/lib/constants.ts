@@ -1,8 +1,14 @@
-import type { Category } from '@/src/types';
+import type { Category, Coordinates } from '@/src/types';
 
 export const APP_NAME = 'Maithing';
 export const APP_TAGLINE = 'Save money. Save food. Help the planet.';
 export const APP_TAGLINE_TH = 'ประหยัดเงิน ลด food waste ช่วยโลก';
+
+// Default user location for distance calculations (Siam, Bangkok).
+export const DEFAULT_USER_LOCATION: Coordinates = {
+  latitude: 13.7462,
+  longitude: 100.5347,
+};
 
 export const CATEGORIES: Category[] = [
   { id: 'bakery', name: 'Bakery', nameTh: 'เบเกอรี่', icon: 'cake' },

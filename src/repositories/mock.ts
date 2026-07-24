@@ -30,6 +30,7 @@ import type {
   Merchant,
   MerchantAnalytics,
   Notification,
+  NotificationPreferences,
   Order,
   User,
   Wallet,
@@ -98,7 +99,10 @@ class MockUserRepository implements UserRepository {
     return user;
   }
 
-  async updateCustomerProfile(userId: string, data: Partial<CustomerProfile>): Promise<CustomerProfile> {
+  async updateCustomerProfile(
+    userId: string,
+    data: Partial<CustomerProfile>
+  ): Promise<CustomerProfile> {
     await sleep(300);
     Object.assign(TEST_CUSTOMER_PROFILE, data);
     return TEST_CUSTOMER_PROFILE;
@@ -108,10 +112,39 @@ class MockUserRepository implements UserRepository {
     await sleep(300);
     return TEST_CUSTOMER_PROFILE;
   }
+
+  async addFavorite(userId: string, merchantId: string): Promise<void> {
+    await sleep(200);
+    if (!TEST_CUSTOMER_PROFILE.favorites.includes(merchantId)) {
+      TEST_CUSTOMER_PROFILE.favorites.push(merchantId);
+    }
+  }
+
+  async removeFavorite(userId: string, merchantId: string): Promise<void> {
+    await sleep(200);
+    TEST_CUSTOMER_PROFILE.favorites = TEST_CUSTOMER_PROFILE.favorites.filter(
+      (id) => id !== merchantId
+    );
+  }
+
+  async updateNotificationPreferences(
+    userId: string,
+    preferences: NotificationPreferences
+  ): Promise<NotificationPreferences> {
+    await sleep(200);
+    TEST_CUSTOMER_PROFILE.notificationPreferences = { ...preferences };
+    return TEST_CUSTOMER_PROFILE.notificationPreferences;
+  }
 }
 
 class MockMerchantRepository implements MerchantRepository {
-  async getMerchants(params?: { lat?: number; lng?: number; radius?: number; category?: string; query?: string }): Promise<Merchant[]> {
+  async getMerchants(params?: {
+    lat?: number;
+    lng?: number;
+    radius?: number;
+    category?: string;
+    query?: string;
+  }): Promise<Merchant[]> {
     await sleep(300);
     let result = [...MERCHANTS];
 
@@ -129,10 +162,16 @@ class MockMerchantRepository implements MerchantRepository {
       result = result.filter((m) => m.categories.includes(params.category!));
     }
 
-    if (params?.lat != null && params?.lng != null && params?.radius != null) {
+    if (params?.lat != null && params?.lng != null) {
       const center = { latitude: params.lat, longitude: params.lng };
-      result = result.filter((m) => calculateDistance(center, m.coordinates) <= params.radius!);
-      result.sort((a, b) => calculateDistance(center, a.coordinates) - calculateDistance(center, b.coordinates));
+      result = result.map((m) => ({
+        ...m,
+        distance: calculateDistance(center, m.coordinates),
+      }));
+      if (params?.radius != null) {
+        result = result.filter((m) => m.distance! <= params.radius!);
+      }
+      result.sort((a, b) => a.distance! - b.distance!);
     }
 
     return result;
@@ -162,7 +201,15 @@ class MockMerchantRepository implements MerchantRepository {
 }
 
 class MockListingRepository implements ListingRepository {
-  async getListings(params?: { merchantId?: string; category?: string; query?: string; lat?: number; lng?: number; radius?: number; type?: string }): Promise<Listing[]> {
+  async getListings(params?: {
+    merchantId?: string;
+    category?: string;
+    query?: string;
+    lat?: number;
+    lng?: number;
+    radius?: number;
+    type?: string;
+  }): Promise<Listing[]> {
     await sleep(300);
     let result = LISTINGS.filter((l) => l.status === 'active');
 
@@ -188,18 +235,19 @@ class MockListingRepository implements ListingRepository {
       );
     }
 
-    if (params?.lat != null && params?.lng != null && params?.radius != null) {
+    if (params?.lat != null && params?.lng != null) {
       const center = { latitude: params.lat, longitude: params.lng };
-      result = result.filter((l) => {
+      result = result.map((l) => {
         const merchant = MERCHANTS.find((m) => m.id === l.merchantId);
-        if (!merchant) return false;
-        return calculateDistance(center, merchant.coordinates) <= params.radius!;
+        return {
+          ...l,
+          distance: merchant ? calculateDistance(center, merchant.coordinates) : undefined,
+        };
       });
-      result.sort((a, b) => {
-        const ma = MERCHANTS.find((m) => m.id === a.merchantId)!;
-        const mb = MERCHANTS.find((m) => m.id === b.merchantId)!;
-        return calculateDistance(center, ma.coordinates) - calculateDistance(center, mb.coordinates);
-      });
+      if (params?.radius != null) {
+        result = result.filter((l) => l.distance == null || l.distance <= params.radius!);
+      }
+      result.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
     }
 
     return result;
@@ -212,7 +260,11 @@ class MockListingRepository implements ListingRepository {
 
   async createListing(data: Omit<Listing, 'id' | 'createdAt'>): Promise<Listing> {
     await sleep(500);
-    const listing = { ...data, id: `listing-${Date.now()}`, createdAt: new Date().toISOString() } as unknown as Listing;
+    const listing = {
+      ...data,
+      id: `listing-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    } as unknown as Listing;
     LISTINGS.push(listing);
     return listing;
   }

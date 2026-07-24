@@ -323,8 +323,8 @@ export const MERCHANTS: Merchant[] = MERCHANT_SEEDS.map((m, idx) => ({
   name: m.name,
   slug: m.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
   description: m.description,
-  logoUrl: `https://placehold.co/200x200/10B981/FFFFFF/png?text=${encodeURIComponent(m.name.charAt(0))}`,
-  coverUrl: `https://placehold.co/800x400/E6F4FE/10B981/png?text=${encodeURIComponent(m.name)}`,
+  logoUrl: `https://placehold.co/200x200/F97316/FFFFFF/png?text=${encodeURIComponent(m.name.charAt(0))}`,
+  coverUrl: getFoodImage(m.categories[0], m.name + '-cover') + '&w=800&h=400',
   address: m.address,
   coordinates: m.coords,
   phone: '02-123-4567',
@@ -367,6 +367,59 @@ const FIXED_ITEM_TITLES: Record<string, string[]> = {
   street_food: ['Grilled Chicken', 'Pork Skewers', 'Som Tam'],
 };
 
+function getFoodImage(category: string, seed: string): string {
+  const images: Record<string, string[]> = {
+    bakery: [
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&h=400&fit=crop',
+    ],
+    cafe: [
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=600&h=400&fit=crop',
+    ],
+    restaurant: [
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=600&h=400&fit=crop',
+    ],
+    grocery: [
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1607349913338-fca6f7fc42d0?w=600&h=400&fit=crop',
+    ],
+    hotel: [
+      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop',
+    ],
+    dessert: [
+      'https://images.unsplash.com/photo-1563729784474-d8b8c88a8b5f?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&h=400&fit=crop',
+    ],
+    healthy: [
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=600&h=400&fit=crop',
+    ],
+    street_food: [
+      'https://images.unsplash.com/photo-1606491956689-2ea866820c96?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1555126634-323283e090fa?w=600&h=400&fit=crop',
+    ],
+  };
+
+  const list = images[category] ?? images.bakery;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  return list[Math.abs(hash) % list.length];
+}
+
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -389,7 +442,7 @@ function generateMysteryBox(merchant: Merchant, index: number): MysteryBoxListin
     title: `${merchant.name} ${title}`,
     description: `A delicious mystery box from ${merchant.name}. Contents vary based on daily surplus. Great value and helps reduce food waste.`,
     images: [
-      `https://placehold.co/600x400/10B981/FFFFFF/png?text=${encodeURIComponent(title)}`,
+      getFoodImage(merchant.categories[0], `${merchant.id}-${index}-box`),
     ],
     category: merchant.categories[0],
     originalPrice: originalPrices[size],
@@ -420,7 +473,7 @@ function generateFixedItem(merchant: Merchant, index: number): FixedItemListing 
     title: `${title} @ ${merchant.name}`,
     description: `Surplus ${title.toLowerCase()} ready for pickup. Fresh and delicious, available at a discounted price while stocks last.`,
     images: [
-      `https://placehold.co/600x400/059669/FFFFFF/png?text=${encodeURIComponent(title)}`,
+      getFoodImage(merchant.categories[0], `${merchant.id}-${index}-fixed`),
     ],
     category: merchant.categories[0],
     originalPrice,
@@ -451,15 +504,6 @@ export const CUSTOMER_WALLET: Wallet = {
   balance: 999999,
   currency: 'THB',
 };
-
-export const WALLET_TRANSACTIONS: WalletTransaction[] = Array.from({ length: 20 }).map((_, i) => ({
-  id: `txn-${i + 1}`,
-  userId: TEST_CUSTOMER.id,
-  type: pick(['top_up', 'purchase', 'refund'] as const),
-  amount: randomInt(50, 500),
-  description: pick(['Top up', 'Order at After You Siam', 'Refund for cancelled order', 'Order at Rocket Coffeebar']),
-  createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-}));
 
 export function generateOrders(count: number): Order[] {
   const statuses: Order['status'][] = ['completed', 'completed', 'completed', 'completed', 'picked_up', 'ready', 'preparing', 'confirmed'];
@@ -500,6 +544,22 @@ export function generateOrders(count: number): Order[] {
 }
 
 export const ORDERS: Order[] = generateOrders(150);
+
+export const WALLET_TRANSACTIONS: WalletTransaction[] = Array.from({ length: 20 }).map((_, i) => {
+  const type = pick(['top_up', 'purchase', 'refund'] as const);
+  const order = type !== 'top_up' ? pick(ORDERS) : null;
+  const amount = type === 'purchase' && order ? order.total : type === 'refund' && order ? order.total : randomInt(50, 500);
+  const description = type === 'top_up' ? 'Top up' : `Order at ${order?.merchantName ?? 'After You Siam'}`;
+  return {
+    id: `txn-${i + 1}`,
+    userId: TEST_CUSTOMER.id,
+    type,
+    amount,
+    description,
+    orderId: order?.id,
+    createdAt: new Date(Date.now() - i * 86400000).toISOString(),
+  };
+});
 
 export const NOTIFICATIONS: Notification[] = [
   {

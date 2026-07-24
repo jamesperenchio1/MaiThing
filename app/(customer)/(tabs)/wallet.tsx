@@ -1,6 +1,7 @@
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView } from 'react-native';
-import { Wallet as WalletIcon, ArrowUpRight, ArrowDownRight } from 'lucide-react-native';
+import { View, ScrollView, Pressable } from 'react-native';
+import { Wallet as WalletIcon, ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -15,35 +16,47 @@ import type { WalletTransaction } from '@/src/types';
 function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
   const isIncoming = transaction.type === 'top_up' || transaction.type === 'refund';
   const colors = useThemeColor();
+  const router = useRouter();
+
+  const onPress = () => {
+    if (transaction.orderId) {
+      router.push(`/(customer)/order/${transaction.orderId}` as any);
+    }
+  };
 
   return (
-    <Card variant="outlined" className="mb-3 flex-row items-center justify-between">
-      <View className="flex-row items-center">
-        <View
-          className={`mr-3 rounded-full p-2 ${isIncoming ? 'bg-primary/10' : 'bg-danger/10'}`}
-        >
-          {isIncoming ? (
-            <ArrowDownRight size={18} color={colors.primary} />
-          ) : (
-            <ArrowUpRight size={18} color={colors.danger} />
-          )}
+    <Pressable onPress={onPress} disabled={!transaction.orderId}>
+      <Card variant="outlined" className="mb-3 flex-row items-center justify-between">
+        <View className="flex-row items-center flex-1 pr-2">
+          <View
+            className={`mr-3 rounded-full p-2 ${isIncoming ? 'bg-primary/10' : 'bg-danger/10'}`}
+          >
+            {isIncoming ? (
+              <ArrowDownRight size={18} color={colors.primary} />
+            ) : (
+              <ArrowUpRight size={18} color={colors.danger} />
+            )}
+          </View>
+          <View className="flex-1">
+            <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
+              {transaction.description}
+            </Text>
+            <Text variant="caption" className="text-muted">
+              {new Date(transaction.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
         </View>
-        <View>
-          <Text variant="body-sm" className="font-semibold">
-            {transaction.description}
+        <View className="flex-row items-center">
+          <Text
+            className={`font-semibold ${isIncoming ? 'text-primary' : 'text-danger'}`}
+          >
+            {isIncoming ? '+' : '-'}
+            {formatCurrency(transaction.amount)}
           </Text>
-          <Text variant="caption" className="text-muted">
-            {new Date(transaction.createdAt).toLocaleDateString()}
-          </Text>
+          {transaction.orderId && <ChevronRight size={18} color={colors.muted} className="ml-1" />}
         </View>
-      </View>
-      <Text
-        className={`font-semibold ${isIncoming ? 'text-primary' : 'text-danger'}`}
-      >
-        {isIncoming ? '+' : '-'}
-        {formatCurrency(transaction.amount)}
-      </Text>
-    </Card>
+      </Card>
+    </Pressable>
   );
 }
 
