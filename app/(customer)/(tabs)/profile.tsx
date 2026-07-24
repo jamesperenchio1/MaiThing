@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { View, Switch } from 'react-native';
+import { View, Switch, Alert } from 'react-native';
 import {
   User,
   Heart,
@@ -10,6 +10,7 @@ import {
   ChevronRight,
   LogOut,
   Store,
+  ShoppingBag,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -21,6 +22,7 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeStore } from '@/src/stores/theme';
+import { useLanguageStore } from '@/src/stores/language';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 
 interface MenuItemProps {
@@ -45,12 +47,13 @@ function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
 }
 
 export default function ProfileScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const selectedRole = useAuthStore((s) => s.selectedRole);
   const hasMerchantRole = useAuthStore((s) => s.hasRole('merchant'));
   const isDark = useThemeStore((s) => s.isDark);
   const toggleTheme = useThemeStore((s) => s.toggle);
+  const { language, toggle: toggleLanguage } = useLanguageStore();
   const colors = useThemeColor();
   const { logout, switchRole } = useAuth();
 
@@ -59,10 +62,26 @@ export default function ProfileScreen() {
     switchRole(nextRole);
   };
 
-  const changeLanguage = () => {
-    const nextLang = i18n.language === 'en' ? 'th' : 'en';
-    i18n.changeLanguage(nextLang);
+  const handleLanguagePress = () => {
+    Alert.alert(
+      t('common.language'),
+      'Choose your language / เลือกภาษา',
+      [
+        {
+          text: 'English',
+          onPress: () => useLanguageStore.getState().setLanguage('en'),
+          style: language === 'en' ? 'default' : 'default',
+        },
+        {
+          text: 'ภาษาไทย',
+          onPress: () => useLanguageStore.getState().setLanguage('th'),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
   };
+
+  const comingSoon = () => Alert.alert('Coming Soon', 'This feature is coming soon!');
 
   return (
     <Screen testID="profile-screen" scrollable className="bg-background">
@@ -79,8 +98,8 @@ export default function ProfileScreen() {
               <Text variant="body-sm" className="text-muted">
                 {user?.email}
               </Text>
-              <Text variant="caption" className="text-muted">
-                {user?.phone}
+              <Text variant="caption" className="text-primary">
+                {selectedRole === 'customer' ? 'Buyer' : 'Merchant'}
               </Text>
             </View>
           </View>
@@ -91,16 +110,25 @@ export default function ProfileScreen() {
             testID="edit-profile-menu-item"
             icon={<User size={20} color={colors.muted} />}
             label="Edit Profile"
+            onPress={comingSoon}
           />
           <MenuItem
             testID="favorites-menu-item"
             icon={<Heart size={20} color={colors.muted} />}
             label={t('common.favorites')}
+            onPress={comingSoon}
           />
           <MenuItem
             testID="saved-addresses-menu-item"
             icon={<MapPin size={20} color={colors.muted} />}
             label="Saved Addresses"
+            onPress={comingSoon}
+          />
+          <MenuItem
+            testID="orders-menu-item"
+            icon={<ShoppingBag size={20} color={colors.muted} />}
+            label="My Orders"
+            onPress={comingSoon}
           />
         </Card>
 
@@ -109,11 +137,13 @@ export default function ProfileScreen() {
             testID="notifications-menu-item"
             icon={<Bell size={20} color={colors.muted} />}
             label={t('common.notifications')}
+            onPress={comingSoon}
           />
           <MenuItem
             testID="dark-mode-menu-item"
             icon={<Moon size={20} color={colors.muted} />}
             label={t('common.darkMode')}
+            onPress={toggleTheme}
             right={
               <Switch
                 value={isDark}
@@ -128,10 +158,10 @@ export default function ProfileScreen() {
             label={t('common.language')}
             right={
               <Text variant="body-sm" className="text-primary">
-                {i18n.language === 'en' ? 'English' : 'ไทย'}
+                {language === 'en' ? 'English' : 'ภาษาไทย'}
               </Text>
             }
-            onPress={changeLanguage}
+            onPress={handleLanguagePress}
           />
         </Card>
 
@@ -139,16 +169,25 @@ export default function ProfileScreen() {
           <Card testID="profile-role-menu" variant="outlined" className="mb-6">
             <MenuItem
               testID="switch-role-button"
-              icon={<Store size={20} color={colors.muted} />}
-              label={
-                selectedRole === 'customer' ? 'Switch to Merchant' : 'Switch to Customer'
-              }
+              icon={<Store size={20} color={colors.primary} />}
+              label={selectedRole === 'customer' ? 'Switch to Merchant mode' : 'Switch to Buyer mode'}
               onPress={handleSwitchRole}
+              right={
+                <Text variant="caption" className="text-primary font-semibold">
+                  {selectedRole === 'customer' ? 'Buyer' : 'Merchant'}
+                </Text>
+              }
             />
           </Card>
         )}
 
-        <Button testID="logout-button" variant="outline" fullWidth onPress={logout} leftIcon={<LogOut size={18} color={colors.foreground} />}>
+        <Button
+          testID="logout-button"
+          variant="outline"
+          fullWidth
+          onPress={logout}
+          leftIcon={<LogOut size={18} color={colors.foreground} />}
+        >
           {t('common.logout')}
         </Button>
       </View>

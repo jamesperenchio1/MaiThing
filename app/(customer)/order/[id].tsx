@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image } from 'react-native';
-import { Clock } from 'lucide-react-native';
+import { Clock, QrCode, Hash } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -9,6 +10,8 @@ import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
+import { QRCode } from '@/src/components/ui/QRCode';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useOrder } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
@@ -46,6 +49,7 @@ export default function OrderDetailScreen() {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const { data: order, isLoading } = useOrder(id);
+  const [showQR, setShowQR] = useState(false);
 
   if (isLoading || !order) {
     return (
@@ -67,12 +71,47 @@ export default function OrderDetailScreen() {
       <Header title={`Order #${order.id.split('-').pop()}`} />
       <View className="px-6 py-4">
         <Card variant="elevated" className="mb-6 items-center p-6">
-          <Text variant="caption" className="mb-2 text-muted">
-            {t('customer.orders.pickupCode')}
-          </Text>
-          <Text className="text-3xl font-mono font-bold tracking-widest text-primary">
-            {order.pickupCode}
-          </Text>
+          <View className="mb-3 flex-row">
+            <PressableScale
+              onPress={() => setShowQR(false)}
+              className={`flex-row items-center rounded-xl px-4 py-2 mr-2 ${!showQR ? 'bg-primary' : 'bg-muted/10'}`}
+              scale={0.95}
+            >
+              <Hash size={16} color={!showQR ? '#fff' : colors.muted} />
+              <Text variant="body-sm" className={`ml-1.5 font-semibold ${!showQR ? 'text-white' : 'text-muted'}`}>
+                Code
+              </Text>
+            </PressableScale>
+            <PressableScale
+              onPress={() => setShowQR(true)}
+              className={`flex-row items-center rounded-xl px-4 py-2 ${showQR ? 'bg-primary' : 'bg-muted/10'}`}
+              scale={0.95}
+            >
+              <QrCode size={16} color={showQR ? '#fff' : colors.muted} />
+              <Text variant="body-sm" className={`ml-1.5 font-semibold ${showQR ? 'text-white' : 'text-muted'}`}>
+                QR
+              </Text>
+            </PressableScale>
+          </View>
+          {showQR ? (
+            <View className="items-center">
+              <View className="rounded-2xl bg-white p-4">
+                <QRCode value={order.pickupCode} size={160} />
+              </View>
+              <Text variant="caption" className="mt-3 text-muted">
+                Show QR code to merchant
+              </Text>
+            </View>
+          ) : (
+            <View className="items-center">
+              <Text variant="caption" className="mb-2 text-muted">
+                {t('customer.orders.pickupCode')}
+              </Text>
+              <Text className="text-3xl font-mono font-bold tracking-widest text-primary">
+                {order.pickupCode}
+              </Text>
+            </View>
+          )}
         </Card>
 
         <View className="mb-6 flex-row">

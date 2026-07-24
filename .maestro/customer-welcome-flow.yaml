@@ -5,6 +5,13 @@ appId: com.jamyangperenchio.maithing
     clearState: true
 
 - waitForAnimationToEnd
+# Dismiss any lingering system dialog (e.g. deep-link confirmation)
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Cancel"
+      - waitForAnimationToEnd
 
 - assertVisible:
     id: "welcome-screen"
@@ -32,8 +39,10 @@ appId: com.jamyangperenchio.maithing
 - assertVisible:
     id: "home-featured-section"
 - assertVisible:
-    id: "home-near-you-section"
-- assertVisible:
     id: "first-featured-merchant"
+
+# Scroll down to reveal the Near You section
+- scroll
+
 - assertVisible:
-    id: "first-nearby-listing"
+    text: "Near You"

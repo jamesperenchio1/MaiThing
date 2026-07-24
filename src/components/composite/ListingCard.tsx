@@ -33,7 +33,7 @@ export function ListingCard({ listing, variant = 'vertical', className, testID }
       scale={0.98}
     >
       <Card variant="elevated" className={cn('overflow-hidden p-0', variant === 'horizontal' && 'flex-row')}>
-        <View className={cn('relative bg-muted', variant === 'vertical' ? 'h-40 w-full' : 'h-full w-32')}>
+        <View className={cn('relative bg-muted', variant === 'vertical' ? 'h-40 w-full' : 'h-24 w-24')}>
           <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
           <View className="absolute left-2 top-2">
             <Badge variant={isMystery ? 'warning' : 'info'}>

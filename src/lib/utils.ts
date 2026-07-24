@@ -40,6 +40,21 @@ export function generatePickupCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  bakery: 'Bakery',
+  cafe: 'Café',
+  restaurant: 'Restaurant',
+  grocery: 'Grocery',
+  hotel: 'Hotel',
+  dessert: 'Dessert',
+  healthy: 'Healthy',
+  street_food: 'Street Food',
+};
+
+export function formatCategory(id: string): string {
+  return CATEGORY_LABELS[id] ?? id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function getInitials(name: string) {
   return name
     .split(' ')

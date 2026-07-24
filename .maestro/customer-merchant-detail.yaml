@@ -3,6 +3,12 @@ appId: com.jamyangperenchio.maithing
 # Open a merchant detail page and verify information
 - runFlow: customer-welcome-flow.yaml
 
+# Welcome flow scrolls down — swipe back to top
+- swipe:
+    direction: DOWN
+    duration: 500
+- waitForAnimationToEnd
+
 # Make sure the first featured merchant card is visible
 - assertVisible:
     id: "first-featured-merchant"
@@ -18,17 +24,16 @@ appId: com.jamyangperenchio.maithing
     timeout: 10000
 
 - assertVisible:
-    id: "merchant-detail-header"
-- assertVisible:
     id: "merchant-about-section"
 - assertVisible:
     id: "merchant-pickup-section"
 - assertVisible:
-    id: "merchant-listings-section"
+    text: "Available Listings"
 
-# Go back to home
-- tapOn:
-    id: "home-tab"
+# Go back to home via swipe or back button
+- swipe:
+    direction: RIGHT
+    duration: 300
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:

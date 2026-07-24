@@ -31,16 +31,18 @@ export default function MapScreen() {
 
   return (
     <Screen testID="map-screen" scrollable={false}>
-      <View className="absolute left-0 right-0 top-0 z-10 px-6 pt-4">
+      <View className="absolute left-0 right-0 top-0 z-10 px-4 pt-4">
         <Text testID="map-title" className="mb-2 text-2xl font-bold text-foreground">
           {t('common.map')}
         </Text>
-        <SearchBar
-          placeholder={t('common.search')}
-          value={query}
-          onChangeText={setQuery}
-          onSubmit={setQuery}
-        />
+        <View className="rounded-2xl bg-background shadow-lg" style={{ shadowOpacity: 0.15, shadowRadius: 8, elevation: 6 }}>
+          <SearchBar
+            placeholder="Search shops nearby..."
+            value={query}
+            onChangeText={setQuery}
+            onSubmit={setQuery}
+          />
+        </View>
       </View>
 
       <View className="absolute bottom-28 right-4 z-10">

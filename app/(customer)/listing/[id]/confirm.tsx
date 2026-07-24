@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Platform, ActivityIndicator } from 'react-native';
@@ -34,6 +35,7 @@ export default function ConfirmOrderScreen() {
   const colors = useThemeColor();
   const { data: listing, isLoading: listingLoading } = useListing(id);
   const { data: merchant } = useMerchant(listing?.merchantId ?? '');
+  const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
@@ -88,6 +90,8 @@ export default function ConfirmOrderScreen() {
         pickupWindowEnd: listing.pickupWindowEnd,
       });
       setOrder(newOrder);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
     } finally {
       setIsSubmitting(false);
     }

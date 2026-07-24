@@ -14,6 +14,7 @@ export function PressableScale({
   scale = 0.97,
   onPressIn,
   onPressOut,
+  testID,
   ...props
 }: PressableScaleProps) {
   const sharedValue = useSharedValue(1);
@@ -23,7 +24,7 @@ export function PressableScale({
   }));
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={animatedStyle} testID={testID}>
       <Pressable
         className={className}
         onPressIn={(e) => {

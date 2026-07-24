@@ -132,7 +132,9 @@ export default function CustomerHomeScreen() {
               <Skeleton key={i} height={120} className="mb-3 rounded-3xl" />
             ))
           : nearbyListings.map((listing, index) => (
-              <ListingCard key={listing.id} listing={listing} variant="horizontal" testID={index === 0 ? 'first-nearby-listing' : undefined} />
+              <View key={listing.id} testID={index === 0 ? 'first-nearby-listing' : undefined}>
+                <ListingCard listing={listing} variant="horizontal" />
+              </View>
             ))}
       </View>
     </Screen>

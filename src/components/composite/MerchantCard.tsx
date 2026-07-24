@@ -2,7 +2,7 @@ import { Image, View } from 'react-native';
 import { Star, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { cn, formatDistance } from '@/src/lib/utils';
+import { cn, formatDistance, formatCategory } from '@/src/lib/utils';
 import { Card } from '@/src/components/ui/Card';
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -47,7 +47,7 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
             </View>
           </View>
           <Text variant="caption" className="text-muted" numberOfLines={1}>
-            {merchant.categories.join(' · ')} · {merchant.address.district}
+            {merchant.categories.map(formatCategory).join(' · ')} · {merchant.address.district}
             {merchant.distance != null ? ` · ${formatDistance(merchant.distance)}` : ''}
           </Text>
         </View>

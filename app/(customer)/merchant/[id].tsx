@@ -16,7 +16,7 @@ import { useMerchant } from '@/src/hooks/useMerchants';
 import { useListings } from '@/src/hooks/useListings';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatDistance, calculateDistance } from '@/src/lib/utils';
+import { formatDistance, calculateDistance, formatCategory } from '@/src/lib/utils';
 import { openDirections } from '@/src/lib/maps';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 
@@ -107,7 +107,7 @@ export default function MerchantDetailScreen() {
           <View className="mb-6 flex-row flex-wrap">
             {merchant.categories.map((cat) => (
               <Badge key={cat} variant="muted" className="mr-2 mb-2">
-                {cat}
+                {formatCategory(cat)}
               </Badge>
             ))}
           </View>

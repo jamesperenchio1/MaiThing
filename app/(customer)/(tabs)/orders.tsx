@@ -8,6 +8,7 @@ import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
 import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
+import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
@@ -84,13 +85,23 @@ export default function OrdersScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const [tab, setTab] = useState<'active' | 'history'>('active');
+  const [search, setSearch] = useState('');
   const { data: orders, isLoading } = useOrders(user?.id ?? '', 'customer');
 
   const activeStatuses: Order['status'][] = ['pending', 'confirmed', 'preparing', 'ready'];
-  const filteredOrders =
+  const tabOrders =
     tab === 'active'
       ? orders?.filter((o) => activeStatuses.includes(o.status))
       : orders?.filter((o) => !activeStatuses.includes(o.status));
+
+  const filteredOrders = search.trim()
+    ? tabOrders?.filter(
+        (o) =>
+          o.merchantName.toLowerCase().includes(search.toLowerCase()) ||
+          o.pickupCode.toLowerCase().includes(search.toLowerCase()) ||
+          o.items.some((i) => i.title.toLowerCase().includes(search.toLowerCase()))
+      )
+    : tabOrders;
 
   return (
     <Screen testID="orders-screen" scrollable className="bg-background">
@@ -98,6 +109,14 @@ export default function OrdersScreen() {
         <Text testID="orders-title" variant="h1" className="mb-4">
           {t('common.orders')}
         </Text>
+
+        <SearchBar
+          placeholder="Search orders..."
+          value={search}
+          onChangeText={setSearch}
+          onSubmit={setSearch}
+          className="mb-4"
+        />
 
         <View testID="orders-tabs" className="mb-4 flex-row rounded-2xl bg-muted/10 p-1">
           {(['active', 'history'] as const).map((tabKey) => (
@@ -129,12 +148,14 @@ export default function OrdersScreen() {
         ) : (
           <View className="items-center py-12">
             <Text variant="h3" className="mb-2 text-center">
-              No {tab} orders
+              {search.trim() ? 'No results found' : `No ${tab} orders`}
             </Text>
             <Text variant="body" className="text-center text-muted">
-              {tab === 'active'
-                ? 'You have no active orders right now.'
-                : 'Your completed and cancelled orders will appear here.'}
+              {search.trim()
+                ? 'Try a different search term'
+                : tab === 'active'
+                  ? 'You have no active orders right now.'
+                  : 'Your completed and cancelled orders will appear here.'}
             </Text>
           </View>
         )}

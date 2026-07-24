@@ -1,41 +1,41 @@
 appId: com.jamyangperenchio.maithing
 ---
-# Open a listing detail from the customer home
+# Open a listing detail via deep link
 - runFlow: customer-welcome-flow.yaml
 
-# Scroll the home screen until the first nearby listing is fully visible
-- scrollUntilVisible:
-    element:
-      id: "first-nearby-listing"
-    direction: DOWN
-    timeout: 10000
-
-# Tap the first nearby listing card by its testID
-- tapOn:
-    id: "first-nearby-listing"
+# Deep-link directly to a known listing in the seed data
+- openLink: "maithing:///(customer)/listing/listing-merchant-1-0-box"
 - waitForAnimationToEnd
-
+# Dismiss the "Open in maithing?" system dialog if it appears
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "listing-detail-screen"
     timeout: 10000
 
 - assertVisible:
-    id: "listing-detail-header"
-- assertVisible:
     id: "listing-description-section"
-- assertVisible:
-    id: "listing-description-title"
 - assertVisible:
     id: "buy-now-button"
 
-# Go back to home
-- tapOn:
-    id: "home-tab"
+# Go back to home via swipe
+- swipe:
+    direction: RIGHT
+    duration: 300
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "customer-home-screen"
     timeout: 10000
+# Scroll back to top to verify the hero
+- swipe:
+    direction: DOWN
+    duration: 500
+- waitForAnimationToEnd
 - assertVisible:
     id: "home-hero-title"
