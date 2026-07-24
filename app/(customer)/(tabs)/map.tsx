@@ -31,11 +31,15 @@ export default function MapScreen() {
 
   return (
     <Screen testID="map-screen" scrollable={false}>
-      <View className="absolute left-0 right-0 top-0 z-10 px-4 pt-4">
+      {/* Search header — sits above the map in normal flow so MapView can't intercept touches */}
+      <View className="px-4 pt-2 pb-2">
         <Text testID="map-title" className="mb-2 text-2xl font-bold text-foreground">
           {t('common.map')}
         </Text>
-        <View className="rounded-2xl bg-background shadow-lg" style={{ shadowOpacity: 0.15, shadowRadius: 8, elevation: 6 }}>
+        <View
+          className="rounded-2xl bg-background"
+          style={{ shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 6 }}
+        >
           <SearchBar
             placeholder="Search shops nearby..."
             value={query}
@@ -45,41 +49,45 @@ export default function MapScreen() {
         </View>
       </View>
 
-      <View className="absolute bottom-28 right-4 z-10">
-        <Button
-          variant="secondary"
-          size="icon"
-          onPress={request}
-          accessibilityLabel={t('customer.map.myLocation')}
-        >
-          {locationDenied ? (
-            <LocateOff size={20} color={colors.muted} />
-          ) : (
-            <LocateFixed size={20} color={colors.primary} />
-          )}
-        </Button>
+      {/* Map fills remaining space; floating controls are absolute within this container */}
+      <View className="flex-1">
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <Skeleton width={200} height={24} className="rounded-xl" />
+          </View>
+        ) : (
+          <Map
+            merchants={merchants ?? []}
+            userLocation={location}
+            locationGranted={status === 'granted'}
+            selectedMerchantId={selectedMerchantId}
+            onSelectMerchant={(merchant) => setSelectedMerchantId(merchant.id)}
+          />
+        )}
+
+        <View className="absolute bottom-4 right-4 z-10">
+          <Button
+            variant="secondary"
+            size="icon"
+            onPress={request}
+            accessibilityLabel={t('customer.map.myLocation')}
+          >
+            {locationDenied ? (
+              <LocateOff size={20} color={colors.muted} />
+            ) : (
+              <LocateFixed size={20} color={colors.primary} />
+            )}
+          </Button>
+        </View>
+
+        {locationDenied && (
+          <View className="absolute bottom-20 left-4 right-4 z-10 rounded-2xl bg-card p-3 shadow-sm">
+            <Text variant="body-sm" className="text-center text-muted">
+              {t('customer.map.locationDenied')}
+            </Text>
+          </View>
+        )}
       </View>
-
-      {locationDenied && (
-        <View className="absolute bottom-24 left-4 right-4 z-10 rounded-2xl bg-card p-3 shadow-sm">
-          <Text variant="body-sm" className="text-center text-muted">
-            {t('customer.map.locationDenied')}
-          </Text>
-        </View>
-      )}
-
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <Skeleton width={200} height={24} className="rounded-xl" />
-        </View>
-      ) : (
-        <Map
-          merchants={merchants ?? []}
-          userLocation={location}
-          selectedMerchantId={selectedMerchantId}
-          onSelectMerchant={(merchant) => setSelectedMerchantId(merchant.id)}
-        />
-      )}
     </Screen>
   );
 }

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { View, Switch } from 'react-native';
-import { Store, Clock, MapPin, LogOut, User } from 'lucide-react-native';
+import { View, Switch, Alert } from 'react-native';
+import { Store, Clock, MapPin, LogOut, User, ChevronRight } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -21,13 +21,14 @@ interface MenuItemProps {
 }
 
 function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
+  const colors = useThemeColor();
   return (
     <PressableScale testID={testID} onPress={onPress} className="flex-row items-center justify-between py-3" scale={0.98}>
       <View className="flex-row items-center">
         <View className="mr-3 rounded-xl bg-muted/10 p-2">{icon}</View>
         <Text variant="body">{label}</Text>
       </View>
-      {right}
+      {right ?? <ChevronRight size={20} color={colors.muted} />}
     </PressableScale>
   );
 }
@@ -37,6 +38,9 @@ export default function MerchantSettingsScreen() {
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
   const { logout, continueAsTest } = useAuth();
+
+  const comingSoon = (feature: string) =>
+    Alert.alert(feature, 'This feature will be available in a future update.');
 
   const handleSwitchRole = () => {
     continueAsTest('customer');
@@ -66,16 +70,19 @@ export default function MerchantSettingsScreen() {
             testID="business-profile-menu-item"
             icon={<Store size={20} color={colors.muted} />}
             label={t('merchant.businessProfile.title')}
+            onPress={() => comingSoon('Business Profile')}
           />
           <MenuItem
             testID="store-hours-menu-item"
             icon={<Clock size={20} color={colors.muted} />}
             label={t('merchant.businessProfile.storeHours')}
+            onPress={() => comingSoon('Store Hours')}
           />
           <MenuItem
             testID="pickup-management-menu-item"
             icon={<MapPin size={20} color={colors.muted} />}
             label={t('merchant.businessProfile.pickupManagement')}
+            onPress={() => comingSoon('Pickup Management')}
           />
         </Card>
 

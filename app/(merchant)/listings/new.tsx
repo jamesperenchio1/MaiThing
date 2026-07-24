@@ -115,7 +115,7 @@ export default function CreateListingScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(merchant)/inventory' as any);
+      router.replace('/(merchant)/(tabs)/inventory' as any);
     },
   });
 
@@ -162,7 +162,8 @@ export default function CreateListingScreen() {
                 >
                   <Card
                     variant={value === t ? 'elevated' : 'outlined'}
-                    className={`items-center p-4 ${value === t ? 'border-2 border-primary' : ''}`}
+                    className="items-center p-4"
+                    style={value === t ? { borderWidth: 2, borderColor: colors.primary } : undefined}
                   >
                     <View className="mb-2 rounded-full bg-primary/10 p-3">
                       <Camera size={24} color={colors.primary} />

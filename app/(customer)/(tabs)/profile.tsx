@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Switch, Alert } from 'react-native';
+import { View, Switch, Alert, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
 import {
   User,
   Heart,
@@ -12,6 +13,7 @@ import {
   Store,
   ShoppingBag,
 } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -24,6 +26,7 @@ import { useAuthStore } from '@/src/stores/auth';
 import { useThemeStore } from '@/src/stores/theme';
 import { useLanguageStore } from '@/src/stores/language';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { mockRepositories } from '@/src/repositories/mock';
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -48,6 +51,7 @@ function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const selectedRole = useAuthStore((s) => s.selectedRole);
   const hasMerchantRole = useAuthStore((s) => s.hasRole('merchant'));
@@ -56,6 +60,9 @@ export default function ProfileScreen() {
   const { language, toggle: toggleLanguage } = useLanguageStore();
   const colors = useThemeColor();
   const { logout, switchRole } = useAuth();
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState(user?.name ?? '');
 
   const handleSwitchRole = () => {
     const nextRole = selectedRole === 'customer' ? 'merchant' : 'customer';
@@ -70,7 +77,6 @@ export default function ProfileScreen() {
         {
           text: 'English',
           onPress: () => useLanguageStore.getState().setLanguage('en'),
-          style: language === 'en' ? 'default' : 'default',
         },
         {
           text: 'ภาษาไทย',
@@ -81,10 +87,56 @@ export default function ProfileScreen() {
     );
   };
 
-  const comingSoon = () => Alert.alert('Coming Soon', 'This feature is coming soon!');
+  const handleEditProfile = () => {
+    setEditName(user?.name ?? '');
+    setEditModalVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    const trimmed = editName.trim();
+    if (!trimmed || !user) {
+      setEditModalVisible(false);
+      return;
+    }
+    await mockRepositories.customerProfile.updateCustomerProfile(user.id, { name: trimmed });
+    useAuthStore.getState().setUser({ ...user, name: trimmed });
+    setEditModalVisible(false);
+  };
 
   return (
     <Screen testID="profile-screen" scrollable className="bg-background">
+      {/* Edit Profile Modal */}
+      <Modal visible={editModalVisible} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={() => setEditModalVisible(false)}>
+          <View className="flex-1 items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <TouchableWithoutFeedback>
+              <View className="mx-6 w-full max-w-sm rounded-3xl bg-card p-6">
+                <Text variant="h3" className="mb-4">Edit Profile</Text>
+                <Text variant="label" className="mb-2 ml-1">Name</Text>
+                <View className="mb-6 rounded-2xl border border-border bg-background px-4 py-3">
+                  <TextInput
+                    value={editName}
+                    onChangeText={setEditName}
+                    placeholder="Your name"
+                    placeholderTextColor={colors.muted}
+                    style={{ color: colors.foreground, fontSize: 16 }}
+                    autoFocus
+                  />
+                </View>
+                <View className="flex-row space-x-3">
+                  <Button variant="outline" className="flex-1" onPress={() => setEditModalVisible(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="flex-1" onPress={handleSaveProfile}>
+                    Save
+                  </Button>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
       <View className="px-6 pt-4 pb-2">
         <Text testID="profile-title" variant="h1" className="mb-6">
           {t('common.profile')}
@@ -110,25 +162,25 @@ export default function ProfileScreen() {
             testID="edit-profile-menu-item"
             icon={<User size={20} color={colors.muted} />}
             label="Edit Profile"
-            onPress={comingSoon}
+            onPress={handleEditProfile}
           />
           <MenuItem
             testID="favorites-menu-item"
             icon={<Heart size={20} color={colors.muted} />}
             label={t('common.favorites')}
-            onPress={comingSoon}
+            onPress={() => router.push('/(customer)/favorites' as any)}
           />
           <MenuItem
             testID="saved-addresses-menu-item"
             icon={<MapPin size={20} color={colors.muted} />}
             label="Saved Addresses"
-            onPress={comingSoon}
+            onPress={() => Alert.alert('Saved Addresses', 'Address management coming soon!')}
           />
           <MenuItem
             testID="orders-menu-item"
             icon={<ShoppingBag size={20} color={colors.muted} />}
             label="My Orders"
-            onPress={comingSoon}
+            onPress={() => router.navigate('/(customer)/(tabs)/orders' as any)}
           />
         </Card>
 
@@ -137,7 +189,7 @@ export default function ProfileScreen() {
             testID="notifications-menu-item"
             icon={<Bell size={20} color={colors.muted} />}
             label={t('common.notifications')}
-            onPress={comingSoon}
+            onPress={() => router.push('/(customer)/notifications' as any)}
           />
           <MenuItem
             testID="dark-mode-menu-item"

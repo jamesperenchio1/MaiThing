@@ -90,7 +90,7 @@ export default function MerchantDashboardScreen() {
           testID="manage-inventory-button"
           variant="secondary"
           fullWidth
-          onPress={() => router.push('/(merchant)/inventory' as any)}
+          onPress={() => router.push('/(merchant)/(tabs)/inventory' as any)}
         >
           {t('merchant.dashboard.manageInventory')}
         </Button>

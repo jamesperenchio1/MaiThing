@@ -8,6 +8,7 @@ export default function CustomerLayout() {
       <Stack.Screen name="merchant/[id]" />
       <Stack.Screen name="order/[id]" />
       <Stack.Screen name="notifications/index" />
+      <Stack.Screen name="favorites" />
     </Stack>
   );
 }

@@ -12,11 +12,12 @@ import type { Merchant, Coordinates } from '@/src/types';
 interface MapProps {
   merchants: Merchant[];
   userLocation?: Coordinates;
+  locationGranted?: boolean;
   selectedMerchantId?: string;
   onSelectMerchant?: (merchant: Merchant) => void;
 }
 
-export function Map({ merchants, userLocation, selectedMerchantId, onSelectMerchant }: MapProps) {
+export function Map({ merchants, userLocation, locationGranted, selectedMerchantId, onSelectMerchant }: MapProps) {
   const colors = useThemeColor();
   const mapRef = useRef<MapView>(null);
 
@@ -44,6 +45,19 @@ export function Map({ merchants, userLocation, selectedMerchantId, onSelectMerch
       animated: true,
     });
   }, [merchants, userLocation]);
+
+  useEffect(() => {
+    if (!locationGranted || !userLocation || !mapRef.current) return;
+    mapRef.current.animateToRegion(
+      {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      },
+      600
+    );
+  }, [locationGranted]);
 
   useEffect(() => {
     if (!selectedMerchantId || !mapRef.current) return;
