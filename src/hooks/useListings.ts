@@ -1,7 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { mockRepositories } from '@/src/repositories/mock';
 
-export function useListings(params?: { merchantId?: string; category?: string; query?: string; lat?: number; lng?: number; radius?: number; type?: string }) {
+export interface ListingFilters {
+  merchantId?: string;
+  category?: string;
+  query?: string;
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  type?: string;
+  sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest';
+  dietaryTags?: string[];
+  allergens?: string[];
+  maxPrice?: number;
+}
+
+export function useListings(params?: ListingFilters) {
   return useQuery({
     queryKey: ['listings', params],
     queryFn: () => mockRepositories.listings.getListings(params),

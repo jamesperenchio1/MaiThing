@@ -39,7 +39,12 @@ interface MenuItemProps {
 function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
   const colors = useThemeColor();
   return (
-    <PressableScale testID={testID} onPress={onPress} className="flex-row items-center justify-between py-3" scale={0.98}>
+    <PressableScale
+      testID={testID}
+      onPress={onPress}
+      className="flex-row items-center justify-between py-3"
+      scale={0.98}
+    >
       <View className="flex-row items-center">
         <View className="mr-3 rounded-xl bg-muted/10 p-2">{icon}</View>
         <Text variant="body">{label}</Text>
@@ -69,22 +74,25 @@ export default function ProfileScreen() {
     switchRole(nextRole);
   };
 
+  const handleLogout = () => {
+    Alert.alert('Log out?', 'You will be signed out of your account.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log Out', style: 'destructive', onPress: logout },
+    ]);
+  };
+
   const handleLanguagePress = () => {
-    Alert.alert(
-      t('common.language'),
-      'Choose your language / เลือกภาษา',
-      [
-        {
-          text: 'English',
-          onPress: () => useLanguageStore.getState().setLanguage('en'),
-        },
-        {
-          text: 'ภาษาไทย',
-          onPress: () => useLanguageStore.getState().setLanguage('th'),
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert(t('common.language'), 'Choose your language / เลือกภาษา', [
+      {
+        text: 'English',
+        onPress: () => useLanguageStore.getState().setLanguage('en'),
+      },
+      {
+        text: 'ภาษาไทย',
+        onPress: () => useLanguageStore.getState().setLanguage('th'),
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const handleEditProfile = () => {
@@ -98,7 +106,7 @@ export default function ProfileScreen() {
       setEditModalVisible(false);
       return;
     }
-    await mockRepositories.customerProfile.updateCustomerProfile(user.id, { name: trimmed });
+    await mockRepositories.users.updateCustomerProfile(user.id, { name: trimmed });
     useAuthStore.getState().setUser({ ...user, name: trimmed });
     setEditModalVisible(false);
   };
@@ -108,11 +116,18 @@ export default function ProfileScreen() {
       {/* Edit Profile Modal */}
       <Modal visible={editModalVisible} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setEditModalVisible(false)}>
-          <View className="flex-1 items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View
+            className="flex-1 items-center justify-center"
+            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          >
             <TouchableWithoutFeedback>
               <View className="mx-6 w-full max-w-sm rounded-3xl bg-card p-6">
-                <Text variant="h3" className="mb-4">Edit Profile</Text>
-                <Text variant="label" className="mb-2 ml-1">Name</Text>
+                <Text variant="h3" className="mb-4">
+                  Edit Profile
+                </Text>
+                <Text variant="label" className="mb-2 ml-1">
+                  Name
+                </Text>
                 <View className="mb-6 rounded-2xl border border-border bg-background px-4 py-3">
                   <TextInput
                     value={editName}
@@ -124,7 +139,11 @@ export default function ProfileScreen() {
                   />
                 </View>
                 <View className="flex-row space-x-3">
-                  <Button variant="outline" className="flex-1" onPress={() => setEditModalVisible(false)}>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onPress={() => setEditModalVisible(false)}
+                  >
                     Cancel
                   </Button>
                   <Button className="flex-1" onPress={handleSaveProfile}>
@@ -222,7 +241,9 @@ export default function ProfileScreen() {
             <MenuItem
               testID="switch-role-button"
               icon={<Store size={20} color={colors.primary} />}
-              label={selectedRole === 'customer' ? 'Switch to Merchant mode' : 'Switch to Buyer mode'}
+              label={
+                selectedRole === 'customer' ? 'Switch to Merchant mode' : 'Switch to Buyer mode'
+              }
               onPress={handleSwitchRole}
               right={
                 <Text variant="caption" className="text-primary font-semibold">
@@ -237,7 +258,7 @@ export default function ProfileScreen() {
           testID="logout-button"
           variant="outline"
           fullWidth
-          onPress={logout}
+          onPress={handleLogout}
           leftIcon={<LogOut size={18} color={colors.foreground} />}
         >
           {t('common.logout')}

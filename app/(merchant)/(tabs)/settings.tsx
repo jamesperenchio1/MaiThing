@@ -23,7 +23,12 @@ interface MenuItemProps {
 function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
   const colors = useThemeColor();
   return (
-    <PressableScale testID={testID} onPress={onPress} className="flex-row items-center justify-between py-3" scale={0.98}>
+    <PressableScale
+      testID={testID}
+      onPress={onPress}
+      className="flex-row items-center justify-between py-3"
+      scale={0.98}
+    >
       <View className="flex-row items-center">
         <View className="mr-3 rounded-xl bg-muted/10 p-2">{icon}</View>
         <Text variant="body">{label}</Text>
@@ -38,6 +43,13 @@ export default function MerchantSettingsScreen() {
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
   const { logout, continueAsTest } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert('Log out?', 'You will be signed out of your account.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log Out', style: 'destructive', onPress: logout },
+    ]);
+  };
 
   const comingSoon = (feature: string) =>
     Alert.alert(feature, 'This feature will be available in a future update.');
@@ -95,7 +107,13 @@ export default function MerchantSettingsScreen() {
           />
         </Card>
 
-        <Button testID="merchant-logout-button" variant="outline" fullWidth onPress={logout} leftIcon={<LogOut size={18} color={colors.foreground} />}>
+        <Button
+          testID="merchant-logout-button"
+          variant="outline"
+          fullWidth
+          onPress={handleLogout}
+          leftIcon={<LogOut size={18} color={colors.foreground} />}
+        >
           {t('common.logout')}
         </Button>
       </View>

@@ -27,6 +27,10 @@ import { initializeI18n } from '@/src/i18n';
 import { useThemeStore } from '@/src/stores/theme';
 import { useAuthStore } from '@/src/stores/auth';
 import { mockRepositories } from '@/src/repositories/mock';
+import {
+  setNotificationHandler,
+  requestNotificationPermissions,
+} from '@/src/services/notifications';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
@@ -60,6 +64,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     useThemeStore.getState().syncSystem();
+    setNotificationHandler();
+    requestNotificationPermissions().catch(() => {});
     init();
   }, [init]);
 

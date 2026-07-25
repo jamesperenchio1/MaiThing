@@ -41,10 +41,7 @@ function ToggleChip({
           selected ? 'bg-primary' : 'bg-muted/10 border border-border'
         }`}
       >
-        <Text
-          variant="body-sm"
-          className={selected ? 'text-white' : 'text-foreground'}
-        >
+        <Text variant="body-sm" className={selected ? 'text-white' : 'text-foreground'}>
           {label}
         </Text>
       </View>
@@ -95,7 +92,11 @@ export default function CreateListingScreen() {
         type: data.type,
         title: data.title,
         description: data.description,
-        images: images.length ? images : [`https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent(data.title)}`],
+        images: images.length
+          ? images
+          : [
+              `https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent(data.title)}`,
+            ],
         category: data.category,
         originalPrice: data.originalPrice,
         salePrice: data.salePrice,
@@ -129,7 +130,10 @@ export default function CreateListingScreen() {
   const toggleArray = (field: 'dietaryTags' | 'allergens', value: string) => {
     const current = watch(field) ?? [];
     if (current.includes(value)) {
-      setValue(field, current.filter((v) => v !== value));
+      setValue(
+        field,
+        current.filter((v) => v !== value)
+      );
     } else {
       setValue(field, [...current, value]);
     }
@@ -140,7 +144,7 @@ export default function CreateListingScreen() {
   };
 
   return (
-    <Screen testID="create-listing-screen" scrollable>
+    <Screen testID="create-listing-screen" scrollable keyboardAvoiding>
       <Header testID="create-listing-header" title={t('merchant.createListing.title')} />
       <View className="px-6 py-4">
         <Text variant="h2" className="mb-6">
@@ -163,7 +167,9 @@ export default function CreateListingScreen() {
                   <Card
                     variant={value === t ? 'elevated' : 'outlined'}
                     className="items-center p-4"
-                    style={value === t ? { borderWidth: 2, borderColor: colors.primary } : undefined}
+                    style={
+                      value === t ? { borderWidth: 2, borderColor: colors.primary } : undefined
+                    }
                   >
                     <View className="mb-2 rounded-full bg-primary/10 p-3">
                       <Camera size={24} color={colors.primary} />

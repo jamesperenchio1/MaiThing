@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image } from 'react-native';
+import { View, Image, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/src/components/ui/Text';
@@ -9,12 +9,16 @@ import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useOrders, useUpdateOrderStatus } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
-const statusVariantMap: Record<Order['status'], 'default' | 'warning' | 'success' | 'danger' | 'info'> = {
+const statusVariantMap: Record<
+  Order['status'],
+  'default' | 'warning' | 'success' | 'danger' | 'info'
+> = {
   pending: 'warning',
   confirmed: 'info',
   preparing: 'info',
@@ -40,10 +44,18 @@ function OrderCard({ order }: { order: Order }) {
 
   const handleNext = () => {
     const next = nextStatus[order.status];
-    if (next) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      updateStatus.mutate({ id: order.id, status: next });
-    }
+    if (!next) return;
+    const statusLabel = next === 'ready' ? 'ready for pickup' : next.replace(/_/g, ' ');
+    Alert.alert('Update order status?', `Mark this order as "${statusLabel}".`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Confirm',
+        onPress: () => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          updateStatus.mutate({ id: order.id, status: next });
+        },
+      },
+    ]);
   };
 
   return (
@@ -79,12 +91,7 @@ function OrderCard({ order }: { order: Order }) {
       </View>
 
       {nextStatus[order.status] && (
-        <Button
-          size="sm"
-          className="mt-3"
-          onPress={handleNext}
-          loading={updateStatus.isPending}
-        >
+        <Button size="sm" className="mt-3" onPress={handleNext} loading={updateStatus.isPending}>
           Mark {nextStatus[order.status]}
         </Button>
       )}
@@ -95,10 +102,16 @@ function OrderCard({ order }: { order: Order }) {
 export default function MerchantOrdersScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { data: orders, isLoading } = useOrders(user?.id ?? '', 'merchant');
+  const {
+    data: orders,
+    isLoading,
+    isRefetching,
+    isError,
+    refetch,
+  } = useOrders(user?.id ?? '', 'merchant');
 
   return (
-    <Screen scrollable className="bg-background">
+    <Screen scrollable className="bg-background" refreshing={isRefetching} onRefresh={refetch}>
       <View className="px-6 pt-4 pb-2">
         <Text variant="h1" className="mb-4">
           {t('merchant.orders.title')}
@@ -110,6 +123,13 @@ export default function MerchantOrdersScreen() {
           <Text variant="body" className="text-muted">
             {t('common.loading')}
           </Text>
+        ) : isError ? (
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your orders."
+            onRetry={refetch}
+            retryLabel={t('common.retry')}
+          />
         ) : orders?.length ? (
           orders.map((order) => <OrderCard key={order.id} order={order} />)
         ) : (

@@ -1,4 +1,11 @@
-import { ScrollView, View, type ViewProps } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  View,
+  type ViewProps,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cn } from '@/src/lib/utils';
 
@@ -8,6 +15,9 @@ interface ScreenProps extends ViewProps {
   className?: string;
   contentClassName?: string;
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
+  refreshing?: boolean;
+  onRefresh?: () => void;
+  keyboardAvoiding?: boolean;
 }
 
 export function Screen({
@@ -16,6 +26,9 @@ export function Screen({
   className,
   contentClassName,
   edges = ['top', 'bottom'],
+  refreshing,
+  onRefresh,
+  keyboardAvoiding = false,
   ...props
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
@@ -38,23 +51,39 @@ export function Screen({
     </View>
   );
 
-  if (scrollable) {
-    return (
-      <View className={cn('flex-1 bg-background', className)} style={{ paddingTop, paddingBottom }}>
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingBottom: 24 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {content}
-        </ScrollView>
-      </View>
-    );
-  }
+  const refreshControl =
+    onRefresh !== undefined ? (
+      <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} />
+    ) : undefined;
 
-  return (
+  const screenBody = scrollable ? (
+    <View className={cn('flex-1 bg-background', className)} style={{ paddingTop, paddingBottom }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
+        keyboardShouldPersistTaps="handled"
+      >
+        {content}
+      </ScrollView>
+    </View>
+  ) : (
     <View className={cn('flex-1 bg-background', className)} style={{ paddingTop, paddingBottom }}>
       {content}
     </View>
   );
+
+  if (keyboardAvoiding) {
+    return (
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        {screenBody}
+      </KeyboardAvoidingView>
+    );
+  }
+
+  return screenBody;
 }

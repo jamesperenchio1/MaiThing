@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Pressable, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
-import { Wallet as WalletIcon, ArrowUpRight, ArrowDownRight, ChevronRight, X } from 'lucide-react-native';
+import {
+  Wallet as WalletIcon,
+  ArrowUpRight,
+  ArrowDownRight,
+  ChevronRight,
+  X,
+} from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Text } from '@/src/components/ui/Text';
@@ -10,6 +16,7 @@ import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useWallet, useWalletTransactions } from '@/src/hooks/useWallet';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -51,9 +58,7 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
           </View>
         </View>
         <View className="flex-row items-center">
-          <Text
-            className={`font-semibold ${isIncoming ? 'text-primary' : 'text-danger'}`}
-          >
+          <Text className={`font-semibold ${isIncoming ? 'text-primary' : 'text-danger'}`}>
             {isIncoming ? '+' : '-'}
             {formatCurrency(transaction.amount)}
           </Text>
@@ -139,12 +144,35 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
 export default function WalletScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { data: wallet, isLoading } = useWallet(user?.id ?? '');
-  const { data: transactions } = useWalletTransactions(user?.id ?? '');
+  const {
+    data: wallet,
+    isLoading,
+    isRefetching,
+    isError: isWalletError,
+    refetch: refetchWallet,
+  } = useWallet(user?.id ?? '');
+  const {
+    data: transactions,
+    isRefetching: transactionsRefetching,
+    isError: isTransactionsError,
+    refetch: refetchTransactions,
+  } = useWalletTransactions(user?.id ?? '');
   const [topUpVisible, setTopUpVisible] = useState(false);
 
+  const isError = isWalletError || isTransactionsError;
+  const refreshing = isRefetching || transactionsRefetching;
+  const handleRefresh = () => {
+    Promise.all([refetchWallet(), refetchTransactions()]);
+  };
+
   return (
-    <Screen testID="wallet-screen" scrollable className="bg-background">
+    <Screen
+      testID="wallet-screen"
+      scrollable
+      className="bg-background"
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    >
       <TopUpModal visible={topUpVisible} onClose={() => setTopUpVisible(false)} />
       <View className="px-6 pt-4 pb-2">
         <Text testID="wallet-title" variant="h1" className="mb-4">
@@ -152,41 +180,56 @@ export default function WalletScreen() {
         </Text>
       </View>
 
-      <View className="px-6 pb-6">
-        <Card testID="balance-card" className="mb-6 bg-primary p-6">
-          <View className="mb-4 flex-row items-center justify-between">
-            <View className="flex-row items-center">
-              <View className="mr-3 rounded-full bg-white/20 p-2">
-                <WalletIcon size={24} color="#fff" />
+      {isError ? (
+        <View className="px-6 pb-6">
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your wallet."
+            onRetry={handleRefresh}
+            retryLabel={t('common.retry')}
+          />
+        </View>
+      ) : (
+        <View className="px-6 pb-6">
+          <Card testID="balance-card" className="mb-6 bg-primary p-6">
+            <View className="mb-4 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <View className="mr-3 rounded-full bg-white/20 p-2">
+                  <WalletIcon size={24} color="#fff" />
+                </View>
+                <Text className="text-white/80">{t('customer.wallet.balance')}</Text>
               </View>
-              <Text className="text-white/80">{t('customer.wallet.balance')}</Text>
+              <Text variant="caption" className="text-white/60">
+                {wallet?.currency}
+              </Text>
             </View>
-            <Text variant="caption" className="text-white/60">
-              {wallet?.currency}
+            <Text variant="h1" className="mb-4 text-white">
+              {isLoading
+                ? '...'
+                : wallet?.balance === 999999
+                  ? t('customer.wallet.infinite')
+                  : formatCurrency(wallet?.balance ?? 0)}
             </Text>
-          </View>
-          <Text variant="h1" className="mb-4 text-white">
-            {isLoading ? '...' : wallet?.balance === 999999 ? t('customer.wallet.infinite') : formatCurrency(wallet?.balance ?? 0)}
-          </Text>
-          <Button
-            testID="top-up-button"
-            variant="secondary"
-            className="bg-white"
-            textClassName="text-primary"
-            fullWidth
-            onPress={() => setTopUpVisible(true)}
-          >
-            {t('customer.wallet.topUp')}
-          </Button>
-        </Card>
+            <Button
+              testID="top-up-button"
+              variant="secondary"
+              className="bg-white"
+              textClassName="text-primary"
+              fullWidth
+              onPress={() => setTopUpVisible(true)}
+            >
+              {t('customer.wallet.topUp')}
+            </Button>
+          </Card>
 
-        <Text variant="h3" className="mb-4">
-          {t('customer.wallet.transactions')}
-        </Text>
-        {transactions?.slice(0, 10).map((transaction) => (
-          <TransactionItem key={transaction.id} transaction={transaction} />
-        ))}
-      </View>
+          <Text variant="h3" className="mb-4">
+            {t('customer.wallet.transactions')}
+          </Text>
+          {transactions?.slice(0, 10).map((transaction) => (
+            <TransactionItem key={transaction.id} transaction={transaction} />
+          ))}
+        </View>
+      )}
     </Screen>
   );
 }

@@ -14,6 +14,7 @@ import { MerchantCard } from '@/src/components/composite/MerchantCard';
 import { CategoryChip } from '@/src/components/composite/CategoryChip';
 import { SectionHeader } from '@/src/components/composite/SectionHeader';
 import { Skeleton } from '@/src/components/ui/Skeleton';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useListings } from '@/src/hooks/useListings';
 import { useMerchants, useCategories } from '@/src/hooks/useMerchants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -26,14 +27,26 @@ export default function CustomerHomeScreen() {
   const colors = useThemeColor();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: listings, isLoading: listingsLoading } = useListings({
+  const {
+    data: listings,
+    isLoading: listingsLoading,
+    isRefetching: listingsRefetching,
+    isError: listingsError,
+    refetch: refetchListings,
+  } = useListings({
     category: selectedCategory ?? undefined,
     lat: 13.7462,
     lng: 100.5347,
     radius: 20000,
   });
 
-  const { data: merchants, isLoading: merchantsLoading } = useMerchants({
+  const {
+    data: merchants,
+    isLoading: merchantsLoading,
+    isRefetching: merchantsRefetching,
+    isError: merchantsError,
+    refetch: refetchMerchants,
+  } = useMerchants({
     lat: 13.7462,
     lng: 100.5347,
     radius: 20000,
@@ -44,8 +57,21 @@ export default function CustomerHomeScreen() {
   const featuredMerchants = merchants?.slice(0, 5) ?? [];
   const nearbyListings = listings?.slice(0, 6) ?? [];
 
+  const isRefreshing = listingsRefetching || merchantsRefetching;
+  const handleRefresh = () => {
+    Promise.all([refetchListings(), refetchMerchants()]);
+  };
+
+  const hasError = listingsError || merchantsError;
+
   return (
-    <Screen testID="customer-home-screen" scrollable className="bg-background">
+    <Screen
+      testID="customer-home-screen"
+      scrollable
+      className="bg-background"
+      refreshing={isRefreshing}
+      onRefresh={handleRefresh}
+    >
       <View className="px-6 pt-4 pb-6">
         <View className="mb-4 flex-row items-center justify-between">
           <View>
@@ -54,7 +80,11 @@ export default function CustomerHomeScreen() {
             </Text>
             <Text variant="h3">{user?.name ?? 'Guest'}</Text>
           </View>
-          <Button variant="ghost" size="icon" onPress={() => router.push('/(customer)/notifications' as any)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onPress={() => router.push('/(customer)/notifications' as any)}
+          >
             <Bell size={24} color={colors.foreground} />
           </Button>
         </View>
@@ -81,7 +111,9 @@ export default function CustomerHomeScreen() {
         <SearchBar
           placeholder={t('common.search')}
           className="mb-6"
-          onSubmit={(query) => router.push({ pathname: '/(customer)/(tabs)/discover', params: { query } })}
+          onSubmit={(query) =>
+            router.push({ pathname: '/(customer)/(tabs)/discover', params: { query } })
+          }
         />
 
         <View className="mb-2">
@@ -102,6 +134,17 @@ export default function CustomerHomeScreen() {
         </View>
       </View>
 
+      {hasError && (
+        <View className="px-6 pb-6">
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your feed. Pull down to try again."
+            onRetry={handleRefresh}
+            retryLabel={t('common.retry')}
+          />
+        </View>
+      )}
+
       <View testID="home-featured-section" className="mb-6">
         <SectionHeader
           title={t('customer.home.featured')}
@@ -115,7 +158,10 @@ export default function CustomerHomeScreen() {
               ))
             : featuredMerchants.map((merchant, index) => (
                 <View key={merchant.id} className="mr-3 w-72">
-                  <MerchantCard merchant={merchant} testID={index === 0 ? 'first-featured-merchant' : undefined} />
+                  <MerchantCard
+                    merchant={merchant}
+                    testID={index === 0 ? 'first-featured-merchant' : undefined}
+                  />
                 </View>
               ))}
         </ScrollView>

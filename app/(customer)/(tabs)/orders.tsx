@@ -10,13 +10,17 @@ import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
-const statusVariantMap: Record<Order['status'], 'default' | 'warning' | 'success' | 'danger' | 'info'> = {
+const statusVariantMap: Record<
+  Order['status'],
+  'default' | 'warning' | 'success' | 'danger' | 'info'
+> = {
   pending: 'warning',
   confirmed: 'info',
   preparing: 'info',
@@ -40,7 +44,10 @@ function OrderCard({ order }: { order: Order }) {
         <View className="mb-3 flex-row items-center justify-between">
           <View className="flex-row items-center flex-1 pr-2">
             {order.merchantLogoUrl && (
-              <Image source={{ uri: order.merchantLogoUrl }} className="mr-3 h-10 w-10 rounded-xl" />
+              <Image
+                source={{ uri: order.merchantLogoUrl }}
+                className="mr-3 h-10 w-10 rounded-xl"
+              />
             )}
             <View className="flex-1">
               <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
@@ -86,7 +93,13 @@ export default function OrdersScreen() {
   const user = useAuthStore((s) => s.user);
   const [tab, setTab] = useState<'active' | 'history'>('active');
   const [search, setSearch] = useState('');
-  const { data: orders, isLoading } = useOrders(user?.id ?? '', 'customer');
+  const {
+    data: orders,
+    isLoading,
+    isRefetching,
+    isError,
+    refetch,
+  } = useOrders(user?.id ?? '', 'customer');
 
   const activeStatuses: Order['status'][] = ['pending', 'confirmed', 'preparing', 'ready'];
   const tabOrders =
@@ -104,7 +117,13 @@ export default function OrdersScreen() {
     : tabOrders;
 
   return (
-    <Screen testID="orders-screen" scrollable className="bg-background">
+    <Screen
+      testID="orders-screen"
+      scrollable
+      className="bg-background"
+      refreshing={isRefetching}
+      onRefresh={refetch}
+    >
       <View className="px-6 pt-4 pb-2">
         <Text testID="orders-title" variant="h1" className="mb-4">
           {t('common.orders')}
@@ -139,7 +158,14 @@ export default function OrdersScreen() {
       </View>
 
       <View className="px-6 pb-6">
-        {isLoading ? (
+        {isError ? (
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your orders."
+            onRetry={refetch}
+            retryLabel={t('common.retry')}
+          />
+        ) : isLoading ? (
           <Text variant="body" className="text-muted">
             {t('common.loading')}
           </Text>

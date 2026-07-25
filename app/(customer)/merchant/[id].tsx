@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image } from 'react-native';
-import { Heart, MapPin, Star, Clock, Phone, Navigation, AlertCircle } from 'lucide-react-native';
+import { MapPin, Star, Clock, Phone, Navigation, AlertCircle } from 'lucide-react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -10,11 +10,11 @@ import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { ListingCard } from '@/src/components/composite/ListingCard';
+import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { MerchantMap } from '@/src/components/map/MerchantMap';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useListings } from '@/src/hooks/useListings';
-import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatDistance, calculateDistance, formatCategory } from '@/src/lib/utils';
 import { openDirections } from '@/src/lib/maps';
@@ -24,7 +24,6 @@ export default function MerchantDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
   const { data: merchant, isLoading } = useMerchant(id);
   const { data: listings } = useListings({ merchantId: id });
@@ -69,9 +68,7 @@ export default function MerchantDetailScreen() {
                 </Text>
               </View>
             </View>
-            <PressableScale onPress={() => {}} className="rounded-full bg-muted/10 p-3" scale={0.9}>
-              <Heart size={20} color={colors.foreground} />
-            </PressableScale>
+            <FavoriteButton merchantId={merchant.id} />
           </View>
 
           <View className="mb-4 flex-row items-center">

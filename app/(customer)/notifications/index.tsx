@@ -8,6 +8,7 @@ import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useNotifications, useMarkNotificationRead } from '@/src/hooks/useNotifications';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -16,18 +17,31 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { data: notifications, isLoading } = useNotifications(user?.id ?? '');
+  const {
+    data: notifications,
+    isLoading,
+    isRefetching,
+    isError,
+    refetch,
+  } = useNotifications(user?.id ?? '');
   const colors = useThemeColor();
   const markAsRead = useMarkNotificationRead();
 
   return (
-    <Screen scrollable className="bg-background">
+    <Screen scrollable className="bg-background" refreshing={isRefetching} onRefresh={refetch}>
       <Header title={t('common.notifications')} />
       <View className="px-6 py-4">
         {isLoading ? (
           <Text variant="body" className="text-muted">
             {t('common.loading')}
           </Text>
+        ) : isError ? (
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your notifications."
+            onRetry={refetch}
+            retryLabel={t('common.retry')}
+          />
         ) : notifications?.length ? (
           notifications.map((notification) => (
             <PressableScale

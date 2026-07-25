@@ -36,7 +36,7 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <Screen scrollable={false}>
+    <Screen scrollable={false} keyboardAvoiding>
       <Header title={t('auth.forgotPassword')} />
       <View className="flex-1 justify-center px-6">
         <Animated.View entering={FadeInUp.duration(500)}>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Platform } from 'react-native';
-import { Minus, Plus, Heart, Share2, Clock, MapPin, AlertCircle } from 'lucide-react-native';
+import { Minus, Plus, Share2, Clock, MapPin, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/src/components/ui/Button';
@@ -12,6 +12,7 @@ import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useCartStore } from '@/src/stores/cart';
@@ -67,9 +68,13 @@ export default function ListingDetailScreen() {
             </Badge>
           </View>
           <View className="absolute right-4 top-4 flex-row space-x-2">
-            <PressableScale onPress={() => {}} className="rounded-full bg-black/30 p-2" scale={0.9}>
-              <Heart size={20} color="#fff" />
-            </PressableScale>
+            {merchant && (
+              <FavoriteButton
+                merchantId={merchant.id}
+                variant="overlay"
+                className="bg-black/30 p-2"
+              />
+            )}
             <PressableScale onPress={() => {}} className="rounded-full bg-black/30 p-2" scale={0.9}>
               <Share2 size={20} color="#fff" />
             </PressableScale>

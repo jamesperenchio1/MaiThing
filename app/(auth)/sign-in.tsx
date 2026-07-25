@@ -31,7 +31,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <Screen scrollable={false}>
+    <Screen scrollable={false} keyboardAvoiding>
       <Header title={t('auth.signIn')} />
       <View className="flex-1 justify-center px-6">
         <Animated.View entering={FadeInUp.duration(500)}>

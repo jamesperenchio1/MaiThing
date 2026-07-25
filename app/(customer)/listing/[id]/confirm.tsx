@@ -25,6 +25,7 @@ import {
 } from '@/src/lib/utils';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 import { mockRepositories } from '@/src/repositories/mock';
+import { scheduleLocalNotification } from '@/src/services/notifications';
 import type { Order } from '@/src/types';
 
 export default function ConfirmOrderScreen() {
@@ -92,6 +93,16 @@ export default function ConfirmOrderScreen() {
       setOrder(newOrder);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      scheduleLocalNotification(
+        'Order confirmed',
+        `Your order from ${merchant.name} has been confirmed. Pickup code: ${newOrder.pickupCode}`,
+        { orderId: newOrder.id, type: 'order_confirmed' }
+      ).catch(() => {});
+      scheduleLocalNotification(
+        'New order received',
+        `You have a new order from ${user.name} for ${formatCurrency(newOrder.total)}`,
+        { orderId: newOrder.id, type: 'new_order' }
+      ).catch(() => {});
     } finally {
       setIsSubmitting(false);
     }

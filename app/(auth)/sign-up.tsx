@@ -31,7 +31,7 @@ export default function SignUpScreen() {
   };
 
   return (
-    <Screen scrollable>
+    <Screen scrollable keyboardAvoiding>
       <Header title={t('auth.signUp')} />
       <View className="px-6 pb-10">
         <Animated.View entering={FadeInUp.duration(500)}>

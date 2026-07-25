@@ -57,6 +57,10 @@ export interface ListingRepository {
     lng?: number;
     radius?: number;
     type?: string;
+    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest';
+    dietaryTags?: string[];
+    allergens?: string[];
+    maxPrice?: number;
   }): Promise<Listing[]>;
   getListing(id: string): Promise<Listing | null>;
   createListing(data: Omit<Listing, 'id' | 'createdAt'>): Promise<Listing>;

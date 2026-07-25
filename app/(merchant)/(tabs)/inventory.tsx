@@ -9,13 +9,17 @@ import { Badge } from '@/src/components/ui/Badge';
 import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useListings } from '@/src/hooks/useListings';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
 import type { Listing } from '@/src/types';
 
-const statusVariantMap: Record<Listing['status'], 'default' | 'warning' | 'success' | 'danger' | 'info'> = {
+const statusVariantMap: Record<
+  Listing['status'],
+  'default' | 'warning' | 'success' | 'danger' | 'info'
+> = {
   active: 'success',
   sold_out: 'warning',
   expired: 'danger',
@@ -31,15 +35,17 @@ function InventoryCard({ listing }: { listing: Listing }) {
           <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
             {listing.title}
           </Text>
-          <Badge variant={statusVariantMap[listing.status]}>
-            {listing.status}
-          </Badge>
+          <Badge variant={statusVariantMap[listing.status]}>{listing.status}</Badge>
         </View>
         <Text variant="body-sm" className="mb-1 text-muted">
           {formatCurrency(listing.salePrice)} · {listing.quantityRemaining} left
         </Text>
         <Text variant="caption" className="text-muted">
-          Pickup {new Date(listing.pickupWindowStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          Pickup{' '}
+          {new Date(listing.pickupWindowStart).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </Text>
       </View>
     </Card>
@@ -51,15 +57,29 @@ export default function InventoryScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
-  const { data: listings, isLoading } = useListings({
+  const {
+    data: listings,
+    isLoading,
+    isRefetching,
+    isError,
+    refetch,
+  } = useListings({
     merchantId: 'merchant-1', // Test merchant
   });
 
   return (
-    <Screen testID="inventory-screen" scrollable className="bg-background">
+    <Screen
+      testID="inventory-screen"
+      scrollable
+      className="bg-background"
+      refreshing={isRefetching}
+      onRefresh={refetch}
+    >
       <View className="px-6 pt-4 pb-2">
         <View className="mb-4 flex-row items-center justify-between">
-          <Text testID="inventory-title" variant="h1">{t('merchant.inventory.title')}</Text>
+          <Text testID="inventory-title" variant="h1">
+            {t('merchant.inventory.title')}
+          </Text>
           <Button
             testID="new-listing-button"
             size="sm"
@@ -76,6 +96,13 @@ export default function InventoryScreen() {
           <Text variant="body" className="text-muted">
             {t('common.loading')}
           </Text>
+        ) : isError ? (
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your inventory."
+            onRetry={refetch}
+            retryLabel={t('common.retry')}
+          />
         ) : listings?.length ? (
           listings.map((listing) => <InventoryCard key={listing.id} listing={listing} />)
         ) : (

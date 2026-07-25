@@ -7,25 +7,16 @@ import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useAuthStore } from '@/src/stores/auth';
 import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
 
-function StatCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}) {
+function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <Card variant="elevated" className="flex-1">
-      <View className="mb-2 rounded-xl bg-primary/10 p-2 self-start">
-        {icon}
-      </View>
+      <View className="mb-2 rounded-xl bg-primary/10 p-2 self-start">{icon}</View>
       <Text variant="caption" className="mb-1 text-muted">
         {label}
       </Text>
@@ -39,10 +30,16 @@ export default function MerchantDashboardScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
-  const { data: analytics } = useAnalytics(user?.id ?? '');
+  const { data: analytics, isRefetching, isError, refetch } = useAnalytics(user?.id ?? '');
 
   return (
-    <Screen testID="merchant-dashboard-screen" scrollable className="bg-background">
+    <Screen
+      testID="merchant-dashboard-screen"
+      scrollable
+      className="bg-background"
+      refreshing={isRefetching}
+      onRefresh={refetch}
+    >
       <View className="px-6 pt-4 pb-2">
         <Text testID="merchant-dashboard-title" variant="h1" className="mb-2">
           {t('merchant.dashboard.title')}
@@ -50,6 +47,15 @@ export default function MerchantDashboardScreen() {
         <Text testID="merchant-dashboard-welcome" variant="body" className="mb-6 text-muted">
           Welcome back, {user?.name}
         </Text>
+
+        {isError && (
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your dashboard."
+            onRetry={refetch}
+            retryLabel={t('common.retry')}
+          />
+        )}
 
         <View testID="merchant-stats-row-1" className="mb-6 flex-row space-x-3">
           <StatCard

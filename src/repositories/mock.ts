@@ -209,6 +209,10 @@ class MockListingRepository implements ListingRepository {
     lng?: number;
     radius?: number;
     type?: string;
+    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest';
+    dietaryTags?: string[];
+    allergens?: string[];
+    maxPrice?: number;
   }): Promise<Listing[]> {
     await sleep(300);
     let result = LISTINGS.filter((l) => l.status === 'active');
@@ -235,8 +239,27 @@ class MockListingRepository implements ListingRepository {
       );
     }
 
-    if (params?.lat != null && params?.lng != null) {
-      const center = { latitude: params.lat, longitude: params.lng };
+    if (params?.dietaryTags && params.dietaryTags.length > 0) {
+      result = result.filter((l) =>
+        params.dietaryTags!.every((tag) => l.dietaryTags.includes(tag))
+      );
+    }
+
+    if (params?.allergens && params.allergens.length > 0) {
+      result = result.filter(
+        (l) => !params.allergens!.some((allergen) => l.allergens.includes(allergen))
+      );
+    }
+
+    if (params?.maxPrice !== undefined && params.maxPrice > 0) {
+      result = result.filter((l) => l.salePrice <= params.maxPrice!);
+    }
+
+    const center =
+      params?.lat != null && params?.lng != null
+        ? { latitude: params.lat, longitude: params.lng }
+        : undefined;
+    if (center) {
       result = result.map((l) => {
         const merchant = MERCHANTS.find((m) => m.id === l.merchantId);
         return {
@@ -247,7 +270,29 @@ class MockListingRepository implements ListingRepository {
       if (params?.radius != null) {
         result = result.filter((l) => l.distance == null || l.distance <= params.radius!);
       }
-      result.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+    }
+
+    switch (params?.sortBy) {
+      case 'distance':
+        result.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+        break;
+      case 'price_asc':
+        result.sort((a, b) => a.salePrice - b.salePrice);
+        break;
+      case 'price_desc':
+        result.sort((a, b) => b.salePrice - a.salePrice);
+        break;
+      case 'discount':
+        result.sort((a, b) => b.originalPrice - b.salePrice - (a.originalPrice - a.salePrice));
+        break;
+      case 'newest':
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      default:
+        if (center) {
+          result.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+        }
+        break;
     }
 
     return result;
