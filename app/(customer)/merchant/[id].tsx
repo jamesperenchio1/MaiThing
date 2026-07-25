@@ -16,17 +16,30 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useListings } from '@/src/hooks/useListings';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatDistance, calculateDistance, formatCategory } from '@/src/lib/utils';
+import {
+  formatDistance,
+  calculateDistance,
+  formatCategory,
+  getMerchantOpenStatus,
+} from '@/src/lib/utils';
 import { openDirections } from '@/src/lib/maps';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 
 export default function MerchantDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const { data: merchant, isLoading } = useMerchant(id);
   const { data: listings } = useListings({ merchantId: id });
+  const openStatus = merchant ? getMerchantOpenStatus(merchant, i18n.language) : null;
+  const openStatusLabel = openStatus
+    ? openStatus.isOpen
+      ? t('customer.merchant.openUntil', { time: openStatus.closeTime })
+      : openStatus.openTime
+        ? t('customer.merchant.opensAt', { time: openStatus.openTime })
+        : t('customer.merchant.closed')
+    : '';
 
   if (isLoading || !merchant) {
     return (
@@ -67,6 +80,11 @@ export default function MerchantDetailScreen() {
                   {merchant.rating.toFixed(1)} · {merchant.reviewCount} reviews
                 </Text>
               </View>
+              {openStatus && (
+                <View className="mt-1 self-start">
+                  <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{openStatusLabel}</Badge>
+                </View>
+              )}
             </View>
             <FavoriteButton merchantId={merchant.id} />
           </View>

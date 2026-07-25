@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, Platform } from 'react-native';
+import { View, ScrollView, Image, Platform, Share } from 'react-native';
 import { Minus, Plus, Share2, Clock, MapPin, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -17,13 +17,19 @@ import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatCurrency, formatDistance, calculateDistance } from '@/src/lib/utils';
+import {
+  formatCurrency,
+  formatDistance,
+  calculateDistance,
+  formatPickupWindow,
+} from '@/src/lib/utils';
+import { getListingUrl } from '@/src/lib/links';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 
 export default function ListingDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: listing, isLoading } = useListing(id);
   const { data: merchant } = useMerchant(listing?.merchantId ?? '');
   const [quantity, setQuantity] = useState(1);
@@ -47,9 +53,38 @@ export default function ListingDetailScreen() {
   const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
   const isSoldOut = listing.quantityRemaining === 0;
 
+  const handleShare = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = getListingUrl(listing.id);
+    const title = listing.title;
+    const message = `"${listing.title}" — ${formatCurrency(listing.salePrice)} (-${discount}%) on Maithing`;
+
+    if (Platform.OS === 'web') {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text: message, url });
+        } catch {
+          // user cancelled
+        }
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${message} ${url}`);
+      }
+      return;
+    }
+
+    try {
+      await Share.share({ title, message: `${message} ${url}`, url });
+    } catch {
+      // user cancelled
+    }
+  };
+
   const handleBuyNow = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push(`/(customer)/listing/${listing.id}/confirm` as any);
+    router.push({
+      pathname: '/(customer)/listing/[id]/confirm' as any,
+      params: { id: listing.id, quantity: String(quantity) },
+    });
   };
 
   return (
@@ -75,7 +110,11 @@ export default function ListingDetailScreen() {
                 className="bg-black/30 p-2"
               />
             )}
-            <PressableScale onPress={() => {}} className="rounded-full bg-black/30 p-2" scale={0.9}>
+            <PressableScale
+              onPress={handleShare}
+              className="rounded-full bg-black/30 p-2"
+              scale={0.9}
+            >
               <Share2 size={20} color="#fff" />
             </PressableScale>
           </View>
@@ -121,15 +160,11 @@ export default function ListingDetailScreen() {
                   {t('customer.listing.pickupWindow')}
                 </Text>
                 <Text variant="caption" className="text-muted">
-                  {new Date(listing.pickupWindowStart).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}{' '}
-                  -{' '}
-                  {new Date(listing.pickupWindowEnd).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatPickupWindow(
+                    listing.pickupWindowStart,
+                    listing.pickupWindowEnd,
+                    i18n.language
+                  )}
                 </Text>
               </View>
             </View>

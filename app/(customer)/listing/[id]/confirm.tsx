@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import {
   formatDistance,
   calculateDistance,
   generatePickupCode,
+  formatPickupWindow,
 } from '@/src/lib/utils';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 import { mockRepositories } from '@/src/repositories/mock';
@@ -30,16 +31,25 @@ import type { Order } from '@/src/types';
 
 export default function ConfirmOrderScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { id, quantity: quantityParam } = useLocalSearchParams<{
+    id: string;
+    quantity?: string;
+  }>();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
   const { data: listing, isLoading: listingLoading } = useListing(id);
   const { data: merchant } = useMerchant(listing?.merchantId ?? '');
   const queryClient = useQueryClient();
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(Math.max(1, Number(quantityParam) || 1));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    if (listing) {
+      setQuantity((q) => Math.max(1, Math.min(q, listing.quantityRemaining)));
+    }
+  }, [listing]);
 
   if (listingLoading || !listing) {
     return (
@@ -220,15 +230,11 @@ export default function ConfirmOrderScreen() {
                   Pickup window
                 </Text>
                 <Text variant="caption" className="text-muted">
-                  {new Date(listing.pickupWindowStart).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}{' '}
-                  -{' '}
-                  {new Date(listing.pickupWindowEnd).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatPickupWindow(
+                    listing.pickupWindowStart,
+                    listing.pickupWindowEnd,
+                    i18n.language
+                  )}
                 </Text>
               </View>
             </View>

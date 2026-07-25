@@ -2,9 +2,11 @@ import { Image, View } from 'react-native';
 import { Star, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { cn, formatDistance, formatCategory } from '@/src/lib/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatDistance, formatCategory, getMerchantOpenStatus } from '@/src/lib/utils';
 import { Card } from '@/src/components/ui/Card';
 import { Text } from '@/src/components/ui/Text';
+import { Badge } from '@/src/components/ui/Badge';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -19,6 +21,14 @@ interface MerchantCardProps {
 export function MerchantCard({ merchant, className, testID }: MerchantCardProps) {
   const router = useRouter();
   const colors = useThemeColor();
+  const { t, i18n } = useTranslation();
+  const openStatus = getMerchantOpenStatus(merchant, i18n.language);
+
+  const statusLabel = openStatus.isOpen
+    ? t('customer.merchant.openUntil', { time: openStatus.closeTime })
+    : openStatus.openTime
+      ? t('customer.merchant.opensAt', { time: openStatus.openTime })
+      : t('customer.merchant.closed');
 
   return (
     <PressableScale
@@ -33,6 +43,9 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
       <Card variant="elevated" className="overflow-hidden p-0">
         <View className="relative">
           <Image source={{ uri: merchant.coverUrl }} className="h-28 w-full" resizeMode="cover" />
+          <View className="absolute left-2 top-2">
+            <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{statusLabel}</Badge>
+          </View>
           <View className="absolute right-2 top-2">
             <FavoriteButton
               merchantId={merchant.id}

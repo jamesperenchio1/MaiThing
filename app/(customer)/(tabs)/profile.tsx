@@ -192,8 +192,8 @@ export default function ProfileScreen() {
           <MenuItem
             testID="saved-addresses-menu-item"
             icon={<MapPin size={20} color={colors.muted} />}
-            label="Saved Addresses"
-            onPress={() => Alert.alert('Saved Addresses', 'Address management coming soon!')}
+            label={t('common.savedAddresses')}
+            onPress={() => router.push('/(customer)/saved-addresses' as any)}
           />
           <MenuItem
             testID="orders-menu-item"

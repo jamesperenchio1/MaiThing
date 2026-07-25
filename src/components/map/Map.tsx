@@ -14,10 +14,16 @@ interface MapProps {
   userLocation?: Coordinates;
   locationGranted?: boolean;
   selectedMerchantId?: string;
-  onSelectMerchant?: (merchant: Merchant) => void;
+  onSelectMerchant?: (merchant: Merchant | null) => void;
 }
 
-export function Map({ merchants, userLocation, locationGranted, selectedMerchantId, onSelectMerchant }: MapProps) {
+export function Map({
+  merchants,
+  userLocation,
+  locationGranted,
+  selectedMerchantId,
+  onSelectMerchant,
+}: MapProps) {
   const colors = useThemeColor();
   const mapRef = useRef<MapView>(null);
 
@@ -83,6 +89,7 @@ export function Map({ merchants, userLocation, locationGranted, selectedMerchant
         initialRegion={initialRegion}
         showsUserLocation={!!userLocation}
         showsMyLocationButton={false}
+        onPress={() => onSelectMerchant?.(null)}
       >
         {merchants.map((merchant) => (
           <Marker

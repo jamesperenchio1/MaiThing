@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import type { Merchant } from '@/src/types';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -62,6 +64,79 @@ export function getInitials(name: string) {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+}
+
+export function formatPickupWindow(start: string | Date, end: string | Date, locale = 'en') {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const isThai = locale === 'th';
+
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  const timeFormatter = new Intl.DateTimeFormat(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: !isThai,
+  });
+
+  return `${dateFormatter.format(startDate)} · ${timeFormatter.format(startDate)} – ${timeFormatter.format(endDate)}`;
+}
+
+function parseTime(time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  return { hours: hours ?? 0, minutes: minutes ?? 0 };
+}
+
+function isCurrentlyOpen(hours: { open: string; close: string }) {
+  const now = new Date();
+  const { hours: openH, minutes: openM } = parseTime(hours.open);
+  const { hours: closeH, minutes: closeM } = parseTime(hours.close);
+
+  const open = new Date(now);
+  open.setHours(openH, openM, 0, 0);
+
+  const close = new Date(now);
+  close.setHours(closeH, closeM, 0, 0);
+
+  if (close <= open) {
+    close.setDate(close.getDate() + 1);
+  }
+
+  return now >= open && now <= close;
+}
+
+export function getMerchantOpenStatus(merchant: Merchant, locale = 'en') {
+  const todayHours = merchant.businessHours.find((h) => h.day === new Date().getDay());
+
+  const timeFormatter = new Intl.DateTimeFormat(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: locale !== 'th',
+  });
+
+  if (!todayHours) {
+    return { isOpen: false, openTime: undefined, closeTime: undefined };
+  }
+
+  const isOpen = isCurrentlyOpen(todayHours);
+  const now = new Date();
+  const { hours: openH, minutes: openM } = parseTime(todayHours.open);
+  const { hours: closeH, minutes: closeM } = parseTime(todayHours.close);
+
+  const openDate = new Date(now);
+  openDate.setHours(openH, openM, 0, 0);
+  const closeDate = new Date(now);
+  closeDate.setHours(closeH, closeM, 0, 0);
+
+  return {
+    isOpen,
+    openTime: timeFormatter.format(openDate),
+    closeTime: timeFormatter.format(closeDate),
+  };
 }
 
 export function calculateDistance(from: Coordinates, to: Coordinates) {

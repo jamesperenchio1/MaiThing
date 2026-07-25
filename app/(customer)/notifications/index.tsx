@@ -48,6 +48,14 @@ export default function NotificationsScreen() {
               key={notification.id}
               onPress={() => {
                 markAsRead.mutate({ userId: user?.id ?? '', notificationId: notification.id });
+                const data = notification.data ?? {};
+                if (typeof data.orderId === 'string') {
+                  router.push(`/(customer)/order/${data.orderId}` as any);
+                } else if (typeof data.listingId === 'string') {
+                  router.push(`/(customer)/listing/${data.listingId}` as any);
+                } else if (typeof data.merchantId === 'string') {
+                  router.push(`/(customer)/merchant/${data.merchantId}` as any);
+                }
               }}
               scale={0.98}
             >

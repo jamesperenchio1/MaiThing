@@ -62,6 +62,9 @@ export default {
     logout: 'Log Out',
     version: 'Version',
     or: 'or',
+    savedAddresses: 'Saved Addresses',
+    noSavedAddresses: 'No saved addresses yet',
+    addAddress: 'Add Address',
   },
   customer: {
     home: {
@@ -94,7 +97,11 @@ export default {
       reviews: 'Reviews',
       distance: '{{distance}} away',
       pickupInstructions: 'Pickup instructions',
-      openUntil: 'Open until {{time}}',
+      open: 'Open',
+      closed: 'Closed',
+      openUntil: 'Open · Closes {{time}}',
+      closedUntil: 'Closed · Closes {{time}}',
+      opensAt: 'Closed · Opens {{time}}',
     },
     map: {
       myLocation: 'My location',
@@ -102,6 +109,9 @@ export default {
       distanceAway: '{{distance}} away',
       enableLocation: 'Enable location',
       locationDenied: 'Location access is off. Using default location.',
+      locationDeniedTitle: 'Location access is off',
+      locationDeniedBody: 'Enable location to see shops near you.',
+      openSettings: 'Open Settings',
     },
     orders: {
       active: 'Active',

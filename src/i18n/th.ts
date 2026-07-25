@@ -62,6 +62,9 @@ export default {
     logout: 'ออกจากระบบ',
     version: 'เวอร์ชัน',
     or: 'หรือ',
+    savedAddresses: 'ที่อยู่ที่บันทึกไว้',
+    noSavedAddresses: 'ยังไม่มีที่อยู่ที่บันทึกไว้',
+    addAddress: 'เพิ่มที่อยู่',
   },
   customer: {
     home: {
@@ -94,7 +97,11 @@ export default {
       reviews: 'รีวิว',
       distance: 'ห่าง {{distance}}',
       pickupInstructions: 'คำแนะนำการรับสินค้า',
-      openUntil: 'เปิดถึง {{time}}',
+      open: 'เปิด',
+      closed: 'ปิด',
+      openUntil: 'เปิด · ปิด {{time}}',
+      closedUntil: 'ปิด · ปิด {{time}}',
+      opensAt: 'ปิด · เปิด {{time}}',
     },
     map: {
       myLocation: 'ตำแหน่งของฉัน',
@@ -102,6 +109,9 @@ export default {
       distanceAway: 'ห่าง {{distance}}',
       enableLocation: 'เปิดตำแหน่ง',
       locationDenied: 'ไม่ได้รับสิทธิ์ตำแหน่ง ใช้ตำแหน่งเริ่มต้นแทน',
+      locationDeniedTitle: 'ไม่ได้รับสิทธิ์ตำแหน่ง',
+      locationDeniedBody: 'เปิดตำแหน่งเพื่อดูร้านค้าใกล้คุณ',
+      openSettings: 'เปิดการตั้งค่า',
     },
     orders: {
       active: 'กำลังดำเนินการ',

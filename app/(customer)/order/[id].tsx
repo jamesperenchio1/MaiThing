@@ -1,8 +1,18 @@
+import React from 'react';
 import { useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image } from 'react-native';
-import { Clock, QrCode, Hash } from 'lucide-react-native';
+import {
+  Clock,
+  QrCode,
+  Hash,
+  CheckCircle,
+  ChefHat,
+  Bell,
+  Check,
+  type LucideIcon,
+} from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -14,39 +24,63 @@ import { QRCode } from '@/src/components/ui/QRCode';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useOrder } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatCurrency } from '@/src/lib/utils';
+import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
-const statusSteps: { status: Order['status']; label: string }[] = [
-  { status: 'pending', label: 'Pending' },
-  { status: 'confirmed', label: 'Confirmed' },
-  { status: 'preparing', label: 'Preparing' },
-  { status: 'ready', label: 'Ready' },
-  { status: 'picked_up', label: 'Picked Up' },
+const statusSteps: {
+  status: Order['status'];
+  Icon: LucideIcon;
+}[] = [
+  { status: 'pending', Icon: Clock },
+  { status: 'confirmed', Icon: CheckCircle },
+  { status: 'preparing', Icon: ChefHat },
+  { status: 'ready', Icon: Bell },
+  { status: 'picked_up', Icon: Check },
 ];
 
-function StatusStep({ status, active }: { status: string; active: boolean }) {
+function StatusStep({
+  Icon,
+  label,
+  active,
+  completed,
+  isLast,
+}: {
+  Icon: LucideIcon;
+  label: string;
+  active: boolean;
+  completed: boolean;
+  isLast: boolean;
+}) {
+  const colors = useThemeColor();
+  const circleColor = completed || active ? 'bg-primary' : 'bg-muted/20';
+  const iconColor = completed || active ? '#fff' : colors.muted;
+
   return (
-    <View className="flex-1 items-center">
-      <View
-        className={`mb-2 h-8 w-8 items-center justify-center rounded-full ${
-          active ? 'bg-primary' : 'bg-muted/20'
-        }`}
-      >
-        <Text className={`text-xs font-bold ${active ? 'text-white' : 'text-muted'}`}>
-          {status.charAt(0).toUpperCase()}
+    <View className="flex-1 flex-row items-center">
+      <View className="flex-1 items-center">
+        <View className={`mb-2 h-9 w-9 items-center justify-center rounded-full ${circleColor}`}>
+          <Icon size={16} color={iconColor} />
+        </View>
+        <Text
+          variant="caption"
+          className={`text-center ${active || completed ? 'text-foreground' : 'text-muted'}`}
+        >
+          {label}
         </Text>
       </View>
-      <Text variant="caption" className={`text-center ${active ? 'text-foreground' : 'text-muted'}`}>
-        {status}
-      </Text>
+      {!isLast && (
+        <View
+          className={`mx-1 h-0.5 flex-1 ${completed ? 'bg-primary' : 'bg-muted/20'}`}
+          style={{ marginTop: -18 }}
+        />
+      )}
     </View>
   );
 }
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const { data: order, isLoading } = useOrder(id);
   const [showQR, setShowQR] = useState(false);
@@ -64,7 +98,9 @@ export default function OrderDetailScreen() {
     );
   }
 
-  const activeIndex = statusSteps.findIndex((s) => s.status === order.status);
+  const normalizedStatus: Order['status'] =
+    order.status === 'completed' ? 'picked_up' : order.status;
+  const activeIndex = statusSteps.findIndex((s) => s.status === normalizedStatus);
 
   return (
     <Screen scrollable>
@@ -78,7 +114,10 @@ export default function OrderDetailScreen() {
               scale={0.95}
             >
               <Hash size={16} color={!showQR ? '#fff' : colors.muted} />
-              <Text variant="body-sm" className={`ml-1.5 font-semibold ${!showQR ? 'text-white' : 'text-muted'}`}>
+              <Text
+                variant="body-sm"
+                className={`ml-1.5 font-semibold ${!showQR ? 'text-white' : 'text-muted'}`}
+              >
                 Code
               </Text>
             </PressableScale>
@@ -88,7 +127,10 @@ export default function OrderDetailScreen() {
               scale={0.95}
             >
               <QrCode size={16} color={showQR ? '#fff' : colors.muted} />
-              <Text variant="body-sm" className={`ml-1.5 font-semibold ${showQR ? 'text-white' : 'text-muted'}`}>
+              <Text
+                variant="body-sm"
+                className={`ml-1.5 font-semibold ${showQR ? 'text-white' : 'text-muted'}`}
+              >
                 QR
               </Text>
             </PressableScale>
@@ -114,11 +156,26 @@ export default function OrderDetailScreen() {
           )}
         </Card>
 
-        <View className="mb-6 flex-row">
-          {statusSteps.map((step, index) => (
-            <StatusStep key={step.status} status={step.label} active={index <= activeIndex} />
-          ))}
-        </View>
+        {order.status === 'cancelled' ? (
+          <Card variant="outlined" className="mb-6 border-danger/30 bg-danger/10">
+            <Text variant="body-sm" className="text-center font-semibold text-danger">
+              {t('customer.orders.status.cancelled')}
+            </Text>
+          </Card>
+        ) : (
+          <View className="mb-6 flex-row">
+            {statusSteps.map((step, index) => (
+              <StatusStep
+                key={step.status}
+                Icon={step.Icon}
+                label={t(`customer.orders.status.${step.status}`)}
+                active={index === activeIndex}
+                completed={index < activeIndex}
+                isLast={index === statusSteps.length - 1}
+              />
+            ))}
+          </View>
+        )}
 
         <Card variant="outlined" className="mb-6">
           <Text variant="h3" className="mb-4">
@@ -164,7 +221,7 @@ export default function OrderDetailScreen() {
                 Pickup Window
               </Text>
               <Text variant="body-sm" className="text-muted">
-                {new Date(order.pickupWindowStart).toLocaleString()} - {new Date(order.pickupWindowEnd).toLocaleTimeString()}
+                {formatPickupWindow(order.pickupWindowStart, order.pickupWindowEnd, i18n.language)}
               </Text>
             </View>
           </View>
