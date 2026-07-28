@@ -52,9 +52,46 @@ appId: com.jamyangperenchio.maithing
     id: "listing-description-input"
 - inputText: "A delicious test mystery box created by Maestro end-to-end testing."
 
-# Dismiss the keyboard so the publish button is reachable
+# Dismiss the keyboard so subsequent fields are reachable
+- hideKeyboard
+
+# Scroll to and verify the new date/time pickers
+- scrollUntilVisible:
+    element:
+      id: "start-time-input"
+    direction: DOWN
+    timeout: 10000
+- assertVisible:
+    id: "start-time-input"
+- assertVisible:
+    id: "end-time-input"
+
+# Add a custom dietary tag
+- scrollUntilVisible:
+    element:
+      id: "custom-tag-input"
+    direction: DOWN
+    timeout: 10000
 - tapOn:
-    text: "return"
+    id: "custom-tag-input"
+- inputText: "Maestro Tag"
+- tapOn:
+    id: "add-custom-tag-button"
+
+# Add a custom allergen
+- scrollUntilVisible:
+    element:
+      id: "custom-allergen-input"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "custom-allergen-input"
+- inputText: "Maestro Allergen"
+- tapOn:
+    id: "add-custom-allergen-button"
+
+# Dismiss keyboard before publishing
+- hideKeyboard
 
 # Scroll to publish button and submit
 - scrollUntilVisible:

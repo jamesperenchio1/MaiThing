@@ -187,6 +187,7 @@ export interface MerchantAnalytics {
   todayOrders: number;
   weeklyRevenue: number[];
   weeklyOrders: number[];
+  weeklyItemsSaved: number[];
 }
 
 export interface Category {

@@ -9,14 +9,14 @@ export const createListingSchema = z.object({
   originalPrice: z.number().min(1, 'Original price must be greater than 0'),
   salePrice: z.number().min(1, 'Sale price must be greater than 0'),
   quantity: z.number().min(1, 'Quantity must be at least 1'),
-  pickupWindowStart: z.string().min(1, 'Start time is required'),
-  pickupWindowEnd: z.string().min(1, 'End time is required'),
+  pickupWindowStart: z.date({ required_error: 'Start time is required' }),
+  pickupWindowEnd: z.date({ required_error: 'End time is required' }),
   dietaryTags: z.array(z.string()).default([]),
   allergens: z.array(z.string()).default([]),
 }).refine((data) => data.salePrice < data.originalPrice, {
   message: 'Sale price must be less than original price',
   path: ['salePrice'],
-}).refine((data) => new Date(data.pickupWindowEnd) > new Date(data.pickupWindowStart), {
+}).refine((data) => data.pickupWindowEnd > data.pickupWindowStart, {
   message: 'End time must be after start time',
   path: ['pickupWindowEnd'],
 });

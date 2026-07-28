@@ -9,20 +9,41 @@ import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuthStore } from '@/src/stores/auth';
 import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
 
-function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+type MetricKey =
+  | 'todayRevenue'
+  | 'todayOrders'
+  | 'totalItemsSaved'
+  | 'totalRevenue';
+
+function StatCard({
+  label,
+  value,
+  icon,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  onPress?: () => void;
+}) {
   return (
-    <Card variant="elevated" className="flex-1">
-      <View className="mb-2 rounded-xl bg-primary/10 p-2 self-start">{icon}</View>
-      <Text variant="caption" className="mb-1 text-muted">
-        {label}
-      </Text>
-      <Text variant="h3">{value}</Text>
-    </Card>
+    <PressableScale onPress={onPress} className="flex-1" scale={0.98} disabled={!onPress}>
+      <Card variant="elevated" className="min-h-[120px] justify-between">
+        <View className="mb-2 rounded-xl bg-primary/10 p-2 self-start">{icon}</View>
+        <View>
+          <Text variant="caption" className="mb-1 text-muted">
+            {label}
+          </Text>
+          <Text variant="h3">{value}</Text>
+        </View>
+      </Card>
+    </PressableScale>
   );
 }
 
@@ -68,11 +89,13 @@ export default function MerchantDashboardScreen() {
             label={t('merchant.dashboard.todayRevenue')}
             value={formatCurrency(analytics?.todayRevenue ?? 0)}
             icon={<DollarSign size={20} color={colors.primary} />}
+            onPress={() => router.push({ pathname: '/(merchant)/analytics', params: { metric: 'todayRevenue' } } as any)}
           />
           <StatCard
             label={t('merchant.dashboard.todayOrders')}
             value={String(analytics?.todayOrders ?? 0)}
             icon={<TrendingUp size={20} color={colors.primary} />}
+            onPress={() => router.push({ pathname: '/(merchant)/analytics', params: { metric: 'todayOrders' } } as any)}
           />
         </View>
 
@@ -81,11 +104,13 @@ export default function MerchantDashboardScreen() {
             label={t('merchant.dashboard.itemsSaved')}
             value={String(analytics?.totalItemsSaved ?? 0)}
             icon={<Package size={20} color={colors.primary} />}
+            onPress={() => router.push({ pathname: '/(merchant)/analytics', params: { metric: 'totalItemsSaved' } } as any)}
           />
           <StatCard
             label={t('merchant.dashboard.totalRevenue')}
             value={formatCurrency(analytics?.totalRevenue ?? 0)}
             icon={<DollarSign size={20} color={colors.primary} />}
+            onPress={() => router.push({ pathname: '/(merchant)/analytics', params: { metric: 'totalRevenue' } } as any)}
           />
         </View>
 

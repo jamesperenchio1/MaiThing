@@ -24,6 +24,7 @@ import {
   WALLET_TRANSACTIONS,
 } from './seed';
 import type {
+  BusinessHours,
   CustomerProfile,
   Listing,
   ListingStatus,
@@ -182,9 +183,38 @@ class MockMerchantRepository implements MerchantRepository {
     return MERCHANTS.find((m) => m.id === id) ?? null;
   }
 
+  async getMerchantByOwnerId(ownerId: string): Promise<Merchant | null> {
+    await sleep(200);
+    return MERCHANTS.find((m) => m.ownerId === ownerId) ?? null;
+  }
+
   async getCategories(): Promise<{ id: string; name: string; nameTh: string; icon: string }[]> {
     await sleep(200);
     return CATEGORIES;
+  }
+
+  async updateMerchant(id: string, data: Partial<Merchant>): Promise<Merchant> {
+    await sleep(300);
+    const index = MERCHANTS.findIndex((m) => m.id === id);
+    if (index === -1) throw new Error('Merchant not found');
+    MERCHANTS[index] = { ...MERCHANTS[index], ...data } as Merchant;
+    return MERCHANTS[index];
+  }
+
+  async updateBusinessHours(id: string, hours: BusinessHours[]): Promise<Merchant> {
+    await sleep(300);
+    const index = MERCHANTS.findIndex((m) => m.id === id);
+    if (index === -1) throw new Error('Merchant not found');
+    MERCHANTS[index].businessHours = [...hours];
+    return MERCHANTS[index];
+  }
+
+  async updatePickupInstructions(id: string, instructions: string): Promise<Merchant> {
+    await sleep(300);
+    const index = MERCHANTS.findIndex((m) => m.id === id);
+    if (index === -1) throw new Error('Merchant not found');
+    MERCHANTS[index].pickupInstructions = instructions;
+    return MERCHANTS[index];
   }
 
   async followMerchant(userId: string, merchantId: string): Promise<void> {

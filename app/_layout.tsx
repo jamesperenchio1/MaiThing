@@ -27,6 +27,7 @@ import { queryClient } from '@/src/services/queryClient';
 import { initializeI18n } from '@/src/i18n';
 import { useThemeStore } from '@/src/stores/theme';
 import { useAuthStore } from '@/src/stores/auth';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { mockRepositories } from '@/src/repositories/mock';
 import {
   setNotificationHandler,
@@ -54,6 +55,7 @@ export default function RootLayout() {
     NotoSansThai_700Bold,
   });
   const isDark = useThemeStore((s) => s.isDark);
+  const colors = useThemeColor();
   const setUser = useAuthStore((s) => s.setUser);
 
   const init = useCallback(async () => {
@@ -113,10 +115,10 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
           <ErrorBoundary>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
               <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-              <Stack.Screen name="(customer)" options={{ animation: 'fade' }} />
-              <Stack.Screen name="(merchant)" options={{ animation: 'fade' }} />
+              <Stack.Screen name="(customer)" options={{ animation: 'default' }} />
+              <Stack.Screen name="(merchant)" options={{ animation: 'default' }} />
               <Stack.Screen name="+not-found" />
             </Stack>
           </ErrorBoundary>

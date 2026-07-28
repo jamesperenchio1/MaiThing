@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Callout, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Navigation, Heart, Star } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -28,6 +28,7 @@ export function Map({
 }: MapProps) {
   const colors = useThemeColor();
   const mapRef = useRef<MapView>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   const initialRegion = userLocation
     ? {
@@ -44,18 +45,22 @@ export function Map({
       };
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapReady) return;
     const coords = merchants.map((m) => m.coordinates);
     if (userLocation) coords.push(userLocation);
     if (coords.length === 0) return;
-    mapRef.current.fitToCoordinates(coords, {
-      edgePadding: { top: 120, right: 60, bottom: 260, left: 60 },
-      animated: true,
-    });
-  }, [merchants, userLocation]);
+    // Use a small delay to ensure the native map has finished laying out.
+    const timeout = setTimeout(() => {
+      mapRef.current?.fitToCoordinates(coords, {
+        edgePadding: { top: 120, right: 60, bottom: 260, left: 60 },
+        animated: true,
+      });
+    }, 250);
+    return () => clearTimeout(timeout);
+  }, [merchants, userLocation, mapReady]);
 
   useEffect(() => {
-    if (!locationGranted || !userLocation || !mapRef.current) return;
+    if (!locationGranted || !userLocation || !mapRef.current || !mapReady) return;
     mapRef.current.animateToRegion(
       {
         latitude: userLocation.latitude,
@@ -65,10 +70,10 @@ export function Map({
       },
       600
     );
-  }, [locationGranted]);
+  }, [locationGranted, mapReady]);
 
   useEffect(() => {
-    if (!selectedMerchantId || !mapRef.current) return;
+    if (!selectedMerchantId || !mapRef.current || !mapReady) return;
     const selected = merchants.find((m) => m.id === selectedMerchantId);
     if (!selected) return;
     mapRef.current.animateToRegion(
@@ -80,17 +85,18 @@ export function Map({
       },
       350
     );
-  }, [selectedMerchantId, merchants]);
+  }, [selectedMerchantId, merchants, mapReady]);
 
   return (
-    <View className="flex-1">
+    <View className="relative flex-1">
       <MapView
         ref={mapRef}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
         style={StyleSheet.absoluteFill as any}
         initialRegion={initialRegion}
-        showsUserLocation={!!userLocation}
+        showsUserLocation={!!userLocation && !!locationGranted}
         showsMyLocationButton={false}
+        onMapReady={() => setMapReady(true)}
         onPress={() => onSelectMerchant?.(null)}
       >
         {merchants.map((merchant) => (

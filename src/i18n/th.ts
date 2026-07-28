@@ -159,6 +159,7 @@ export default {
       totalRevenue: 'รายได้ทั้งหมด',
       createListing: 'สร้างรายการ',
       manageInventory: 'จัดการสินค้า',
+      viewAnalytics: 'ดูวิเคราะห์',
     },
     orders: {
       title: 'ออเดอร์',
@@ -191,7 +192,9 @@ export default {
       salePrice: 'ราคาขาย',
       category: 'หมวดหมู่',
       tags: 'แท็ก',
+      customTag: 'เพิ่มแท็กกำหนดเอง',
       allergens: 'สารก่อภูมิแพ้',
+      customAllergen: 'เพิ่มสารก่อภูมิแพ้กำหนดเอง',
       preview: 'ตัวอย่าง',
       publish: 'เผยแพร่',
     },
@@ -199,6 +202,11 @@ export default {
       title: 'โปรไฟล์ร้านค้า',
       storeHours: 'เวลาเปิด-ปิด',
       pickupManagement: 'การจัดการรับสินค้า',
+      description: 'อัปเดตข้อมูลร้านค้าและคำแนะนำการรับสินค้า',
+    },
+    analytics: {
+      title: 'วิเคราะห์',
+      last7Days: '7 วันล่าสุด',
     },
   },
   validation: {

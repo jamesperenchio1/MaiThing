@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { View, Switch, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { View, Alert } from 'react-native';
 import { Store, Clock, MapPin, LogOut, User, ChevronRight } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -39,6 +40,7 @@ function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
 }
 
 export default function MerchantSettingsScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
@@ -50,9 +52,6 @@ export default function MerchantSettingsScreen() {
       { text: 'Log Out', style: 'destructive', onPress: logout },
     ]);
   };
-
-  const comingSoon = (feature: string) =>
-    Alert.alert(feature, 'This feature will be available in a future update.');
 
   const handleSwitchRole = () => {
     continueAsTest('customer');
@@ -82,19 +81,19 @@ export default function MerchantSettingsScreen() {
             testID="business-profile-menu-item"
             icon={<Store size={20} color={colors.muted} />}
             label={t('merchant.businessProfile.title')}
-            onPress={() => comingSoon('Business Profile')}
+            onPress={() => router.push('/(merchant)/business-profile' as any)}
           />
           <MenuItem
             testID="store-hours-menu-item"
             icon={<Clock size={20} color={colors.muted} />}
             label={t('merchant.businessProfile.storeHours')}
-            onPress={() => comingSoon('Store Hours')}
+            onPress={() => router.push('/(merchant)/store-hours' as any)}
           />
           <MenuItem
             testID="pickup-management-menu-item"
             icon={<MapPin size={20} color={colors.muted} />}
             label={t('merchant.businessProfile.pickupManagement')}
-            onPress={() => comingSoon('Pickup Management')}
+            onPress={() => router.push('/(merchant)/pickup-management' as any)}
           />
         </Card>
 

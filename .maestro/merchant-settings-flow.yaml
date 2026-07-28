@@ -1,0 +1,104 @@
+appId: com.jamyangperenchio.maithing
+---
+# Merchant settings screens navigation flow
+- runFlow: merchant-switch-flow.yaml
+
+# Open merchant settings tab
+- tapOn:
+    id: "merchant-settings-tab"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+- assertVisible:
+    id: "business-profile-menu-item"
+- assertVisible:
+    id: "store-hours-menu-item"
+- assertVisible:
+    id: "pickup-management-menu-item"
+
+# Business Profile
+- tapOn:
+    id: "business-profile-menu-item"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "business-profile-screen"
+    timeout: 10000
+- assertVisible:
+    id: "business-name-input"
+- assertVisible:
+    id: "business-description-input"
+- assertVisible:
+    id: "business-phone-input"
+- assertVisible:
+    id: "business-pickup-instructions-input"
+- assertVisible:
+    id: "save-business-profile-button"
+
+- tapOn:
+    id: "header-back-button"
+- waitForAnimationToEnd
+
+# Store Hours
+- tapOn:
+    id: "store-hours-menu-item"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "store-hours-screen"
+    timeout: 10000
+- assertVisible:
+    id: "store-hours-day-0-switch"
+- scrollUntilVisible:
+    element:
+      id: "save-store-hours-button"
+    direction: DOWN
+    timeout: 10000
+- assertVisible:
+    id: "save-store-hours-button"
+
+# Scroll back to the sticky header so the back button is reachable
+- scrollUntilVisible:
+    element:
+      id: "header-back-button"
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: "header-back-button"
+- waitForAnimationToEnd
+
+# Pickup Management
+- tapOn:
+    id: "pickup-management-menu-item"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "pickup-management-screen"
+    timeout: 10000
+- assertVisible:
+    id: "pickup-instructions-input"
+- assertVisible:
+    id: "save-pickup-management-button"
+
+- scrollUntilVisible:
+    element:
+      id: "header-back-button"
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: "header-back-button"
+- waitForAnimationToEnd
+
+# Back on settings
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+- assertVisible:
+    id: "merchant-settings-title"

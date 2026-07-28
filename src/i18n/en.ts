@@ -161,6 +161,7 @@ export default {
       totalRevenue: 'Total Revenue',
       createListing: 'Create Listing',
       manageInventory: 'Manage Inventory',
+      viewAnalytics: 'View Analytics',
     },
     orders: {
       title: 'Orders',
@@ -193,7 +194,9 @@ export default {
       salePrice: 'Sale Price',
       category: 'Category',
       tags: 'Tags',
+      customTag: 'Add custom tag',
       allergens: 'Allergens',
+      customAllergen: 'Add custom allergen',
       preview: 'Preview',
       publish: 'Publish',
     },
@@ -201,6 +204,11 @@ export default {
       title: 'Business Profile',
       storeHours: 'Store Hours',
       pickupManagement: 'Pickup Management',
+      description: 'Update your shop details and pickup instructions.',
+    },
+    analytics: {
+      title: 'Analytics',
+      last7Days: 'Last 7 days',
     },
   },
   validation: {

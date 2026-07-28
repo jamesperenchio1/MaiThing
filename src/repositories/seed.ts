@@ -606,6 +606,7 @@ export const MERCHANT_ANALYTICS: MerchantAnalytics = {
   todayOrders: 11,
   weeklyRevenue: [5200, 6100, 4800, 7300, 5400, 6900, 4200],
   weeklyOrders: [12, 15, 11, 18, 13, 16, 11],
+  weeklyItemsSaved: [38, 45, 32, 51, 41, 48, 35],
 };
 
 export const ALL_USERS: User[] = [TEST_CUSTOMER, TEST_MERCHANT_USER];

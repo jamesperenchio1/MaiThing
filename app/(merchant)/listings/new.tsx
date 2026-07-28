@@ -16,6 +16,7 @@ import { Badge } from '@/src/components/ui/Badge';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { DateTimePickerField } from '@/src/components/ui/DateTimePickerField';
 import { createListingSchema, type CreateListingForm } from '@/src/features/listings/schemas';
 import { useCategories } from '@/src/hooks/useMerchants';
 import { mockRepositories } from '@/src/repositories/mock';
@@ -60,6 +61,8 @@ export default function CreateListingScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [isOriginalPriceFocused, setIsOriginalPriceFocused] = useState(false);
   const [isSalePriceFocused, setIsSalePriceFocused] = useState(false);
+  const [customTagInput, setCustomTagInput] = useState('');
+  const [customAllergenInput, setCustomAllergenInput] = useState('');
 
   const {
     control,
@@ -79,8 +82,8 @@ export default function CreateListingScreen() {
       originalPrice: 300,
       salePrice: 99,
       quantity: 5,
-      pickupWindowStart: '2026-07-27 18:00',
-      pickupWindowEnd: '2026-07-27 20:00',
+      pickupWindowStart: new Date(new Date().setHours(18, 0, 0, 0)),
+      pickupWindowEnd: new Date(new Date().setHours(20, 0, 0, 0)),
       dietaryTags: [],
       allergens: [],
     },
@@ -107,8 +110,8 @@ export default function CreateListingScreen() {
         salePrice: data.salePrice,
         quantity: data.quantity,
         quantityRemaining: data.quantity,
-        pickupWindowStart: new Date(data.pickupWindowStart).toISOString(),
-        pickupWindowEnd: new Date(data.pickupWindowEnd).toISOString(),
+        pickupWindowStart: data.pickupWindowStart.toISOString(),
+        pickupWindowEnd: data.pickupWindowEnd.toISOString(),
         dietaryTags: data.dietaryTags,
         allergens: data.allergens,
         status: 'active' as const,
@@ -152,6 +155,26 @@ export default function CreateListingScreen() {
     }
   };
 
+  const addCustomTag = () => {
+    const value = customTagInput.trim();
+    if (!value) return;
+    const current = dietaryTags;
+    if (!current.includes(value)) {
+      setValue('dietaryTags', [...current, value]);
+    }
+    setCustomTagInput('');
+  };
+
+  const addCustomAllergen = () => {
+    const value = customAllergenInput.trim();
+    if (!value) return;
+    const current = allergens;
+    if (!current.includes(value)) {
+      setValue('allergens', [...current, value]);
+    }
+    setCustomAllergenInput('');
+  };
+
   const onSubmit = (data: CreateListingForm) => {
     createListing.mutate(data);
   };
@@ -159,7 +182,7 @@ export default function CreateListingScreen() {
   return (
     <Screen testID="create-listing-screen" scrollable keyboardAvoiding>
       <Header testID="create-listing-header" title={t('merchant.createListing.title')} />
-      <View className="px-6 py-4">
+      <View className="px-6 py-4 pb-12">
         <Text variant="h2" className="mb-6">
           {t('merchant.createListing.chooseType')}
         </Text>
@@ -402,39 +425,44 @@ export default function CreateListingScreen() {
           )}
         />
 
-        <View className="mb-6 flex-row space-x-3">
-          <Controller
-            control={control}
-            name="pickupWindowStart"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <View className="flex-1">
-                <Input
-                  testID="start-time-input"
-                  label="Start Time"
-                  placeholder="2025-07-22 18:00"
-                  value={value}
-                  onChangeText={onChange}
-                  error={error?.message}
-                />
-              </View>
-            )}
-          />
-          <Controller
-            control={control}
-            name="pickupWindowEnd"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <View className="flex-1">
-                <Input
-                  testID="end-time-input"
-                  label="End Time"
-                  placeholder="2025-07-22 20:00"
-                  value={value}
-                  onChangeText={onChange}
-                  error={error?.message}
-                />
-              </View>
-            )}
-          />
+        <View className="mb-6">
+          <Text variant="h3" className="mb-3">
+            {t('merchant.createListing.pickupWindow')}
+          </Text>
+          <View className="flex-row space-x-3">
+            <Controller
+              control={control}
+              name="pickupWindowStart"
+              render={({ field: { onChange, value }, fieldState: { error } }) => (
+                <View className="flex-1">
+                  <DateTimePickerField
+                    testID="start-time-input"
+                    label="Start"
+                    value={value}
+                    onChange={onChange}
+                    minimumDate={new Date()}
+                    error={error?.message}
+                  />
+                </View>
+              )}
+            />
+            <Controller
+              control={control}
+              name="pickupWindowEnd"
+              render={({ field: { onChange, value }, fieldState: { error } }) => (
+                <View className="flex-1">
+                  <DateTimePickerField
+                    testID="end-time-input"
+                    label="End"
+                    value={value}
+                    onChange={onChange}
+                    minimumDate={value}
+                    error={error?.message}
+                  />
+                </View>
+              )}
+            />
+          </View>
         </View>
 
         <View className="mb-6">
@@ -450,6 +478,35 @@ export default function CreateListingScreen() {
                 onPress={() => toggleArray('dietaryTags', tag.id)}
               />
             ))}
+            {dietaryTags
+              .filter((id) => !DIETARY_TAGS.some((t) => t.id === id))
+              .map((tag) => (
+                <ToggleChip
+                  key={tag}
+                  label={tag}
+                  selected
+                  onPress={() => toggleArray('dietaryTags', tag)}
+                />
+              ))}
+          </View>
+          <View className="mt-3 flex-row items-center space-x-2">
+            <Input
+              containerClassName="flex-1"
+              testID="custom-tag-input"
+              placeholder="Add custom tag"
+              value={customTagInput}
+              onChangeText={setCustomTagInput}
+              onSubmitEditing={addCustomTag}
+            />
+            <Button
+              testID="add-custom-tag-button"
+              variant="secondary"
+              size="sm"
+              onPress={addCustomTag}
+              disabled={!customTagInput.trim()}
+            >
+              Add
+            </Button>
           </View>
         </View>
 
@@ -466,6 +523,35 @@ export default function CreateListingScreen() {
                 onPress={() => toggleArray('allergens', allergen.id)}
               />
             ))}
+            {allergens
+              .filter((id) => !ALLERGENS.some((a) => a.id === id))
+              .map((allergen) => (
+                <ToggleChip
+                  key={allergen}
+                  label={allergen}
+                  selected
+                  onPress={() => toggleArray('allergens', allergen)}
+                />
+              ))}
+          </View>
+          <View className="mt-3 flex-row items-center space-x-2">
+            <Input
+              containerClassName="flex-1"
+              testID="custom-allergen-input"
+              placeholder="Add custom allergen"
+              value={customAllergenInput}
+              onChangeText={setCustomAllergenInput}
+              onSubmitEditing={addCustomAllergen}
+            />
+            <Button
+              testID="add-custom-allergen-button"
+              variant="secondary"
+              size="sm"
+              onPress={addCustomAllergen}
+              disabled={!customAllergenInput.trim()}
+            >
+              Add
+            </Button>
           </View>
         </View>
 

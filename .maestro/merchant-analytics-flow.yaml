@@ -1,0 +1,28 @@
+appId: com.jamyangperenchio.maithing
+---
+# Merchant analytics drill-down flow
+- runFlow: merchant-switch-flow.yaml
+
+# Tap a dashboard stat card to open analytics detail
+- tapOn:
+    text: "Today's Revenue"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-analytics-screen"
+    timeout: 10000
+- assertVisible:
+    text: "Last 7 days"
+
+# Return to dashboard
+- tapOn:
+    id: "header-back-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-dashboard-screen"
+    timeout: 10000
+- assertVisible:
+    id: "merchant-dashboard-title"

@@ -1,4 +1,5 @@
 import type {
+  BusinessHours,
   Category,
   CustomerProfile,
   Listing,
@@ -43,9 +44,13 @@ export interface MerchantRepository {
     query?: string;
   }): Promise<Merchant[]>;
   getMerchant(id: string): Promise<Merchant | null>;
+  getMerchantByOwnerId(ownerId: string): Promise<Merchant | null>;
   getCategories(): Promise<Category[]>;
   followMerchant(userId: string, merchantId: string): Promise<void>;
   unfollowMerchant(userId: string, merchantId: string): Promise<void>;
+  updateMerchant(id: string, data: Partial<Merchant>): Promise<Merchant>;
+  updateBusinessHours(id: string, hours: BusinessHours[]): Promise<Merchant>;
+  updatePickupInstructions(id: string, instructions: string): Promise<Merchant>;
 }
 
 export interface ListingRepository {
