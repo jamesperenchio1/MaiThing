@@ -284,7 +284,7 @@ export default function ListingDetailScreen() {
       <View className="border-t border-border bg-background px-6 py-4">
         <View className="mb-3 flex-row items-center justify-between">
           <Text variant="body-sm" className="text-muted">
-            {listing.quantityRemaining} left
+            {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })}
           </Text>
           <Text className="text-xl font-bold">{formatCurrency(listing.salePrice * quantity)}</Text>
         </View>

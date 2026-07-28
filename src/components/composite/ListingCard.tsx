@@ -1,6 +1,7 @@
 import { Image, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { cn, formatCurrency, formatDistance } from '@/src/lib/utils';
 import { Card } from '@/src/components/ui/Card';
 import { Text } from '@/src/components/ui/Text';
@@ -23,6 +24,7 @@ export function ListingCard({
   testID,
 }: ListingCardProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const isMystery = listing.type === 'mystery_box';
   const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
   const isSoldOut = listing.quantityRemaining === 0;
@@ -78,7 +80,7 @@ export function ListingCard({
             <Text className="ml-2 text-sm font-semibold text-primary">-{discount}%</Text>
           </View>
           <Text variant="caption" className="text-muted">
-            {listing.quantityRemaining} left · Pickup{' '}
+            {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })} · Pickup{' '}
             {new Date(listing.pickupWindowStart).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',

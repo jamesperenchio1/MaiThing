@@ -60,6 +60,23 @@ export default function RootLayout() {
     try {
       const currentUser = await mockRepositories.users.getCurrentUser();
       setUser(currentUser);
+
+      if (currentUser) {
+        await Promise.allSettled([
+          queryClient.prefetchQuery({
+            queryKey: ['wallet', currentUser.id],
+            queryFn: () => mockRepositories.wallet.getWallet(currentUser.id),
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ['orders', currentUser.id, 'customer'],
+            queryFn: () => mockRepositories.orders.getOrders(currentUser.id, 'customer'),
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ['customer-profile', currentUser.id],
+            queryFn: () => mockRepositories.users.getCustomerProfile(currentUser.id),
+          }),
+        ]);
+      }
     } finally {
       setReady(true);
     }

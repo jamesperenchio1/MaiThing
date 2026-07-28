@@ -31,6 +31,7 @@ const statusVariantMap: Record<
 };
 
 function InventoryCard({ listing }: { listing: Listing }) {
+  const { t } = useTranslation();
   return (
     <Card variant="elevated" className="mb-3 flex-row overflow-hidden p-0">
       <Image source={{ uri: listing.images[0] }} className="h-full w-28" resizeMode="cover" />
@@ -42,7 +43,8 @@ function InventoryCard({ listing }: { listing: Listing }) {
           <Badge variant={statusVariantMap[listing.status]}>{listing.status}</Badge>
         </View>
         <Text variant="body-sm" className="mb-1 text-muted">
-          {formatCurrency(listing.salePrice)} · {listing.quantityRemaining} left
+          {formatCurrency(listing.salePrice)} ·{' '}
+          {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })}
           {listing.quantityRemaining > 0 && listing.quantityRemaining <= 3 && (
             <Text variant="body-sm" className="font-semibold text-danger">
               {' '}

@@ -14,7 +14,7 @@ A running list of small-to-medium improvements that would make the app feel more
 5. ⚠️ **Memoize heavy computations** (`calculateDistance`, `getMerchantOpenStatus`, filtered lists) with `useMemo`. `MerchantCard.tsx`'s `getMerchantOpenStatus` call (invoked once per card in every merchant list) is now wrapped in `useMemo`. The other call sites for `calculateDistance`/`getMerchantOpenStatus` are single-item detail screens, not list renders, so they weren't in scope for this fix.
 6. ⚠️ **Image optimization**: add `resizeMode`, consistent sizes, and a placeholder/error fallback for merchant logos and listing images. `resizeMode="cover"` is now applied to every `<Image>` in the app (5 previously-missing spots fixed: listing image picker preview, both order-item thumbnails, customer order card logo, `MerchantCard` logo). No error/placeholder fallback exists anywhere in the codebase (not even in the screens that already had `resizeMode`) — adding that requires new `onError` state/fallback-asset logic, which is new behavior, not wiring, so it was left alone.
 7. ❌ **Lazy-load heavy screens** (map, merchant dashboard charts, order detail) with `React.lazy` / dynamic imports where possible. No `React.lazy` usage found.
-8. ❌ **Preload critical data** after login (wallet, active orders, favorites) so tabs open instantly. No `prefetchQuery` or preload logic found.
+8. ✅ **Preload critical data** after login (wallet, active orders, favorites) so tabs open instantly. `app/_layout.tsx` now prefetches wallet, customer orders, and customer profile (which includes favorites) right after the current user is loaded.
 
 ## 🎨 UX / UI Polish
 
@@ -102,7 +102,7 @@ A running list of small-to-medium improvements that would make the app feel more
 ## 🌍 Localization
 
 66. ⚠️ **Move all hard-coded strings** (e.g., "Order History", create listing labels) into `i18n/en.ts` and `i18n/th.ts`. 147 `t('...')` calls exist showing solid i18n adoption already. Checked `i18n/en.ts` for the specific strings still hardcoded (e.g. "My Orders", "Order History", "Search orders...", "No results found") — none of them have an existing matching key sitting unused, so wiring them in would mean writing brand-new English *and* Thai copy, which is new content, not wiring. Skipped.
-67. ❌ **Pluralization support** for item counts and review counts. No plural-handling logic found in `src/i18n`.
+67. ✅ **Pluralization support** for item counts and review counts. Added i18next plural keys for `customer.listing.quantityLeft` and `customer.merchant.reviewCount` in both `en.ts` and `th.ts`, and wired them into `ListingCard`, listing detail, merchant inventory, and merchant detail.
 68. ✅ **Date/time localization** using `Intl.DateTimeFormat` or `date-fns` with Thai locale. `formatPickupWindow()` and `getMerchantOpenStatus()` in `src/lib/utils.ts` both use `Intl.DateTimeFormat` with a `locale` param and explicit Thai (`'th'`) handling.
 69. ❌ **RTL layout audit** even though Thai is LTR, to future-proof Arabic support. No evidence of any RTL-related code or audit.
 
@@ -143,8 +143,8 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## Summary
 
-- ✅ **Done: 29** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support, tab switcher animation, global error boundary, reorder button, version/build info, low-stock warning.
-- ⚠️ **Partial: 7** — image placeholder/error fallback, lazy-load heavy screens, preload critical data, loading buttons audit (covered major actions but not every button), distance km/miles decision, broader testID/accessibility audit, OTP auto-fill (no OTP screen exists).
+- ✅ **Done: 32** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support, tab switcher animation, global error boundary, reorder button, version/build info, low-stock warning, preload critical data, pluralization for counts/reviews.
+- ⚠️ **Partial: 6** — image placeholder/error fallback, lazy-load heavy screens, loading buttons audit (covered major actions but not every button), distance km/miles decision, broader testID/accessibility audit, OTP auto-fill (no OTP screen exists).
 - ❌ **Not started: 43**
 - ❓ **Not verifiable by static analysis: 1** (color contrast — needs a manual/tooling audit)
 

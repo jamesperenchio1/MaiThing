@@ -77,7 +77,8 @@ export default function MerchantDetailScreen() {
               <View className="flex-row items-center">
                 <Star size={16} color={colors.warning} fill={colors.warning} />
                 <Text variant="body-sm" className="ml-1">
-                  {merchant.rating.toFixed(1)} · {merchant.reviewCount} reviews
+                  {merchant.rating.toFixed(1)} ·{' '}
+                  {t('customer.merchant.reviewCount', { count: merchant.reviewCount })}
                 </Text>
               </View>
               {openStatus && (
