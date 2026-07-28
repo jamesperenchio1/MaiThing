@@ -1,6 +1,7 @@
 import { Pressable, type PressableProps } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { cn } from '@/src/lib/utils';
+import { useReducedMotion } from '@/src/hooks/useReducedMotion';
 
 interface PressableScaleProps extends PressableProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export function PressableScale({
   testID,
   ...props
 }: PressableScaleProps) {
+  const reducedMotion = useReducedMotion();
   const sharedValue = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -29,13 +31,17 @@ export function PressableScale({
     <AnimatedPressable
       testID={testID}
       className={cn(className)}
-      style={animatedStyle}
+      style={reducedMotion ? undefined : animatedStyle}
       onPressIn={(e) => {
-        sharedValue.value = withSpring(scale, { damping: 15, stiffness: 300 });
+        if (!reducedMotion) {
+          sharedValue.value = withSpring(scale, { damping: 15, stiffness: 300 });
+        }
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        sharedValue.value = withSpring(1, { damping: 15, stiffness: 300 });
+        if (!reducedMotion) {
+          sharedValue.value = withSpring(1, { damping: 15, stiffness: 300 });
+        }
         onPressOut?.(e);
       }}
       {...props}

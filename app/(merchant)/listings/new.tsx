@@ -126,7 +126,8 @@ export default function CreateListingScreen() {
         `"${data.title}" is now live and visible to customers.`,
         { listingId: data.id, type: 'listing_published' },
         undefined,
-        'new_deal'
+        'new_deal',
+        `/(merchant)/(tabs)/inventory`
       ).catch(() => {});
       router.replace('/(merchant)/(tabs)/inventory' as any);
     },

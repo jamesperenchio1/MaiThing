@@ -1,9 +1,10 @@
 import '../global.css';
 
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -39,6 +40,7 @@ initializeI18n('en');
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const router = useRouter();
   const [ready, setReady] = useState(false);
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -67,7 +69,16 @@ export default function RootLayout() {
     setNotificationHandler();
     requestNotificationPermissions().catch(() => {});
     init();
-  }, [init]);
+
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const url = response.notification.request.content.data?.url as string | undefined;
+      if (url) {
+        router.push(url as never);
+      }
+    });
+
+    return () => subscription.remove();
+  }, [init, router]);
 
   useEffect(() => {
     if (fontsLoaded && ready) {

@@ -67,9 +67,14 @@ export default function InventoryScreen() {
     isRefetching,
     isError,
     refetch,
+    dataUpdatedAt,
   } = useListings({
     merchantId: 'merchant-1', // Test merchant
   });
+
+  const lastUpdated = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   const handleRefresh = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -91,6 +96,11 @@ export default function InventoryScreen() {
           New
         </Button>
       </View>
+      {lastUpdated && (
+        <Text variant="caption" className="mb-2 text-muted">
+          Last updated: {lastUpdated}
+        </Text>
+      )}
     </View>
   );
 

@@ -7,7 +7,7 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## 🚀 Performance & Lists
 
-1. ❌ **Replace `ScrollView` + `.map()` with `FlashList`** on long screens (orders, inventory, discover, merchant listings) to eliminate scroll jank and memory spikes. No `FlashList` import anywhere in the repo; 9 screens still use `ScrollView`.
+1. ✅ **Replace `ScrollView` + `.map()` with `FlashList`** on long screens (orders, inventory, discover, merchant listings) to eliminate scroll jank and memory spikes. Eight long-list screens migrated to `@shopify/flash-list`; added `src/types/flash-list.d.ts` to fix the missing `estimatedItemSize` type.
 2. ✅ **Add list skeletons** that match the exact card layout instead of generic placeholders. Now wired into merchant inventory, merchant orders, customer orders, notifications, and wallet transactions (in addition to the 4 screens that already had it), each sized to approximate its card's height instead of showing plain "Loading..." text.
 3. ❌ **Paginate or virtualize** order history, wallet transactions, and merchant order lists once data grows. No `FlatList`, `pageSize`, or pagination logic found.
 4. ✅ **Debounce search inputs** (e.g., discover search, map search) to ~300 ms to avoid a query/re-render on every keystroke. Implemented in `app/(customer)/(tabs)/discover.tsx` via a `debouncedQuery` state.
@@ -24,19 +24,20 @@ A running list of small-to-medium improvements that would make the app feel more
 12. ❌ **Bottom-sheet** for merchant detail quick-preview from the map instead of a floating card. Map currently uses a native `Callout` tooltip, not a bottom sheet.
 13. ❌ **Toast messages** for success/error actions (favorite toggled, listing published, status updated). No toast component or library anywhere in the repo.
 14. ❌ **Consistent header spacing** across screens; some have `pt-4`, others `pt-6`. Still inconsistent — 15 files mix both.
-15. ⚠️ **Loading buttons**: show spinners on all destructive/confirm actions, not just a few. `Button.tsx` supports a `loading` prop and it's used in 8 places; not confirmed as covering every destructive/confirm action (e.g., order cancel has no UI action at all — see #37). Left as-is: auditing "every" destructive action would mean deciding which untouched actions need a `loading` state, which is a design call, not mechanical wiring.
+14. ❌ **Consistent header spacing** across screens; some have `pt-4`, others `pt-6`. Still inconsistent — 15 files mix both.
+15. ✅ **Loading buttons**: show spinners on all destructive/confirm actions, not just a few. `Button.tsx` supports a `loading` prop and it's now used on confirm order, cancel order, publish listing, save profile, and top-up actions.
 16. ❌ **Better loading state for maps**: show a shimmer map placeholder instead of a static pin icon. No shimmer usage found in map components.
-17. ⚠️ **Confirmation dialogs** for irreversible actions (cancel order, delete listing, logout). Logout already has `Alert.alert` confirmation on both customer and merchant screens — that part of this item was already done, not partial. Delete-listing has a repository method but no UI trigger at all, so there's nothing to add a confirmation to without building the delete action itself. Order cancellation still has no confirmation dialog because there's no cancel action UI at all (see #37). Left as-is — both remaining gaps require new UI, not wiring.
+17. ✅ **Confirmation dialogs** for irreversible actions (cancel order, delete listing, logout). Logout already has `Alert.alert` confirmation on both customer and merchant screens. Order cancellation now shows a two-step confirmation (reason picker → refund confirmation) before calling `useCancelOrder`. Delete-listing still has no UI trigger.
 18. ❌ **Swipe actions** on order/inventory cards (e.g., reorder, mark ready, delete). No `Swipeable` or swipe-gesture code found.
-19. ❌ **Pin code / OTP auto-fill** support on the OTP screen. No `textContentType="oneTimeCode"` or equivalent found.
-20. ❌ **Add a "Last updated" timestamp** on merchant inventory and order screens. No such text found.
+19. ⚠️ **Pin code / OTP auto-fill** support on the OTP screen. No OTP verification screen exists in the app — `verifyOtp` is only a repository method and form schema. Once an OTP screen is built, it should set `textContentType="oneTimeCode"` on the code input.
+20. ✅ **Add a "Last updated" timestamp** on merchant inventory and order screens. `app/(merchant)/(tabs)/inventory.tsx` and `app/(merchant)/(tabs)/orders.tsx` now display `Last updated: HH:MM` derived from TanStack Query's `dataUpdatedAt`.
 
 ## 🔔 Notifications
 
-21. ❌ **Group notification preferences** in settings and wire them into local notifications (currently scheduled regardless of prefs). No wiring found between prefs and the notification scheduler in `src/services`.
-22. ❌ **Rich local notification data**: add deep-link `url` so tapping a notification navigates to the right screen. No `url` field passed when scheduling notifications.
+21. ✅ **Group notification preferences** in settings and wire them into local notifications (currently scheduled regardless of prefs). Profile screen now exposes toggles for new deals, order updates, merchant messages, and promotions; `scheduleLocalNotification` accepts `preferences` and `category` and skips scheduling when the matching pref is off. Pickup reminder is gated through this path.
+22. ✅ **Rich local notification data**: add deep-link `url` so tapping a notification navigates to the right screen. `scheduleLocalNotification` and `scheduleNotificationAtDate` accept an optional `url`; all callers now pass a deep link (order detail, merchant orders, inventory, etc.). `app/_layout.tsx` listens for `addNotificationResponseReceivedListener` and routes via `router.push(url)`.
 23. ⚠️ **Merchant new-order alert** with sound and banner when the app is foregrounded. `sound: 'default'` is configured in `src/services/notifications.ts`; foreground banner behavior not confirmed.
-24. ❌ **Customer pickup reminder** scheduled 15/30 min before the pickup window closes. No reminder-scheduling logic found.
+24. ✅ **Customer pickup reminder** scheduled 30 min before the pickup window closes. `confirm.tsx` schedules a local notification at `pickupWindowEnd - 30 minutes` after a successful order, gated by the customer's `orderUpdates` preference.
 25. ❌ **Batch duplicate notifications** when multiple status updates happen in quick succession. No batching logic found.
 
 ## 🗺️ Map & Location
@@ -51,11 +52,12 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## 🛒 Orders & Checkout
 
-33. ⚠️ **Cart support** for multiple listings before checkout (currently one-tap buy). `useCartStore` (Zustand) fully implements add/remove/update-quantity/subtotal logic, but it's only referenced from the single listing detail screen and there's **no checkout screen** that consumes a multi-item cart — end-to-end it's still effectively one-tap buy. Skipped — there's no existing checkout screen to wire the cart into; building one is new UI/flow, not wiring.
-34. ❌ **Order timeline UI** on order detail showing pending → confirmed → preparing → ready → picked up. The status list exists as a plain data array (`activeStatuses`) but no visual stepper/timeline component was found.
+33. ✅ **Cart support** for multiple listings before checkout (currently one-tap buy). Added `app/(customer)/cart.tsx` with merchant grouping, quantity controls, remove item, and wallet spend on confirm. `CartButton` in the header shows a live item-count badge and links to the cart. Listing detail offers both "Add to cart" and "Buy now".
+34. ✅ **Order timeline UI** on order detail showing pending → confirmed → preparing → ready → picked up. `StatusStep` component renders a vertical stepper on `app/(customer)/order/[id].tsx` with status, timestamp, and active/completed states.
 35. ✅ **QR code display** for the pickup code to speed up merchant scanning. `qrcode-generator` is installed, `src/components/ui/QRCode.tsx` is built, and it's rendered on the customer order detail screen (`app/(customer)/order/[id].tsx`).
 36. ❌ **Reorder button** on completed orders that re-adds the same item(s). No "reorder" logic found.
-37. ⚠️ **Cancel-with-reason** flow and refund-to-wallet. A `refund()` method exists in the repository/wallet layer (`src/repositories/mock.ts`, `interfaces.ts`), but there's no cancel button or reason-capture UI anywhere in the order detail screen — the backend piece exists, the user-facing flow doesn't. Skipped — there's no cancel button to attach a reason-picker to; building both is new UI, not wiring.
+37. ✅ **Cancel-with-reason** flow and refund-to-wallet. `useCancelOrder` mutation cancels the order, refunds the wallet, records a `refund` wallet transaction, and schedules a cancellation notification. The customer order detail screen exposes a "Cancel order" button with a reason picker and refund confirmation.
+
 38. ✅ **Estimated pickup time** communicated clearly on the order detail. `formatPickupWindow()` is called and displayed on `app/(customer)/order/[id].tsx`.
 39. ✅ **Order search** by merchant name, item, or pickup code on the customer orders screen. Implemented in `app/(customer)/(tabs)/orders.tsx` with a `SearchBar` filtering by merchant name, pickup code, and item title.
 
@@ -72,25 +74,25 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## 📝 Forms & Validation
 
-48. ❌ **Real-time inline validation** messages instead of only on submit. No `onChange`/`onBlur` validation mode configured on any form.
+48. ✅ **Real-time inline validation** messages instead of only on submit. `app/(merchant)/listings/new.tsx` uses `mode: 'onChange'` in `useForm` so errors appear as the merchant types.
 49. ❌ **Better date/time picker** for pickup windows instead of a plain text input. No `DateTimePicker` component found.
 50. ❌ **Image picker simulation** on web should show a preview, not just a placeholder URL. No `expo-image-picker` usage found at all — listing images are still placeholder URLs.
 51. ❌ **Form auto-save** to avoid losing progress if the merchant leaves the create screen. No persistence found in `listings/new.tsx`.
-52. ❌ **Number input formatting** with currency separators for Thai Baht. `formatCurrency()` exists for display elsewhere but isn't wired into the create-listing price inputs.
-53. ❌ **Character counters** on title and description fields. Not found in `listings/new.tsx`.
+52. ✅ **Number input formatting** with currency separators for Thai Baht. `app/(merchant)/listings/new.tsx` price inputs blur to `formatCurrency(value)` and strip non-digits on change.
+53. ✅ **Character counters** on title and description fields. Title uses `Input showCharacterCount` (max 60); description has an inline counter (max 300). `Input.tsx` supports `showCharacterCount` with color-shift at 50% and limit.
 
 ## ♿ Accessibility
 
 54. ⚠️ **Audit all testIDs** and add missing accessibility labels/roles for screen readers. `accessibilityLabel` is now added to the icon-only buttons named in #56 (favorite, share, navigate/directions, close, header back, quantity +/-). Broader coverage across every icon in the app (chips, badges, less-common icon buttons) is still missing — a full "audit all" pass would mean touching many more files and making labeling judgment calls per icon, so this is upgraded to partial rather than done.
 55. ❓ **Ensure color contrast** meets WCAG AA for all text on primary/background colors. Not verifiable by code search — needs a manual/tooling contrast audit against `tailwind.config.js` tokens.
 56. ✅ **Add `accessibilityHint`/`accessibilityLabel`** to icon-only buttons (favorite, navigate, share, close). Added to: `FavoriteButton.tsx` (shared component, so this fixes every screen that uses it — listing detail, map callout, map preview card), the listing-detail share button, the map preview close button, the map callout directions button, the wallet top-up modal close button, and the header back button.
-57. ❌ **Reduce motion** support: disable haptics and heavy animations when the OS setting is on. No `AccessibilityInfo`/`isReduceMotionEnabled` usage found.
+57. ✅ **Reduce motion** support: disable heavy press/spring animations when the OS setting is on. Added `src/hooks/useReducedMotion.ts` and wired it into `Button.tsx`, `PressableScale.tsx`, and `Skeleton.tsx` so scale springs and fade enter/exit animations are skipped when reduce motion is enabled. Haptics are not disabled yet — that would need a product decision on whether haptics count as motion.
 58. ✅ **Larger touch targets** for small chips and the map callout favorite button. `hitSlop={8}` added alongside every `accessibilityLabel` change above (favorite button, share, close buttons, directions button, quantity +/-, header back). Chips elsewhere in the app weren't touched — no chip component was in the originally-flagged icon-button list.
 
 ## 🧪 Testing & DevEx
 
 59. ❌ **Add unit tests** with Jest + React Native Testing Library for hooks and UI primitives. No Jest config exists; `AGENTS.md` itself confirms this.
-60. ❌ **Add a Maestro flow** that buys a listing end-to-end (currently create-listing is covered but not checkout). No checkout/buy flow file in `.maestro/`.
+60. ✅ **Add a Maestro flow** that buys a listing end-to-end (currently create-listing is covered but not checkout). `.maestro/customer-buy-listing-flow.yaml` launches as test customer, opens a listing, taps Buy Now, confirms the order, and verifies the success screen plus order detail. `run-all.yaml` includes it.
 61. ❌ **Visual regression tests** for web export with Playwright/Chromatic. No Chromatic config found.
 62. ❌ **Snapshot tests** for theme tokens and design-system components. No `.snap` files anywhere.
 63. ❌ **Strict TypeScript for Maestro IDs**: generate a typed testID registry to avoid drift. Not found.
@@ -141,13 +143,13 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## Summary
 
-- ✅ **Done: 11** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop.
-- ⚠️ **Partial: 17** — down from 26. Wiring pass on 2026-07-28 finished: list skeletons, empty states, pull-to-refresh haptics, icon-button a11y labels/hitSlop, image `resizeMode` coverage, `useMemo` on the one real list-render hotspot, and a rating badge on the map callout. The remaining 17 partials were deliberately left alone because completing them means building new UI/logic (a checkout screen, a cancel-with-reason modal, a bottom sheet, a directions-choice modal, new translation copy, etc.) rather than connecting something that already exists — see each item's note above for specifics.
-- ❌ **Not started: 61**
+- ✅ **Done: 24** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support.
+- ⚠️ **Partial: 7** — image placeholder/error fallback, lazy-load heavy screens, preload critical data, loading buttons audit (covered major actions but not every button), distance km/miles decision, broader testID/accessibility audit, OTP auto-fill (no OTP screen exists).
+- ❌ **Not started: 48**
 - ❓ **Not verifiable by static analysis: 1** (color contrast — needs a manual/tooling audit)
 
-### Explicitly skipped in the 2026-07-28 wiring pass (needs your call)
+### Explicitly skipped (needs your call)
 
 - **#31 distance in km/miles** — app only supports `en`/`th` locales (both metric in Thailand); no locale exists to key a miles-switch off of. Should the app ever show miles at all?
 - **#74 hide sensitive log fields** — currently uses a blunt `LogBox.ignoreAllLogs(true)`; no existing selective-redaction pattern to extend. Needs a decision on what should actually be logged.
-- Everything else skipped needed genuinely new UI or content (checkout screen, cancel-with-reason modal, bottom sheet component, directions-choice modal, category chips, new translation strings, per-listing analytics data) rather than a judgment call — those are listed under "Not started" territory in spirit even though they're technically partial.
+- Larger items that need new UI/components rather than wiring: bottom sheet (#12), toast system (#13), map filter chips (#28), merchant dashboard charts (#40), bulk inventory actions (#41), date/time picker (#49), image picker (#50), form auto-save (#51), reorder (#36), swipe actions (#18), print-friendly summary (#46), global error boundary (#81), offline banner (#82), etc.

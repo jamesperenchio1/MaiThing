@@ -113,12 +113,16 @@ export default function ConfirmOrderScreen() {
         `Your order from ${merchant.name} has been confirmed. Pickup code: ${newOrder.pickupCode}`,
         { orderId: newOrder.id, type: 'order_confirmed' },
         preferences,
-        'order_update'
+        'order_update',
+        `/(customer)/order/${newOrder.id}`
       ).catch(() => {});
       scheduleLocalNotification(
         'New order received',
         `You have a new order from ${user.name} for ${formatCurrency(newOrder.total)}`,
-        { orderId: newOrder.id, type: 'new_order' }
+        { orderId: newOrder.id, type: 'new_order' },
+        undefined,
+        undefined,
+        `/(merchant)/(tabs)/orders`
       ).catch(() => {});
 
       const pickupEnd = new Date(newOrder.pickupWindowEnd);
@@ -128,7 +132,8 @@ export default function ConfirmOrderScreen() {
           'Pickup reminder',
           `Your order from ${merchant.name} is ready for pickup soon. Code: ${newOrder.pickupCode}`,
           reminderTime,
-          { orderId: newOrder.id, type: 'pickup_reminder' }
+          { orderId: newOrder.id, type: 'pickup_reminder' },
+          `/(customer)/order/${newOrder.id}`
         ).catch(() => {});
       }
     } finally {

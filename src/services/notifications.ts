@@ -48,7 +48,8 @@ export async function scheduleLocalNotification(
   body: string,
   data?: Record<string, unknown>,
   preferences?: NotificationPreferences,
-  category?: NotificationCategory
+  category?: NotificationCategory,
+  url?: string
 ) {
   if (Platform.OS === 'web') return;
   if (category && !shouldScheduleNotification(preferences, category)) return;
@@ -60,7 +61,7 @@ export async function scheduleLocalNotification(
     content: {
       title,
       body,
-      data,
+      data: { ...data, url },
       sound: 'default',
     },
     trigger: null,
@@ -71,7 +72,8 @@ export async function scheduleNotificationAtDate(
   title: string,
   body: string,
   date: Date,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
+  url?: string
 ) {
   if (Platform.OS === 'web') return;
   const granted = await requestNotificationPermissions();
@@ -81,7 +83,7 @@ export async function scheduleNotificationAtDate(
     content: {
       title,
       body,
-      data,
+      data: { ...data, url },
       sound: 'default',
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },

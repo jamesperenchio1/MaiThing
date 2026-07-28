@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, type PressableProps, View } from 'react-n
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { cn } from '@/src/lib/utils';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useReducedMotion } from '@/src/hooks/useReducedMotion';
 import { Text } from './Text';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -59,6 +60,7 @@ export function Button({
   onPressOut,
   ...props
 }: ButtonProps) {
+  const reducedMotion = useReducedMotion();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -82,14 +84,18 @@ export function Button({
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
       onPressIn={(e) => {
-        scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+        if (!reducedMotion) {
+          scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+        }
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+        if (!reducedMotion) {
+          scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+        }
         onPressOut?.(e);
       }}
-      style={animatedStyle}
+      style={reducedMotion ? undefined : animatedStyle}
       {...props}
     >
       {loading && (

@@ -102,13 +102,19 @@ export default function CartScreen() {
       scheduleLocalNotification(
         'Order confirmed',
         `Your order from ${merchant.name} has been confirmed. Pickup code: ${order.pickupCode}`,
-        { orderId: order.id, type: 'order_confirmed' }
+        { orderId: order.id, type: 'order_confirmed' },
+        undefined,
+        'order_update',
+        `/(customer)/order/${order.id}`
       ).catch(() => {});
 
       scheduleLocalNotification(
         'New order received',
         `You have a new order from ${user.name} for ${formatCurrency(order.total)}`,
-        { orderId: order.id, type: 'new_order' }
+        { orderId: order.id, type: 'new_order' },
+        undefined,
+        undefined,
+        `/(merchant)/(tabs)/orders`
       ).catch(() => {});
 
       router.replace(`/(customer)/order/${order.id}` as any);

@@ -106,7 +106,8 @@ export function useCancelOrder() {
           type: 'order_cancelled',
         },
         customerProfile?.notificationPreferences,
-        'order_update'
+        'order_update',
+        `/(customer)/order/${order.id}`
       ).catch(() => {});
     },
   });
@@ -137,7 +138,8 @@ export function useUpdateOrderStatus() {
             type: `order_${order.status}`,
           },
           customerProfile?.notificationPreferences,
-          'order_update'
+          'order_update',
+          `/(customer)/order/${order.id}`
         ).catch(() => {});
       }
     },

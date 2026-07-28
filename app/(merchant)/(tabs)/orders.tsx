@@ -118,7 +118,12 @@ export default function MerchantOrdersScreen() {
     isRefetching,
     isError,
     refetch,
+    dataUpdatedAt,
   } = useOrders(user?.id ?? '', 'merchant');
+
+  const lastUpdated = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   const handleRefresh = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -130,6 +135,11 @@ export default function MerchantOrdersScreen() {
       <Text testID="orders-title" variant="h1" className="mb-4">
         {t('merchant.orders.title')}
       </Text>
+      {lastUpdated && (
+        <Text variant="caption" className="mb-2 text-muted">
+          Last updated: {lastUpdated}
+        </Text>
+      )}
     </View>
   );
 

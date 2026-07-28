@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cn } from '@/src/lib/utils';
+import { useReducedMotion } from '@/src/hooks/useReducedMotion';
 
 interface SkeletonProps {
   className?: string;
@@ -10,10 +11,11 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className, width, height, circle }: SkeletonProps) {
+  const reducedMotion = useReducedMotion();
   return (
     <Animated.View
-      entering={FadeIn.duration(200)}
-      exiting={FadeOut.duration(200)}
+      entering={reducedMotion ? undefined : FadeIn.duration(200)}
+      exiting={reducedMotion ? undefined : FadeOut.duration(200)}
       style={{ width: width as number, height: height as number }}
       className={cn(
         'animate-pulse bg-muted/20',
