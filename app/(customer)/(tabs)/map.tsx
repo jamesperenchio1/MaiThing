@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Image, Share, Linking, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -13,7 +13,7 @@ import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { CategoryChip } from '@/src/components/composite/CategoryChip';
-import type { MapProps } from '@/src/components/map/Map';
+import { Map } from '@/src/components/map/Map';
 import { useMerchants, useCategories } from '@/src/hooks/useMerchants';
 import { useUserLocation } from '@/src/hooks/useUserLocation';
 import { Skeleton } from '@/src/components/ui/Skeleton';
@@ -97,16 +97,7 @@ export default function MapScreen() {
     );
   };
 
-  const [MapComponent, setMapComponent] = useState<React.ComponentType<MapProps> | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    import('@/src/components/map/Map').then((mod) => {
-      if (!cancelled) setMapComponent(() => mod.Map);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+
 
   return (
     <Screen testID="map-screen" scrollable={false}>
@@ -163,12 +154,12 @@ export default function MapScreen() {
 
       {/* Map fills remaining space; floating controls are absolute within this container */}
       <View className="flex-1">
-        {isLoading || !MapComponent ? (
+        {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <Skeleton width={200} height={24} className="rounded-xl" />
           </View>
         ) : (
-          <MapComponent
+          <Map
             merchants={filteredMerchants}
             userLocation={location}
             locationGranted={status === 'granted'}
