@@ -128,6 +128,7 @@ export default {
       call: 'Call',
       share: 'Share',
       viewShop: 'View shop',
+      openNow: 'Open Now',
     },
     orders: {
       active: 'Active',

@@ -126,6 +126,7 @@ export default {
       call: 'โทร',
       share: 'แชร์',
       viewShop: 'ดูร้านค้า',
+      openNow: 'เปิดอยู่',
     },
     orders: {
       active: 'กำลังดำเนินการ',

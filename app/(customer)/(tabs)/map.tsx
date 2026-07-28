@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Share, Linking } from 'react-native';
+import { View, Image, Share, Linking, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LocateFixed, LocateOff, Star, MapPin, X, Phone, Navigation, Share2, Store } from 'lucide-react-native';
 
@@ -12,14 +12,43 @@ import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
-import { Map } from '@/src/components/map/Map';
-import { useMerchants } from '@/src/hooks/useMerchants';
+import { CategoryChip } from '@/src/components/composite/CategoryChip';
+import type { MapProps } from '@/src/components/map/Map';
+import { useMerchants, useCategories } from '@/src/hooks/useMerchants';
 import { useUserLocation } from '@/src/hooks/useUserLocation';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { calculateDistance, formatDistance, getMerchantOpenStatus } from '@/src/lib/utils';
+import { calculateDistance, formatDistance, getMerchantOpenStatus, cn } from '@/src/lib/utils';
 import { openDirections } from '@/src/lib/maps';
 import { openLocationSettings } from '@/src/lib/settings';
+
+function FilterChip({
+  label,
+  selected,
+  onPress,
+  testID,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <PressableScale onPress={onPress} scale={0.95}>
+      <View
+        testID={testID}
+        className={cn(
+          'mr-2 rounded-full border px-4 py-2',
+          selected ? 'border-primary bg-primary' : 'border-border bg-card'
+        )}
+      >
+        <Text variant="body-sm" className={selected ? 'text-white' : 'text-foreground'}>
+          {label}
+        </Text>
+      </View>
+    </PressableScale>
+  );
+}
 
 export default function MapScreen() {
   const { t, i18n } = useTranslation();
@@ -36,11 +65,48 @@ export default function MapScreen() {
     radius: 50000,
   });
 
-  const selectedMerchant = merchants?.find((m) => m.id === selectedMerchantId);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [openNowOnly, setOpenNowOnly] = useState(false);
+  const [nearbyOnly, setNearbyOnly] = useState(false);
+  const { data: categories } = useCategories();
+
+  const filteredMerchants = useMemo(() => {
+    if (!merchants) return [];
+    let result = merchants;
+    if (selectedCategories.length > 0) {
+      result = result.filter((m) => m.categories.some((c) => selectedCategories.includes(c)));
+    }
+    if (openNowOnly) {
+      result = result.filter((m) => getMerchantOpenStatus(m, i18n.language).isOpen);
+    }
+    if (nearbyOnly) {
+      result = result.filter((m) => (m.distance ?? Infinity) <= 5000);
+    }
+    return result;
+  }, [merchants, selectedCategories, openNowOnly, nearbyOnly, i18n.language]);
+
+  const selectedMerchant = filteredMerchants.find((m) => m.id === selectedMerchantId);
   const openStatus = selectedMerchant
     ? getMerchantOpenStatus(selectedMerchant, i18n.language)
     : null;
   const locationDenied = status === 'denied';
+
+  const toggleCategory = (id: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  };
+
+  const [MapComponent, setMapComponent] = useState<React.ComponentType<MapProps> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    import('@/src/components/map/Map').then((mod) => {
+      if (!cancelled) setMapComponent(() => mod.Map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <Screen testID="map-screen" scrollable={false}>
@@ -68,15 +134,42 @@ export default function MapScreen() {
         </View>
       </View>
 
+      {/* Filter chips */}
+      <View className="px-4 pb-2">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {categories?.map((category) => (
+            <CategoryChip
+              key={category.id}
+              category={category}
+              isActive={selectedCategories.includes(category.id)}
+              onPress={() => toggleCategory(category.id)}
+              locale={i18n.language as 'en' | 'th'}
+            />
+          ))}
+          <FilterChip
+            testID="map-filter-chip-open-now"
+            label={t('customer.map.openNow')}
+            selected={openNowOnly}
+            onPress={() => setOpenNowOnly((prev) => !prev)}
+          />
+          <FilterChip
+            testID="map-filter-chip-nearby"
+            label={t('common.nearby')}
+            selected={nearbyOnly}
+            onPress={() => setNearbyOnly((prev) => !prev)}
+          />
+        </ScrollView>
+      </View>
+
       {/* Map fills remaining space; floating controls are absolute within this container */}
       <View className="flex-1">
-        {isLoading ? (
+        {isLoading || !MapComponent ? (
           <View className="flex-1 items-center justify-center">
             <Skeleton width={200} height={24} className="rounded-xl" />
           </View>
         ) : (
-          <Map
-            merchants={merchants ?? []}
+          <MapComponent
+            merchants={filteredMerchants}
             userLocation={location}
             locationGranted={status === 'granted'}
             selectedMerchantId={selectedMerchantId}

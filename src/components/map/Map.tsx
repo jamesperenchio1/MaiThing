@@ -11,7 +11,7 @@ import { openDirections } from '@/src/lib/maps';
 import { formatDistance } from '@/src/lib/utils';
 import type { Merchant, Coordinates } from '@/src/types';
 
-interface MapProps {
+export interface MapProps {
   merchants: Merchant[];
   userLocation?: Coordinates;
   locationGranted?: boolean;
