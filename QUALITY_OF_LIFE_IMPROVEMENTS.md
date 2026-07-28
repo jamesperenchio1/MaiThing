@@ -65,7 +65,7 @@ A running list of small-to-medium improvements that would make the app feel more
 
 40. ❌ **Merchant dashboard real-ish time** revenue animation on load. No animation code found on the dashboard screen.
 41. ❌ **Bulk inventory actions**: mark multiple listings sold out / active at once. No multi-select/bulk-action code found.
-42. ❌ **Inventory low-stock warning** when `quantityRemaining` drops below a threshold. No such threshold check found anywhere.
+42. ✅ **Inventory low-stock warning** when `quantityRemaining` drops below a threshold. Merchant inventory cards now show "Low stock" in danger text when a listing has 1–3 items remaining.
 43. ❌ **Duplicate listing** action to create a similar listing faster. No "duplicate" logic found.
 44. ❌ **Draft listings**: allow saving unpublished listings. No draft status/field found in the listing schema or repository.
 45. ❌ **Merchant order filters**: by status, date, or pickup window. The merchant orders screen only has per-order "advance to next status" actions — no filter UI.
@@ -143,9 +143,9 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## Summary
 
-- ✅ **Done: 28** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support, tab switcher animation, global error boundary, reorder button, version/build info.
+- ✅ **Done: 29** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support, tab switcher animation, global error boundary, reorder button, version/build info, low-stock warning.
 - ⚠️ **Partial: 7** — image placeholder/error fallback, lazy-load heavy screens, preload critical data, loading buttons audit (covered major actions but not every button), distance km/miles decision, broader testID/accessibility audit, OTP auto-fill (no OTP screen exists).
-- ❌ **Not started: 44**
+- ❌ **Not started: 43**
 - ❓ **Not verifiable by static analysis: 1** (color contrast — needs a manual/tooling audit)
 
 ### Explicitly skipped (needs your call)

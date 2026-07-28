@@ -43,6 +43,12 @@ function InventoryCard({ listing }: { listing: Listing }) {
         </View>
         <Text variant="body-sm" className="mb-1 text-muted">
           {formatCurrency(listing.salePrice)} · {listing.quantityRemaining} left
+          {listing.quantityRemaining > 0 && listing.quantityRemaining <= 3 && (
+            <Text variant="body-sm" className="font-semibold text-danger">
+              {' '}
+              · Low stock
+            </Text>
+          )}
         </Text>
         <Text variant="caption" className="text-muted">
           Pickup{' '}
