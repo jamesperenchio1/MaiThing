@@ -91,6 +91,13 @@ export default {
       allergens: 'สารก่อภูมิแพ้',
       dietary: 'อาหารเฉพาะ',
     },
+    cart: {
+      title: 'ตะกร้า',
+      emptyTitle: 'ตะกร้าของคุณว่างเปล่า',
+      emptySubtitle: 'ค้นหาดีลเด็ดและช่วยอาหารอร่อยใกล้คุณ',
+      browseDeals: 'สำรวจดีล',
+      confirmOrder: 'ยืนยันคำสั่งซื้อ',
+    },
     merchant: {
       follow: 'ติดตาม',
       following: 'กำลังติดตาม',

@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Alert } from 'react-native';
+import { View, Image, Alert, RefreshControl } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ClipboardList } from 'lucide-react-native';
 
@@ -13,6 +13,7 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
+import { FlashList } from '@shopify/flash-list';
 import { useOrders, useUpdateOrderStatus } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -124,37 +125,53 @@ export default function MerchantOrdersScreen() {
     refetch();
   };
 
-  return (
-    <Screen testID="orders-screen" scrollable className="bg-background" refreshing={isRefetching} onRefresh={handleRefresh}>
-      <View className="px-6 pt-4 pb-2">
-        <Text testID="orders-title" variant="h1" className="mb-4">
-          {t('merchant.orders.title')}
-        </Text>
-      </View>
+  const listHeader = (
+    <View className="pt-4 pb-2">
+      <Text testID="orders-title" variant="h1" className="mb-4">
+        {t('merchant.orders.title')}
+      </Text>
+    </View>
+  );
 
-      <View className="px-6 pb-6">
-        {isLoading ? (
-          <>
-            <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
-            <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
-          </>
-        ) : isError ? (
-          <ErrorState
-            title={t('common.error')}
-            message="We couldn't load your orders."
-            onRetry={refetch}
-            retryLabel={t('common.retry')}
-          />
-        ) : orders?.length ? (
-          orders.map((order) => <OrderCard key={order.id} order={order} />)
-        ) : (
-          <EmptyState
-            icon={<ClipboardList size={32} color={colors.muted} />}
-            title="No orders yet"
-            description="Orders will appear here when customers make purchases."
-          />
-        )}
-      </View>
+  return (
+    <Screen testID="orders-screen" scrollable={false} className="bg-background">
+      {isError || isLoading ? (
+        <View className="flex-1 px-6 pb-6">
+          {listHeader}
+          {isError ? (
+            <ErrorState
+              title={t('common.error')}
+              message="We couldn't load your orders."
+              onRetry={refetch}
+              retryLabel={t('common.retry')}
+            />
+          ) : (
+            <>
+              <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
+              <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
+            </>
+          )}
+        </View>
+      ) : (
+        <FlashList
+          className="flex-1"
+          data={orders ?? []}
+          renderItem={({ item }) => <OrderCard order={item} />}
+          keyExtractor={(item) => item.id}
+          estimatedItemSize={168}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={
+            <EmptyState
+              icon={<ClipboardList size={32} color={colors.muted} />}
+              title="No orders yet"
+              description="Orders will appear here when customers make purchases."
+            />
+          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        />
+      )}
     </Screen>
   );
 }

@@ -4,6 +4,7 @@ appId: com.jamyangperenchio.maithing
 - runFlow: customer-welcome-flow.yaml
 - runFlow: customer-tab-navigation.yaml
 - runFlow: customer-listing-detail.yaml
+- runFlow: customer-buy-listing-flow.yaml
 - runFlow: customer-merchant-detail.yaml
 - runFlow: merchant-switch-flow.yaml
 - runFlow: merchant-create-listing.yaml

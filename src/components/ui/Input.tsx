@@ -10,6 +10,7 @@ interface InputProps extends TextInputProps {
   rightIcon?: React.ReactNode;
   containerClassName?: string;
   inputClassName?: string;
+  showCharacterCount?: boolean;
 }
 
 export function Input({
@@ -20,10 +21,19 @@ export function Input({
   containerClassName,
   inputClassName,
   editable,
+  showCharacterCount,
+  maxLength,
+  value,
+  defaultValue,
   ...props
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const disabled = editable === false;
+
+  const currentValue = value ?? defaultValue ?? '';
+  const charCount = String(currentValue).length;
+  const isNearLimit = maxLength ? charCount >= maxLength * 0.5 : false;
+  const isAtLimit = maxLength ? charCount >= maxLength : false;
 
   return (
     <View className={cn('mb-4', containerClassName)}>
@@ -62,6 +72,17 @@ export function Input({
       {error && (
         <Text variant="caption" className="mt-1.5 ml-1 text-danger">
           {error}
+        </Text>
+      )}
+      {showCharacterCount && maxLength && (
+        <Text
+          variant="caption"
+          className={cn(
+            'mt-1.5 ml-1 text-right',
+            isAtLimit ? 'text-danger' : isNearLimit ? 'text-amber-500' : 'text-muted'
+          )}
+        >
+          {charCount}/{maxLength}
         </Text>
       )}
     </View>

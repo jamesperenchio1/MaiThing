@@ -15,6 +15,7 @@ import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
+import { useNotificationPreferences } from '@/src/hooks/useNotifications';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import {
@@ -26,7 +27,10 @@ import {
 } from '@/src/lib/utils';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 import { mockRepositories } from '@/src/repositories/mock';
-import { scheduleLocalNotification } from '@/src/services/notifications';
+import {
+  scheduleLocalNotification,
+  scheduleNotificationAtDate,
+} from '@/src/services/notifications';
 import type { Order } from '@/src/types';
 
 export default function ConfirmOrderScreen() {
@@ -40,6 +44,7 @@ export default function ConfirmOrderScreen() {
   const colors = useThemeColor();
   const { data: listing, isLoading: listingLoading } = useListing(id);
   const { data: merchant } = useMerchant(listing?.merchantId ?? '');
+  const { data: preferences } = useNotificationPreferences(user?.id ?? '');
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(Math.max(1, Number(quantityParam) || 1));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,13 +111,26 @@ export default function ConfirmOrderScreen() {
       scheduleLocalNotification(
         'Order confirmed',
         `Your order from ${merchant.name} has been confirmed. Pickup code: ${newOrder.pickupCode}`,
-        { orderId: newOrder.id, type: 'order_confirmed' }
+        { orderId: newOrder.id, type: 'order_confirmed' },
+        preferences,
+        'order_update'
       ).catch(() => {});
       scheduleLocalNotification(
         'New order received',
         `You have a new order from ${user.name} for ${formatCurrency(newOrder.total)}`,
         { orderId: newOrder.id, type: 'new_order' }
       ).catch(() => {});
+
+      const pickupEnd = new Date(newOrder.pickupWindowEnd);
+      const reminderTime = new Date(pickupEnd.getTime() - 30 * 60 * 1000);
+      if (reminderTime > new Date() && preferences?.orderUpdates) {
+        scheduleNotificationAtDate(
+          'Pickup reminder',
+          `Your order from ${merchant.name} is ready for pickup soon. Code: ${newOrder.pickupCode}`,
+          reminderTime,
+          { orderId: newOrder.id, type: 'pickup_reminder' }
+        ).catch(() => {});
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -272,6 +290,7 @@ export default function ConfirmOrderScreen() {
 
       <View className="border-t border-border bg-background px-6 py-4">
         <Button
+          testID="confirm-order-button"
           fullWidth
           disabled={isSoldOut || isSubmitting}
           loading={isSubmitting}

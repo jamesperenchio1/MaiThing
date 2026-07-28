@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, RefreshControl } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -10,6 +10,7 @@ import { MerchantCard } from '@/src/components/composite/MerchantCard';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
+import { FlashList } from '@shopify/flash-list';
 import { useMerchants } from '@/src/hooks/useMerchants';
 import { useCustomerProfile } from '@/src/hooks/useFavorites';
 import { useAuthStore } from '@/src/stores/auth';
@@ -48,39 +49,43 @@ export default function FavoritesScreen() {
   const favorited = merchants?.filter((m) => profile?.favorites.includes(m.id)) ?? [];
 
   return (
-    <Screen
-      testID="favorites-screen"
-      scrollable
-      className="bg-background"
-      refreshing={isRefetching}
-      onRefresh={handleRefresh}
-    >
+    <Screen testID="favorites-screen" scrollable={false} className="bg-background">
       <Header title={t('common.favorites')} />
-      <View className="px-6 py-4">
-        {isLoading ? (
-          <>
-            <Skeleton width="100%" height={120} className="mb-3 rounded-3xl" />
-            <Skeleton width="100%" height={120} className="mb-3 rounded-3xl" />
-          </>
-        ) : isError ? (
-          <ErrorState
-            title={t('common.error')}
-            message="We couldn't load your favorites."
-            onRetry={handleRefresh}
-            retryLabel={t('common.retry')}
-          />
-        ) : favorited.length > 0 ? (
-          favorited.map((merchant) => (
-            <MerchantCard key={merchant.id} merchant={merchant} className="mb-3" />
-          ))
-        ) : (
-          <EmptyState
-            icon={<Heart size={32} color={colors.muted} />}
-            title="No favorites yet"
-            description="Tap the heart on any shop to save it here."
-          />
-        )}
-      </View>
+      {isError || isLoading ? (
+        <View className="flex-1 px-6 py-4">
+          {isError ? (
+            <ErrorState
+              title={t('common.error')}
+              message="We couldn't load your favorites."
+              onRetry={handleRefresh}
+              retryLabel={t('common.retry')}
+            />
+          ) : (
+            <>
+              <Skeleton width="100%" height={120} className="mb-3 rounded-3xl" />
+              <Skeleton width="100%" height={120} className="mb-3 rounded-3xl" />
+            </>
+          )}
+        </View>
+      ) : (
+        <FlashList
+          className="flex-1"
+          data={favorited}
+          renderItem={({ item }) => <MerchantCard merchant={item} className="mb-3" />}
+          keyExtractor={(item) => item.id}
+          estimatedItemSize={120}
+          ListEmptyComponent={
+            <EmptyState
+              icon={<Heart size={32} color={colors.muted} />}
+              title="No favorites yet"
+              description="Tap the heart on any shop to save it here."
+            />
+          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}
+        />
+      )}
     </Screen>
   );
 }

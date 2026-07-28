@@ -73,6 +73,7 @@ export interface OrderRepository {
   getOrder(id: string): Promise<Order | null>;
   createOrder(data: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order>;
   updateOrderStatus(id: string, status: Order['status']): Promise<Order>;
+  cancelOrder(id: string, reason: string): Promise<Order>;
 }
 
 export interface WalletRepository {

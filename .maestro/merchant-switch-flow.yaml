@@ -11,6 +11,7 @@ appId: com.jamyangperenchio.maithing
     visible:
       id: "profile-screen"
     timeout: 10000
+- scroll
 
 # Switch to merchant role
 - tapOn:

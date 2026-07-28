@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import type { NotificationPreferences } from '@/src/types';
 
 let permissionGranted: boolean | null = null;
 
@@ -17,9 +18,59 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return permissionGranted;
 }
 
+export type NotificationCategory =
+  | 'new_deal'
+  | 'order_update'
+  | 'merchant_message'
+  | 'promotion';
+
+export function shouldScheduleNotification(
+  preferences: NotificationPreferences | undefined,
+  type: NotificationCategory
+): boolean {
+  if (!preferences) return true;
+  switch (type) {
+    case 'new_deal':
+      return preferences.newDeals;
+    case 'order_update':
+      return preferences.orderUpdates;
+    case 'merchant_message':
+      return preferences.merchantMessages;
+    case 'promotion':
+      return preferences.promotions;
+    default:
+      return true;
+  }
+}
+
 export async function scheduleLocalNotification(
   title: string,
   body: string,
+  data?: Record<string, unknown>,
+  preferences?: NotificationPreferences,
+  category?: NotificationCategory
+) {
+  if (Platform.OS === 'web') return;
+  if (category && !shouldScheduleNotification(preferences, category)) return;
+
+  const granted = await requestNotificationPermissions();
+  if (!granted) return;
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      data,
+      sound: 'default',
+    },
+    trigger: null,
+  });
+}
+
+export async function scheduleNotificationAtDate(
+  title: string,
+  body: string,
+  date: Date,
   data?: Record<string, unknown>
 ) {
   if (Platform.OS === 'web') return;
@@ -33,7 +84,7 @@ export async function scheduleLocalNotification(
       data,
       sound: 'default',
     },
-    trigger: null,
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
   });
 }
 

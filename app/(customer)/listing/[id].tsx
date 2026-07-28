@@ -87,6 +87,11 @@ export default function ListingDetailScreen() {
     });
   };
 
+  const handleAddToCart = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    addItem(listing, quantity);
+  };
+
   return (
     <Screen testID="listing-detail-screen" scrollable={false}>
       <Header testID="listing-detail-header" />
@@ -283,15 +288,26 @@ export default function ListingDetailScreen() {
           </Text>
           <Text className="text-xl font-bold">{formatCurrency(listing.salePrice * quantity)}</Text>
         </View>
-        <Button
-          testID="buy-now-button"
-          fullWidth
-          disabled={isSoldOut}
-          loading={false}
-          onPress={handleBuyNow}
-        >
-          {isSoldOut ? t('customer.listing.soldOut') : t('customer.listing.buyNow')}
-        </Button>
+        <View className="flex-row space-x-3">
+          <Button
+            testID="add-to-cart-button"
+            variant="secondary"
+            className="flex-1"
+            disabled={isSoldOut}
+            onPress={handleAddToCart}
+          >
+            {t('customer.listing.addToCart')}
+          </Button>
+          <Button
+            testID="buy-now-button"
+            className="flex-1"
+            disabled={isSoldOut}
+            loading={false}
+            onPress={handleBuyNow}
+          >
+            {isSoldOut ? t('customer.listing.soldOut') : t('customer.listing.buyNow')}
+          </Button>
+        </View>
       </View>
     </Screen>
   );

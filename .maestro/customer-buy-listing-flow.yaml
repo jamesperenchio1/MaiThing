@@ -1,0 +1,91 @@
+appId: com.jamyangperenchio.maithing
+---
+# End-to-end customer purchase flow: browse a listing, buy it, verify order confirmation
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+# Handle notification permission dialog
+- runFlow:
+    when:
+      visible: "Would Like to Send You Notifications"
+    commands:
+      - tapOn: "Allow"
+      - waitForAnimationToEnd
+# Dismiss any lingering system dialog
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Cancel"
+      - waitForAnimationToEnd
+
+- assertVisible:
+    id: "welcome-screen"
+- extendedWaitUntil:
+    visible:
+      id: "test-customer-button"
+    timeout: 10000
+
+- tapOn:
+    id: "test-customer-button"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000
+
+# Open a known seeded listing directly via deep link
+- openLink: "maithing:///(customer)/listing/listing-merchant-1-0-box"
+- waitForAnimationToEnd
+# Dismiss the "Open in maithing?" system dialog if it appears
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "listing-detail-screen"
+    timeout: 10000
+
+- assertVisible:
+    id: "buy-now-button"
+- tapOn:
+    id: "buy-now-button"
+- waitForAnimationToEnd
+
+# Confirm order screen
+- extendedWaitUntil:
+    visible:
+      text: "Confirm order"
+    timeout: 10000
+- assertVisible:
+    text: "Total"
+- scroll
+- waitForAnimationToEnd
+- tapOn:
+    id: "confirm-order-button"
+- waitForAnimationToEnd
+
+# Verify order confirmed success screen
+- extendedWaitUntil:
+    visible:
+      text: "Order confirmed!"
+    timeout: 10000
+- assertVisible:
+    text: "Pickup code"
+- assertVisible:
+    text: "View order details"
+
+# Navigate to order detail and verify it loaded
+- tapOn:
+    text: "View order details"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Order Summary"
+    timeout: 10000
+- assertVisible:
+    text: "Pickup Window"

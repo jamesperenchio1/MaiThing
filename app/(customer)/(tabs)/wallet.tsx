@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Pressable, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
+import {
+  View,
+  Pressable,
+  Modal,
+  TouchableWithoutFeedback,
+  Alert,
+  RefreshControl,
+} from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   Wallet as WalletIcon,
@@ -20,6 +27,7 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
+import { FlashList } from '@shopify/flash-list';
 import { useWallet, useWalletTransactions } from '@/src/hooks/useWallet';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -176,23 +184,68 @@ export default function WalletScreen() {
     Promise.all([refetchWallet(), refetchTransactions()]);
   };
 
-  return (
-    <Screen
-      testID="wallet-screen"
-      scrollable
-      className="bg-background"
-      refreshing={refreshing}
-      onRefresh={handleRefresh}
-    >
-      <TopUpModal visible={topUpVisible} onClose={() => setTopUpVisible(false)} />
-      <View className="px-6 pt-4 pb-2">
-        <Text testID="wallet-title" variant="h1" className="mb-4">
-          {t('common.wallet')}
-        </Text>
-      </View>
+  const listHeader = (
+    <View className="pt-4 pb-2">
+      <Text testID="wallet-title" variant="h1" className="mb-4">
+        {t('common.wallet')}
+      </Text>
 
+      <Card testID="balance-card" className="mb-6 bg-primary p-6">
+        <View className="mb-4 flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <View className="mr-3 rounded-full bg-white/20 p-2">
+              <WalletIcon size={24} color="#fff" />
+            </View>
+            <Text className="text-white/80">{t('customer.wallet.balance')}</Text>
+          </View>
+          <Text variant="caption" className="text-white/60">
+            {wallet?.currency}
+          </Text>
+        </View>
+        <Text variant="h1" className="mb-4 text-white">
+          {isLoading
+            ? '...'
+            : wallet?.balance === 999999
+              ? t('customer.wallet.infinite')
+              : formatCurrency(wallet?.balance ?? 0)}
+        </Text>
+        <Button
+          testID="top-up-button"
+          variant="secondary"
+          className="bg-white"
+          textClassName="text-primary"
+          fullWidth
+          onPress={() => setTopUpVisible(true)}
+        >
+          {t('customer.wallet.topUp')}
+        </Button>
+      </Card>
+
+      <Text variant="h3" className="mb-4">
+        {t('customer.wallet.transactions')}
+      </Text>
+    </View>
+  );
+
+  const listEmpty = transactionsLoading ? (
+    <>
+      <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
+      <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
+    </>
+  ) : (
+    <EmptyState
+      icon={<WalletIcon size={32} color={colors.muted} />}
+      title="No transactions yet"
+      description="Your transactions will appear here."
+    />
+  );
+
+  return (
+    <Screen testID="wallet-screen" scrollable={false} className="bg-background">
+      <TopUpModal visible={topUpVisible} onClose={() => setTopUpVisible(false)} />
       {isError ? (
-        <View className="px-6 pb-6">
+        <View className="flex-1 px-6 pb-6">
+          {listHeader}
           <ErrorState
             title={t('common.error')}
             message="We couldn't load your wallet."
@@ -201,60 +254,18 @@ export default function WalletScreen() {
           />
         </View>
       ) : (
-        <View className="px-6 pb-6">
-          <Card testID="balance-card" className="mb-6 bg-primary p-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <View className="mr-3 rounded-full bg-white/20 p-2">
-                  <WalletIcon size={24} color="#fff" />
-                </View>
-                <Text className="text-white/80">{t('customer.wallet.balance')}</Text>
-              </View>
-              <Text variant="caption" className="text-white/60">
-                {wallet?.currency}
-              </Text>
-            </View>
-            <Text variant="h1" className="mb-4 text-white">
-              {isLoading
-                ? '...'
-                : wallet?.balance === 999999
-                  ? t('customer.wallet.infinite')
-                  : formatCurrency(wallet?.balance ?? 0)}
-            </Text>
-            <Button
-              testID="top-up-button"
-              variant="secondary"
-              className="bg-white"
-              textClassName="text-primary"
-              fullWidth
-              onPress={() => setTopUpVisible(true)}
-            >
-              {t('customer.wallet.topUp')}
-            </Button>
-          </Card>
-
-          <Text variant="h3" className="mb-4">
-            {t('customer.wallet.transactions')}
-          </Text>
-          {transactionsLoading ? (
-            <>
-              <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
-              <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
-            </>
-          ) : transactions?.length ? (
-            transactions
-              .slice(0, 10)
-              .map((transaction) => (
-                <TransactionItem key={transaction.id} transaction={transaction} />
-              ))
-          ) : (
-            <EmptyState
-              icon={<WalletIcon size={32} color={colors.muted} />}
-              title="No transactions yet"
-              description="Your transactions will appear here."
-            />
-          )}
-        </View>
+        <FlashList
+          className="flex-1"
+          data={transactions?.slice(0, 10) ?? []}
+          renderItem={({ item }) => <TransactionItem transaction={item} />}
+          keyExtractor={(item) => item.id}
+          estimatedItemSize={68}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={listEmpty}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        />
       )}
     </Screen>
   );

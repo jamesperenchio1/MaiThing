@@ -69,6 +69,7 @@ appId: com.jamyangperenchio.maithing
     id: "profile-title"
 - assertVisible:
     id: "edit-profile-menu-item"
+- scroll
 - assertVisible:
     id: "language-menu-item"
 - assertVisible:

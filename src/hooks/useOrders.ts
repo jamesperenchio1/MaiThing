@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { mockRepositories } from '@/src/repositories/mock';
+import { WALLET_TRANSACTIONS } from '@/src/repositories/seed';
 import { scheduleLocalNotification } from '@/src/services/notifications';
-import type { Order } from '@/src/types';
+import type { CustomerProfile, Order, WalletTransaction } from '@/src/types';
 
 function getStatusNotification(order: Order, status: Order['status']) {
   const label = order.merchantName;
@@ -62,6 +63,55 @@ export function useOrder(id: string) {
   });
 }
 
+export function useCancelOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const order = await mockRepositories.orders.cancelOrder(id, reason);
+      const userId = order.customerId;
+      const description = `Refund for order ${order.pickupCode}`;
+
+      await mockRepositories.wallet.refund(userId, order.total, description);
+
+      const transaction: WalletTransaction = {
+        id: `txn-${Date.now()}`,
+        userId,
+        type: 'refund',
+        amount: order.total,
+        description,
+        orderId: order.id,
+        createdAt: new Date().toISOString(),
+      };
+      WALLET_TRANSACTIONS.unshift(transaction);
+
+      return order;
+    },
+    onSuccess: (order, variables) => {
+      const userId = order.customerId;
+      queryClient.invalidateQueries({ queryKey: ['order', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet', userId] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions', userId] });
+
+      const body = variables.reason || `Order ${order.pickupCode} was cancelled.`;
+      const customerProfile = queryClient.getQueryData<CustomerProfile>([
+        'customerProfile',
+        userId,
+      ]);
+      scheduleLocalNotification(
+        'Order cancelled',
+        body,
+        {
+          orderId: order.id,
+          type: 'order_cancelled',
+        },
+        customerProfile?.notificationPreferences,
+        'order_update'
+      ).catch(() => {});
+    },
+  });
+}
+
 export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -75,10 +125,20 @@ export function useUpdateOrderStatus() {
 
       const notification = getStatusNotification(order, order.status);
       if (notification) {
-        scheduleLocalNotification(notification.title, notification.body, {
-          orderId: order.id,
-          type: `order_${order.status}`,
-        }).catch(() => {});
+        const customerProfile = queryClient.getQueryData<CustomerProfile>([
+          'customerProfile',
+          order.customerId,
+        ]);
+        scheduleLocalNotification(
+          notification.title,
+          notification.body,
+          {
+            orderId: order.id,
+            type: `order_${order.status}`,
+          },
+          customerProfile?.notificationPreferences,
+          'order_update'
+        ).catch(() => {});
       }
     },
   });

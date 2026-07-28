@@ -1,8 +1,8 @@
 import React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image } from 'react-native';
+import { View, Image, Alert } from 'react-native';
 import {
   Clock,
   QrCode,
@@ -22,7 +22,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { QRCode } from '@/src/components/ui/QRCode';
 import { PressableScale } from '@/src/components/ui/PressableScale';
-import { useOrder } from '@/src/hooks/useOrders';
+import { useCancelOrder, useOrder } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
@@ -83,7 +83,13 @@ export default function OrderDetailScreen() {
   const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const { data: order, isLoading } = useOrder(id);
+  const cancelOrder = useCancelOrder();
   const [showQR, setShowQR] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
+  useEffect(() => {
+    setCancelSuccess(false);
+  }, [id]);
 
   if (isLoading || !order) {
     return (
@@ -230,6 +236,57 @@ export default function OrderDetailScreen() {
             </View>
           </View>
         </Card>
+
+        {['pending', 'confirmed', 'preparing'].includes(order.status) && (
+          <Button
+            variant="outline"
+            fullWidth
+            className="mt-6"
+            loading={cancelOrder.isPending}
+            onPress={() => {
+              const reasons = [
+                'Changed my mind',
+                'Ordered by mistake',
+                "Pickup time doesn't work",
+                'Other',
+              ];
+              Alert.alert('Cancel order', 'Why are you cancelling this order?', [
+                ...reasons.map((reason) => ({
+                  text: reason,
+                  onPress: () => {
+                    Alert.alert(
+                      'Confirm cancellation',
+                      `Your wallet will be refunded ${formatCurrency(order.total)}.`,
+                      [
+                        { text: 'Never mind', style: 'cancel' },
+                        {
+                          text: 'Confirm',
+                          style: 'destructive',
+                          onPress: () =>
+                            cancelOrder.mutate(
+                              { id: order.id, reason },
+                              { onSuccess: () => setCancelSuccess(true) }
+                            ),
+                        },
+                      ]
+                    );
+                  },
+                })),
+                { text: 'Cancel', style: 'cancel' },
+              ]);
+            }}
+          >
+            Cancel order
+          </Button>
+        )}
+
+        {cancelSuccess && (
+          <Card variant="outlined" className="mt-4 border-success/30 bg-success/10">
+            <Text variant="body-sm" className="text-center font-semibold text-success">
+              Order cancelled and refunded.
+            </Text>
+          </Card>
+        )}
       </View>
     </Screen>
   );

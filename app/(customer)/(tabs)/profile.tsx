@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Switch, Alert, Modal, TextInput, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import {
@@ -23,10 +23,15 @@ import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useAuthStore } from '@/src/stores/auth';
+import {
+  useNotificationPreferences,
+  useUpdateNotificationPreferences,
+} from '@/src/hooks/useNotifications';
 import { useThemeStore } from '@/src/stores/theme';
 import { useLanguageStore } from '@/src/stores/language';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { mockRepositories } from '@/src/repositories/mock';
+import type { NotificationPreferences } from '@/src/types';
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -71,6 +76,21 @@ export default function ProfileScreen() {
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? '');
+
+  const { data: preferences } = useNotificationPreferences(user?.id ?? '');
+  const updatePreferences = useUpdateNotificationPreferences();
+  const [localPrefs, setLocalPrefs] = useState<NotificationPreferences | null>(null);
+
+  useEffect(() => {
+    if (preferences) setLocalPrefs(preferences);
+  }, [preferences]);
+
+  const togglePreference = (key: keyof NotificationPreferences) => {
+    if (!user || !localPrefs) return;
+    const next = { ...localPrefs, [key]: !localPrefs[key] };
+    setLocalPrefs(next);
+    updatePreferences.mutate({ userId: user.id, preferences: next });
+  };
 
   console.log('[Profile] user:', user?.id, 'roles:', user?.roles, 'selectedRole:', selectedRole, 'hasMerchantRole:', hasMerchantRole);
 
@@ -215,6 +235,58 @@ export default function ProfileScreen() {
             icon={<Bell size={20} color={colors.muted} />}
             label={t('common.notifications')}
             onPress={() => router.push('/(customer)/notifications' as any)}
+          />
+          <MenuItem
+            testID="new-deals-pref-item"
+            icon={<Bell size={20} color={colors.muted} />}
+            label="New deals"
+            onPress={() => togglePreference('newDeals')}
+            right={
+              <Switch
+                value={localPrefs?.newDeals ?? true}
+                onValueChange={() => togglePreference('newDeals')}
+                trackColor={{ false: colors.border, true: colors.primary }}
+              />
+            }
+          />
+          <MenuItem
+            testID="order-updates-pref-item"
+            icon={<Bell size={20} color={colors.muted} />}
+            label="Order updates"
+            onPress={() => togglePreference('orderUpdates')}
+            right={
+              <Switch
+                value={localPrefs?.orderUpdates ?? true}
+                onValueChange={() => togglePreference('orderUpdates')}
+                trackColor={{ false: colors.border, true: colors.primary }}
+              />
+            }
+          />
+          <MenuItem
+            testID="merchant-messages-pref-item"
+            icon={<Bell size={20} color={colors.muted} />}
+            label="Merchant messages"
+            onPress={() => togglePreference('merchantMessages')}
+            right={
+              <Switch
+                value={localPrefs?.merchantMessages ?? true}
+                onValueChange={() => togglePreference('merchantMessages')}
+                trackColor={{ false: colors.border, true: colors.primary }}
+              />
+            }
+          />
+          <MenuItem
+            testID="promotions-pref-item"
+            icon={<Bell size={20} color={colors.muted} />}
+            label="Promotions"
+            onPress={() => togglePreference('promotions')}
+            right={
+              <Switch
+                value={localPrefs?.promotions ?? false}
+                onValueChange={() => togglePreference('promotions')}
+                trackColor={{ false: colors.border, true: colors.primary }}
+              />
+            }
           />
           <MenuItem
             testID="dark-mode-menu-item"

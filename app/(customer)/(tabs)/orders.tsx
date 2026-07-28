@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, Pressable } from 'react-native';
+import { View, Image, Pressable, RefreshControl } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ChevronRight, Package, History, SearchX } from 'lucide-react-native';
 
@@ -14,6 +14,7 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
+import { FlashList } from '@shopify/flash-list';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -126,110 +127,120 @@ export default function OrdersScreen() {
       )
     : tabOrders;
 
-  return (
-    <Screen
-      testID="orders-screen"
-      scrollable
-      className="bg-background"
-      refreshing={isRefetching}
-      onRefresh={handleRefresh}
-    >
-      <View className="px-6 pt-6 pb-2">
-        <View className="mb-5 flex-row items-center">
-          <View
-            className="mr-4 h-12 w-12 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: `${colors.primary}15` }}
-          >
-            {tab === 'history' ? (
-              <History size={24} color={colors.primary} />
-            ) : (
-              <Package size={24} color={colors.primary} />
-            )}
-          </View>
-          <View className="flex-1">
-            <Text testID="orders-title" variant="h1" className="mb-0.5">
-              {tab === 'history' ? 'Order History' : 'My Orders'}
-            </Text>
-            <Text variant="body-sm" className="text-muted">
-              {tab === 'history'
-                ? 'View your past and cancelled orders'
-                : 'Track your active rescues and pickups'}
-            </Text>
-          </View>
-          {!isLoading && !isError && (
-            <View
-              className="min-w-[40px] items-center justify-center rounded-full px-3 py-1"
-              style={{ backgroundColor: `${colors.primary}15` }}
-            >
-              <Text variant="body-sm" className="font-semibold" style={{ color: colors.primary }}>
-                {filteredOrders?.length ?? 0}
-              </Text>
-            </View>
+  const listHeader = (
+    <View className="pt-6 pb-2">
+      <View className="mb-5 flex-row items-center">
+        <View
+          className="mr-4 h-12 w-12 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: `${colors.primary}15` }}
+        >
+          {tab === 'history' ? (
+            <History size={24} color={colors.primary} />
+          ) : (
+            <Package size={24} color={colors.primary} />
           )}
         </View>
-
-        <SearchBar
-          placeholder="Search orders..."
-          value={search}
-          onChangeText={setSearch}
-          onSubmit={setSearch}
-          className="mb-4"
-        />
-
-        <View testID="orders-tabs" className="mb-4 flex-row rounded-2xl bg-muted/10 p-1">
-          {(['active', 'history'] as const).map((tabKey) => (
-            <Pressable
-              key={tabKey}
-              testID={`${tabKey}-orders-tab`}
-              onPress={() => setTab(tabKey)}
-              className={`flex-1 items-center rounded-xl py-3 ${tab === tabKey ? 'bg-primary' : ''}`}
-            >
-              <Text
-                variant="body-sm"
-                className={`text-center font-semibold ${tab === tabKey ? 'text-white' : 'text-muted'}`}
-              >
-                {tabKey === 'active' ? t('customer.orders.active') : t('customer.orders.history')}
-              </Text>
-            </Pressable>
-          ))}
+        <View className="flex-1">
+          <Text testID="orders-title" variant="h1" className="mb-0.5">
+            {tab === 'history' ? 'Order History' : 'My Orders'}
+          </Text>
+          <Text variant="body-sm" className="text-muted">
+            {tab === 'history'
+              ? 'View your past and cancelled orders'
+              : 'Track your active rescues and pickups'}
+          </Text>
         </View>
-      </View>
-
-      <View className="px-6 pb-6">
-        {isError ? (
-          <ErrorState
-            title={t('common.error')}
-            message="We couldn't load your orders."
-            onRetry={refetch}
-            retryLabel={t('common.retry')}
-          />
-        ) : isLoading ? (
-          <>
-            <Skeleton width="100%" height={168} className="mb-4 rounded-2xl" />
-            <Skeleton width="100%" height={168} className="mb-4 rounded-2xl" />
-          </>
-        ) : filteredOrders?.length ? (
-          filteredOrders.map((order) => <OrderCard key={order.id} order={order} />)
-        ) : (
-          <EmptyState
-            icon={
-              search.trim() ? (
-                <SearchX size={32} color={colors.muted} />
-              ) : (
-                <Package size={32} color={colors.muted} />
-              )
-            }
-            title={search.trim() ? 'No results found' : `No ${tab} orders`}
-            description={
-              search.trim()
-                ? 'Try a different search term'
-                : tab === 'active'
-                  ? 'You have no active orders right now.'
-                  : 'Your completed and cancelled orders will appear here.'
-            }
-          />
+        {!isLoading && !isError && (
+          <View
+            className="min-w-[40px] items-center justify-center rounded-full px-3 py-1"
+            style={{ backgroundColor: `${colors.primary}15` }}
+          >
+            <Text variant="body-sm" className="font-semibold" style={{ color: colors.primary }}>
+              {filteredOrders?.length ?? 0}
+            </Text>
+          </View>
         )}
       </View>
+
+      <SearchBar
+        placeholder="Search orders..."
+        value={search}
+        onChangeText={setSearch}
+        onSubmit={setSearch}
+        className="mb-4"
+      />
+
+      <View testID="orders-tabs" className="mb-4 flex-row rounded-2xl bg-muted/10 p-1">
+        {(['active', 'history'] as const).map((tabKey) => (
+          <Pressable
+            key={tabKey}
+            testID={`${tabKey}-orders-tab`}
+            onPress={() => setTab(tabKey)}
+            className={`flex-1 items-center rounded-xl py-3 ${tab === tabKey ? 'bg-primary' : ''}`}
+          >
+            <Text
+              variant="body-sm"
+              className={`text-center font-semibold ${tab === tabKey ? 'text-white' : 'text-muted'}`}
+            >
+              {tabKey === 'active' ? t('customer.orders.active') : t('customer.orders.history')}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+
+  return (
+    <Screen testID="orders-screen" scrollable={false} className="bg-background">
+      {isError || isLoading ? (
+        <View className="flex-1 px-6 pb-6">
+          {listHeader}
+          {isError ? (
+            <ErrorState
+              title={t('common.error')}
+              message="We couldn't load your orders."
+              onRetry={refetch}
+              retryLabel={t('common.retry')}
+            />
+          ) : (
+            <>
+              <Skeleton width="100%" height={168} className="mb-4 rounded-2xl" />
+              <Skeleton width="100%" height={168} className="mb-4 rounded-2xl" />
+            </>
+          )}
+        </View>
+      ) : (
+        <FlashList
+          className="flex-1"
+          data={filteredOrders ?? []}
+          renderItem={({ item }) => <OrderCard order={item} />}
+          keyExtractor={(item) => item.id}
+          estimatedItemSize={168}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={
+            <EmptyState
+              icon={
+                search.trim() ? (
+                  <SearchX size={32} color={colors.muted} />
+                ) : (
+                  <Package size={32} color={colors.muted} />
+                )
+              }
+              title={search.trim() ? 'No results found' : `No ${tab} orders`}
+              description={
+                search.trim()
+                  ? 'Try a different search term'
+                  : tab === 'active'
+                    ? 'You have no active orders right now.'
+                    : 'Your completed and cancelled orders will appear here.'
+              }
+            />
+          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        />
+      )}
     </Screen>
   );
 }

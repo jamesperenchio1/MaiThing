@@ -379,6 +379,25 @@ class MockOrderRepository implements OrderRepository {
     ORDERS[index].updatedAt = new Date().toISOString();
     return ORDERS[index];
   }
+
+  async cancelOrder(id: string, _reason: string): Promise<Order> {
+    await sleep(300);
+    const order = ORDERS.find((o) => o.id === id);
+    if (!order) throw new Error('Order not found');
+
+    order.status = 'cancelled';
+    order.updatedAt = new Date().toISOString();
+
+    for (const item of order.items) {
+      const listing = LISTINGS.find((l) => l.id === item.listingId);
+      if (listing) {
+        listing.quantityRemaining += item.quantity;
+        if (listing.status === 'sold_out') listing.status = 'active';
+      }
+    }
+
+    return order;
+  }
 }
 
 class MockWalletRepository implements WalletRepository {

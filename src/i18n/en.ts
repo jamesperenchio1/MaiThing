@@ -91,6 +91,13 @@ export default {
       allergens: 'Allergens',
       dietary: 'Dietary',
     },
+    cart: {
+      title: 'Cart',
+      emptyTitle: 'Your cart is empty',
+      emptySubtitle: 'Find great deals and rescue delicious food near you.',
+      browseDeals: 'Browse deals',
+      confirmOrder: 'Confirm order',
+    },
     merchant: {
       follow: 'Follow',
       following: 'Following',

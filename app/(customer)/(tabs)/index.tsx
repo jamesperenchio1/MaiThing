@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image } from 'react-native';
+import { View, ScrollView, Image, RefreshControl } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MapPin, Bell } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -16,10 +16,12 @@ import { CategoryChip } from '@/src/components/composite/CategoryChip';
 import { SectionHeader } from '@/src/components/composite/SectionHeader';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { FlashList } from '@shopify/flash-list';
 import { useListings } from '@/src/hooks/useListings';
 import { useMerchants, useCategories } from '@/src/hooks/useMerchants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
+import { CartButton } from '@/src/components/composite/CartButton';
 
 export default function CustomerHomeScreen() {
   const router = useRouter();
@@ -66,22 +68,17 @@ export default function CustomerHomeScreen() {
 
   const hasError = listingsError || merchantsError;
 
-  return (
-    <Screen
-      testID="customer-home-screen"
-      scrollable
-      className="bg-background"
-      refreshing={isRefreshing}
-      onRefresh={handleRefresh}
-    >
-      <View className="px-6 pt-4 pb-6">
-        <View className="mb-4 flex-row items-center justify-between">
-          <View>
-            <Text variant="body-sm" className="text-muted">
-              {t('customer.home.greeting', { timeOfDay: 'morning' })}
-            </Text>
-            <Text variant="h3">{user?.name ?? 'Guest'}</Text>
-          </View>
+  const listHeader = (
+    <View className="pt-4 pb-6">
+      <View className="mb-4 flex-row items-center justify-between">
+        <View>
+          <Text variant="body-sm" className="text-muted">
+            {t('customer.home.greeting', { timeOfDay: 'morning' })}
+          </Text>
+          <Text variant="h3">{user?.name ?? 'Guest'}</Text>
+        </View>
+        <View className="flex-row items-center space-x-1">
+          <CartButton />
           <Button
             variant="ghost"
             size="icon"
@@ -90,62 +87,51 @@ export default function CustomerHomeScreen() {
             <Bell size={24} color={colors.foreground} />
           </Button>
         </View>
-
-        <Animated.View entering={FadeInUp.duration(500)}>
-          <View testID="home-hero-card" className="mb-6 rounded-3xl bg-primary p-6">
-            <Text testID="home-hero-title" variant="h2" className="mb-2 text-white">
-              {t('customer.home.heroTitle')}
-            </Text>
-            <Text testID="home-hero-subtitle" variant="body" className="mb-4 text-white/80">
-              {t('customer.home.heroSubtitle')}
-            </Text>
-            <Button
-              variant="secondary"
-              className="self-start bg-white"
-              textClassName="text-primary"
-              onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
-            >
-              {t('common.discover')}
-            </Button>
-          </View>
-        </Animated.View>
-
-        <SearchBar
-          placeholder={t('common.search')}
-          className="mb-6"
-          onSubmit={(query) =>
-            router.push({ pathname: '/(customer)/(tabs)/discover', params: { query } })
-          }
-        />
-
-        <View className="mb-2">
-          <SectionHeader title={t('customer.home.categories')} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {categories?.map((category) => (
-              <CategoryChip
-                key={category.id}
-                category={category}
-                isActive={selectedCategory === category.id}
-                onPress={() =>
-                  setSelectedCategory((prev) => (prev === category.id ? null : category.id))
-                }
-                locale={i18n.language as 'en' | 'th'}
-              />
-            ))}
-          </ScrollView>
-        </View>
       </View>
 
-      {hasError && (
-        <View className="px-6 pb-6">
-          <ErrorState
-            title={t('common.error')}
-            message="We couldn't load your feed. Pull down to try again."
-            onRetry={handleRefresh}
-            retryLabel={t('common.retry')}
-          />
+      <Animated.View entering={FadeInUp.duration(500)}>
+        <View testID="home-hero-card" className="mb-6 rounded-3xl bg-primary p-6">
+          <Text testID="home-hero-title" variant="h2" className="mb-2 text-white">
+            {t('customer.home.heroTitle')}
+          </Text>
+          <Text testID="home-hero-subtitle" variant="body" className="mb-4 text-white/80">
+            {t('customer.home.heroSubtitle')}
+          </Text>
+          <Button
+            variant="secondary"
+            className="self-start bg-white"
+            textClassName="text-primary"
+            onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
+          >
+            {t('common.discover')}
+          </Button>
         </View>
-      )}
+      </Animated.View>
+
+      <SearchBar
+        placeholder={t('common.search')}
+        className="mb-6"
+        onSubmit={(query) =>
+          router.push({ pathname: '/(customer)/(tabs)/discover', params: { query } })
+        }
+      />
+
+      <View className="mb-2">
+        <SectionHeader title={t('customer.home.categories')} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {categories?.map((category) => (
+            <CategoryChip
+              key={category.id}
+              category={category}
+              isActive={selectedCategory === category.id}
+              onPress={() =>
+                setSelectedCategory((prev) => (prev === category.id ? null : category.id))
+              }
+              locale={i18n.language as 'en' | 'th'}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
       <View testID="home-featured-section" className="mb-6">
         <SectionHeader
@@ -169,22 +155,53 @@ export default function CustomerHomeScreen() {
         </ScrollView>
       </View>
 
-      <View testID="home-near-you-section" className="px-6 pb-6">
-        <SectionHeader
-          title={t('customer.home.nearYou')}
-          action={t('common.seeAll')}
-          onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
-        />
-        {listingsLoading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} height={120} className="mb-3 rounded-3xl" />
-            ))
-          : nearbyListings.map((listing, index) => (
-              <View key={listing.id} testID={index === 0 ? 'first-nearby-listing' : undefined}>
-                <ListingCard listing={listing} variant="horizontal" />
-              </View>
-            ))}
-      </View>
+      {hasError && (
+        <View className="mb-6">
+          <ErrorState
+            title={t('common.error')}
+            message="We couldn't load your feed. Pull down to try again."
+            onRetry={handleRefresh}
+            retryLabel={t('common.retry')}
+          />
+        </View>
+      )}
+
+      <SectionHeader
+        title={t('customer.home.nearYou')}
+        action={t('common.seeAll')}
+        onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
+      />
+    </View>
+  );
+
+  const listEmpty = listingsLoading ? (
+    <>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} height={120} className="mb-3 rounded-3xl" />
+      ))}
+    </>
+  ) : null;
+
+  return (
+    <Screen testID="customer-home-screen" scrollable={false} className="bg-background">
+      <FlashList
+        className="flex-1"
+        data={nearbyListings}
+        renderItem={({ item, index }) => (
+          <ListingCard
+            listing={item}
+            variant="horizontal"
+            testID={index === 0 ? 'first-nearby-listing' : undefined}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={120}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+      />
     </Screen>
   );
 }

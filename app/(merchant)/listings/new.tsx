@@ -22,6 +22,7 @@ import { mockRepositories } from '@/src/repositories/mock';
 import { scheduleLocalNotification } from '@/src/services/notifications';
 import { CATEGORIES, DIETARY_TAGS, ALLERGENS, BOX_SIZES } from '@/src/lib/constants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { cn, formatCurrency } from '@/src/lib/utils';
 import type { Listing } from '@/src/types';
 
 function ToggleChip({
@@ -57,6 +58,8 @@ export default function CreateListingScreen() {
   const colors = useThemeColor();
   const queryClient = useQueryClient();
   const [images, setImages] = useState<string[]>([]);
+  const [isOriginalPriceFocused, setIsOriginalPriceFocused] = useState(false);
+  const [isSalePriceFocused, setIsSalePriceFocused] = useState(false);
 
   const {
     control,
@@ -66,6 +69,7 @@ export default function CreateListingScreen() {
     formState: { errors },
   } = useForm<CreateListingForm>({
     resolver: zodResolver(createListingSchema),
+    mode: 'onChange',
     defaultValues: {
       type: 'mystery_box',
       title: '',
@@ -120,7 +124,9 @@ export default function CreateListingScreen() {
       scheduleLocalNotification(
         'Listing published',
         `"${data.title}" is now live and visible to customers.`,
-        { listingId: data.id, type: 'listing_published' }
+        { listingId: data.id, type: 'listing_published' },
+        undefined,
+        'new_deal'
       ).catch(() => {});
       router.replace('/(merchant)/(tabs)/inventory' as any);
     },
@@ -255,10 +261,12 @@ export default function CreateListingScreen() {
               testID="listing-title-input"
               label="Title"
               placeholder="e.g., Surplus Bread Box"
-              defaultValue={value}
+              value={value}
               onChangeText={onChange}
               onEndEditing={(e) => onChange(e.nativeEvent.text)}
               error={error?.message}
+              maxLength={60}
+              showCharacterCount
             />
           )}
         />
@@ -266,29 +274,48 @@ export default function CreateListingScreen() {
         <Controller
           control={control}
           name="description"
-          render={({ field: { onChange, value }, fieldState: { error } }) => (
-            <View className="mb-4">
-              <Text testID="listing-description-label" variant="label" className="mb-2 ml-1">
-                Description
-              </Text>
-              <TextInput
-                testID="listing-description-input"
-                className="min-h-[100] rounded-2xl border border-border bg-card p-4 text-base text-foreground"
-                placeholder="Describe what's inside..."
-                placeholderTextColor="#9CA3AF"
-                multiline
-                numberOfLines={4}
-                defaultValue={value}
-                onChangeText={onChange}
-                onEndEditing={(e) => onChange(e.nativeEvent.text)}
-              />
-              {error && (
-                <Text variant="caption" className="mt-1 text-danger">
-                  {error.message}
+          render={({ field: { onChange, value }, fieldState: { error } }) => {
+            const descriptionLength = value?.length ?? 0;
+            const descriptionNearLimit = descriptionLength >= 150;
+            const descriptionAtLimit = descriptionLength >= 300;
+            return (
+              <View className="mb-4">
+                <Text testID="listing-description-label" variant="label" className="mb-2 ml-1">
+                  Description
                 </Text>
-              )}
-            </View>
-          )}
+                <TextInput
+                  testID="listing-description-input"
+                  className="min-h-[100] rounded-2xl border border-border bg-card p-4 text-base text-foreground"
+                  placeholder="Describe what's inside..."
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  numberOfLines={4}
+                  value={value}
+                  onChangeText={onChange}
+                  onEndEditing={(e) => onChange(e.nativeEvent.text)}
+                  maxLength={300}
+                />
+                <View className="mt-1.5 ml-1 flex-row justify-between">
+                  {error ? (
+                    <Text variant="caption" className="text-danger">
+                      {error.message}
+                    </Text>
+                  ) : (
+                    <View />
+                  )}
+                  <Text
+                    variant="caption"
+                    className={cn(
+                      'text-right',
+                      descriptionAtLimit ? 'text-danger' : descriptionNearLimit ? 'text-amber-500' : 'text-muted'
+                    )}
+                  >
+                    {descriptionLength}/300
+                  </Text>
+                </View>
+              </View>
+            );
+          }}
         />
 
         <Controller
@@ -330,8 +357,10 @@ export default function CreateListingScreen() {
                 label={t('merchant.createListing.originalPrice')}
                 placeholder="300"
                 keyboardType="number-pad"
-                defaultValue={value ? String(value) : ''}
-                onChangeText={(text) => onChange(Number(text) || 0)}
+                value={value ? (isOriginalPriceFocused ? String(value) : formatCurrency(value)) : ''}
+                onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
+                onFocus={() => setIsOriginalPriceFocused(true)}
+                onBlur={() => setIsOriginalPriceFocused(false)}
                 error={error?.message}
               />
             )}
@@ -346,8 +375,10 @@ export default function CreateListingScreen() {
                 label={t('merchant.createListing.salePrice')}
                 placeholder="99"
                 keyboardType="number-pad"
-                defaultValue={value ? String(value) : ''}
-                onChangeText={(text) => onChange(Number(text) || 0)}
+                value={value ? (isSalePriceFocused ? String(value) : formatCurrency(value)) : ''}
+                onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
+                onFocus={() => setIsSalePriceFocused(true)}
+                onBlur={() => setIsSalePriceFocused(false)}
                 error={error?.message}
               />
             )}
@@ -363,8 +394,8 @@ export default function CreateListingScreen() {
               label={t('merchant.createListing.quantity')}
               placeholder="5"
               keyboardType="number-pad"
-              defaultValue={value ? String(value) : ''}
-              onChangeText={(text) => onChange(Number(text) || 0)}
+              value={value ? String(value) : ''}
+              onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
               error={error?.message}
             />
           )}

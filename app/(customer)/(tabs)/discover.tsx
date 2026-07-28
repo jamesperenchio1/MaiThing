@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Modal, TouchableWithoutFeedback, Pressable } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Modal,
+  TouchableWithoutFeedback,
+  Pressable,
+  RefreshControl,
+} from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SlidersHorizontal, X, Clock } from 'lucide-react-native';
 
@@ -14,10 +21,12 @@ import { CategoryChip } from '@/src/components/composite/CategoryChip';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { FlashList } from '@shopify/flash-list';
 import { useListings, type ListingFilters } from '@/src/hooks/useListings';
 import { useCategories } from '@/src/hooks/useMerchants';
 import { useRecentSearches } from '@/src/hooks/useRecentSearches';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { CartButton } from '@/src/components/composite/CartButton';
 import { DIETARY_TAGS, ALLERGENS } from '@/src/lib/constants';
 import { cn } from '@/src/lib/utils';
 
@@ -144,14 +153,115 @@ export default function DiscoverScreen() {
     );
   };
 
+  const listHeader = (
+    <View className="pt-4 pb-2">
+      <View className="mb-4 flex-row items-center justify-between">
+        <Text testID="discover-title" variant="h1">
+          {t('common.discover')}
+        </Text>
+        <CartButton />
+      </View>
+
+      <View className="mb-4 flex-row items-center space-x-3">
+        <View className="flex-1">
+          <SearchBar
+            testID="discover-search-bar"
+            placeholder={t('common.search')}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmit={handleSubmit}
+          />
+        </View>
+        <PressableScale onPress={() => setFilterVisible(true)} scale={0.95}>
+          <View
+            className={cn(
+              'relative rounded-2xl border border-border bg-card p-3.5',
+              activeFilterCount > 0 && 'border-primary bg-primary/10'
+            )}
+          >
+            <SlidersHorizontal
+              size={20}
+              color={activeFilterCount > 0 ? colors.primary : colors.foreground}
+            />
+            {activeFilterCount > 0 && (
+              <View className="absolute -right-1 -top-1 h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5">
+                <Text variant="caption" className="text-white">
+                  {activeFilterCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </PressableScale>
+      </View>
+
+      {!searchQuery && recent.length > 0 && (
+        <View className="mb-4">
+          <View className="mb-2 flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <Clock size={14} color={colors.muted} className="mr-1.5" />
+              <Text variant="body-sm" className="text-muted">
+                Recent searches
+              </Text>
+            </View>
+            <Pressable onPress={clearSearches}>
+              <Text variant="caption" className="text-primary">
+                Clear
+              </Text>
+            </Pressable>
+          </View>
+          <View className="flex-row flex-wrap">
+            {recent.map((item) => (
+              <PressableScale key={item} onPress={() => setSearchQuery(item)} scale={0.95}>
+                <View className="mr-2 mb-2 flex-row items-center rounded-full bg-muted/10 px-3 py-1.5">
+                  <Text variant="body-sm">{item}</Text>
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      removeSearch(item);
+                    }}
+                    className="ml-1.5"
+                    hitSlop={8}
+                  >
+                    <X size={12} color={colors.muted} />
+                  </Pressable>
+                </View>
+              </PressableScale>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View className="mb-4 flex-row items-center">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1">
+          {categories?.map((category) => (
+            <CategoryChip
+              key={category.id}
+              category={category}
+              isActive={selectedCategory === category.id}
+              onPress={() =>
+                setSelectedCategory((prev) => (prev === category.id ? null : category.id))
+              }
+              locale={i18n.language as 'en' | 'th'}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
+
+  const listEmpty = (
+    <View className="items-center py-12">
+      <Text variant="h3" className="mb-2 text-center">
+        No deals found
+      </Text>
+      <Text variant="body" className="text-center text-muted">
+        Try a different search or category
+      </Text>
+    </View>
+  );
+
   return (
-    <Screen
-      testID="discover-screen"
-      scrollable
-      className="bg-background"
-      refreshing={isRefetching}
-      onRefresh={handleRefresh}
-    >
+    <Screen testID="discover-screen" scrollable={false} className="bg-background">
       <Modal
         visible={filterVisible}
         transparent
@@ -271,126 +381,36 @@ export default function DiscoverScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      <View className="px-6 pt-4 pb-2">
-        <Text testID="discover-title" variant="h1" className="mb-4">
-          {t('common.discover')}
-        </Text>
-
-        <View className="mb-4 flex-row items-center space-x-3">
-          <View className="flex-1">
-            <SearchBar
-              testID="discover-search-bar"
-              placeholder={t('common.search')}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmit={handleSubmit}
+      {isError || isLoading ? (
+        <View className="flex-1 px-6 pb-6">
+          {listHeader}
+          {isError ? (
+            <ErrorState
+              title={t('common.error')}
+              message="We couldn't load deals right now."
+              onRetry={refetch}
+              retryLabel={t('common.retry')}
             />
-          </View>
-          <PressableScale onPress={() => setFilterVisible(true)} scale={0.95}>
-            <View
-              className={cn(
-                'relative rounded-2xl border border-border bg-card p-3.5',
-                activeFilterCount > 0 && 'border-primary bg-primary/10'
-              )}
-            >
-              <SlidersHorizontal
-                size={20}
-                color={activeFilterCount > 0 ? colors.primary : colors.foreground}
-              />
-              {activeFilterCount > 0 && (
-                <View className="absolute -right-1 -top-1 h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5">
-                  <Text variant="caption" className="text-white">
-                    {activeFilterCount}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </PressableScale>
+          ) : (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} height={140} className="mb-3 rounded-3xl" />
+            ))
+          )}
         </View>
-
-        {!searchQuery && recent.length > 0 && (
-          <View className="mb-4">
-            <View className="mb-2 flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <Clock size={14} color={colors.muted} className="mr-1.5" />
-                <Text variant="body-sm" className="text-muted">
-                  Recent searches
-                </Text>
-              </View>
-              <Pressable onPress={clearSearches}>
-                <Text variant="caption" className="text-primary">
-                  Clear
-                </Text>
-              </Pressable>
-            </View>
-            <View className="flex-row flex-wrap">
-              {recent.map((item) => (
-                <PressableScale key={item} onPress={() => setSearchQuery(item)} scale={0.95}>
-                  <View className="mr-2 mb-2 flex-row items-center rounded-full bg-muted/10 px-3 py-1.5">
-                    <Text variant="body-sm">{item}</Text>
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        removeSearch(item);
-                      }}
-                      className="ml-1.5"
-                      hitSlop={8}
-                    >
-                      <X size={12} color={colors.muted} />
-                    </Pressable>
-                  </View>
-                </PressableScale>
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View className="mb-4 flex-row items-center">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1">
-            {categories?.map((category) => (
-              <CategoryChip
-                key={category.id}
-                category={category}
-                isActive={selectedCategory === category.id}
-                onPress={() =>
-                  setSelectedCategory((prev) => (prev === category.id ? null : category.id))
-                }
-                locale={i18n.language as 'en' | 'th'}
-              />
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-
-      <View className="px-6 pb-6">
-        {isError ? (
-          <ErrorState
-            title={t('common.error')}
-            message="We couldn't load deals right now."
-            onRetry={refetch}
-            retryLabel={t('common.retry')}
-          />
-        ) : isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height={140} className="mb-3 rounded-3xl" />
-          ))
-        ) : (
-          listings?.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} variant="horizontal" />
-          ))
-        )}
-
-        {!isLoading && !isError && listings?.length === 0 && (
-          <View className="items-center py-12">
-            <Text variant="h3" className="mb-2 text-center">
-              No deals found
-            </Text>
-            <Text variant="body" className="text-center text-muted">
-              Try a different search or category
-            </Text>
-          </View>
-        )}
-      </View>
+      ) : (
+        <FlashList
+          className="flex-1"
+          data={listings ?? []}
+          renderItem={({ item }) => <ListingCard listing={item} variant="horizontal" />}
+          keyExtractor={(item) => item.id}
+          estimatedItemSize={140}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={listEmpty}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        />
+      )}
     </Screen>
   );
 }
