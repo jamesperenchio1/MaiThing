@@ -32,6 +32,7 @@ import {
   setNotificationHandler,
   requestNotificationPermissions,
 } from '@/src/services/notifications';
+import { ErrorBoundary } from '@/src/components/layout/ErrorBoundary';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
@@ -94,12 +95,14 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-            <Stack.Screen name="(customer)" options={{ animation: 'fade' }} />
-            <Stack.Screen name="(merchant)" options={{ animation: 'fade' }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
+          <ErrorBoundary>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+              <Stack.Screen name="(customer)" options={{ animation: 'fade' }} />
+              <Stack.Screen name="(merchant)" options={{ animation: 'fade' }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </ErrorBoundary>
         </View>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </QueryClientProvider>

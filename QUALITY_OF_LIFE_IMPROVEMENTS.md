@@ -20,7 +20,7 @@ A running list of small-to-medium improvements that would make the app feel more
 
 9. ✅ **Empty states**: add illustrations and primary CTA buttons to all empty screens (no orders, no inventory, no favorites, no search results). `EmptyState` is now wired into merchant inventory, merchant orders, customer orders (including the "no search results" case), favorites, notifications, and wallet transactions — no longer dead code. Note: it doesn't have a CTA-button slot, only icon/title/description, so screens still don't have an action button in the empty state itself (e.g. no "Create your first listing" button inside the empty state on inventory) — that would mean extending the component's API, which is new, not wiring.
 10. ✅ **Pull-to-refresh haptic feedback** on all scrollable screens. All 9 `onRefresh` handlers (inventory, discover, favorites, merchant dashboard, customer home, wallet, merchant orders, customer orders, notifications) now fire `Haptics.impactAsync(Light)` before refetching, using the same pattern already established elsewhere in the app.
-11. ❌ **Tab switcher animation**: animate the active pill background instead of an instant jump. No `Animated`/`useAnimatedStyle` usage in `src/components/navigation`.
+11. ✅ **Tab switcher animation**: animate the active pill background instead of an instant jump. `BottomTabBar.tsx` now renders an animated `primary/10` pill that springs to the active tab position. Animation is skipped when reduce motion is enabled.
 12. ❌ **Bottom-sheet** for merchant detail quick-preview from the map instead of a floating card. Map currently uses a native `Callout` tooltip, not a bottom sheet.
 13. ❌ **Toast messages** for success/error actions (favorite toggled, listing published, status updated). No toast component or library anywhere in the repo.
 14. ❌ **Consistent header spacing** across screens; some have `pt-4`, others `pt-6`. Still inconsistent — 15 files mix both.
@@ -125,7 +125,7 @@ A running list of small-to-medium improvements that would make the app feel more
 ## 📊 Analytics & Reliability
 
 80. ❌ **Add lightweight analytics events** (screen views, listing views, order conversions). Only merchant-facing mock analytics *data* exists (revenue/orders dashboard) — no event-tracking instrumentation.
-81. ❌ **Global error boundary** with a friendly fallback and retry option. No `ErrorBoundary` component anywhere.
+81. ✅ **Global error boundary** with a friendly fallback and retry option. Added `src/components/layout/ErrorBoundary.tsx` with a class-component boundary that shows an emoji fallback, optional dev error message, and a "Try again" button. Wrapped the root `<Stack />` in `app/_layout.tsx`.
 82. ❌ **Network/offline detection** and a banner when the device is offline. No `NetInfo` package or offline-handling code found.
 83. ⚠️ **Request retry policy** for TanStack Query with exponential backoff. `retry: 1` is configured in `src/services/queryClient.ts`, which does use TanStack Query's built-in default exponential backoff. Left as-is — the backoff behavior described in the item is technically already active via the library default; picking specific custom `retryDelay`/`retry` values would be a tuning decision (how many retries, what backoff curve) rather than wiring up something that already exists elsewhere.
 84. ❌ **Sentry / error tracking** integration for production crashes. Not in `package.json`, no Sentry init code.
@@ -143,9 +143,9 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## Summary
 
-- ✅ **Done: 24** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support.
+- ✅ **Done: 26** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support, tab switcher animation, global error boundary.
 - ⚠️ **Partial: 7** — image placeholder/error fallback, lazy-load heavy screens, preload critical data, loading buttons audit (covered major actions but not every button), distance km/miles decision, broader testID/accessibility audit, OTP auto-fill (no OTP screen exists).
-- ❌ **Not started: 48**
+- ❌ **Not started: 46**
 - ❓ **Not verifiable by static analysis: 1** (color contrast — needs a manual/tooling audit)
 
 ### Explicitly skipped (needs your call)
