@@ -112,6 +112,10 @@ export default {
       locationDeniedTitle: 'Location access is off',
       locationDeniedBody: 'Enable location to see shops near you.',
       openSettings: 'Open Settings',
+      navigate: 'Navigate',
+      call: 'Call',
+      share: 'Share',
+      viewShop: 'View shop',
     },
     orders: {
       active: 'Active',

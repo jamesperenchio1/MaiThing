@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
-import { Navigation } from 'lucide-react-native';
+import { Navigation, Heart, Star } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
+import { PressableScale } from '@/src/components/ui/PressableScale';
+import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { openDirections } from '@/src/lib/maps';
 import { formatDistance } from '@/src/lib/utils';
@@ -98,23 +100,41 @@ export function Map({
             pinColor={selectedMerchantId === merchant.id ? '#10B981' : '#EF4444'}
             onPress={() => onSelectMerchant?.(merchant)}
           >
-            <Callout tooltip onPress={() => openDirections(merchant.coordinates, merchant.name)}>
-              <View className="min-w-[200px] rounded-2xl bg-background p-3 shadow-sm">
-                <Text variant="body-sm" className="font-semibold text-foreground">
-                  {merchant.name}
-                </Text>
-                <Text variant="caption" numberOfLines={1}>
-                  {merchant.address.street}, {merchant.address.district}
-                </Text>
-                {merchant.distance != null && (
-                  <Text variant="caption">{formatDistance(merchant.distance)} away</Text>
-                )}
-                <View className="mt-2 flex-row items-center">
+            <Callout tooltip>
+              <View className="min-w-[220px] rounded-2xl bg-background p-3 shadow-sm">
+                <View className="flex-row items-start justify-between">
+                  <View className="mr-2 flex-1">
+                    <Text variant="body-sm" className="font-semibold text-foreground">
+                      {merchant.name}
+                    </Text>
+                    <Text variant="caption" numberOfLines={1}>
+                      {merchant.address.street}, {merchant.address.district}
+                    </Text>
+                    <View className="mt-1 flex-row items-center">
+                      <Star size={12} color={colors.warning} fill={colors.warning} />
+                      <Text variant="caption" className="ml-1">
+                        {merchant.rating.toFixed(1)} ({merchant.reviewCount})
+                      </Text>
+                    </View>
+                    {merchant.distance != null && (
+                      <Text variant="caption">{formatDistance(merchant.distance)} away</Text>
+                    )}
+                  </View>
+                  <FavoriteButton merchantId={merchant.id} size={18} />
+                </View>
+
+                <PressableScale
+                  onPress={() => openDirections(merchant.coordinates, merchant.name)}
+                  className="mt-3 flex-row items-center justify-center rounded-xl bg-primary/10 py-2"
+                  scale={0.97}
+                  accessibilityLabel={`Get directions to ${merchant.name}`}
+                  hitSlop={8}
+                >
                   <Navigation size={14} color={colors.primary} />
-                  <Text variant="body-sm" className="ml-1 font-medium text-primary">
+                  <Text variant="body-sm" className="ml-1.5 font-medium text-primary">
                     Get directions
                   </Text>
-                </View>
+                </PressableScale>
               </View>
             </Callout>
           </Marker>

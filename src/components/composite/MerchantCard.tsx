@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Image, View } from 'react-native';
 import { Star, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -22,7 +23,10 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
   const router = useRouter();
   const colors = useThemeColor();
   const { t, i18n } = useTranslation();
-  const openStatus = getMerchantOpenStatus(merchant, i18n.language);
+  const openStatus = useMemo(
+    () => getMerchantOpenStatus(merchant, i18n.language),
+    [merchant, i18n.language]
+  );
 
   const statusLabel = openStatus.isOpen
     ? t('customer.merchant.openUntil', { time: openStatus.closeTime })
@@ -57,7 +61,11 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
         </View>
         <View className="p-3">
           <View className="mb-2 flex-row items-center">
-            <Image source={{ uri: merchant.logoUrl }} className="mr-3 h-10 w-10 rounded-xl" />
+            <Image
+              source={{ uri: merchant.logoUrl }}
+              className="mr-3 h-10 w-10 rounded-xl"
+              resizeMode="cover"
+            />
             <View className="flex-1">
               <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
                 {merchant.name}

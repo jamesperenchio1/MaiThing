@@ -44,6 +44,9 @@ export function FavoriteButton({
       )}
       scale={0.9}
       disabled={toggle.isPending}
+      accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      accessibilityRole="button"
+      hitSlop={8}
     >
       <Heart
         size={size}

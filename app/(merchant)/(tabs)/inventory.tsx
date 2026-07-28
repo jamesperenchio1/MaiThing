@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image } from 'react-native';
-import { Plus } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { Package, Plus } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -10,6 +11,8 @@ import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useListings } from '@/src/hooks/useListings';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -67,13 +70,18 @@ export default function InventoryScreen() {
     merchantId: 'merchant-1', // Test merchant
   });
 
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    refetch();
+  };
+
   return (
     <Screen
       testID="inventory-screen"
       scrollable
       className="bg-background"
       refreshing={isRefetching}
-      onRefresh={refetch}
+      onRefresh={handleRefresh}
     >
       <View className="px-6 pt-4 pb-2">
         <View className="mb-4 flex-row items-center justify-between">
@@ -93,9 +101,11 @@ export default function InventoryScreen() {
 
       <View className="px-6 pb-6">
         {isLoading ? (
-          <Text variant="body" className="text-muted">
-            {t('common.loading')}
-          </Text>
+          <>
+            <Skeleton width="100%" height={92} className="mb-3 rounded-2xl" />
+            <Skeleton width="100%" height={92} className="mb-3 rounded-2xl" />
+            <Skeleton width="100%" height={92} className="mb-3 rounded-2xl" />
+          </>
         ) : isError ? (
           <ErrorState
             title={t('common.error')}
@@ -106,14 +116,11 @@ export default function InventoryScreen() {
         ) : listings?.length ? (
           listings.map((listing) => <InventoryCard key={listing.id} listing={listing} />)
         ) : (
-          <View className="items-center py-12">
-            <Text variant="h3" className="mb-2 text-center">
-              No listings yet
-            </Text>
-            <Text variant="body" className="text-center text-muted">
-              Create your first listing to start selling.
-            </Text>
-          </View>
+          <EmptyState
+            icon={<Package size={32} color={colors.muted} />}
+            title="No listings yet"
+            description="Create your first listing to start selling."
+          />
         )}
       </View>
     </Screen>

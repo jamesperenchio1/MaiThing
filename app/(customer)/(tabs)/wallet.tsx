@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Pressable, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import {
   Wallet as WalletIcon,
   ArrowUpRight,
@@ -17,6 +18,8 @@ import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useWallet, useWalletTransactions } from '@/src/hooks/useWallet';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -100,7 +103,12 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
             <View className="rounded-t-3xl bg-background px-6 pb-10 pt-6">
               <View className="mb-6 flex-row items-center justify-between">
                 <Text variant="h3">Top up wallet</Text>
-                <PressableScale onPress={onClose} scale={0.9}>
+                <PressableScale
+                  onPress={onClose}
+                  scale={0.9}
+                  accessibilityLabel="Close"
+                  hitSlop={8}
+                >
                   <View className="rounded-full bg-muted/10 p-2">
                     <X size={20} color={colors.muted} />
                   </View>
@@ -144,6 +152,7 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
 export default function WalletScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const colors = useThemeColor();
   const {
     data: wallet,
     isLoading,
@@ -153,6 +162,7 @@ export default function WalletScreen() {
   } = useWallet(user?.id ?? '');
   const {
     data: transactions,
+    isLoading: transactionsLoading,
     isRefetching: transactionsRefetching,
     isError: isTransactionsError,
     refetch: refetchTransactions,
@@ -162,6 +172,7 @@ export default function WalletScreen() {
   const isError = isWalletError || isTransactionsError;
   const refreshing = isRefetching || transactionsRefetching;
   const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Promise.all([refetchWallet(), refetchTransactions()]);
   };
 
@@ -225,9 +236,24 @@ export default function WalletScreen() {
           <Text variant="h3" className="mb-4">
             {t('customer.wallet.transactions')}
           </Text>
-          {transactions?.slice(0, 10).map((transaction) => (
-            <TransactionItem key={transaction.id} transaction={transaction} />
-          ))}
+          {transactionsLoading ? (
+            <>
+              <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
+              <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
+            </>
+          ) : transactions?.length ? (
+            transactions
+              .slice(0, 10)
+              .map((transaction) => (
+                <TransactionItem key={transaction.id} transaction={transaction} />
+              ))
+          ) : (
+            <EmptyState
+              icon={<WalletIcon size={32} color={colors.muted} />}
+              title="No transactions yet"
+              description="Your transactions will appear here."
+            />
+          )}
         </View>
       )}
     </Screen>

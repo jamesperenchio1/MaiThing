@@ -184,7 +184,11 @@ export default function OrderDetailScreen() {
           {order.items.map((item) => (
             <View key={item.listingId} className="mb-3 flex-row items-center">
               {item.imageUrl && (
-                <Image source={{ uri: item.imageUrl }} className="mr-3 h-14 w-14 rounded-xl" />
+                <Image
+                  source={{ uri: item.imageUrl }}
+                  className="mr-3 h-14 w-14 rounded-xl"
+                  resizeMode="cover"
+                />
               )}
               <View className="flex-1">
                 <Text variant="body-sm" className="font-semibold" numberOfLines={1}>

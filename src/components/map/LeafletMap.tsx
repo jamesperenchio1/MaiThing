@@ -6,6 +6,8 @@ import { DivIcon, LatLngBounds, latLng } from 'leaflet';
 import { MapPin, Navigation } from 'lucide-react-native';
 
 import { MerchantCard } from '@/src/components/composite/MerchantCard';
+import { useAuthStore } from '@/src/stores/auth';
+import { useCustomerProfile, useToggleFavorite } from '@/src/hooks/useFavorites';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { openDirections } from '@/src/lib/maps';
 import { formatDistance } from '@/src/lib/utils';
@@ -63,6 +65,37 @@ const selectedIconHtml =
   '<div style="width:36px;height:36px;border-radius:50%;background:#10B981;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);"></div>';
 const userIconHtml =
   '<div style="width:18px;height:18px;border-radius:50%;background:#3B82F6;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>';
+
+function WebFavoriteButton({ merchantId }: { merchantId: string }) {
+  const user = useAuthStore((s) => s.user);
+  const { data: profile } = useCustomerProfile(user?.id ?? '');
+  const toggle = useToggleFavorite();
+  const isFavorite = profile?.favorites.includes(merchantId) ?? false;
+
+  return (
+    <button
+      type="button"
+      onClick={() => user && toggle.mutate({ userId: user.id, merchantId, isFavorite })}
+      disabled={!user || toggle.isPending}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        padding: '8px 12px',
+        borderRadius: 8,
+        border: 'none',
+        backgroundColor: isFavorite ? '#FEE2E2' : '#F3F4F6',
+        color: isFavorite ? '#EF4444' : '#374151',
+        fontSize: 13,
+        fontWeight: 500,
+        cursor: 'pointer',
+      }}
+    >
+      {isFavorite ? '♥ Saved' : '♡ Save'}
+    </button>
+  );
+}
 
 export function LeafletMap({
   merchants,
@@ -146,25 +179,29 @@ export function LeafletMap({
                       {formatDistance(merchant.distance)} away
                     </div>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => openDirections(merchant.coordinates, merchant.name)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      border: 'none',
-                      backgroundColor: `${colors.primary}15`,
-                      color: colors.primary,
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Get directions
-                  </button>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <WebFavoriteButton merchantId={merchant.id} />
+                    <button
+                      type="button"
+                      onClick={() => openDirections(merchant.coordinates, merchant.name)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: 'none',
+                        backgroundColor: `${colors.primary}15`,
+                        color: colors.primary,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Get directions
+                    </button>
+                  </div>
                 </div>
               </Popup>
             </Marker>

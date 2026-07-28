@@ -24,16 +24,31 @@ appId: com.jamyangperenchio.maithing
     timeout: 10000
 
 - assertVisible:
+    id: "merchant-detail-header"
+- assertVisible:
+    id: "merchant-map-section"
+
+# Scroll down to reveal About, Pickup, and Available Listings sections
+- scrollUntilVisible:
+    element:
+      id: "merchant-about-section"
+    direction: DOWN
+    timeout: 10000
+- assertVisible:
     id: "merchant-about-section"
 - assertVisible:
     id: "merchant-pickup-section"
+- scrollUntilVisible:
+    element:
+      text: "Available Listings"
+    direction: DOWN
+    timeout: 10000
 - assertVisible:
     text: "Available Listings"
 
-# Go back to home via swipe or back button
-- swipe:
-    direction: RIGHT
-    duration: 300
+# Go back to home via header back button
+- tapOn:
+    id: "header-back-button"
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:

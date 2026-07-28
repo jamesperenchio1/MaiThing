@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/src/components/ui/Text';
 import { Screen } from '@/src/components/layout/Screen';
@@ -8,6 +9,7 @@ import { Header } from '@/src/components/layout/Header';
 import { MerchantCard } from '@/src/components/composite/MerchantCard';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { EmptyState } from '@/src/components/ui/EmptyState';
 import { useMerchants } from '@/src/hooks/useMerchants';
 import { useCustomerProfile } from '@/src/hooks/useFavorites';
 import { useAuthStore } from '@/src/stores/auth';
@@ -39,6 +41,7 @@ export default function FavoritesScreen() {
   const isError = profileError || merchantsError;
 
   const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Promise.all([refetchProfile(), refetchMerchants()]);
   };
 
@@ -71,15 +74,11 @@ export default function FavoritesScreen() {
             <MerchantCard key={merchant.id} merchant={merchant} className="mb-3" />
           ))
         ) : (
-          <View className="items-center py-16">
-            <Heart size={48} color={colors.muted} />
-            <Text variant="h3" className="mt-4 text-center">
-              No favorites yet
-            </Text>
-            <Text variant="body" className="mt-2 text-center text-muted">
-              Tap the heart on any shop to save it here.
-            </Text>
-          </View>
+          <EmptyState
+            icon={<Heart size={32} color={colors.muted} />}
+            title="No favorites yet"
+            description="Tap the heart on any shop to save it here."
+          />
         )}
       </View>
     </Screen>

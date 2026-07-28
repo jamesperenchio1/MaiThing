@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Image } from 'react-native';
+import { View, Image, Share, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LocateFixed, LocateOff, Star, MapPin, X } from 'lucide-react-native';
+import { LocateFixed, LocateOff, Star, MapPin, X, Phone, Navigation, Share2, Store } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -11,12 +11,14 @@ import { Badge } from '@/src/components/ui/Badge';
 import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { Map } from '@/src/components/map/Map';
 import { useMerchants } from '@/src/hooks/useMerchants';
 import { useUserLocation } from '@/src/hooks/useUserLocation';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { calculateDistance, formatDistance, getMerchantOpenStatus } from '@/src/lib/utils';
+import { openDirections } from '@/src/lib/maps';
 import { openLocationSettings } from '@/src/lib/settings';
 
 export default function MapScreen() {
@@ -111,10 +113,13 @@ export default function MapScreen() {
                     <Text variant="body-sm" className="flex-1 font-semibold" numberOfLines={1}>
                       {selectedMerchant.name}
                     </Text>
+                    <FavoriteButton merchantId={selectedMerchant.id} size={18} className="ml-2" />
                     <PressableScale
                       onPress={() => setSelectedMerchantId(undefined)}
-                      className="ml-2 rounded-full bg-muted/20 p-1"
+                      className="ml-2 rounded-full bg-muted/20 p-1.5"
                       scale={0.9}
+                      accessibilityLabel="Close merchant preview"
+                      hitSlop={8}
                     >
                       <X size={14} color={colors.muted} />
                     </PressableScale>
@@ -143,13 +148,55 @@ export default function MapScreen() {
                 </View>
               </View>
 
+              <View className="mt-3 flex-row items-center justify-between">
+                <PressableScale
+                  onPress={() => openDirections(selectedMerchant.coordinates, selectedMerchant.name)}
+                  className="flex-1 items-center rounded-xl bg-primary/10 py-2"
+                  scale={0.97}
+                >
+                  <Navigation size={18} color={colors.primary} />
+                  <Text variant="caption" className="mt-1 font-medium text-primary">
+                    {t('customer.map.navigate')}
+                  </Text>
+                </PressableScale>
+                <View className="w-2" />
+                <PressableScale
+                  onPress={() => Linking.openURL(`tel:${selectedMerchant.phone}`)}
+                  className="flex-1 items-center rounded-xl bg-muted/10 py-2"
+                  scale={0.97}
+                >
+                  <Phone size={18} color={colors.foreground} />
+                  <Text variant="caption" className="mt-1 font-medium text-foreground">
+                    {t('customer.map.call')}
+                  </Text>
+                </PressableScale>
+                <View className="w-2" />
+                <PressableScale
+                  onPress={() =>
+                    Share.share({
+                      title: selectedMerchant.name,
+                      message: `Check out ${selectedMerchant.name} on Maithing!`,
+                    })
+                  }
+                  className="flex-1 items-center rounded-xl bg-muted/10 py-2"
+                  scale={0.97}
+                >
+                  <Share2 size={18} color={colors.foreground} />
+                  <Text variant="caption" className="mt-1 font-medium text-foreground">
+                    {t('customer.map.share')}
+                  </Text>
+                </PressableScale>
+              </View>
+
               <Button
                 className="mt-3"
                 fullWidth
                 size="sm"
+                variant="secondary"
+                leftIcon={<Store size={16} color={colors.primary} />}
                 onPress={() => router.push(`/(customer)/merchant/${selectedMerchant.id}` as any)}
               >
-                {t('customer.map.directions')}
+                {t('customer.map.viewShop')}
               </Button>
             </Card>
           </View>

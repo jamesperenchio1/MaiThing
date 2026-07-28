@@ -35,7 +35,9 @@ export function useAuth() {
   const continueAsTest = useCallback(
     (role: UserRole) => {
       const user = role === 'customer' ? TEST_CUSTOMER : TEST_MERCHANT_USER;
-      setUser({ ...user, roles: ['customer', 'merchant'] });
+      const userWithRoles = { ...user, roles: ['customer', 'merchant'] as UserRole[] };
+      console.log('[continueAsTest] setting user with roles:', userWithRoles.roles);
+      setUser(userWithRoles);
       setRole(role);
       router.replace((role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any);
     },

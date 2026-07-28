@@ -23,10 +23,9 @@ appId: com.jamyangperenchio.maithing
 - assertVisible:
     id: "buy-now-button"
 
-# Go back to home via swipe
-- swipe:
-    direction: RIGHT
-    duration: 300
+# Go back to home via header back button
+- tapOn:
+    id: "header-back-button"
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:

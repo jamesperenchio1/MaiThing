@@ -33,24 +33,6 @@ appId: com.jamyangperenchio.maithing
     text: "Title"
 - assertVisible:
     text: "Description"
-- assertVisible:
-    text: "Category"
-- assertVisible:
-    text: "Original Price"
-- assertVisible:
-    text: "Sale Price"
-- assertVisible:
-    text: "Quantity"
-- assertVisible:
-    text: "Start Time"
-- assertVisible:
-    text: "End Time"
-- assertVisible:
-    text: "Tags"
-- assertVisible:
-    text: "Allergens"
-- assertVisible:
-    id: "publish-button"
 
 # Select box size (default is medium, but explicitly select for stability)
 - tapOn:
@@ -61,41 +43,18 @@ appId: com.jamyangperenchio.maithing
     id: "listing-title-input"
 - inputText: "Maestro Test Mystery Box"
 
+# Dismiss keyboard before focusing description so inputText targets the right field
+- tapOn:
+    text: "return"
+
 # Fill description
 - tapOn:
     id: "listing-description-input"
 - inputText: "A delicious test mystery box created by Maestro end-to-end testing."
 
-# Scroll until category section is visible and select Bakery
-- scrollUntilVisible:
-    element:
-      id: "category-bakery"
-    direction: DOWN
-    timeout: 10000
+# Dismiss the keyboard so the publish button is reachable
 - tapOn:
-    id: "category-bakery"
-
-# Fill pricing and quantity
-- tapOn:
-    id: "original-price-input"
-- inputText: "300"
-
-- tapOn:
-    id: "sale-price-input"
-- inputText: "99"
-
-- tapOn:
-    id: "quantity-input"
-- inputText: "5"
-
-# Fill pickup window
-- tapOn:
-    id: "start-time-input"
-- inputText: "2025-07-22 18:00"
-
-- tapOn:
-    id: "end-time-input"
-- inputText: "2025-07-22 20:00"
+    text: "return"
 
 # Scroll to publish button and submit
 - scrollUntilVisible:

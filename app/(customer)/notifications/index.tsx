@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Bell } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -9,6 +10,8 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useNotifications, useMarkNotificationRead } from '@/src/hooks/useNotifications';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -27,14 +30,21 @@ export default function NotificationsScreen() {
   const colors = useThemeColor();
   const markAsRead = useMarkNotificationRead();
 
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    refetch();
+  };
+
   return (
-    <Screen scrollable className="bg-background" refreshing={isRefetching} onRefresh={refetch}>
+    <Screen scrollable className="bg-background" refreshing={isRefetching} onRefresh={handleRefresh}>
       <Header title={t('common.notifications')} />
       <View className="px-6 py-4">
         {isLoading ? (
-          <Text variant="body" className="text-muted">
-            {t('common.loading')}
-          </Text>
+          <>
+            <Skeleton width="100%" height={96} className="mb-3 rounded-2xl" />
+            <Skeleton width="100%" height={96} className="mb-3 rounded-2xl" />
+            <Skeleton width="100%" height={96} className="mb-3 rounded-2xl" />
+          </>
         ) : isError ? (
           <ErrorState
             title={t('common.error')}
@@ -86,15 +96,11 @@ export default function NotificationsScreen() {
             </PressableScale>
           ))
         ) : (
-          <View className="items-center py-12">
-            <Bell size={48} color={colors.muted} />
-            <Text variant="h3" className="mt-4 text-center">
-              No notifications yet
-            </Text>
-            <Text variant="body" className="text-center text-muted">
-              We'll notify you about new deals and order updates.
-            </Text>
-          </View>
+          <EmptyState
+            icon={<Bell size={32} color={colors.muted} />}
+            title="No notifications yet"
+            description="We'll notify you about new deals and order updates."
+          />
         )}
       </View>
     </Screen>

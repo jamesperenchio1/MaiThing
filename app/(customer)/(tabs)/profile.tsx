@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Switch, Alert, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
+import { View, Switch, Alert, Modal, TextInput, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import {
   User,
   Heart,
@@ -39,18 +39,21 @@ interface MenuItemProps {
 function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
   const colors = useThemeColor();
   return (
-    <PressableScale
+    <TouchableOpacity
       testID={testID}
-      onPress={onPress}
-      className="flex-row items-center justify-between py-3"
-      scale={0.98}
+      onPress={() => {
+        console.log('[MenuItem] pressed:', label);
+        onPress?.();
+      }}
+      className="flex-row items-center justify-between py-3 active:opacity-70"
+      activeOpacity={0.7}
     >
       <View className="flex-row items-center">
         <View className="mr-3 rounded-xl bg-muted/10 p-2">{icon}</View>
         <Text variant="body">{label}</Text>
       </View>
       {right ?? <ChevronRight size={20} color={colors.muted} />}
-    </PressableScale>
+    </TouchableOpacity>
   );
 }
 
@@ -59,7 +62,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const selectedRole = useAuthStore((s) => s.selectedRole);
-  const hasMerchantRole = useAuthStore((s) => s.hasRole('merchant'));
+  const hasMerchantRole = user?.roles.includes('merchant') ?? false;
   const isDark = useThemeStore((s) => s.isDark);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const { language, toggle: toggleLanguage } = useLanguageStore();
@@ -69,8 +72,11 @@ export default function ProfileScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? '');
 
+  console.log('[Profile] user:', user?.id, 'roles:', user?.roles, 'selectedRole:', selectedRole, 'hasMerchantRole:', hasMerchantRole);
+
   const handleSwitchRole = () => {
     const nextRole = selectedRole === 'customer' ? 'merchant' : 'customer';
+    console.log('[Profile] switching to', nextRole);
     switchRole(nextRole);
   };
 
@@ -237,21 +243,19 @@ export default function ProfileScreen() {
         </Card>
 
         {hasMerchantRole && (
-          <Card testID="profile-role-menu" variant="outlined" className="mb-6">
-            <MenuItem
-              testID="switch-role-button"
-              icon={<Store size={20} color={colors.primary} />}
-              label={
-                selectedRole === 'customer' ? 'Switch to Merchant mode' : 'Switch to Buyer mode'
-              }
-              onPress={handleSwitchRole}
-              right={
-                <Text variant="caption" className="text-primary font-semibold">
-                  {selectedRole === 'customer' ? 'Buyer' : 'Merchant'}
-                </Text>
-              }
-            />
-          </Card>
+          <Button
+            testID="switch-role-button"
+            variant="secondary"
+            fullWidth
+            className="mb-6"
+            onPress={() => {
+              console.log('[SwitchRole] pressed');
+              handleSwitchRole();
+            }}
+            leftIcon={<Store size={20} color={colors.primary} />}
+          >
+            Switch to Merchant mode
+          </Button>
         )}
 
         <Button

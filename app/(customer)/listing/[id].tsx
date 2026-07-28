@@ -114,6 +114,9 @@ export default function ListingDetailScreen() {
               onPress={handleShare}
               className="rounded-full bg-black/30 p-2"
               scale={0.9}
+              accessibilityLabel="Share listing"
+              accessibilityHint="Opens the share sheet for this listing"
+              hitSlop={8}
             >
               <Share2 size={20} color="#fff" />
             </PressableScale>
@@ -251,6 +254,8 @@ export default function ListingDetailScreen() {
               className="rounded-2xl bg-muted/10 p-3"
               scale={0.9}
               disabled={quantity <= 1}
+              accessibilityLabel="Decrease quantity"
+              hitSlop={8}
             >
               <Minus size={20} color={colors.foreground} />
             </PressableScale>
@@ -262,6 +267,8 @@ export default function ListingDetailScreen() {
               className="rounded-2xl bg-muted/10 p-3"
               scale={0.9}
               disabled={quantity >= listing.quantityRemaining}
+              accessibilityLabel="Increase quantity"
+              hitSlop={8}
             >
               <Plus size={20} color={colors.foreground} />
             </PressableScale>

@@ -112,6 +112,10 @@ export default {
       locationDeniedTitle: 'ไม่ได้รับสิทธิ์ตำแหน่ง',
       locationDeniedBody: 'เปิดตำแหน่งเพื่อดูร้านค้าใกล้คุณ',
       openSettings: 'เปิดการตั้งค่า',
+      navigate: 'นำทาง',
+      call: 'โทร',
+      share: 'แชร์',
+      viewShop: 'ดูร้านค้า',
     },
     orders: {
       active: 'กำลังดำเนินการ',

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { ClipboardList } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
@@ -10,8 +11,11 @@ import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useOrders, useUpdateOrderStatus } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
@@ -77,7 +81,11 @@ function OrderCard({ order }: { order: Order }) {
       {order.items.map((item) => (
         <View key={item.listingId} className="mb-2 flex-row items-center">
           {item.imageUrl && (
-            <Image source={{ uri: item.imageUrl }} className="mr-3 h-10 w-10 rounded-xl" />
+            <Image
+              source={{ uri: item.imageUrl }}
+              className="mr-3 h-10 w-10 rounded-xl"
+              resizeMode="cover"
+            />
           )}
           <Text variant="body-sm" className="flex-1 text-muted" numberOfLines={1}>
             {item.quantity}x {item.title}
@@ -102,6 +110,7 @@ function OrderCard({ order }: { order: Order }) {
 export default function MerchantOrdersScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const colors = useThemeColor();
   const {
     data: orders,
     isLoading,
@@ -110,19 +119,25 @@ export default function MerchantOrdersScreen() {
     refetch,
   } = useOrders(user?.id ?? '', 'merchant');
 
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    refetch();
+  };
+
   return (
-    <Screen scrollable className="bg-background" refreshing={isRefetching} onRefresh={refetch}>
+    <Screen testID="orders-screen" scrollable className="bg-background" refreshing={isRefetching} onRefresh={handleRefresh}>
       <View className="px-6 pt-4 pb-2">
-        <Text variant="h1" className="mb-4">
+        <Text testID="orders-title" variant="h1" className="mb-4">
           {t('merchant.orders.title')}
         </Text>
       </View>
 
       <View className="px-6 pb-6">
         {isLoading ? (
-          <Text variant="body" className="text-muted">
-            {t('common.loading')}
-          </Text>
+          <>
+            <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
+            <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
+          </>
         ) : isError ? (
           <ErrorState
             title={t('common.error')}
@@ -133,14 +148,11 @@ export default function MerchantOrdersScreen() {
         ) : orders?.length ? (
           orders.map((order) => <OrderCard key={order.id} order={order} />)
         ) : (
-          <View className="items-center py-12">
-            <Text variant="h3" className="mb-2 text-center">
-              No orders yet
-            </Text>
-            <Text variant="body" className="text-center text-muted">
-              Orders will appear here when customers make purchases.
-            </Text>
-          </View>
+          <EmptyState
+            icon={<ClipboardList size={32} color={colors.muted} />}
+            title="No orders yet"
+            description="Orders will appear here when customers make purchases."
+          />
         )}
       </View>
     </Screen>

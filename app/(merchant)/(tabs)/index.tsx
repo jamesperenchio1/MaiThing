@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Plus, TrendingUp, Package, DollarSign } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -32,13 +33,18 @@ export default function MerchantDashboardScreen() {
   const colors = useThemeColor();
   const { data: analytics, isRefetching, isError, refetch } = useAnalytics(user?.id ?? '');
 
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    refetch();
+  };
+
   return (
     <Screen
       testID="merchant-dashboard-screen"
       scrollable
       className="bg-background"
       refreshing={isRefetching}
-      onRefresh={refetch}
+      onRefresh={handleRefresh}
     >
       <View className="px-6 pt-4 pb-2">
         <Text testID="merchant-dashboard-title" variant="h1" className="mb-2">

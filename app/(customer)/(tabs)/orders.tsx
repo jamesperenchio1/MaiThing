@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image } from 'react-native';
-import { ChevronRight, Package } from 'lucide-react-native';
+import { View, ScrollView, Image, Pressable } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { ChevronRight, Package, History, SearchX } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
@@ -11,6 +12,8 @@ import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -47,6 +50,7 @@ function OrderCard({ order }: { order: Order }) {
               <Image
                 source={{ uri: order.merchantLogoUrl }}
                 className="mr-3 h-10 w-10 rounded-xl"
+                resizeMode="cover"
               />
             )}
             <View className="flex-1">
@@ -90,6 +94,7 @@ function OrderCard({ order }: { order: Order }) {
 
 export default function OrdersScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
   const [tab, setTab] = useState<'active' | 'history'>('active');
   const [search, setSearch] = useState('');
@@ -100,6 +105,11 @@ export default function OrdersScreen() {
     isError,
     refetch,
   } = useOrders(user?.id ?? '', 'customer');
+
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    refetch();
+  };
 
   const activeStatuses: Order['status'][] = ['pending', 'confirmed', 'preparing', 'ready'];
   const tabOrders =
@@ -122,12 +132,41 @@ export default function OrdersScreen() {
       scrollable
       className="bg-background"
       refreshing={isRefetching}
-      onRefresh={refetch}
+      onRefresh={handleRefresh}
     >
-      <View className="px-6 pt-4 pb-2">
-        <Text testID="orders-title" variant="h1" className="mb-4">
-          {t('common.orders')}
-        </Text>
+      <View className="px-6 pt-6 pb-2">
+        <View className="mb-5 flex-row items-center">
+          <View
+            className="mr-4 h-12 w-12 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: `${colors.primary}15` }}
+          >
+            {tab === 'history' ? (
+              <History size={24} color={colors.primary} />
+            ) : (
+              <Package size={24} color={colors.primary} />
+            )}
+          </View>
+          <View className="flex-1">
+            <Text testID="orders-title" variant="h1" className="mb-0.5">
+              {tab === 'history' ? 'Order History' : 'My Orders'}
+            </Text>
+            <Text variant="body-sm" className="text-muted">
+              {tab === 'history'
+                ? 'View your past and cancelled orders'
+                : 'Track your active rescues and pickups'}
+            </Text>
+          </View>
+          {!isLoading && !isError && (
+            <View
+              className="min-w-[40px] items-center justify-center rounded-full px-3 py-1"
+              style={{ backgroundColor: `${colors.primary}15` }}
+            >
+              <Text variant="body-sm" className="font-semibold" style={{ color: colors.primary }}>
+                {filteredOrders?.length ?? 0}
+              </Text>
+            </View>
+          )}
+        </View>
 
         <SearchBar
           placeholder="Search orders..."
@@ -139,12 +178,11 @@ export default function OrdersScreen() {
 
         <View testID="orders-tabs" className="mb-4 flex-row rounded-2xl bg-muted/10 p-1">
           {(['active', 'history'] as const).map((tabKey) => (
-            <PressableScale
+            <Pressable
               key={tabKey}
               testID={`${tabKey}-orders-tab`}
               onPress={() => setTab(tabKey)}
               className={`flex-1 items-center rounded-xl py-3 ${tab === tabKey ? 'bg-primary' : ''}`}
-              scale={0.98}
             >
               <Text
                 variant="body-sm"
@@ -152,7 +190,7 @@ export default function OrdersScreen() {
               >
                 {tabKey === 'active' ? t('customer.orders.active') : t('customer.orders.history')}
               </Text>
-            </PressableScale>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -166,24 +204,30 @@ export default function OrdersScreen() {
             retryLabel={t('common.retry')}
           />
         ) : isLoading ? (
-          <Text variant="body" className="text-muted">
-            {t('common.loading')}
-          </Text>
+          <>
+            <Skeleton width="100%" height={168} className="mb-4 rounded-2xl" />
+            <Skeleton width="100%" height={168} className="mb-4 rounded-2xl" />
+          </>
         ) : filteredOrders?.length ? (
           filteredOrders.map((order) => <OrderCard key={order.id} order={order} />)
         ) : (
-          <View className="items-center py-12">
-            <Text variant="h3" className="mb-2 text-center">
-              {search.trim() ? 'No results found' : `No ${tab} orders`}
-            </Text>
-            <Text variant="body" className="text-center text-muted">
-              {search.trim()
+          <EmptyState
+            icon={
+              search.trim() ? (
+                <SearchX size={32} color={colors.muted} />
+              ) : (
+                <Package size={32} color={colors.muted} />
+              )
+            }
+            title={search.trim() ? 'No results found' : `No ${tab} orders`}
+            description={
+              search.trim()
                 ? 'Try a different search term'
                 : tab === 'active'
                   ? 'You have no active orders right now.'
-                  : 'Your completed and cancelled orders will appear here.'}
-            </Text>
-          </View>
+                  : 'Your completed and cancelled orders will appear here.'
+            }
+          />
         )}
       </View>
     </Screen>

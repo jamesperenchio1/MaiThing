@@ -63,3 +63,12 @@ appId: com.jamyangperenchio.maithing
     id: "merchant-settings-title"
 - assertVisible:
     id: "switch-to-customer-button"
+
+# Return to dashboard so downstream flows can continue from merchant home
+- tapOn:
+    id: "merchant-dashboard-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-dashboard-screen"
+    timeout: 10000

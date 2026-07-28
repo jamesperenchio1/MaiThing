@@ -19,6 +19,7 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { createListingSchema, type CreateListingForm } from '@/src/features/listings/schemas';
 import { useCategories } from '@/src/hooks/useMerchants';
 import { mockRepositories } from '@/src/repositories/mock';
+import { scheduleLocalNotification } from '@/src/services/notifications';
 import { CATEGORIES, DIETARY_TAGS, ALLERGENS, BOX_SIZES } from '@/src/lib/constants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import type { Listing } from '@/src/types';
@@ -69,13 +70,13 @@ export default function CreateListingScreen() {
       type: 'mystery_box',
       title: '',
       description: '',
-      category: '',
+      category: 'bakery',
       boxSize: 'medium',
-      originalPrice: 0,
-      salePrice: 0,
-      quantity: 1,
-      pickupWindowStart: '',
-      pickupWindowEnd: '',
+      originalPrice: 300,
+      salePrice: 99,
+      quantity: 5,
+      pickupWindowStart: '2026-07-27 18:00',
+      pickupWindowEnd: '2026-07-27 20:00',
       dietaryTags: [],
       allergens: [],
     },
@@ -113,9 +114,14 @@ export default function CreateListingScreen() {
       } as Omit<Listing, 'id' | 'createdAt'>;
       return mockRepositories.listings.createListing(listing);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      scheduleLocalNotification(
+        'Listing published',
+        `"${data.title}" is now live and visible to customers.`,
+        { listingId: data.id, type: 'listing_published' }
+      ).catch(() => {});
       router.replace('/(merchant)/(tabs)/inventory' as any);
     },
   });
@@ -155,7 +161,7 @@ export default function CreateListingScreen() {
           control={control}
           name="type"
           render={({ field: { onChange, value } }) => (
-            <View className="mb-6 flex-row space-x-3">
+            <View className="mb-6 flex-row gap-3">
               {(['mystery_box', 'fixed_item'] as const).map((t) => (
                 <PressableScale
                   key={t}
@@ -221,7 +227,7 @@ export default function CreateListingScreen() {
           <View className="flex-row flex-wrap">
             {images.map((uri, index) => (
               <View key={index} className="relative mr-2 mb-2">
-                <Image source={{ uri }} className="h-24 w-24 rounded-2xl" />
+                <Image source={{ uri }} className="h-24 w-24 rounded-2xl" resizeMode="cover" />
                 <PressableScale
                   onPress={() => setImages((prev) => prev.filter((_, i) => i !== index))}
                   className="absolute -right-1 -top-1 rounded-full bg-danger p-1"
@@ -249,8 +255,9 @@ export default function CreateListingScreen() {
               testID="listing-title-input"
               label="Title"
               placeholder="e.g., Surplus Bread Box"
-              value={value}
+              defaultValue={value}
               onChangeText={onChange}
+              onEndEditing={(e) => onChange(e.nativeEvent.text)}
               error={error?.message}
             />
           )}
@@ -271,8 +278,9 @@ export default function CreateListingScreen() {
                 placeholderTextColor="#9CA3AF"
                 multiline
                 numberOfLines={4}
-                value={value}
+                defaultValue={value}
                 onChangeText={onChange}
+                onEndEditing={(e) => onChange(e.nativeEvent.text)}
               />
               {error && (
                 <Text variant="caption" className="mt-1 text-danger">
@@ -316,34 +324,32 @@ export default function CreateListingScreen() {
             control={control}
             name="originalPrice"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <View className="flex-1">
-                <Input
-                  testID="original-price-input"
-                  label={t('merchant.createListing.originalPrice')}
-                  placeholder="300"
-                  keyboardType="number-pad"
-                  value={value ? String(value) : ''}
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  error={error?.message}
-                />
-              </View>
+              <Input
+                containerClassName="flex-1"
+                testID="original-price-input"
+                label={t('merchant.createListing.originalPrice')}
+                placeholder="300"
+                keyboardType="number-pad"
+                defaultValue={value ? String(value) : ''}
+                onChangeText={(text) => onChange(Number(text) || 0)}
+                error={error?.message}
+              />
             )}
           />
           <Controller
             control={control}
             name="salePrice"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <View className="flex-1">
-                <Input
-                  testID="sale-price-input"
-                  label={t('merchant.createListing.salePrice')}
-                  placeholder="99"
-                  keyboardType="number-pad"
-                  value={value ? String(value) : ''}
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  error={error?.message}
-                />
-              </View>
+              <Input
+                containerClassName="flex-1"
+                testID="sale-price-input"
+                label={t('merchant.createListing.salePrice')}
+                placeholder="99"
+                keyboardType="number-pad"
+                defaultValue={value ? String(value) : ''}
+                onChangeText={(text) => onChange(Number(text) || 0)}
+                error={error?.message}
+              />
             )}
           />
         </View>
@@ -357,7 +363,7 @@ export default function CreateListingScreen() {
               label={t('merchant.createListing.quantity')}
               placeholder="5"
               keyboardType="number-pad"
-              value={value ? String(value) : ''}
+              defaultValue={value ? String(value) : ''}
               onChangeText={(text) => onChange(Number(text) || 0)}
               error={error?.message}
             />

@@ -23,23 +23,27 @@ export function Header({ title, showBack = true, right, className, onBack, testI
 
   return (
     <View
+      testID={testID}
       className={cn('flex-row items-center justify-between border-b border-border px-4 pb-3 pt-2', className)}
       style={{ paddingTop: insets.top + 8 }}
     >
       <View className="w-12">
         {showBack && (
           <Button
+            testID="header-back-button"
             variant="ghost"
             size="icon"
             onPress={onBack ?? (() => router.back())}
             className="self-start"
+            accessibilityLabel="Go back"
+            hitSlop={8}
           >
             <ChevronLeft size={24} color={colors.foreground} />
           </Button>
         )}
       </View>
       {title && (
-        <Text testID={testID} variant="h3" className="flex-1 text-center" numberOfLines={1}>
+        <Text variant="h3" className="flex-1 text-center" numberOfLines={1}>
           {title}
         </Text>
       )}

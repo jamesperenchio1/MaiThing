@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Modal, TouchableWithoutFeedback, Pressable } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { SlidersHorizontal, X, Clock } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -102,6 +103,11 @@ export default function DiscoverScreen() {
 
   const { data: listings, isLoading, isRefetching, isError, refetch } = useListings(filters);
 
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    refetch();
+  };
+
   const { data: categories } = useCategories();
 
   const handleSubmit = (value: string) => {
@@ -144,7 +150,7 @@ export default function DiscoverScreen() {
       scrollable
       className="bg-background"
       refreshing={isRefetching}
-      onRefresh={refetch}
+      onRefresh={handleRefresh}
     >
       <Modal
         visible={filterVisible}

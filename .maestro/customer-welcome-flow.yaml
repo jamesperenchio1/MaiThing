@@ -5,6 +5,13 @@ appId: com.jamyangperenchio.maithing
     clearState: true
 
 - waitForAnimationToEnd
+# Handle notification permission dialog
+- runFlow:
+    when:
+      visible: "Would Like to Send You Notifications"
+    commands:
+      - tapOn: "Allow"
+      - waitForAnimationToEnd
 # Dismiss any lingering system dialog (e.g. deep-link confirmation)
 - runFlow:
     when:

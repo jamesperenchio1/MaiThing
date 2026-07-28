@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { MapPin, Bell } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
@@ -59,6 +60,7 @@ export default function CustomerHomeScreen() {
 
   const isRefreshing = listingsRefetching || merchantsRefetching;
   const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Promise.all([refetchListings(), refetchMerchants()]);
   };
 
