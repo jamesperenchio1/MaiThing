@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { mockRepositories } from '@/src/repositories/mock';
 import { WALLET_TRANSACTIONS } from '@/src/repositories/seed';
 import { scheduleLocalNotification } from '@/src/services/notifications';
+import { useCartStore } from '@/src/stores/cart';
 import type { CustomerProfile, Order, WalletTransaction } from '@/src/types';
 
 function getStatusNotification(order: Order, status: Order['status']) {
@@ -142,6 +144,28 @@ export function useUpdateOrderStatus() {
           `/(customer)/order/${order.id}`
         ).catch(() => {});
       }
+    },
+  });
+}
+
+export function useReorder() {
+  const router = useRouter();
+  const addItem = useCartStore((s) => s.addItem);
+  return useMutation({
+    mutationFn: async (order: Order) => {
+      const listings = await Promise.all(
+        order.items.map((item) => mockRepositories.listings.getListing(item.listingId))
+      );
+      return { order, listings: listings.filter((l): l is NonNullable<typeof l> => l != null) };
+    },
+    onSuccess: ({ order, listings }) => {
+      for (const listing of listings) {
+        const orderItem = order.items.find((i) => i.listingId === listing.id);
+        if (orderItem) {
+          addItem(listing, orderItem.quantity);
+        }
+      }
+      router.push('/(customer)/cart' as any);
     },
   });
 }

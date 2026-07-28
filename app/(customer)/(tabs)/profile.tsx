@@ -14,6 +14,7 @@ import {
   ShoppingBag,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -339,6 +340,15 @@ export default function ProfileScreen() {
         >
           {t('common.logout')}
         </Button>
+
+        <View className="mt-8 items-center">
+          <Text variant="caption" className="text-muted">
+            {Constants.expoConfig?.name} v{Constants.expoConfig?.version}
+            {Constants.expoConfig?.ios?.buildNumber
+              ? ` (${Constants.expoConfig.ios.buildNumber})`
+              : ''}
+          </Text>
+        </View>
       </View>
     </Screen>
   );

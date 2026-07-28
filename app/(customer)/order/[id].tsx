@@ -22,7 +22,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { QRCode } from '@/src/components/ui/QRCode';
 import { PressableScale } from '@/src/components/ui/PressableScale';
-import { useCancelOrder, useOrder } from '@/src/hooks/useOrders';
+import { useCancelOrder, useOrder, useReorder } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
@@ -84,6 +84,7 @@ export default function OrderDetailScreen() {
   const colors = useThemeColor();
   const { data: order, isLoading } = useOrder(id);
   const cancelOrder = useCancelOrder();
+  const reorder = useReorder();
   const [showQR, setShowQR] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
 
@@ -236,6 +237,17 @@ export default function OrderDetailScreen() {
             </View>
           </View>
         </Card>
+
+        {['completed', 'picked_up'].includes(order.status) && (
+          <Button
+            fullWidth
+            className="mt-6"
+            loading={reorder.isPending}
+            onPress={() => reorder.mutate(order)}
+          >
+            Reorder
+          </Button>
+        )}
 
         {['pending', 'confirmed', 'preparing'].includes(order.status) && (
           <Button

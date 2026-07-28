@@ -55,7 +55,7 @@ A running list of small-to-medium improvements that would make the app feel more
 33. ✅ **Cart support** for multiple listings before checkout (currently one-tap buy). Added `app/(customer)/cart.tsx` with merchant grouping, quantity controls, remove item, and wallet spend on confirm. `CartButton` in the header shows a live item-count badge and links to the cart. Listing detail offers both "Add to cart" and "Buy now".
 34. ✅ **Order timeline UI** on order detail showing pending → confirmed → preparing → ready → picked up. `StatusStep` component renders a vertical stepper on `app/(customer)/order/[id].tsx` with status, timestamp, and active/completed states.
 35. ✅ **QR code display** for the pickup code to speed up merchant scanning. `qrcode-generator` is installed, `src/components/ui/QRCode.tsx` is built, and it's rendered on the customer order detail screen (`app/(customer)/order/[id].tsx`).
-36. ❌ **Reorder button** on completed orders that re-adds the same item(s). No "reorder" logic found.
+36. ✅ **Reorder button** on completed orders that re-adds the same item(s). Added `useReorder` hook in `src/hooks/useOrders.ts` that fetches each order item's current listing and adds it back to the cart. The customer order detail screen shows a "Reorder" button for `completed`/`picked_up` orders.
 37. ✅ **Cancel-with-reason** flow and refund-to-wallet. `useCancelOrder` mutation cancels the order, refunds the wallet, records a `refund` wallet transaction, and schedules a cancellation notification. The customer order detail screen exposes a "Cancel order" button with a reason picker and refund confirmation.
 
 38. ✅ **Estimated pickup time** communicated clearly on the order detail. `formatPickupWindow()` is called and displayed on `app/(customer)/order/[id].tsx`.
@@ -137,15 +137,15 @@ A running list of small-to-medium improvements that would make the app feel more
 87. ⚠️ **Language selector** as a bottom sheet instead of a simple menu item. Language switching works, but via `Alert.alert` (a native action sheet), not a custom bottom sheet component. Skipped — there is no bottom-sheet primitive anywhere in the codebase to wire this into; building one would be new UI, not wiring.
 88. ❌ **Onboarding tooltip** for first-time merchants explaining the dashboard. No tooltip/onboarding-hint code found.
 89. ❌ **Profile photo upload** and edit from the profile screen. No `ImagePicker` usage on the profile screen.
-90. ❌ **Version/build info** in settings for easier support. No `Constants.expoConfig`/version display found in any settings screen.
+90. ✅ **Version/build info** in settings for easier support. Customer profile screen now shows `{App Name} v{version} ({buildNumber})` at the bottom using `expo-constants`.
 
 ---
 
 ## Summary
 
-- ✅ **Done: 26** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support, tab switcher animation, global error boundary.
+- ✅ **Done: 28** — search debounce, QR pickup code, order search, pickup time display, distance/date `Intl` localization, share URLs, list skeletons, empty states, pull-to-refresh haptics, icon-button accessibility labels/hitSlop, image `resizeMode` coverage, `useMemo` on the merchant-card hotspot, map callout rating badge, FlashList migration, notification preferences wiring, pickup reminder, cart checkout, order timeline UI, cancel-with-reason flow, real-time create-listing validation, currency/character counters on create listing, Maestro buy-flow, last updated timestamps, notification deep links, reduce motion support, tab switcher animation, global error boundary, reorder button, version/build info.
 - ⚠️ **Partial: 7** — image placeholder/error fallback, lazy-load heavy screens, preload critical data, loading buttons audit (covered major actions but not every button), distance km/miles decision, broader testID/accessibility audit, OTP auto-fill (no OTP screen exists).
-- ❌ **Not started: 46**
+- ❌ **Not started: 44**
 - ❓ **Not verifiable by static analysis: 1** (color contrast — needs a manual/tooling audit)
 
 ### Explicitly skipped (needs your call)
