@@ -1,9 +1,16 @@
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, ShoppingBag, Package, Settings } from 'lucide-react-native';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useOrders } from '@/src/hooks/useOrders';
+import { useAuthStore } from '@/src/stores/auth';
+
+const ACTIONABLE_STATUSES = new Set(['pending', 'confirmed', 'preparing', 'ready']);
 
 export default function MerchantTabsLayout() {
   const colors = useThemeColor();
+  const user = useAuthStore((s) => s.user);
+  const { data: orders } = useOrders(user?.id ?? '', 'merchant');
+  const pendingCount = orders?.filter((o) => ACTIONABLE_STATUSES.has(o.status)).length ?? 0;
 
   return (
     <Tabs
@@ -35,6 +42,8 @@ export default function MerchantTabsLayout() {
           title: 'Orders',
           tabBarButtonTestID: 'merchant-orders-tab',
           tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} />,
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+          tabBarBadgeStyle: { fontSize: 11, minWidth: 18, height: 18 },
         }}
       />
       <Tabs.Screen

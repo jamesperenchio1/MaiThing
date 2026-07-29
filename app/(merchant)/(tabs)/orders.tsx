@@ -1,8 +1,9 @@
+import { useState, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Alert, RefreshControl } from 'react-native';
+import { View, Image, RefreshControl } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { ClipboardList } from 'lucide-react-native';
+import { ClipboardList, Check } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
@@ -33,9 +34,20 @@ const statusVariantMap: Record<
   cancelled: 'danger',
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  confirmed: 'Confirmed',
+  preparing: 'Preparing',
+  ready: 'Ready for Pickup',
+  picked_up: 'Picked Up',
+  completed: 'Completed',
+};
+
 function OrderCard({ order }: { order: Order }) {
   const { t } = useTranslation();
+  const colors = useThemeColor();
   const updateStatus = useUpdateOrderStatus();
+  const [confirming, setConfirming] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const nextStatus: Record<Order['status'], Order['status'] | null> = {
     pending: 'confirmed',
@@ -47,20 +59,20 @@ function OrderCard({ order }: { order: Order }) {
     cancelled: null,
   };
 
-  const handleNext = () => {
-    const next = nextStatus[order.status];
+  const next = nextStatus[order.status];
+
+  const handlePress = () => {
     if (!next) return;
-    const statusLabel = next === 'ready' ? 'ready for pickup' : next.replace(/_/g, ' ');
-    Alert.alert('Update order status?', `Mark this order as "${statusLabel}".`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Confirm',
-        onPress: () => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          updateStatus.mutate({ id: order.id, status: next });
-        },
-      },
-    ]);
+    if (!confirming) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setConfirming(true);
+      timeoutRef.current = setTimeout(() => setConfirming(false), 3000);
+    } else {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setConfirming(false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      updateStatus.mutate({ id: order.id, status: next });
+    }
   };
 
   return (
@@ -99,9 +111,15 @@ function OrderCard({ order }: { order: Order }) {
         <Text className="font-mono text-primary">{order.pickupCode}</Text>
       </View>
 
-      {nextStatus[order.status] && (
-        <Button size="sm" className="mt-3" onPress={handleNext} loading={updateStatus.isPending}>
-          Mark {nextStatus[order.status]}
+      {next && (
+        <Button
+          size="sm"
+          className={confirming ? 'mt-3 bg-primary' : 'mt-3'}
+          onPress={handlePress}
+          loading={updateStatus.isPending}
+          leftIcon={confirming ? <Check size={15} color={colors.white} /> : undefined}
+        >
+          {confirming ? `Confirm → ${STATUS_LABELS[next] ?? next}` : `Mark as ${STATUS_LABELS[next] ?? next}`}
         </Button>
       )}
     </Card>
