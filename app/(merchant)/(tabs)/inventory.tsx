@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image, RefreshControl } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Package, Plus } from 'lucide-react-native';
+import { Package, Plus, Copy } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -14,7 +14,7 @@ import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { FlashList } from '@shopify/flash-list';
-import { useListings } from '@/src/hooks/useListings';
+import { useListings, useUpdateListing } from '@/src/hooks/useListings';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
@@ -30,11 +30,19 @@ const statusVariantMap: Record<
   draft: 'info',
 };
 
-function InventoryCard({ listing }: { listing: Listing }) {
+function InventoryCard({ listing, onDuplicate }: { listing: Listing; onDuplicate: () => void }) {
   const { t } = useTranslation();
+  const colors = useThemeColor();
+  const updateListing = useUpdateListing();
+
   return (
     <Card variant="elevated" className="mb-3 flex-row overflow-hidden p-0">
-      <Image source={{ uri: listing.images[0] }} className="h-full w-28" resizeMode="cover" />
+      <Image
+        source={{ uri: listing.images[0] }}
+        className="h-full w-28"
+        resizeMode="cover"
+        style={{ backgroundColor: colors.border }}
+      />
       <View className="flex-1 p-3">
         <View className="mb-1 flex-row items-center justify-between">
           <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
@@ -59,6 +67,44 @@ function InventoryCard({ listing }: { listing: Listing }) {
             minute: '2-digit',
           })}
         </Text>
+        <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2">
+          <PressableScale
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              updateListing.mutate({
+                id: listing.id,
+                data: { status: listing.status === 'active' ? 'sold_out' : 'active' },
+              });
+            }}
+            scale={0.95}
+            disabled={updateListing.isPending}
+          >
+            <View
+              className={`rounded-full px-3 py-1 ${listing.status === 'active' ? 'bg-danger/10' : 'bg-primary/10'}`}
+            >
+              <Text
+                variant="caption"
+                className={`font-semibold ${listing.status === 'active' ? 'text-danger' : 'text-primary'}`}
+              >
+                {listing.status === 'active' ? 'Mark Sold Out' : 'Restock'}
+              </Text>
+            </View>
+          </PressableScale>
+          <PressableScale
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onDuplicate();
+            }}
+            scale={0.95}
+          >
+            <View className="flex-row items-center">
+              <Copy size={14} color={colors.muted} />
+              <Text variant="caption" className="ml-1 text-muted">
+                Duplicate
+              </Text>
+            </View>
+          </PressableScale>
+        </View>
       </View>
     </Card>
   );
@@ -136,9 +182,26 @@ export default function InventoryScreen() {
         <FlashList
           className="flex-1"
           data={listings ?? []}
-          renderItem={({ item }) => <InventoryCard listing={item} />}
+          renderItem={({ item }) => (
+            <InventoryCard
+              listing={item}
+              onDuplicate={() =>
+                router.push({
+                  pathname: '/(merchant)/listings/new',
+                  params: {
+                    duplicateId: item.id,
+                    title: item.title,
+                    description: item.description,
+                    originalPrice: String(item.originalPrice),
+                    salePrice: String(item.salePrice),
+                    category: item.category,
+                  },
+                } as any)
+              }
+            />
+          )}
           keyExtractor={(item) => item.id}
-          estimatedItemSize={92}
+          estimatedItemSize={120}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={
             <EmptyState

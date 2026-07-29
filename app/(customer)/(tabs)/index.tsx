@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, RefreshControl } from 'react-native';
+import { View, ScrollView, Image, RefreshControl, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MapPin, Bell } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
 import { ListingCard } from '@/src/components/composite/ListingCard';
@@ -22,6 +23,7 @@ import { useMerchants, useCategories } from '@/src/hooks/useMerchants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { CartButton } from '@/src/components/composite/CartButton';
+import { formatCurrency } from '@/src/lib/utils';
 
 export default function CustomerHomeScreen() {
   const router = useRouter();
@@ -60,6 +62,33 @@ export default function CustomerHomeScreen() {
   const featuredMerchants = merchants?.slice(0, 5) ?? [];
   const nearbyListings = listings?.slice(0, 6) ?? [];
 
+  const scrollRef = useRef<ScrollView>(null);
+  const currentSlide = useRef(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const slideWidth = Dimensions.get('window').width - 48;
+
+  const promoListings = useMemo(
+    () =>
+      [...(listings ?? [])]
+        .filter((l) => l.status === 'active')
+        .sort(
+          (a, b) =>
+            1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice)
+        )
+        .slice(0, 5),
+    [listings]
+  );
+
+  useEffect(() => {
+    if (promoListings.length <= 1) return;
+    const interval = setInterval(() => {
+      currentSlide.current = (currentSlide.current + 1) % promoListings.length;
+      setActiveSlide(currentSlide.current);
+      scrollRef.current?.scrollTo({ x: currentSlide.current * slideWidth, animated: true });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [promoListings.length, slideWidth]);
+
   const isRefreshing = listingsRefetching || merchantsRefetching;
   const handleRefresh = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -89,23 +118,76 @@ export default function CustomerHomeScreen() {
         </View>
       </View>
 
-      <Animated.View entering={FadeInUp.duration(500)}>
-        <View testID="home-hero-card" className="mb-6 rounded-3xl bg-primary p-6">
-          <Text testID="home-hero-title" variant="h2" className="mb-2 text-white">
-            {t('customer.home.heroTitle')}
-          </Text>
-          <Text testID="home-hero-subtitle" variant="body" className="mb-4 text-white/80">
-            {t('customer.home.heroSubtitle')}
-          </Text>
-          <Button
-            variant="secondary"
-            className="self-start bg-white"
-            textClassName="text-primary"
-            onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
-          >
-            {t('common.discover')}
-          </Button>
-        </View>
+      <Animated.View entering={FadeInUp.duration(500)} className="mb-6">
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEnabled={false}
+        >
+          {promoListings.map((listing) => {
+            const merchantName = merchants?.find((m) => m.id === listing.merchantId)?.name ?? '';
+            const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
+            return (
+              <PressableScale
+                key={listing.id}
+                onPress={() => router.push(`/(customer)/listing/${listing.id}` as any)}
+                scale={0.98}
+              >
+                <View
+                  style={{ width: slideWidth, height: 200 }}
+                  className="rounded-3xl overflow-hidden"
+                >
+                  <Image
+                    source={{ uri: listing.images[0] }}
+                    className="absolute inset-0 w-full h-full"
+                    resizeMode="cover"
+                  />
+                  <View className="absolute inset-0 bg-black/10" />
+                  <View className="absolute bottom-0 left-0 right-0 h-1/2 bg-black/60" />
+                  <View className="absolute top-3 left-4">
+                    <Text variant="caption" className="text-white/80">
+                      {merchantName}
+                    </Text>
+                  </View>
+                  <View className="absolute bottom-0 left-0 right-0 p-4">
+                    <Text
+                      variant="body-sm"
+                      className="text-white font-semibold mb-1"
+                      numberOfLines={2}
+                    >
+                      {listing.title}
+                    </Text>
+                    <View className="flex-row items-center">
+                      <Text className="text-white text-xl font-bold">
+                        {formatCurrency(listing.salePrice)}
+                      </Text>
+                      <Text className="text-white/70 text-sm line-through ml-2">
+                        {formatCurrency(listing.originalPrice)}
+                      </Text>
+                      <View className="ml-2 bg-white rounded-full px-2 py-0.5">
+                        <Text variant="caption" className="text-primary font-bold">
+                          -{discount}%
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </PressableScale>
+            );
+          })}
+        </ScrollView>
+        {promoListings.length > 1 && (
+          <View className="flex-row justify-center mt-3 space-x-1.5">
+            {promoListings.map((_, i) => (
+              <View
+                key={i}
+                className={`h-1.5 rounded-full bg-foreground ${i === activeSlide ? 'w-4' : 'w-1.5 opacity-30'}`}
+              />
+            ))}
+          </View>
+        )}
       </Animated.View>
 
       <SearchBar
