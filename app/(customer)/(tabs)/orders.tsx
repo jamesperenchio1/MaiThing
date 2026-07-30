@@ -7,6 +7,7 @@ import { ChevronRight, Package, History, SearchX } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
+import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
@@ -88,6 +89,22 @@ function OrderCard({ order }: { order: Order }) {
           </View>
           <Text className="font-semibold">{formatCurrency(order.total)}</Text>
         </View>
+
+        {(order.status === 'completed' || order.status === 'picked_up') &&
+          order.items.length > 0 && (
+            <View className="mt-3 border-t border-border pt-3">
+              <Button
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push(`/listing/${order.items[0].listingId}`);
+                }}
+                variant="outline"
+                size="sm"
+              >
+                {t('customer.orders.orderAgain')}
+              </Button>
+            </View>
+          )}
       </Card>
     </PressableScale>
   );
