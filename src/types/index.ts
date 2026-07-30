@@ -27,6 +27,7 @@ export interface User {
 
 export interface CustomerProfile extends User {
   favorites: string[];
+  savedListings: string[]; // listing IDs
   savedAddresses: Address[];
   notificationPreferences: NotificationPreferences;
 }
@@ -153,7 +154,7 @@ export interface Wallet {
 export interface WalletTransaction {
   id: string;
   userId: string;
-  type: 'top_up' | 'purchase' | 'refund' | 'payout';
+  type: 'top_up' | 'purchase' | 'refund' | 'payout' | 'top_up_bonus' | 'points_earned';
   amount: number;
   description: string;
   orderId?: string;
@@ -182,6 +183,13 @@ export interface Review {
   merchantReply?: string;
   merchantRepliedAt?: string;
   createdAt: string;
+}
+
+export interface WalletReward {
+  userId: string;
+  points: number; // 1 point per ฿1 spent
+  bonusBalance: number; // top-up bonus credit (฿)
+  lifetimePoints: number; // all-time points earned
 }
 
 export interface MerchantAnalytics {

@@ -41,6 +41,7 @@ export const TEST_CUSTOMER: User = {
 export const TEST_CUSTOMER_PROFILE: CustomerProfile = {
   ...TEST_CUSTOMER,
   favorites: ['merchant-1', 'merchant-3', 'merchant-7'],
+  savedListings: [],
   savedAddresses: [
     {
       street: '123 Sukhumvit Soi 55',

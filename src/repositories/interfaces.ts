@@ -20,6 +20,7 @@ import type {
   StaffMember,
   User,
   Wallet,
+  WalletReward,
   WalletTransaction,
   CustomerImpact,
 } from '@/src/types';
@@ -47,6 +48,8 @@ export interface UserRepository {
   getCustomerProfile(userId: string): Promise<CustomerProfile>;
   addFavorite(userId: string, merchantId: string): Promise<void>;
   removeFavorite(userId: string, merchantId: string): Promise<void>;
+  addSavedListing(userId: string, listingId: string): Promise<void>;
+  removeSavedListing(userId: string, listingId: string): Promise<void>;
   updateNotificationPreferences(
     userId: string,
     preferences: NotificationPreferences
@@ -71,6 +74,7 @@ export interface MerchantRepository {
   updatePickupInstructions(id: string, instructions: string): Promise<Merchant>;
   getReviews(merchantId: string): Promise<Review[]>;
   replyToReview(reviewId: string, reply: string): Promise<Review>;
+  submitReview(data: Omit<Review, 'id' | 'createdAt' | 'merchantReply' | 'merchantRepliedAt'>): Promise<Review>;
   getStaff(merchantId: string): Promise<StaffMember[]>;
   addStaff(
     merchantId: string,
@@ -126,6 +130,9 @@ export interface WalletRepository {
   topUp(userId: string, amount: number): Promise<Wallet>;
   spend(userId: string, amount: number, description: string): Promise<Wallet>;
   refund(userId: string, amount: number, description: string): Promise<Wallet>;
+  getRewards(userId: string): Promise<WalletReward>;
+  addTopUpBonus(userId: string, topUpAmount: number): Promise<WalletReward>;
+  addPurchasePoints(userId: string, amountSpent: number): Promise<WalletReward>;
 }
 
 export interface NotificationRepository {
