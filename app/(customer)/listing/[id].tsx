@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, Platform, Share } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Image,
+  Platform,
+  Share,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { Minus, Plus, Share2, Clock, MapPin, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -41,8 +50,15 @@ export default function ListingDetailScreen() {
   const { data: merchant } = useMerchant(listing?.merchantId ?? '');
   const { data: reviews } = useReviews(listing?.merchantId ?? '');
   const [quantity, setQuantity] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const colors = useThemeColor();
   const addItem = useCartStore((s) => s.addItem);
+  const { width: screenWidth } = Dimensions.get('window');
+
+  const handleImageScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+    setActiveImageIndex(index);
+  };
 
   if (isLoading || !listing) {
     return (
@@ -115,7 +131,22 @@ export default function ListingDetailScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
       >
         <View className="relative h-72 w-full">
-          <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleImageScroll}
+            className="h-full w-full"
+          >
+            {listing.images.map((uri, index) => (
+              <Image
+                key={index}
+                source={{ uri }}
+                style={{ width: screenWidth, height: '100%' }}
+                resizeMode="cover"
+              />
+            ))}
+          </ScrollView>
           <View className="absolute left-4 top-4">
             <Badge variant={isMystery ? 'warning' : 'info'}>
               {isMystery ? 'Mystery Box' : 'Fixed Item'}
@@ -124,6 +155,18 @@ export default function ListingDetailScreen() {
           {urgency && (
             <View className="absolute bottom-4 left-4">
               <UrgencyBadge urgency={urgency} />
+            </View>
+          )}
+          {listing.images.length > 1 && (
+            <View className="absolute bottom-4 left-0 right-0 flex-row items-center justify-center">
+              {listing.images.map((_, index) => (
+                <View
+                  key={index}
+                  className={`mx-1 rounded-full ${
+                    index === activeImageIndex ? 'h-2 w-2 bg-white' : 'h-1.5 w-1.5 bg-white/50'
+                  }`}
+                />
+              ))}
             </View>
           )}
           <View className="absolute right-4 top-4 flex-row space-x-2">
@@ -332,31 +375,6 @@ export default function ListingDetailScreen() {
             </View>
           )}
 
-          <View className="mb-6 flex-row items-center justify-center">
-            <PressableScale
-              onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="rounded-2xl bg-muted/10 p-3"
-              scale={0.9}
-              disabled={quantity <= 1}
-              accessibilityLabel="Decrease quantity"
-              hitSlop={8}
-            >
-              <Minus size={20} color={colors.foreground} />
-            </PressableScale>
-            <Text variant="h2" className="mx-6 w-8 text-center">
-              {quantity}
-            </Text>
-            <PressableScale
-              onPress={() => setQuantity((q) => Math.min(q + 1, listing.quantityRemaining))}
-              className="rounded-2xl bg-muted/10 p-3"
-              scale={0.9}
-              disabled={quantity >= listing.quantityRemaining}
-              accessibilityLabel="Increase quantity"
-              hitSlop={8}
-            >
-              <Plus size={20} color={colors.foreground} />
-            </PressableScale>
-          </View>
         </View>
       </ScrollView>
 
@@ -367,7 +385,32 @@ export default function ListingDetailScreen() {
           </Text>
           <Text className="text-xl font-bold">{formatCurrency(listing.salePrice * quantity)}</Text>
         </View>
-        <View className="flex-row space-x-3">
+        <View className="flex-row items-center space-x-3">
+          <View className="flex-row items-center">
+            <PressableScale
+              onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="rounded-2xl bg-muted/10 p-3"
+              scale={0.9}
+              disabled={quantity <= 1}
+              accessibilityLabel="Decrease quantity"
+              hitSlop={8}
+            >
+              <Minus size={18} color={colors.foreground} />
+            </PressableScale>
+            <Text variant="body" className="mx-3 w-6 text-center font-semibold">
+              {quantity}
+            </Text>
+            <PressableScale
+              onPress={() => setQuantity((q) => Math.min(q + 1, listing.quantityRemaining))}
+              className="rounded-2xl bg-muted/10 p-3"
+              scale={0.9}
+              disabled={quantity >= listing.quantityRemaining}
+              accessibilityLabel="Increase quantity"
+              hitSlop={8}
+            >
+              <Plus size={18} color={colors.foreground} />
+            </PressableScale>
+          </View>
           <Button
             testID="add-to-cart-button"
             variant="secondary"
