@@ -142,7 +142,8 @@ export default function ListingDetailScreen() {
               <Image
                 key={index}
                 source={{ uri }}
-                style={{ width: screenWidth, height: '100%' }}
+                style={{ width: screenWidth }}
+                className="h-full"
                 resizeMode="cover"
               />
             ))}
