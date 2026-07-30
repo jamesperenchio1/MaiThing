@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Alert } from 'react-native';
+import { View, Image, Alert, Platform } from 'react-native';
 import {
   Clock,
   QrCode,
@@ -12,8 +12,10 @@ import {
   Bell,
   Check,
   Star,
+  Calendar,
   type LucideIcon,
 } from 'lucide-react-native';
+import * as ExpoCalendar from 'expo-calendar';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -170,6 +172,25 @@ export default function OrderDetailScreen() {
   const reorder = useReorder();
   const [showQR, setShowQR] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [calendarAdded, setCalendarAdded] = useState(false);
+
+  const handleAddToCalendar = async () => {
+    if (!order || Platform.OS === 'web') return;
+    const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
+    if (status !== 'granted') return;
+    const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
+    const writable = calendars.find((c) => c.allowsModifications);
+    if (!writable) return;
+    await ExpoCalendar.createEventAsync(writable.id, {
+      title: `Pickup: ${order.merchantName}`,
+      startDate: new Date(order.pickupWindowStart),
+      endDate: new Date(order.pickupWindowEnd),
+      notes: `Pickup code: ${order.pickupCode}`,
+      location: order.merchantName,
+    });
+    setCalendarAdded(true);
+    setTimeout(() => setCalendarAdded(false), 2000);
+  };
 
   useEffect(() => {
     setCancelSuccess(false);
@@ -322,6 +343,26 @@ export default function OrderDetailScreen() {
             </View>
           </View>
         </Card>
+
+        {Platform.OS !== 'web' &&
+          order.status !== 'completed' &&
+          order.status !== 'cancelled' && (
+            <View className="mt-4">
+              <Button
+                variant="outline"
+                fullWidth
+                onPress={handleAddToCalendar}
+                leftIcon={<Calendar size={18} color={colors.primary} />}
+              >
+                Add to Calendar
+              </Button>
+              {calendarAdded && (
+                <Text variant="caption" className="mt-2 text-center text-success">
+                  Added to calendar ✓
+                </Text>
+              )}
+            </View>
+          )}
 
         {['completed', 'picked_up'].includes(order.status) && (
           <Button

@@ -3,8 +3,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Platform, ActivityIndicator } from 'react-native';
-import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle } from 'lucide-react-native';
+import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import * as ExpoCalendar from 'expo-calendar';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -49,6 +50,25 @@ export default function ConfirmOrderScreen() {
   const [quantity, setQuantity] = useState(Math.max(1, Number(quantityParam) || 1));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
+  const [calendarAdded, setCalendarAdded] = useState(false);
+
+  const handleAddToCalendar = async (o: Order) => {
+    if (Platform.OS === 'web') return;
+    const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
+    if (status !== 'granted') return;
+    const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
+    const writable = calendars.find((c) => c.allowsModifications);
+    if (!writable) return;
+    await ExpoCalendar.createEventAsync(writable.id, {
+      title: `Pickup: ${o.merchantName}`,
+      startDate: new Date(o.pickupWindowStart),
+      endDate: new Date(o.pickupWindowEnd),
+      notes: `Pickup code: ${o.pickupCode}`,
+      location: o.merchantName,
+    });
+    setCalendarAdded(true);
+    setTimeout(() => setCalendarAdded(false), 2000);
+  };
 
   useEffect(() => {
     if (listing) {
@@ -169,6 +189,23 @@ export default function ConfirmOrderScreen() {
           <Button fullWidth onPress={() => router.replace(`/(customer)/order/${order.id}` as any)}>
             View order details
           </Button>
+          {Platform.OS !== 'web' && (
+            <View className="mt-3 w-full">
+              <Button
+                variant="outline"
+                fullWidth
+                onPress={() => handleAddToCalendar(order)}
+                leftIcon={<Calendar size={18} color={colors.primary} />}
+              >
+                Add to Calendar
+              </Button>
+              {calendarAdded && (
+                <Text variant="caption" className="mt-2 text-center text-success">
+                  Added to calendar ✓
+                </Text>
+              )}
+            </View>
+          )}
         </View>
       </Screen>
     );
