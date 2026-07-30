@@ -60,6 +60,7 @@ import type {
   StaffMember,
   User,
   Wallet,
+  WalletReward,
   WalletTransaction,
 } from '@/src/types';
 
@@ -214,6 +215,23 @@ class MockUserRepository implements UserRepository {
     );
   }
 
+  async addSavedListing(userId: string, listingId: string): Promise<void> {
+    await sleep(200);
+    if (!TEST_CUSTOMER_PROFILE.savedListings) {
+      TEST_CUSTOMER_PROFILE.savedListings = [];
+    }
+    if (!TEST_CUSTOMER_PROFILE.savedListings.includes(listingId)) {
+      TEST_CUSTOMER_PROFILE.savedListings.push(listingId);
+    }
+  }
+
+  async removeSavedListing(userId: string, listingId: string): Promise<void> {
+    await sleep(200);
+    TEST_CUSTOMER_PROFILE.savedListings = (TEST_CUSTOMER_PROFILE.savedListings ?? []).filter(
+      (id) => id !== listingId
+    );
+  }
+
   async updateNotificationPreferences(
     userId: string,
     preferences: NotificationPreferences
@@ -316,6 +334,19 @@ class MockMerchantRepository implements MerchantRepository {
     if (!review) throw new Error('Review not found');
     review.merchantReply = reply;
     review.merchantRepliedAt = new Date().toISOString();
+    return review;
+  }
+
+  async submitReview(
+    data: Omit<Review, 'id' | 'createdAt' | 'merchantReply' | 'merchantRepliedAt'>
+  ): Promise<Review> {
+    await sleep(300);
+    const review: Review = {
+      ...data,
+      id: `review_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    REVIEWS.push(review);
     return review;
   }
 
@@ -655,6 +686,8 @@ class MockOrderRepository implements OrderRepository {
   }
 }
 
+const walletRewards = new Map<string, WalletReward>();
+
 class MockWalletRepository implements WalletRepository {
   async getWallet(userId: string): Promise<Wallet> {
     await sleep(200);
@@ -684,6 +717,58 @@ class MockWalletRepository implements WalletRepository {
     await sleep(300);
     CUSTOMER_WALLET.balance += amount;
     return CUSTOMER_WALLET;
+  }
+
+  private getOrInitReward(userId: string): WalletReward {
+    if (!walletRewards.has(userId)) {
+      walletRewards.set(userId, {
+        userId,
+        points: 0,
+        bonusBalance: 0,
+        lifetimePoints: 0,
+      });
+    }
+    return walletRewards.get(userId)!;
+  }
+
+  async getRewards(userId: string): Promise<WalletReward> {
+    await sleep(200);
+    return { ...this.getOrInitReward(userId) };
+  }
+
+  async addTopUpBonus(userId: string, topUpAmount: number): Promise<WalletReward> {
+    await sleep(200);
+    const reward = this.getOrInitReward(userId);
+    const bonus = Math.floor(topUpAmount * 0.05);
+    reward.bonusBalance += bonus;
+    const tx: WalletTransaction = {
+      id: `tx-bonus-${Date.now()}`,
+      userId,
+      type: 'top_up_bonus',
+      amount: bonus,
+      description: `Top-up bonus (+฿${bonus})`,
+      createdAt: new Date().toISOString(),
+    };
+    WALLET_TRANSACTIONS.unshift(tx);
+    return { ...reward };
+  }
+
+  async addPurchasePoints(userId: string, amountSpent: number): Promise<WalletReward> {
+    await sleep(200);
+    const reward = this.getOrInitReward(userId);
+    const points = Math.floor(amountSpent);
+    reward.points += points;
+    reward.lifetimePoints += points;
+    const tx: WalletTransaction = {
+      id: `tx-points-${Date.now()}`,
+      userId,
+      type: 'points_earned',
+      amount: points,
+      description: `Points earned (${points} pts)`,
+      createdAt: new Date().toISOString(),
+    };
+    WALLET_TRANSACTIONS.unshift(tx);
+    return { ...reward };
   }
 }
 
