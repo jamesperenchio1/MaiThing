@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   View,
   ScrollView,
+  Image,
   Modal,
   TouchableWithoutFeedback,
   Pressable,
@@ -23,12 +24,12 @@ import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FlashList } from '@shopify/flash-list';
 import { useListings, type ListingFilters } from '@/src/hooks/useListings';
-import { useCategories } from '@/src/hooks/useMerchants';
+import { useCategories, useMerchants } from '@/src/hooks/useMerchants';
 import { useRecentSearches } from '@/src/hooks/useRecentSearches';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { CartButton } from '@/src/components/composite/CartButton';
 import { DIETARY_TAGS, ALLERGENS } from '@/src/lib/constants';
-import { cn } from '@/src/lib/utils';
+import { cn, formatCurrency } from '@/src/lib/utils';
 
 type SortOption = NonNullable<ListingFilters['sortBy']>;
 
@@ -118,6 +119,11 @@ export default function DiscoverScreen() {
   };
 
   const { data: categories } = useCategories();
+  const { data: merchants } = useMerchants({ lat: 13.7462, lng: 100.5347, radius: 50000 });
+  const topRatedMerchants = useMemo(
+    () => [...(merchants ?? [])].sort((a, b) => b.rating - a.rating).slice(0, 6),
+    [merchants]
+  );
 
   const handleSubmit = (value: string) => {
     setSearchQuery(value);
@@ -193,6 +199,105 @@ export default function DiscoverScreen() {
           </View>
         </PressableScale>
       </View>
+
+      {!searchQuery && listings && listings.length > 0 && (() => {
+        const featured = [...listings].sort(
+          (a, b) =>
+            1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice)
+        )[0];
+        const discount = Math.round((1 - featured.salePrice / featured.originalPrice) * 100);
+        return (
+          <PressableScale
+            onPress={() => router.push(`/(customer)/listing/${featured.id}` as any)}
+            scale={0.98}
+            className="mb-4"
+          >
+            <View className="h-36 rounded-3xl overflow-hidden">
+              <Image
+                source={{ uri: featured.images[0] }}
+                className="absolute inset-0 h-full w-full"
+                resizeMode="cover"
+              />
+              <View className="absolute inset-0 bg-black/50" />
+              <View className="absolute bottom-0 left-0 right-0 bg-black/40 h-1/2" />
+              <View className="absolute inset-0 p-4 justify-between">
+                <View className="self-start bg-primary rounded-full px-2.5 py-1">
+                  <Text variant="caption" className="text-white font-bold">
+                    🔥 Deal of the Day
+                  </Text>
+                </View>
+                <View>
+                  <Text variant="body-sm" className="text-white font-semibold" numberOfLines={1}>
+                    {featured.title}
+                  </Text>
+                  <View className="flex-row items-center mt-0.5">
+                    <Text className="text-white text-lg font-bold">
+                      {formatCurrency(featured.salePrice)}
+                    </Text>
+                    <Text className="text-white/70 text-sm line-through ml-2">
+                      {formatCurrency(featured.originalPrice)}
+                    </Text>
+                    <View className="ml-2 bg-white rounded-full px-2 py-0.5">
+                      <Text variant="caption" className="text-primary font-bold">
+                        -{discount}%
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </PressableScale>
+        );
+      })()}
+
+      {topRatedMerchants.length > 0 && !searchQuery && (
+        <View className="mb-4">
+          <View className="mb-2 flex-row items-center justify-between">
+            <Text variant="body-sm" className="font-semibold">
+              Top Rated Shops
+            </Text>
+            <PressableScale
+              onPress={() => router.push('/(customer)/(tabs)/map' as any)}
+              scale={0.95}
+            >
+              <Text variant="caption" className="text-primary">
+                See on map
+              </Text>
+            </PressableScale>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {topRatedMerchants.map((merchant) => (
+              <PressableScale
+                key={merchant.id}
+                onPress={() => router.push(`/(customer)/merchant/${merchant.id}` as any)}
+                scale={0.96}
+                className="mr-3"
+              >
+                <View className="items-center w-20">
+                  <View className="w-14 h-14 rounded-2xl overflow-hidden bg-muted mb-1.5">
+                    <Image
+                      source={{ uri: merchant.logoUrl }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <Text variant="caption" className="text-center font-medium" numberOfLines={2}>
+                    {merchant.name}
+                  </Text>
+                  <View className="flex-row items-center mt-0.5">
+                    <Text variant="caption" className="text-warning">
+                      ★
+                    </Text>
+                    <Text variant="caption" className="ml-0.5">
+                      {merchant.rating.toFixed(1)}
+                    </Text>
+                  </View>
+                </View>
+              </PressableScale>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {!searchQuery && recent.length > 0 && (
         <View className="mb-4">

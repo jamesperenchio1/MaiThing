@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { mockRepositories } from '@/src/repositories/mock';
 
 export interface ListingFilters {
@@ -27,5 +27,16 @@ export function useListing(id: string) {
     queryKey: ['listing', id],
     queryFn: () => mockRepositories.listings.getListing(id),
     enabled: !!id,
+  });
+}
+
+export function useUpdateListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<import('@/src/types').Listing> }) =>
+      mockRepositories.listings.updateListing(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
   });
 }

@@ -15,10 +15,11 @@ import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { CategoryChip } from '@/src/components/composite/CategoryChip';
 import { Map } from '@/src/components/map/Map';
 import { useMerchants, useCategories } from '@/src/hooks/useMerchants';
+import { useListings } from '@/src/hooks/useListings';
 import { useUserLocation } from '@/src/hooks/useUserLocation';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { calculateDistance, formatDistance, getMerchantOpenStatus, cn } from '@/src/lib/utils';
+import { calculateDistance, formatDistance, getMerchantOpenStatus, cn, formatCurrency } from '@/src/lib/utils';
 import { openDirections } from '@/src/lib/maps';
 import { openLocationSettings } from '@/src/lib/settings';
 
@@ -84,6 +85,13 @@ export default function MapScreen() {
     }
     return result;
   }, [merchants, selectedCategories, openNowOnly, nearbyOnly, i18n.language]);
+
+  const { data: merchantListings } = useListings(
+    selectedMerchantId
+      ? { merchantId: selectedMerchantId, lat: location.latitude, lng: location.longitude }
+      : undefined
+  );
+  const activeListings = merchantListings?.filter((l) => l.status === 'active') ?? [];
 
   const selectedMerchant = filteredMerchants.find((m) => m.id === selectedMerchantId);
   const openStatus = selectedMerchant
@@ -231,6 +239,52 @@ export default function MapScreen() {
                   )}
                 </View>
               </View>
+
+              {activeListings.length > 0 && (
+                <View className="mt-3">
+                  <Text variant="caption" className="mb-2 font-semibold text-muted">
+                    Available now
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1">
+                    {activeListings.slice(0, 5).map((listing) => {
+                      const discount = Math.round(
+                        (1 - listing.salePrice / listing.originalPrice) * 100
+                      );
+                      return (
+                        <PressableScale
+                          key={listing.id}
+                          onPress={() =>
+                            router.push(`/(customer)/listing/${listing.id}` as any)
+                          }
+                          scale={0.97}
+                          className="mx-1"
+                        >
+                          <View className="w-28 rounded-2xl overflow-hidden bg-muted">
+                            <Image
+                              source={{ uri: listing.images[0] }}
+                              className="w-full h-20"
+                              resizeMode="cover"
+                            />
+                            <View className="p-2">
+                              <Text variant="caption" className="font-semibold" numberOfLines={1}>
+                                {listing.title}
+                              </Text>
+                              <View className="flex-row items-center mt-0.5">
+                                <Text variant="caption" className="text-primary font-bold">
+                                  {formatCurrency(listing.salePrice)}
+                                </Text>
+                                <Text variant="caption" className="ml-1.5 bg-primary/10 text-primary rounded-full px-1.5 font-semibold">
+                                  -{discount}%
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        </PressableScale>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
 
               <View className="mt-3 flex-row items-center justify-between">
                 <PressableScale
