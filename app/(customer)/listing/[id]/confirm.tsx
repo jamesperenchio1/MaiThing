@@ -155,12 +155,12 @@ export default function ConfirmOrderScreen() {
         `/(merchant)/(tabs)/orders`
       ).catch(() => {});
 
-      const pickupEnd = new Date(newOrder.pickupWindowEnd);
-      const reminderTime = new Date(pickupEnd.getTime() - 30 * 60 * 1000);
-      if (reminderTime > new Date() && preferences?.orderUpdates) {
+      const pickupStart = new Date(newOrder.pickupWindowStart);
+      const reminderTime = new Date(pickupStart.getTime() - 30 * 60 * 1000);
+      if (reminderTime > new Date()) {
         scheduleNotificationAtDate(
           'Pickup reminder',
-          `Your order from ${merchant.name} is ready for pickup soon. Code: ${newOrder.pickupCode}`,
+          `Your pickup at ${merchant.name} is in 30 minutes! Code: ${newOrder.pickupCode}`,
           reminderTime,
           { orderId: newOrder.id, type: 'pickup_reminder' },
           `/(customer)/order/${newOrder.id}`

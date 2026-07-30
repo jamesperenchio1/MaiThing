@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image, Alert, Platform } from 'react-native';
@@ -28,6 +28,7 @@ import { QRCode } from '@/src/components/ui/QRCode';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useCancelOrder, useOrder, useReorder } from '@/src/hooks/useOrders';
 import { useReviews, useSubmitReview } from '@/src/hooks/useReviews';
+import { scheduleLocalNotification } from '@/src/services/notifications';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
@@ -173,6 +174,19 @@ export default function OrderDetailScreen() {
   const [showQR, setShowQR] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
   const [calendarAdded, setCalendarAdded] = useState(false);
+  const prevStatusRef = useRef<Order['status'] | undefined>(undefined);
+
+  useEffect(() => {
+    if (order && prevStatusRef.current !== 'ready' && order.status === 'ready' && Platform.OS !== 'web') {
+      scheduleLocalNotification(
+        'Your order is ready!',
+        `Pick up at ${order.merchantName} now. Code: ${order.pickupCode}`
+      );
+    }
+    if (order) {
+      prevStatusRef.current = order.status;
+    }
+  }, [order]);
 
   const handleAddToCalendar = async () => {
     if (!order || Platform.OS === 'web') return;

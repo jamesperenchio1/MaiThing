@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 import { mockRepositories } from '@/src/repositories/mock';
+import { scheduleLocalNotification } from '@/src/services/notifications';
+import type { Merchant } from '@/src/types';
 
 export function useCustomerProfile(userId: string) {
   return useQuery({
@@ -28,8 +31,18 @@ export function useToggleFavorite() {
       }
       return { merchantId, isFavorite: !isFavorite };
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['customer-profile'] });
+      if (!variables.isFavorite && Platform.OS !== 'web') {
+        const merchant = queryClient.getQueryData<Merchant>(['merchant', variables.merchantId]);
+        const merchantName = merchant?.name ?? 'A merchant you follow';
+        setTimeout(() => {
+          scheduleLocalNotification(
+            `${merchantName} just posted!`,
+            "A new listing is available from a merchant you follow. Tap to see what's available."
+          );
+        }, 2000);
+      }
     },
   });
 }
