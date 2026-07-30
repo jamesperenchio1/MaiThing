@@ -195,7 +195,7 @@ export default function ConfirmOrderScreen() {
                     key={item.id}
                     onPress={() => {
                       setShowUpsell(false);
-                      router.push(`/(customer)/listing/${item.id}` as any);
+                      router.push(`/(customer)/listing/${item.id}`);
                     }}
                     className="mb-3 flex-row items-center rounded-2xl border border-border bg-card p-3"
                   >
