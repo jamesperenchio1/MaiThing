@@ -108,6 +108,9 @@ export default function ConfirmOrderScreen() {
       setOrder(newOrder);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      mockRepositories.wallet.addPurchasePoints(user.id, newOrder.total).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['wallet-rewards', user.id] });
+      });
       scheduleLocalNotification(
         'Order confirmed',
         `Your order from ${merchant.name} has been confirmed. Pickup code: ${newOrder.pickupCode}`,

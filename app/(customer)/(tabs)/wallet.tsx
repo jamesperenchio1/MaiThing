@@ -16,6 +16,7 @@ import {
   ArrowDownRight,
   ChevronRight,
   X,
+  Star,
 } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -28,15 +29,18 @@ import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { FlashList } from '@shopify/flash-list';
-import { useWallet, useWalletTransactions } from '@/src/hooks/useWallet';
+import { useWallet, useWalletTransactions, useWalletRewards } from '@/src/hooks/useWallet';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
 import { mockRepositories } from '@/src/repositories/mock';
-import type { WalletTransaction } from '@/src/types';
+import type { WalletReward, WalletTransaction } from '@/src/types';
 
 function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
-  const isIncoming = transaction.type === 'top_up' || transaction.type === 'refund';
+  const isIncoming =
+    transaction.type === 'top_up' ||
+    transaction.type === 'refund' ||
+    transaction.type === 'top_up_bonus';
   const colors = useThemeColor();
   const router = useRouter();
 
@@ -104,7 +108,9 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
     setLoading(true);
     try {
       await mockRepositories.wallet.topUp(user.id, effectiveAmount);
+      await mockRepositories.wallet.addTopUpBonus(user.id, effectiveAmount);
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-rewards', user.id] });
       onClose();
       setSelected(null);
       setIsCustom(false);
@@ -196,6 +202,51 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
   );
 }
 
+function RewardsCard({ rewards }: { rewards?: WalletReward }) {
+  const colors = useThemeColor();
+  return (
+    <Card variant="outlined" className="mb-4 p-4">
+      <View className="mb-2 flex-row items-center">
+        <Star size={16} color={colors.primary} />
+        <Text variant="body-sm" className="ml-2 font-semibold text-primary">
+          Rewards
+        </Text>
+      </View>
+      <View className="flex-row justify-between mb-2">
+        <View>
+          <Text variant="caption" className="text-muted">
+            Points balance
+          </Text>
+          <Text className="font-bold text-foreground">
+            {(rewards?.points ?? 0).toLocaleString()} pts
+          </Text>
+        </View>
+        <View className="items-end">
+          <Text variant="caption" className="text-muted">
+            Bonus credit
+          </Text>
+          <Text className="font-bold text-primary">
+            +{formatCurrency(rewards?.bonusBalance ?? 0)}
+          </Text>
+        </View>
+      </View>
+      <View className="flex-row justify-between">
+        <View>
+          <Text variant="caption" className="text-muted">
+            Lifetime points
+          </Text>
+          <Text variant="caption" className="font-semibold text-foreground">
+            {(rewards?.lifetimePoints ?? 0).toLocaleString()} pts
+          </Text>
+        </View>
+      </View>
+      <Text variant="caption" className="mt-2 text-muted">
+        Earn 1 point per ฿1 spent. Top up and get 5% bonus credit.
+      </Text>
+    </Card>
+  );
+}
+
 export default function WalletScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -214,6 +265,7 @@ export default function WalletScreen() {
     isError: isTransactionsError,
     refetch: refetchTransactions,
   } = useWalletTransactions(user?.id ?? '');
+  const { data: rewards } = useWalletRewards(user?.id ?? '');
   const [topUpVisible, setTopUpVisible] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
@@ -266,6 +318,8 @@ export default function WalletScreen() {
           {t('customer.wallet.topUp')}
         </Button>
       </Card>
+
+      <RewardsCard rewards={rewards} />
 
       <Text variant="h3" className="mb-4">
         {t('customer.wallet.transactions')}

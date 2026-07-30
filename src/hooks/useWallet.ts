@@ -16,3 +16,11 @@ export function useWalletTransactions(userId: string) {
     enabled: !!userId,
   });
 }
+
+export function useWalletRewards(userId: string) {
+  return useQuery({
+    queryKey: ['wallet-rewards', userId],
+    queryFn: () => mockRepositories.wallet.getRewards(userId),
+    enabled: !!userId,
+  });
+}
