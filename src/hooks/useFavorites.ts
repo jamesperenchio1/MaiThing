@@ -33,3 +33,33 @@ export function useToggleFavorite() {
     },
   });
 }
+
+export function useSavedListings(userId: string) {
+  const { data: profile } = useCustomerProfile(userId);
+  return profile?.savedListings ?? [];
+}
+
+export function useSaveListingToggle() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      listingId,
+      isSaved,
+    }: {
+      userId: string;
+      listingId: string;
+      isSaved: boolean;
+    }) => {
+      if (isSaved) {
+        await mockRepositories.users.removeSavedListing(userId, listingId);
+      } else {
+        await mockRepositories.users.addSavedListing(userId, listingId);
+      }
+      return { listingId, isSaved: !isSaved };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-profile'] });
+    },
+  });
+}

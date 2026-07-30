@@ -11,7 +11,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Minus, Plus, Share2, Clock, MapPin, AlertCircle } from 'lucide-react-native';
+import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/src/components/ui/Button';
@@ -30,8 +30,10 @@ import { ReviewCard } from '@/src/components/composite/ReviewCard';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useReviews } from '@/src/hooks/useReviews';
+import { useSavedListings, useSaveListingToggle } from '@/src/hooks/useFavorites';
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useAuthStore } from '@/src/stores/auth';
 import {
   formatCurrency,
   formatDistance,
@@ -54,6 +56,9 @@ export default function ListingDetailScreen() {
   const colors = useThemeColor();
   const addItem = useCartStore((s) => s.addItem);
   const { width: screenWidth } = Dimensions.get('window');
+  const userId = useAuthStore((s) => s.user?.id ?? '');
+  const savedListings = useSavedListings(userId);
+  const { mutate: toggleSave } = useSaveListingToggle();
 
   const handleImageScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
@@ -82,6 +87,13 @@ export default function ListingDetailScreen() {
   );
   const showCountdown = !isSoldOut && minsUntilEnd <= 240 && minsUntilEnd > 0;
   const recentReviews = reviews?.slice(0, 3) ?? [];
+  const isSaved = savedListings.includes(listing.id);
+
+  const handleBookmark = () => {
+    if (!userId) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    toggleSave({ userId, listingId: listing.id, isSaved });
+  };
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -177,6 +189,24 @@ export default function ListingDetailScreen() {
                 variant="overlay"
                 className="bg-black/30 p-2"
               />
+            )}
+            {!!userId && (
+              <PressableScale
+                onPress={handleBookmark}
+                className="rounded-full bg-black/30 p-2"
+                scale={0.9}
+                accessibilityLabel={isSaved ? 'Remove from saved listings' : 'Save listing'}
+                accessibilityHint={
+                  isSaved ? 'Removes this listing from your saved items' : 'Saves this listing for later'
+                }
+                hitSlop={8}
+              >
+                {isSaved ? (
+                  <BookmarkCheck size={20} color="#fff" />
+                ) : (
+                  <Bookmark size={20} color="#fff" />
+                )}
+              </PressableScale>
             )}
             <PressableScale
               onPress={handleShare}
