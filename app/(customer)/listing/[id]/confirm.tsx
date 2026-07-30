@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, Platform, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Image, Platform, ActivityIndicator, Modal, Pressable } from 'react-native';
 import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ExpoCalendar from 'expo-calendar';
@@ -32,7 +32,7 @@ import {
   scheduleLocalNotification,
   scheduleNotificationAtDate,
 } from '@/src/services/notifications';
-import type { Order } from '@/src/types';
+import type { Order, Listing } from '@/src/types';
 
 export default function ConfirmOrderScreen() {
   const router = useRouter();
@@ -51,6 +51,8 @@ export default function ConfirmOrderScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [calendarAdded, setCalendarAdded] = useState(false);
+  const [upsellListings, setUpsellListings] = useState<Listing[]>([]);
+  const [showUpsell, setShowUpsell] = useState(false);
 
   const handleAddToCalendar = async (o: Order) => {
     if (Platform.OS === 'web') return;
@@ -128,6 +130,11 @@ export default function ConfirmOrderScreen() {
       setOrder(newOrder);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      mockRepositories.listings.getListings().then((all) => {
+        const nearby = all.filter((l) => l.merchantId !== newOrder.merchantId).slice(0, 3);
+        setUpsellListings(nearby);
+        setShowUpsell(true);
+      });
       mockRepositories.wallet.addPurchasePoints(user.id, newOrder.total).then(() => {
         queryClient.invalidateQueries({ queryKey: ['wallet-rewards', user.id] });
       });
@@ -168,6 +175,71 @@ export default function ConfirmOrderScreen() {
     return (
       <Screen className="bg-background">
         <Header title="Order confirmed" />
+        <Modal
+          visible={showUpsell}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowUpsell(false)}
+        >
+          <View className="flex-1 justify-end bg-black/50">
+            <View className="rounded-t-3xl bg-background px-5 pb-8 pt-5">
+              <Text variant="h3" className="mb-4 text-center">
+                Rescue more food nearby 🌍
+              </Text>
+              {upsellListings.map((item) => {
+                const discountPct = Math.round(
+                  ((item.originalPrice - item.salePrice) / item.originalPrice) * 100
+                );
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      setShowUpsell(false);
+                      router.push(`/(customer)/listing/${item.id}` as any);
+                    }}
+                    className="mb-3 flex-row items-center rounded-2xl border border-border bg-card p-3"
+                  >
+                    <Image
+                      source={{ uri: item.images[0] }}
+                      className="h-16 w-16 rounded-xl"
+                      resizeMode="cover"
+                    />
+                    <View className="ml-3 flex-1">
+                      <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text variant="caption" className="text-muted" numberOfLines={1}>
+                        {item.category}
+                      </Text>
+                      <View className="mt-1 flex-row items-center">
+                        <Text variant="body-sm" className="font-bold text-primary">
+                          {formatCurrency(item.salePrice)}
+                        </Text>
+                        <Text
+                          variant="caption"
+                          className="ml-2 text-muted line-through"
+                        >
+                          {formatCurrency(item.originalPrice)}
+                        </Text>
+                        <Badge variant="success" className="ml-2">
+                          -{discountPct}%
+                        </Badge>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
+              <Button
+                variant="outline"
+                fullWidth
+                onPress={() => setShowUpsell(false)}
+                className="mt-2"
+              >
+                No thanks
+              </Button>
+            </View>
+          </View>
+        </Modal>
         <View className="flex-1 items-center justify-center px-6">
           <View className="mb-6 rounded-full bg-primary/10 p-4">
             <CheckCircle size={48} color={colors.primary} />
