@@ -93,7 +93,7 @@ function ReviewSection({ order }: { order: Order }) {
 
   const isEligible =
     (order.status === 'completed' || order.status === 'picked_up') &&
-    new Date().getTime() - new Date(order.createdAt).getTime() > 3600000;
+    new Date().getTime() - new Date(order.createdAt).getTime() >= 3600000;
 
   if (!isEligible) return null;
 
