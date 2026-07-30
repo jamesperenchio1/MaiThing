@@ -18,7 +18,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatCurrency } from '@/src/lib/utils';
+import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
 const statusVariantMap: Record<
@@ -59,7 +59,7 @@ function OrderCard({ order }: { order: Order }) {
                 {order.merchantName}
               </Text>
               <Text variant="caption" className="text-muted">
-                {new Date(order.createdAt).toLocaleDateString()}
+                {formatPickupWindow(order.pickupWindowStart, order.pickupWindowEnd)}
               </Text>
             </View>
           </View>
