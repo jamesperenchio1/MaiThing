@@ -11,6 +11,7 @@ import {
   ChefHat,
   Bell,
   Check,
+  Star,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -18,12 +19,15 @@ import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
+import { Input } from '@/src/components/ui/Input';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { QRCode } from '@/src/components/ui/QRCode';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useCancelOrder, useOrder, useReorder } from '@/src/hooks/useOrders';
+import { useReviews, useSubmitReview } from '@/src/hooks/useReviews';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
@@ -75,6 +79,85 @@ function StatusStep({
         />
       )}
     </View>
+  );
+}
+
+function ReviewSection({ order }: { order: Order }) {
+  const colors = useThemeColor();
+  const user = useAuthStore((s) => s.user);
+  const { data: reviews } = useReviews(order.merchantId);
+  const submitReview = useSubmitReview();
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const isEligible =
+    (order.status === 'completed' || order.status === 'picked_up') &&
+    new Date().getTime() - new Date(order.createdAt).getTime() > 3600000;
+
+  if (!isEligible) return null;
+
+  const alreadyReviewed = reviews?.some((r) => r.orderId === order.id);
+
+  if (alreadyReviewed || submitted) {
+    return (
+      <Card variant="outlined" className="mb-6 items-center">
+        <Text variant="body-sm" className="text-center text-muted">
+          {submitted ? 'Thank you for your review! ⭐' : 'You reviewed this order'}
+        </Text>
+      </Card>
+    );
+  }
+
+  return (
+    <Card variant="outlined" className="mb-6">
+      <Text variant="h3" className="mb-4">
+        Leave a review
+      </Text>
+      <View className="mb-4 flex-row justify-center gap-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <PressableScale key={star} onPress={() => setRating(star)} scale={0.85}>
+            <Star
+              size={32}
+              color={star <= rating ? '#F59E0B' : colors.muted}
+              fill={star <= rating ? '#F59E0B' : 'transparent'}
+            />
+          </PressableScale>
+        ))}
+      </View>
+      <Input
+        placeholder="How was your order?"
+        value={comment}
+        onChangeText={setComment}
+        multiline
+        numberOfLines={3}
+        textAlignVertical="top"
+        inputClassName="min-h-[72px]"
+        containerClassName="mb-2"
+      />
+      <Button
+        fullWidth
+        disabled={rating === 0 || submitReview.isPending}
+        loading={submitReview.isPending}
+        onPress={() => {
+          if (!user || rating === 0) return;
+          submitReview.mutate(
+            {
+              orderId: order.id,
+              customerId: user.id,
+              customerName: user.name,
+              merchantId: order.merchantId,
+              listingId: order.items[0]?.listingId,
+              rating,
+              comment,
+            },
+            { onSuccess: () => setSubmitted(true) }
+          );
+        }}
+      >
+        Submit review
+      </Button>
+    </Card>
   );
 }
 
@@ -183,6 +266,8 @@ export default function OrderDetailScreen() {
             ))}
           </View>
         )}
+
+        <ReviewSection order={order} />
 
         <Card variant="outlined" className="mb-6">
           <Text variant="h3" className="mb-4">
