@@ -147,12 +147,15 @@ export default function CustomerHomeScreen() {
 
   const hasError = listingsError || merchantsError;
 
+  const hour = new Date().getHours();
+  const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+
   const listHeader = (
     <View className="pt-4 pb-6">
       <View className="mb-4 flex-row items-center justify-between">
         <View>
           <Text variant="body-sm" className="text-muted">
-            {t('customer.home.greeting', { timeOfDay: 'morning' })}
+            {t('customer.home.greeting', { timeOfDay })}
           </Text>
           <Text variant="h3">{user?.name ?? 'Guest'}</Text>
         </View>
@@ -180,7 +183,11 @@ export default function CustomerHomeScreen() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          scrollEnabled={false}
+          onMomentumScrollEnd={(e) => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / slideWidth);
+            currentSlide.current = index;
+            setActiveSlide(index);
+          }}
         >
           {promoListings.map((listing) => {
             const merchantName = merchants?.find((m) => m.id === listing.merchantId)?.name ?? '';
