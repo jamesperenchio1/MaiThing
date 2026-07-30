@@ -6,8 +6,8 @@ import {
   Pressable,
   Modal,
   TouchableWithoutFeedback,
-  Alert,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
@@ -89,15 +89,26 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
+  const [isCustom, setIsCustom] = useState(false);
+  const [customAmount, setCustomAmount] = useState('');
+
+  const customAmountValue = parseFloat(customAmount);
+  const effectiveAmount = isCustom
+    ? Number.isFinite(customAmountValue) && customAmountValue > 0
+      ? customAmountValue
+      : null
+    : selected;
 
   const handleTopUp = async () => {
-    if (!selected || !user) return;
+    if (!effectiveAmount || !user) return;
     setLoading(true);
     try {
-      await mockRepositories.wallet.topUp(user.id, selected);
+      await mockRepositories.wallet.topUp(user.id, effectiveAmount);
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       onClose();
       setSelected(null);
+      setIsCustom(false);
+      setCustomAmount('');
     } finally {
       setLoading(false);
     }
@@ -125,29 +136,57 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
               <Text variant="body-sm" className="mb-4 text-muted">
                 Select an amount to add to your wallet
               </Text>
-              <View className="mb-6 flex-row flex-wrap gap-3">
+              <View className="mb-3 flex-row flex-wrap gap-3">
                 {TOP_UP_AMOUNTS.map((amount) => (
                   <PressableScale
                     key={amount}
-                    onPress={() => setSelected(amount)}
-                    className={`rounded-2xl border-2 px-5 py-3 ${selected === amount ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}
+                    onPress={() => {
+                      setSelected(amount);
+                      setIsCustom(false);
+                      setCustomAmount('');
+                    }}
+                    className={`rounded-2xl border-2 px-5 py-3 ${!isCustom && selected === amount ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}
                     scale={0.96}
                   >
                     <Text
-                      className={`font-semibold ${selected === amount ? 'text-primary' : 'text-foreground'}`}
+                      className={`font-semibold ${!isCustom && selected === amount ? 'text-primary' : 'text-foreground'}`}
                     >
                       {formatCurrency(amount)}
                     </Text>
                   </PressableScale>
                 ))}
+                <PressableScale
+                  onPress={() => {
+                    setIsCustom(true);
+                    setSelected(null);
+                  }}
+                  className={`rounded-2xl border-2 px-5 py-3 ${isCustom ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}
+                  scale={0.96}
+                >
+                  <Text className={`font-semibold ${isCustom ? 'text-primary' : 'text-foreground'}`}>
+                    Other
+                  </Text>
+                </PressableScale>
               </View>
+              {isCustom && (
+                <TextInput
+                  className="mb-6 rounded-2xl border-2 border-primary bg-primary/5 px-5 py-3 text-base font-semibold text-foreground"
+                  placeholder="Enter amount"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="numeric"
+                  value={customAmount}
+                  onChangeText={setCustomAmount}
+                  autoFocus
+                />
+              )}
+              {!isCustom && <View className="mb-6" />}
               <Button
                 fullWidth
-                disabled={!selected || loading}
+                disabled={!effectiveAmount || loading}
                 loading={loading}
                 onPress={handleTopUp}
               >
-                {selected ? `Add ${formatCurrency(selected)}` : 'Select an amount'}
+                {effectiveAmount ? `Add ${formatCurrency(effectiveAmount)}` : 'Select an amount'}
               </Button>
             </View>
           </TouchableWithoutFeedback>
@@ -176,6 +215,13 @@ export default function WalletScreen() {
     refetch: refetchTransactions,
   } = useWalletTransactions(user?.id ?? '');
   const [topUpVisible, setTopUpVisible] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  const PAGE_SIZE = 20;
+  const visibleTransactions = showAll
+    ? (transactions ?? [])
+    : (transactions ?? []).slice(0, PAGE_SIZE);
+  const hasMore = (transactions?.length ?? 0) > PAGE_SIZE && !showAll;
 
   const isError = isWalletError || isTransactionsError;
   const refreshing = isRefetching || transactionsRefetching;
@@ -256,12 +302,24 @@ export default function WalletScreen() {
       ) : (
         <FlashList
           className="flex-1"
-          data={transactions?.slice(0, 10) ?? []}
+          data={visibleTransactions}
           renderItem={({ item }) => <TransactionItem transaction={item} />}
           keyExtractor={(item) => item.id}
           estimatedItemSize={68}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
+          ListFooterComponent={
+            hasMore ? (
+              <Button
+                variant="ghost"
+                fullWidth
+                onPress={() => setShowAll(true)}
+                className="mt-1 mb-2"
+              >
+                Load more
+              </Button>
+            ) : null
+          }
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
