@@ -30,13 +30,10 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
   const [containerWidth, setContainerWidth] = React.useState(0);
 
   const isTabRoute = tabs.some((tab) => pathname === tab.name || pathname.startsWith(`${tab.name}/`));
-  if (!isTabRoute) return null;
-
   const activeIndex = Math.max(
     0,
     tabs.findIndex((tab) => pathname === tab.name || pathname.startsWith(`${tab.name}/`))
   );
-
   const tabWidth = tabs.length > 0 ? containerWidth / tabs.length : 0;
 
   const indicatorStyle = useAnimatedStyle(() => {
@@ -59,6 +56,8 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
   const handleLayout = (e: LayoutChangeEvent) => {
     setContainerWidth(e.nativeEvent.layout.width);
   };
+
+  if (!isTabRoute) return null;
 
   return (
     <View

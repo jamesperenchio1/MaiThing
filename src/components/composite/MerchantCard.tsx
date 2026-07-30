@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
 import { Image, View } from 'react-native';
-import { Star, MapPin } from 'lucide-react-native';
+import { MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { cn, formatDistance, formatCategory, getMerchantOpenStatus } from '@/src/lib/utils';
+import { cn, formatDistance, formatCompactNumber, getMerchantOpenStatus } from '@/src/lib/utils';
 import { Card } from '@/src/components/ui/Card';
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
+import { TrustBadge } from '@/src/components/composite/TrustBadge';
+import { ReviewSummary } from '@/src/components/composite/ReviewSummary';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import type { Merchant } from '@/src/types';
 
@@ -46,7 +48,8 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
     >
       <Card variant="elevated" className="overflow-hidden p-0">
         <View className="relative">
-          <Image source={{ uri: merchant.coverUrl }} className="h-28 w-full" resizeMode="cover" />
+          <Image source={{ uri: merchant.coverUrl }} className="h-32 w-full" resizeMode="cover" />
+          <View className="absolute inset-0 bg-black/10" />
           <View className="absolute left-2 top-2">
             <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{statusLabel}</Badge>
           </View>
@@ -60,28 +63,36 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
           </View>
         </View>
         <View className="p-3">
-          <View className="mb-2 flex-row items-center">
+          <View className="mb-3 flex-row items-center">
             <Image
               source={{ uri: merchant.logoUrl }}
-              className="mr-3 h-10 w-10 rounded-xl"
+              className="mr-3 h-12 w-12 rounded-xl"
               resizeMode="cover"
             />
             <View className="flex-1">
               <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
                 {merchant.name}
               </Text>
-              <View className="flex-row items-center">
-                <Star size={14} color={colors.warning} fill={colors.warning} />
-                <Text variant="caption" className="ml-1">
-                  {merchant.rating.toFixed(1)} ({merchant.reviewCount})
-                </Text>
-              </View>
+              <ReviewSummary rating={merchant.rating} reviewCount={merchant.reviewCount} />
             </View>
           </View>
-          <Text variant="caption" className="text-muted" numberOfLines={1}>
-            {merchant.categories.map(formatCategory).join(' · ')} · {merchant.address.district}
-            {merchant.distance != null ? ` · ${formatDistance(merchant.distance)}` : ''}
-          </Text>
+
+          <View className="mb-2 flex-row flex-wrap items-center">
+            {merchant.isVerified && <TrustBadge type="verified" />}
+            {merchant.hygieneRating && merchant.hygieneRating >= 4.5 && (
+              <TrustBadge type="hygiene" label={`Hygiene ${merchant.hygieneRating}`} />
+            )}
+          </View>
+
+          <View className="flex-row items-center">
+            <MapPin size={14} color={colors.muted} />
+            <Text variant="caption" className="ml-1.5 flex-1 text-muted" numberOfLines={1}>
+              {merchant.address.district}
+              {merchant.distance != null ? ` · ${formatDistance(merchant.distance)} away` : ''}
+              {' · '}
+              {formatCompactNumber(merchant.followers)} followers
+            </Text>
+          </View>
         </View>
       </Card>
     </PressableScale>

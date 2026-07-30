@@ -1,0 +1,40 @@
+import { View } from 'react-native';
+import { Star } from 'lucide-react-native';
+import { Card } from '@/src/components/ui/Card';
+import { Text } from '@/src/components/ui/Text';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { formatRelativeTime } from '@/src/lib/utils';
+import type { Review } from '@/src/types';
+
+interface ReviewCardProps {
+  review: Review;
+}
+
+export function ReviewCard({ review }: ReviewCardProps) {
+  const colors = useThemeColor();
+
+  return (
+    <Card variant="outlined" className="mb-3 rounded-2xl p-4">
+      <View className="mb-2 flex-row items-center justify-between">
+        <Text variant="body-sm" className="font-semibold">
+          {review.customerName}
+        </Text>
+        <Text variant="caption">{formatRelativeTime(review.createdAt)}</Text>
+      </View>
+      <View className="mb-2 flex-row items-center">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star
+            key={i}
+            size={12}
+            color={colors.warning}
+            fill={i < review.rating ? colors.warning : 'transparent'}
+            style={{ marginRight: 2 }}
+          />
+        ))}
+      </View>
+      <Text variant="body-sm" className="text-muted">
+        {review.comment}
+      </Text>
+    </Card>
+  );
+}

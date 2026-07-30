@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image } from 'react-native';
-import { MapPin, Star, Clock, Phone, Navigation, AlertCircle } from 'lucide-react-native';
+import { MapPin, Phone, Navigation, AlertCircle, Calendar } from 'lucide-react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -12,8 +12,12 @@ import { Header } from '@/src/components/layout/Header';
 import { ListingCard } from '@/src/components/composite/ListingCard';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { MerchantMap } from '@/src/components/map/MerchantMap';
+import { TrustBadge } from '@/src/components/composite/TrustBadge';
+import { ReviewSummary } from '@/src/components/composite/ReviewSummary';
+import { ReviewCard } from '@/src/components/composite/ReviewCard';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useMerchant } from '@/src/hooks/useMerchants';
+import { useReviews } from '@/src/hooks/useReviews';
 import { useListings } from '@/src/hooks/useListings';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import {
@@ -32,6 +36,7 @@ export default function MerchantDetailScreen() {
   const colors = useThemeColor();
   const { data: merchant, isLoading } = useMerchant(id);
   const { data: listings } = useListings({ merchantId: id });
+  const { data: reviews } = useReviews(id);
   const openStatus = merchant ? getMerchantOpenStatus(merchant, i18n.language) : null;
   const openStatusLabel = openStatus
     ? openStatus.isOpen
@@ -54,6 +59,13 @@ export default function MerchantDetailScreen() {
     );
   }
 
+  const joinedDate = merchant.joinedAt
+    ? new Date(merchant.joinedAt).toLocaleDateString(i18n.language, {
+        year: 'numeric',
+        month: 'long',
+      })
+    : null;
+
   return (
     <Screen testID="merchant-detail-screen" scrollable={false}>
       <Header testID="merchant-detail-header" />
@@ -74,20 +86,22 @@ export default function MerchantDetailScreen() {
               <Text variant="h2" className="mb-1">
                 {merchant.name}
               </Text>
-              <View className="flex-row items-center">
-                <Star size={16} color={colors.warning} fill={colors.warning} />
-                <Text variant="body-sm" className="ml-1">
-                  {merchant.rating.toFixed(1)} ·{' '}
-                  {t('customer.merchant.reviewCount', { count: merchant.reviewCount })}
-                </Text>
-              </View>
+              <ReviewSummary rating={merchant.rating} reviewCount={merchant.reviewCount} size="md" />
               {openStatus && (
-                <View className="mt-1 self-start">
+                <View className="mt-2 self-start">
                   <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{openStatusLabel}</Badge>
                 </View>
               )}
             </View>
             <FavoriteButton merchantId={merchant.id} />
+          </View>
+
+          <View className="mb-4 flex-row flex-wrap">
+            {merchant.isVerified && <TrustBadge type="verified" />}
+            <TrustBadge type="guarantee" />
+            {merchant.hygieneRating && (
+              <TrustBadge type="hygiene" rating={merchant.hygieneRating} />
+            )}
           </View>
 
           <View className="mb-4 flex-row items-center">
@@ -110,6 +124,15 @@ export default function MerchantDetailScreen() {
               {merchant.phone}
             </Text>
           </View>
+
+          {joinedDate && (
+            <View className="mb-4 flex-row items-center">
+              <Calendar size={16} color={colors.muted} />
+              <Text variant="body-sm" className="ml-2 text-muted">
+                {t('customer.merchant.partnerSince', { date: joinedDate })}
+              </Text>
+            </View>
+          )}
 
           <Button
             variant="secondary"
@@ -190,6 +213,17 @@ export default function MerchantDetailScreen() {
               {merchant.description}
             </Text>
           </View>
+
+          {reviews && reviews.length > 0 && (
+            <View testID="merchant-reviews-section" className="mb-6">
+              <Text variant="h3" className="mb-2">
+                {t('customer.merchant.reviews')}
+              </Text>
+              {reviews.slice(0, 5).map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </View>
+          )}
 
           <View testID="merchant-listings-section" className="mb-6">
             <Text testID="merchant-listings-title" variant="h3" className="mb-2">

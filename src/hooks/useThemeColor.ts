@@ -13,6 +13,7 @@ export function useThemeColor() {
     danger: isDark ? '#F87171' : '#EF4444',
     warning: isDark ? '#FBBF24' : '#F59E0B',
     info: isDark ? '#60A5FA' : '#3B82F6',
+    success: isDark ? '#34D399' : '#10B981',
     white: '#FFFFFF',
   };
 }

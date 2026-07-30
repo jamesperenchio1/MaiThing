@@ -18,6 +18,7 @@ import {
   MERCHANT_ANALYTICS,
   NOTIFICATIONS,
   ORDERS,
+  REVIEWS,
   TEST_CUSTOMER,
   TEST_CUSTOMER_PROFILE,
   TEST_MERCHANT_USER,
@@ -25,6 +26,7 @@ import {
 } from './seed';
 import type {
   BusinessHours,
+  CustomerImpact,
   CustomerProfile,
   Listing,
   ListingStatus,
@@ -33,6 +35,7 @@ import type {
   Notification,
   NotificationPreferences,
   Order,
+  Review,
   User,
   Wallet,
   WalletTransaction,
@@ -215,6 +218,13 @@ class MockMerchantRepository implements MerchantRepository {
     if (index === -1) throw new Error('Merchant not found');
     MERCHANTS[index].pickupInstructions = instructions;
     return MERCHANTS[index];
+  }
+
+  async getReviews(merchantId: string): Promise<Review[]> {
+    await sleep(200);
+    return REVIEWS.filter((r) => r.merchantId === merchantId).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   async followMerchant(userId: string, merchantId: string): Promise<void> {
@@ -489,6 +499,21 @@ class MockAnalyticsRepository implements AnalyticsRepository {
     const merchant = MERCHANTS.find((m) => m.ownerId === merchantIdOrUserId);
     if (merchant) return { ...MERCHANT_ANALYTICS, merchantId: merchant.id };
     return MERCHANT_ANALYTICS;
+  }
+
+  async getCustomerImpact(userId: string): Promise<CustomerImpact> {
+    await sleep(300);
+    const userOrders = ORDERS.filter(
+      (o) => o.customerId === userId && ['completed', 'picked_up'].includes(o.status)
+    );
+    const mealsSaved = userOrders.reduce((sum, o) => sum + o.items.reduce((is, item) => is + item.quantity, 0), 0);
+    const moneySaved = userOrders.reduce((sum, o) => sum + o.discount, 0);
+    return {
+      mealsSaved,
+      moneySaved,
+      co2SavedKg: Math.round(mealsSaved * 2.3 * 10) / 10,
+      ordersCount: userOrders.length,
+    };
   }
 }
 

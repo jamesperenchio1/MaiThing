@@ -13,8 +13,14 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
+import { UrgencyBadge } from '@/src/components/composite/UrgencyBadge';
+import { CountdownTimer } from '@/src/components/composite/CountdownTimer';
+import { TrustBadge } from '@/src/components/composite/TrustBadge';
+import { ReviewSummary } from '@/src/components/composite/ReviewSummary';
+import { ReviewCard } from '@/src/components/composite/ReviewCard';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
+import { useReviews } from '@/src/hooks/useReviews';
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import {
@@ -22,6 +28,7 @@ import {
   formatDistance,
   calculateDistance,
   formatPickupWindow,
+  getListingUrgency,
 } from '@/src/lib/utils';
 import { getListingUrl } from '@/src/lib/links';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
@@ -32,6 +39,7 @@ export default function ListingDetailScreen() {
   const { t, i18n } = useTranslation();
   const { data: listing, isLoading } = useListing(id);
   const { data: merchant } = useMerchant(listing?.merchantId ?? '');
+  const { data: reviews } = useReviews(listing?.merchantId ?? '');
   const [quantity, setQuantity] = useState(1);
   const colors = useThemeColor();
   const addItem = useCartStore((s) => s.addItem);
@@ -52,6 +60,12 @@ export default function ListingDetailScreen() {
   const isMystery = listing.type === 'mystery_box';
   const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
   const isSoldOut = listing.quantityRemaining === 0;
+  const urgency = getListingUrgency(listing);
+  const minsUntilEnd = Math.round(
+    (new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000
+  );
+  const showCountdown = !isSoldOut && minsUntilEnd <= 240 && minsUntilEnd > 0;
+  const recentReviews = reviews?.slice(0, 3) ?? [];
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -107,6 +121,11 @@ export default function ListingDetailScreen() {
               {isMystery ? 'Mystery Box' : 'Fixed Item'}
             </Badge>
           </View>
+          {urgency && (
+            <View className="absolute bottom-4 left-4">
+              <UrgencyBadge urgency={urgency} />
+            </View>
+          )}
           <View className="absolute right-4 top-4 flex-row space-x-2">
             {merchant && (
               <FavoriteButton
@@ -143,10 +162,13 @@ export default function ListingDetailScreen() {
                 </Text>
               </PressableScale>
               {merchant && (
-                <Text variant="caption" className="mt-1 text-muted">
-                  {formatDistance(calculateDistance(DEFAULT_USER_LOCATION, merchant.coordinates))}{' '}
-                  away · {merchant.address.district}
-                </Text>
+                <View className="mt-1">
+                  <ReviewSummary
+                    rating={merchant.rating}
+                    reviewCount={merchant.reviewCount}
+                    size="sm"
+                  />
+                </View>
               )}
             </View>
             <View className="items-end">
@@ -156,8 +178,37 @@ export default function ListingDetailScreen() {
               <Text className="text-sm text-muted line-through">
                 {formatCurrency(listing.originalPrice)}
               </Text>
-              <Text className="text-sm font-semibold text-primary">-{discount}%</Text>
+              <Badge variant="success" className="mt-1">
+                -{discount}%
+              </Badge>
             </View>
+          </View>
+
+          {isMystery && (
+            <Card variant="outlined" className="mb-4 rounded-2xl border-warning/30 bg-warning/5 p-4">
+              <Text variant="body-sm" className="font-semibold text-warning">
+                {t('customer.listing.mysteryBoxValue', {
+                  value: formatCurrency(listing.estimatedRetailValue),
+                })}
+              </Text>
+              <Text variant="body-sm" className="text-muted">
+                {t('customer.listing.mysteryBoxHint')}
+              </Text>
+            </Card>
+          )}
+
+          {showCountdown && (
+            <View className="mb-4">
+              <CountdownTimer targetDate={listing.pickupWindowEnd} label="Pickup ends" />
+            </View>
+          )}
+
+          <View className="mb-4 flex-row flex-wrap">
+            <TrustBadge type="guarantee" />
+            {merchant?.isVerified && <TrustBadge type="verified" />}
+            {merchant?.hygieneRating && merchant.hygieneRating >= 4.5 && (
+              <TrustBadge type="hygiene" rating={merchant.hygieneRating} />
+            )}
           </View>
 
           <Card variant="outlined" className="mb-6">
@@ -221,7 +272,7 @@ export default function ListingDetailScreen() {
             <View className="mb-3 flex-row items-center">
               <MapPin size={20} color={colors.primary} className="mr-3" />
               <Text variant="body-sm" className="font-semibold">
-                Pickup location
+                {t('customer.listing.pickupLocation')}
               </Text>
             </View>
             {merchant && (
@@ -229,9 +280,13 @@ export default function ListingDetailScreen() {
                 <Text variant="body-sm" className="mb-1 text-foreground">
                   {merchant.name}
                 </Text>
-                <Text variant="body-sm" className="mb-3 text-muted">
+                <Text variant="body-sm" className="mb-1 text-muted">
                   {merchant.address.street}, {merchant.address.district},{' '}
                   {merchant.address.province} {merchant.address.postalCode}
+                </Text>
+                <Text variant="caption" className="mb-3 text-muted">
+                  {formatDistance(calculateDistance(DEFAULT_USER_LOCATION, merchant.coordinates))}{' '}
+                  {t('customer.listing.away')}
                 </Text>
                 {Platform.OS === 'web' && (
                   <View className="mb-3 overflow-hidden rounded-xl" style={{ height: 160 }}>
@@ -252,6 +307,27 @@ export default function ListingDetailScreen() {
               </>
             )}
           </View>
+
+          {recentReviews.length > 0 && (
+            <View className="mb-6">
+              <View className="mb-3 flex-row items-center justify-between">
+                <Text variant="h3">{t('customer.listing.recentReviews')}</Text>
+                {merchant && (
+                  <PressableScale
+                    onPress={() => router.push(`/(customer)/merchant/${merchant.id}` as any)}
+                    scale={0.98}
+                  >
+                    <Text variant="body-sm" className="text-primary">
+                      See all
+                    </Text>
+                  </PressableScale>
+                )}
+              </View>
+              {recentReviews.map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </View>
+          )}
 
           <View className="mb-6 flex-row items-center justify-center">
             <PressableScale

@@ -1,7 +1,18 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
-import { Leaf, Utensils, Wallet } from 'lucide-react-native';
+import { View, ScrollView, Image } from 'react-native';
+import {
+  Leaf,
+  Utensils,
+  Wallet,
+  Search,
+  ShoppingBag,
+  MapPin,
+  BadgeCheck,
+  ShieldCheck,
+  Users,
+  UtensilsCrossed,
+} from 'lucide-react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -10,6 +21,35 @@ import { Text } from '@/src/components/ui/Text';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { APP_NAME } from '@/src/lib/constants';
+import { APP_STATS } from '@/src/lib/constants';
+import { formatCompactNumber } from '@/src/lib/utils';
+
+const FOOD_HERO_IMAGES = [
+  'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1563729784474-d8b7fc59eb4?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=400&fit=crop',
+];
+
+function getHowItWorksSteps(t: (key: string, options?: Record<string, unknown>) => string) {
+  return [
+    {
+      icon: Search,
+      title: t('auth.onboarding.howItWorks.browse.title'),
+      description: t('auth.onboarding.howItWorks.browse.desc'),
+    },
+    {
+      icon: ShoppingBag,
+      title: t('auth.onboarding.howItWorks.reserve.title'),
+      description: t('auth.onboarding.howItWorks.reserve.desc'),
+    },
+    {
+      icon: MapPin,
+      title: t('auth.onboarding.howItWorks.pickup.title'),
+      description: t('auth.onboarding.howItWorks.pickup.desc'),
+    },
+  ];
+}
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -38,85 +78,156 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <View testID="welcome-screen" className="flex-1 bg-background px-6 pt-20 pb-10">
-      <Animated.View
-        entering={FadeInUp.duration(600).delay(100)}
-        className="flex-1 items-center justify-center"
-      >
-        <View className="mb-8 h-32 w-32 items-center justify-center rounded-3xl bg-primary/10">
-          <Leaf size={64} color={colors.primary} />
-        </View>
+    <ScrollView
+      testID="welcome-screen"
+      className="flex-1 bg-background"
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="px-6 pt-16 pb-10">
+        <Animated.View
+          entering={FadeInUp.duration(600).delay(100)}
+          className="items-center"
+        >
+          <View className="mb-6 h-24 w-24 items-center justify-center rounded-3xl bg-primary/10">
+            <Leaf size={48} color={colors.primary} />
+          </View>
 
-        <Text testID="welcome-title" variant="h1" className="mb-4 text-center text-primary">
-          {APP_NAME}
-        </Text>
-        <Text testID="welcome-subtitle" variant="h2" className="mb-4 text-center">
-          {t('auth.welcome')}
-        </Text>
-        <Text variant="body" className="mb-12 text-center text-muted">
-          {t('app.tagline')}
-        </Text>
+          <View className="mb-6 flex-row justify-center space-x-2">
+            {FOOD_HERO_IMAGES.map((uri, index) => (
+              <View
+                key={uri}
+                className="h-16 w-16 overflow-hidden rounded-2xl border-2 border-background shadow-sm"
+                style={{ marginLeft: index > 0 ? -12 : 0, zIndex: index }}
+              >
+                <Image source={{ uri }} className="h-full w-full" resizeMode="cover" />
+              </View>
+            ))}
+          </View>
 
-        <View className="w-full space-y-4">
-          <View className="flex-row items-center rounded-2xl bg-muted/10 p-4">
-            <View className="mr-4 rounded-xl bg-primary/10 p-2">
-              <Wallet size={24} color={colors.primary} />
-            </View>
-            <View className="flex-1">
-              <Text variant="h4">{t('auth.onboarding.saveMoney')}</Text>
-              <Text variant="body-sm" className="text-muted">
-                {t('auth.onboarding.saveMoneyDesc')}
-              </Text>
+          <Text testID="welcome-title" variant="h1" className="mb-3 text-center text-primary">
+            {APP_NAME}
+          </Text>
+          <Text testID="welcome-subtitle" variant="h2" className="mb-3 text-center">
+            {t('auth.welcome')}
+          </Text>
+          <Text variant="body" className="mb-8 max-w-xs text-center text-muted">
+            {t('app.tagline')}
+          </Text>
+
+          <View className="mb-8 w-full rounded-3xl bg-primary p-6">
+            <Text variant="h3" className="mb-4 text-center text-white">
+              {t('auth.onboarding.stats.title')}
+            </Text>
+            <View className="flex-row justify-between">
+              <View className="flex-1 items-center">
+                <Users size={24} color={colors.white} />
+                <Text className="mt-2 text-xl font-bold text-white">
+                  {formatCompactNumber(APP_STATS.totalRescuers)}
+                </Text>
+                <Text variant="caption" className="text-white/80">
+                  {t('auth.onboarding.stats.rescuers')}
+                </Text>
+              </View>
+              <View className="flex-1 items-center border-x border-white/20">
+                <UtensilsCrossed size={24} color={colors.white} />
+                <Text className="mt-2 text-xl font-bold text-white">
+                  {formatCompactNumber(APP_STATS.totalMealsSaved)}
+                </Text>
+                <Text variant="caption" className="text-white/80">
+                  {t('auth.onboarding.stats.mealsSaved')}
+                </Text>
+              </View>
+              <View className="flex-1 items-center">
+                <BadgeCheck size={24} color={colors.white} />
+                <Text className="mt-2 text-xl font-bold text-white">
+                  {APP_STATS.totalMerchantPartners}+
+                </Text>
+                <Text variant="caption" className="text-white/80">
+                  {t('auth.onboarding.stats.partners')}
+                </Text>
+              </View>
             </View>
           </View>
 
-          <View className="flex-row items-center rounded-2xl bg-muted/10 p-4">
-            <View className="mr-4 rounded-xl bg-primary/10 p-2">
-              <Utensils size={24} color={colors.primary} />
-            </View>
-            <View className="flex-1">
-              <Text variant="h4">{t('auth.onboarding.saveFood')}</Text>
-              <Text variant="body-sm" className="text-muted">
-                {t('auth.onboarding.saveFoodDesc')}
-              </Text>
-            </View>
+          <View className="mb-8 w-full space-y-3">
+            {getHowItWorksSteps(t).map((step, index) => (
+              <View
+                key={step.title}
+                className="flex-row items-center rounded-2xl bg-card p-4"
+              >
+                <View className="mr-4 h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <step.icon size={20} color={colors.primary} />
+                </View>
+                <View className="flex-1">
+                  <View className="mb-0.5 flex-row items-center">
+                    <Text variant="caption" className="mr-2 text-primary">
+                      {t('auth.onboarding.step', { step: index + 1 })}
+                    </Text>
+                    <Text variant="h4">{step.title}</Text>
+                  </View>
+                  <Text variant="body-sm" className="text-muted">
+                    {step.description}
+                  </Text>
+                </View>
+              </View>
+            ))}
           </View>
-        </View>
-      </Animated.View>
 
-      <Animated.View entering={FadeIn.duration(600).delay(400)} className="w-full space-y-3">
-        <Button testID="sign-up-button" fullWidth onPress={handleSignUp}>
-          {t('auth.signUp')}
-        </Button>
-        <Button testID="sign-in-button" variant="secondary" fullWidth onPress={handleSignIn}>
-          {t('auth.signIn')}
-        </Button>
+          <View className="mb-8 w-full rounded-2xl bg-muted/10 p-4">
+            <View className="mb-3 flex-row items-center justify-center space-x-4">
+              <View className="flex-row items-center">
+                <ShieldCheck size={16} color={colors.success} />
+                <Text variant="body-sm" className="ml-1.5">
+                  {t('auth.onboarding.trust.pickupGuarantee')}
+                </Text>
+              </View>
+              <View className="flex-row items-center">
+                <BadgeCheck size={16} color={colors.success} />
+                <Text variant="body-sm" className="ml-1.5">
+                  {t('auth.onboarding.trust.verifiedShops')}
+                </Text>
+              </View>
+            </View>
+            <Text variant="caption" className="text-center text-muted">
+              {t('auth.onboarding.context')}
+            </Text>
+          </View>
+        </Animated.View>
 
-        <View className="my-4 flex-row items-center justify-center space-x-4">
-          <View className="h-px flex-1 bg-border" />
-          <Text variant="caption">{t('common.or')}</Text>
-          <View className="h-px flex-1 bg-border" />
-        </View>
+        <Animated.View entering={FadeIn.duration(600).delay(400)} className="w-full space-y-3">
+          <Button testID="sign-up-button" fullWidth onPress={handleSignUp}>
+            {t('auth.signUp')}
+          </Button>
+          <Button testID="sign-in-button" variant="secondary" fullWidth onPress={handleSignIn}>
+            {t('auth.signIn')}
+          </Button>
 
-        <Button
-          testID="test-customer-button"
-          variant="outline"
-          fullWidth
-          onPress={handleContinueAsCustomer}
-          leftIcon={<Wallet size={18} color={colors.foreground} />}
-        >
-          {t('auth.continueAsTestCustomer')}
-        </Button>
-        <Button
-          testID="test-merchant-button"
-          variant="outline"
-          fullWidth
-          onPress={handleContinueAsMerchant}
-          leftIcon={<Utensils size={18} color={colors.foreground} />}
-        >
-          {t('auth.continueAsTestMerchant')}
-        </Button>
-      </Animated.View>
-    </View>
+          <View className="my-4 flex-row items-center justify-center space-x-4">
+            <View className="h-px flex-1 bg-border" />
+            <Text variant="caption">{t('common.or')}</Text>
+            <View className="h-px flex-1 bg-border" />
+          </View>
+
+          <Button
+            testID="test-customer-button"
+            variant="outline"
+            fullWidth
+            onPress={handleContinueAsCustomer}
+            leftIcon={<Wallet size={18} color={colors.foreground} />}
+          >
+            {t('auth.continueAsTestCustomer')}
+          </Button>
+          <Button
+            testID="test-merchant-button"
+            variant="outline"
+            fullWidth
+            onPress={handleContinueAsMerchant}
+            leftIcon={<Utensils size={18} color={colors.foreground} />}
+          >
+            {t('auth.continueAsTestMerchant')}
+          </Button>
+        </Animated.View>
+      </View>
+    </ScrollView>
   );
 }

@@ -2,12 +2,22 @@ import { Image, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { cn, formatCurrency, formatDistance } from '@/src/lib/utils';
+import {
+  cn,
+  formatCurrency,
+  formatDistance,
+  formatWalkTime,
+  getListingUrgency,
+  formatPickupWindow,
+} from '@/src/lib/utils';
 import { Card } from '@/src/components/ui/Card';
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
+import { UrgencyBadge } from '@/src/components/composite/UrgencyBadge';
+import { DietaryBadgeRow } from '@/src/components/composite/DietaryBadgeRow';
+import { CountdownTimer } from '@/src/components/composite/CountdownTimer';
 import type { Listing } from '@/src/types';
 
 interface ListingCardProps {
@@ -24,10 +34,15 @@ export function ListingCard({
   testID,
 }: ListingCardProps) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isMystery = listing.type === 'mystery_box';
   const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
   const isSoldOut = listing.quantityRemaining === 0;
+  const urgency = getListingUrgency(listing);
+  const minsUntilEnd = Math.round(
+    (new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000
+  );
+  const showCountdown = !isSoldOut && minsUntilEnd <= 240 && minsUntilEnd > 0;
 
   return (
     <PressableScale
@@ -44,7 +59,7 @@ export function ListingCard({
         className={cn('overflow-hidden p-0', variant === 'horizontal' && 'flex-row')}
       >
         <View
-          className={cn('relative bg-muted', variant === 'vertical' ? 'h-40 w-full' : 'h-24 w-24')}
+          className={cn('relative bg-muted', variant === 'vertical' ? 'h-44 w-full' : 'h-28 w-28')}
         >
           <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
           <View className="absolute left-2 top-2">
@@ -52,6 +67,11 @@ export function ListingCard({
               {isMystery ? 'Mystery Box' : 'Fixed'}
             </Badge>
           </View>
+          {urgency && (
+            <View className="absolute bottom-2 left-2">
+              <UrgencyBadge urgency={urgency} />
+            </View>
+          )}
           {isSoldOut && (
             <View className="absolute inset-0 items-center justify-center bg-black/50">
               <Text className="font-semibold text-white">Sold Out</Text>
@@ -70,22 +90,44 @@ export function ListingCard({
           <Text variant="body-sm" className="mb-1 font-semibold" numberOfLines={2}>
             {listing.title}
           </Text>
-          <View className="mb-2 flex-row items-center">
+
+          {isMystery && (
+            <Text variant="caption" className="mb-1.5 text-muted">
+              Worth {formatCurrency(listing.estimatedRetailValue)}+ of surprises
+            </Text>
+          )}
+
+          <View className="mb-2 flex-row flex-wrap items-center">
             <Text className="text-lg font-bold text-primary">
               {formatCurrency(listing.salePrice)}
             </Text>
             <Text className="ml-2 text-sm text-muted line-through">
               {formatCurrency(listing.originalPrice)}
             </Text>
-            <Text className="ml-2 text-sm font-semibold text-primary">-{discount}%</Text>
+            <Badge variant="success" className="ml-2">
+              -{discount}%
+            </Badge>
           </View>
-          <Text variant="caption" className="text-muted">
-            {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })} · Pickup{' '}
-            {new Date(listing.pickupWindowStart).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-            {listing.distance != null ? ` · ${formatDistance(listing.distance)}` : ''}
+
+          {showCountdown && (
+            <View className="mb-2">
+              <CountdownTimer targetDate={listing.pickupWindowEnd} label="Pickup ends" />
+            </View>
+          )}
+
+          <DietaryBadgeRow tags={listing.dietaryTags} max={variant === 'horizontal' ? 1 : 2} />
+
+          <Text variant="caption" className="mt-2 text-muted">
+            {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })}
+            {' · '}
+            {formatPickupWindow(
+              listing.pickupWindowStart,
+              listing.pickupWindowEnd,
+              i18n.language
+            ).split(' · ')[1]}
+            {listing.distance != null
+              ? ` · ${formatDistance(listing.distance)} (${formatWalkTime(listing.distance)})`
+              : ''}
           </Text>
         </View>
       </Card>

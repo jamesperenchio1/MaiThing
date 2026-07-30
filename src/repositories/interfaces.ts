@@ -8,9 +8,11 @@ import type {
   Notification,
   NotificationPreferences,
   Order,
+  Review,
   User,
   Wallet,
   WalletTransaction,
+  CustomerImpact,
 } from '@/src/types';
 
 export interface AuthRepository {
@@ -51,6 +53,7 @@ export interface MerchantRepository {
   updateMerchant(id: string, data: Partial<Merchant>): Promise<Merchant>;
   updateBusinessHours(id: string, hours: BusinessHours[]): Promise<Merchant>;
   updatePickupInstructions(id: string, instructions: string): Promise<Merchant>;
+  getReviews(merchantId: string): Promise<Review[]>;
 }
 
 export interface ListingRepository {
@@ -97,6 +100,7 @@ export interface NotificationRepository {
 
 export interface AnalyticsRepository {
   getMerchantAnalytics(merchantId: string): Promise<MerchantAnalytics>;
+  getCustomerImpact(userId: string): Promise<CustomerImpact>;
 }
 
 export interface Repositories {

@@ -68,6 +68,9 @@ export interface Merchant {
   followers: number;
   createdAt: string;
   distance?: number;
+  isVerified?: boolean;
+  joinedAt?: string;
+  hygieneRating?: number;
 }
 
 export type ListingType = 'mystery_box' | 'fixed_item';
@@ -172,7 +175,9 @@ export interface Review {
   id: string;
   orderId: string;
   customerId: string;
+  customerName: string;
   merchantId: string;
+  listingId?: string;
   rating: number;
   comment: string;
   createdAt: string;
@@ -188,6 +193,13 @@ export interface MerchantAnalytics {
   weeklyRevenue: number[];
   weeklyOrders: number[];
   weeklyItemsSaved: number[];
+}
+
+export interface CustomerImpact {
+  mealsSaved: number;
+  moneySaved: number;
+  co2SavedKg: number;
+  ordersCount: number;
 }
 
 export interface Category {

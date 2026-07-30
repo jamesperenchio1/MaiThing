@@ -47,3 +47,25 @@ export const BOX_SIZES = [
   { id: 'large', name: 'Large', nameTh: 'ใหญ่', description: '4-6 items', descriptionTh: '4-6 รายการ' },
   { id: 'xl', name: 'XL', nameTh: 'XL', description: 'Family size', descriptionTh: 'สำหรับครอบครัว' },
 ];
+
+export const MEAL_TIMES = [
+  { id: 'breakfast', name: 'Breakfast', nameTh: 'อาหารเช้า', icon: 'sunrise' },
+  { id: 'lunch', name: 'Lunch', nameTh: 'อาหารกลางวัน', icon: 'sun' },
+  { id: 'dinner', name: 'Dinner', nameTh: 'อาหารเย็น', icon: 'sunset' },
+  { id: 'late_night', name: 'Late Night', nameTh: 'ดึก', icon: 'moon' },
+] as const;
+
+export type MealTimeId = (typeof MEAL_TIMES)[number]['id'];
+
+export const HOME_COLLECTIONS = [
+  { id: 'under_100', name: 'Under ฿100', filter: { maxPrice: 100 } },
+  { id: 'ending_soon', name: 'Ending Soon', filter: { sortBy: 'newest' as const } },
+  { id: 'biggest_discount', name: 'Biggest Discount', filter: { sortBy: 'discount' as const } },
+  { id: 'mystery_boxes', name: 'Mystery Boxes', filter: { type: 'mystery_box' as const } },
+] as const;
+
+export const APP_STATS = {
+  totalRescuers: 52800,
+  totalMealsSaved: 312000,
+  totalMerchantPartners: 230,
+};

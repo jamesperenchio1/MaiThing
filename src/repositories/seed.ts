@@ -12,6 +12,7 @@ import type {
   Notification,
   NotificationPreferences,
   Order,
+  Review,
   User,
   Wallet,
   WalletTransaction,
@@ -336,6 +337,9 @@ export const MERCHANTS: Merchant[] = MERCHANT_SEEDS.map((m, idx) => ({
   pickupInstructions: m.pickupInstructions,
   followers: m.followers,
   createdAt: '2025-01-01T00:00:00Z',
+  isVerified: idx < 12,
+  joinedAt: new Date(Date.now() - (idx + 1) * 30 * 86400000).toISOString(),
+  hygieneRating: Math.round((4.2 + (idx % 8) / 10) * 10) / 10,
 }));
 
 function hoursFromNow(offsetHours: number, durationHours: number): { start: string; end: string } {
@@ -610,3 +614,49 @@ export const MERCHANT_ANALYTICS: MerchantAnalytics = {
 };
 
 export const ALL_USERS: User[] = [TEST_CUSTOMER, TEST_MERCHANT_USER];
+
+const REVIEW_TEMPLATES = [
+  'Great value! The mystery box was full of delicious surprises.',
+  'Friendly staff and easy pickup. Will definitely order again.',
+  'Good food, amazing price. Helped me discover this place.',
+  'The portion was generous and everything was fresh.',
+  'Quick pickup and the staff knew exactly what to do.',
+  'Nice surprise bag, loved the variety.',
+  'Excellent way to save food and money. Highly recommended!',
+  'Pickup was smooth, food quality was better than expected.',
+  'Such a clever idea. Got a lot more than I paid for.',
+  'The fixed item deal was perfect for lunch.',
+];
+
+const REVIEWER_NAMES = [
+  'Ariya Wong',
+  'Kornchai Srisuk',
+  'Somchai J',
+  'Nattawadee P',
+  'Pimchanok L',
+  'Thanakrit M',
+  'Wipada S',
+  'Jirayu K',
+  'Suthida R',
+  'Chaiwat T',
+];
+
+export const REVIEWS: Review[] = MERCHANTS.flatMap((merchant) => {
+  const count = Math.min(merchant.reviewCount, 12);
+  return Array.from({ length: count }).map((_, i) => {
+    const targetRating = merchant.rating;
+    const variance = i % 2 === 0 ? 0.5 : -0.3;
+    const rating = Math.min(5, Math.max(1, Math.round((targetRating + variance) * 2) / 2));
+    const daysAgo = i * 3 + randomInt(1, 6);
+    return {
+      id: `review-${merchant.id}-${i}`,
+      orderId: `order-review-${merchant.id}-${i}`,
+      customerId: i === 0 ? TEST_CUSTOMER.id : `user-review-${i}`,
+      customerName: REVIEWER_NAMES[i % REVIEWER_NAMES.length],
+      merchantId: merchant.id,
+      rating,
+      comment: REVIEW_TEMPLATES[i % REVIEW_TEMPLATES.length],
+      createdAt: new Date(Date.now() - daysAgo * 86400000).toISOString(),
+    };
+  });
+});
