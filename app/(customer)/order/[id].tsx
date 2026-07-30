@@ -177,7 +177,7 @@ export default function OrderDetailScreen() {
   const prevStatusRef = useRef<Order['status'] | undefined>(undefined);
 
   useEffect(() => {
-    if (order && prevStatusRef.current !== 'ready' && order.status === 'ready' && Platform.OS !== 'web') {
+    if (order && prevStatusRef.current !== undefined && prevStatusRef.current !== 'ready' && order.status === 'ready' && Platform.OS !== 'web') {
       scheduleLocalNotification(
         'Your order is ready!',
         `Pick up at ${order.merchantName} now. Code: ${order.pickupCode}`
