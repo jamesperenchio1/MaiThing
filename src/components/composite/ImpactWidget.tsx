@@ -16,8 +16,16 @@ export function ImpactWidget({ impact }: ImpactWidgetProps) {
   const { t } = useTranslation();
 
   const items = [
-    { icon: Utensils, value: formatCompactNumber(impact.mealsSaved), label: t('customer.home.impact.mealsSaved') },
-    { icon: Coins, value: formatCurrency(impact.moneySaved), label: t('customer.home.impact.moneySaved') },
+    {
+      icon: Utensils,
+      value: formatCompactNumber(impact.mealsSaved),
+      label: t('customer.home.impact.mealsSaved'),
+    },
+    {
+      icon: Coins,
+      value: formatCurrency(impact.moneySaved),
+      label: t('customer.home.impact.moneySaved'),
+    },
     { icon: Leaf, value: `${impact.co2SavedKg} kg`, label: t('customer.home.impact.co2Saved') },
   ];
 
@@ -39,9 +47,7 @@ export function ImpactWidget({ impact }: ImpactWidgetProps) {
               {item.label}
             </Text>
             {index < items.length - 1 && (
-              <View
-                className="absolute right-0 top-1/4 h-1/2 w-px bg-border"
-              />
+              <View className="absolute right-0 top-1/4 h-1/2 w-px bg-border" />
             )}
           </View>
         ))}

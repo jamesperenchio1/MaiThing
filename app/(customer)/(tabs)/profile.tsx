@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Switch, Alert, Modal, TextInput, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Switch,
+  Alert,
+  Modal,
+  TextInput,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+} from 'react-native';
 import {
   User,
   Heart,
@@ -93,7 +101,16 @@ export default function ProfileScreen() {
     updatePreferences.mutate({ userId: user.id, preferences: next });
   };
 
-  console.log('[Profile] user:', user?.id, 'roles:', user?.roles, 'selectedRole:', selectedRole, 'hasMerchantRole:', hasMerchantRole);
+  console.log(
+    '[Profile] user:',
+    user?.id,
+    'roles:',
+    user?.roles,
+    'selectedRole:',
+    selectedRole,
+    'hasMerchantRole:',
+    hasMerchantRole
+  );
 
   const handleSwitchRole = () => {
     const nextRole = selectedRole === 'customer' ? 'merchant' : 'customer';

@@ -24,13 +24,13 @@ A running list of small-to-medium improvements that would make the app feel more
 12. ❌ **Bottom-sheet** for merchant detail quick-preview from the map instead of a floating card. Map currently uses a native `Callout` tooltip, not a bottom sheet.
 13. ❌ **Toast messages** for success/error actions (favorite toggled, listing published, status updated). No toast component or library anywhere in the repo.
 14. ❌ **Consistent header spacing** across screens; some have `pt-4`, others `pt-6`. Still inconsistent — 15 files mix both.
-14. ❌ **Consistent header spacing** across screens; some have `pt-4`, others `pt-6`. Still inconsistent — 15 files mix both.
-15. ✅ **Loading buttons**: show spinners on all destructive/confirm actions, not just a few. `Button.tsx` supports a `loading` prop and it's now used on confirm order, cancel order, publish listing, save profile, and top-up actions.
-16. ❌ **Better loading state for maps**: show a shimmer map placeholder instead of a static pin icon. No shimmer usage found in map components.
-17. ✅ **Confirmation dialogs** for irreversible actions (cancel order, delete listing, logout). Logout already has `Alert.alert` confirmation on both customer and merchant screens. Order cancellation now shows a two-step confirmation (reason picker → refund confirmation) before calling `useCancelOrder`. Delete-listing still has no UI trigger.
-18. ❌ **Swipe actions** on order/inventory cards (e.g., reorder, mark ready, delete). No `Swipeable` or swipe-gesture code found.
-19. ⚠️ **Pin code / OTP auto-fill** support on the OTP screen. No OTP verification screen exists in the app — `verifyOtp` is only a repository method and form schema. Once an OTP screen is built, it should set `textContentType="oneTimeCode"` on the code input.
-20. ✅ **Add a "Last updated" timestamp** on merchant inventory and order screens. `app/(merchant)/(tabs)/inventory.tsx` and `app/(merchant)/(tabs)/orders.tsx` now display `Last updated: HH:MM` derived from TanStack Query's `dataUpdatedAt`.
+15. ❌ **Consistent header spacing** across screens; some have `pt-4`, others `pt-6`. Still inconsistent — 15 files mix both.
+16. ✅ **Loading buttons**: show spinners on all destructive/confirm actions, not just a few. `Button.tsx` supports a `loading` prop and it's now used on confirm order, cancel order, publish listing, save profile, and top-up actions.
+17. ❌ **Better loading state for maps**: show a shimmer map placeholder instead of a static pin icon. No shimmer usage found in map components.
+18. ✅ **Confirmation dialogs** for irreversible actions (cancel order, delete listing, logout). Logout already has `Alert.alert` confirmation on both customer and merchant screens. Order cancellation now shows a two-step confirmation (reason picker → refund confirmation) before calling `useCancelOrder`. Delete-listing still has no UI trigger.
+19. ❌ **Swipe actions** on order/inventory cards (e.g., reorder, mark ready, delete). No `Swipeable` or swipe-gesture code found.
+20. ⚠️ **Pin code / OTP auto-fill** support on the OTP screen. No OTP verification screen exists in the app — `verifyOtp` is only a repository method and form schema. Once an OTP screen is built, it should set `textContentType="oneTimeCode"` on the code input.
+21. ✅ **Add a "Last updated" timestamp** on merchant inventory and order screens. `app/(merchant)/(tabs)/inventory.tsx` and `app/(merchant)/(tabs)/orders.tsx` now display `Last updated: HH:MM` derived from TanStack Query's `dataUpdatedAt`.
 
 ## 🔔 Notifications
 
@@ -101,7 +101,7 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## 🌍 Localization
 
-66. ⚠️ **Move all hard-coded strings** (e.g., "Order History", create listing labels) into `i18n/en.ts` and `i18n/th.ts`. 147 `t('...')` calls exist showing solid i18n adoption already. Checked `i18n/en.ts` for the specific strings still hardcoded (e.g. "My Orders", "Order History", "Search orders...", "No results found") — none of them have an existing matching key sitting unused, so wiring them in would mean writing brand-new English *and* Thai copy, which is new content, not wiring. Skipped.
+66. ⚠️ **Move all hard-coded strings** (e.g., "Order History", create listing labels) into `i18n/en.ts` and `i18n/th.ts`. 147 `t('...')` calls exist showing solid i18n adoption already. Checked `i18n/en.ts` for the specific strings still hardcoded (e.g. "My Orders", "Order History", "Search orders...", "No results found") — none of them have an existing matching key sitting unused, so wiring them in would mean writing brand-new English _and_ Thai copy, which is new content, not wiring. Skipped.
 67. ✅ **Pluralization support** for item counts and review counts. Added i18next plural keys for `customer.listing.quantityLeft` and `customer.merchant.reviewCount` in both `en.ts` and `th.ts`, and wired them into `ListingCard`, listing detail, merchant inventory, and merchant detail.
 68. ✅ **Date/time localization** using `Intl.DateTimeFormat` or `date-fns` with Thai locale. `formatPickupWindow()` and `getMerchantOpenStatus()` in `src/lib/utils.ts` both use `Intl.DateTimeFormat` with a `locale` param and explicit Thai (`'th'`) handling.
 69. ❌ **RTL layout audit** even though Thai is LTR, to future-proof Arabic support. No evidence of any RTL-related code or audit.
@@ -112,7 +112,7 @@ A running list of small-to-medium improvements that would make the app feel more
 71. ❌ **Store tokens in `expo-secure-store`** instead of AsyncStorage. Package is installed (`expo-secure-store` in `package.json`) but not actually used in `src/stores/auth.ts`.
 72. ❌ **Input sanitization** for search and form text to prevent XSS in shared content. No sanitization logic found.
 73. ❌ **Rate limiting** on auth attempts in the (future) backend. N/A currently — no real backend exists yet.
-74. ⚠️ **Hide sensitive fields** from Metro logs and Flipper in release builds. The opposite blunt approach is in place: `LogBox.ignoreAllLogs(true)` in `app/_layout.tsx` suppresses *all* warnings globally rather than selectively hiding sensitive fields. Skipped intentionally — changing or removing `LogBox.ignoreAllLogs` is a behavior change with no clear "correct" replacement to wire in (there's nothing else in the codebase that already redacts sensitive fields to reuse), so this needs a product decision about what should actually be logged, not a mechanical fix.
+74. ⚠️ **Hide sensitive fields** from Metro logs and Flipper in release builds. The opposite blunt approach is in place: `LogBox.ignoreAllLogs(true)` in `app/_layout.tsx` suppresses _all_ warnings globally rather than selectively hiding sensitive fields. Skipped intentionally — changing or removing `LogBox.ignoreAllLogs` is a behavior change with no clear "correct" replacement to wire in (there's nothing else in the codebase that already redacts sensitive fields to reuse), so this needs a product decision about what should actually be logged, not a mechanical fix.
 
 ## 🌐 Web & Deep Links
 
@@ -124,7 +124,7 @@ A running list of small-to-medium improvements that would make the app feel more
 
 ## 📊 Analytics & Reliability
 
-80. ❌ **Add lightweight analytics events** (screen views, listing views, order conversions). Only merchant-facing mock analytics *data* exists (revenue/orders dashboard) — no event-tracking instrumentation.
+80. ❌ **Add lightweight analytics events** (screen views, listing views, order conversions). Only merchant-facing mock analytics _data_ exists (revenue/orders dashboard) — no event-tracking instrumentation.
 81. ✅ **Global error boundary** with a friendly fallback and retry option. Added `src/components/layout/ErrorBoundary.tsx` with a class-component boundary that shows an emoji fallback, optional dev error message, and a "Try again" button. Wrapped the root `<Stack />` in `app/_layout.tsx`.
 82. ❌ **Network/offline detection** and a banner when the device is offline. No `NetInfo` package or offline-handling code found.
 83. ⚠️ **Request retry policy** for TanStack Query with exponential backoff. `retry: 1` is configured in `src/services/queryClient.ts`, which does use TanStack Query's built-in default exponential backoff. Left as-is — the backoff behavior described in the item is technically already active via the library default; picking specific custom `retryDelay`/`retry` values would be a tuning decision (how many retries, what backoff curve) rather than wiring up something that already exists elsewhere.

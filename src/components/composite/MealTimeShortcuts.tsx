@@ -41,17 +41,12 @@ export function MealTimeShortcuts({ selected, onSelect, locale = 'en' }: MealTim
             <View
               className={cn(
                 'mr-3 flex-row items-center rounded-2xl border px-4 py-3',
-                isActive
-                  ? 'border-primary bg-primary'
-                  : 'border-border bg-card'
+                isActive ? 'border-primary bg-primary' : 'border-border bg-card'
               )}
             >
               <Icon size={18} color={isActive ? colors.white : colors.foreground} />
               <Text
-                className={cn(
-                  'ml-2 font-semibold',
-                  isActive ? 'text-white' : 'text-foreground'
-                )}
+                className={cn('ml-2 font-semibold', isActive ? 'text-white' : 'text-foreground')}
               >
                 {locale === 'th' ? meal.nameTh : meal.name}
               </Text>

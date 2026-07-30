@@ -86,7 +86,11 @@ export default function MerchantDetailScreen() {
               <Text variant="h2" className="mb-1">
                 {merchant.name}
               </Text>
-              <ReviewSummary rating={merchant.rating} reviewCount={merchant.reviewCount} size="md" />
+              <ReviewSummary
+                rating={merchant.rating}
+                reviewCount={merchant.reviewCount}
+                size="md"
+              />
               {openStatus && (
                 <View className="mt-2 self-start">
                   <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{openStatusLabel}</Badge>

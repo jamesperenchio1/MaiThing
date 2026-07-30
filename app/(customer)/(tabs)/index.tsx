@@ -98,7 +98,9 @@ export default function CustomerHomeScreen() {
     () =>
       [...(listings ?? [])]
         .filter((l) => new Date(l.pickupWindowEnd).getTime() > Date.now())
-        .sort((a, b) => new Date(a.pickupWindowEnd).getTime() - new Date(b.pickupWindowEnd).getTime())
+        .sort(
+          (a, b) => new Date(a.pickupWindowEnd).getTime() - new Date(b.pickupWindowEnd).getTime()
+        )
         .slice(0, 6),
     [listings]
   );
@@ -122,10 +124,7 @@ export default function CustomerHomeScreen() {
     () =>
       [...(listings ?? [])]
         .filter((l) => l.status === 'active')
-        .sort(
-          (a, b) =>
-            1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice)
-        )
+        .sort((a, b) => 1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice))
         .slice(0, 5),
     [listings]
   );
@@ -312,7 +311,10 @@ export default function CustomerHomeScreen() {
           title={t('customer.home.mysteryBoxes')}
           listings={mysteryBoxes}
           onSeeAll={() =>
-            router.push({ pathname: '/(customer)/(tabs)/discover', params: { type: 'mystery_box' } })
+            router.push({
+              pathname: '/(customer)/(tabs)/discover',
+              params: { type: 'mystery_box' },
+            })
           }
         />
       )}

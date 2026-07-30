@@ -18,7 +18,9 @@ export function useAuth() {
     onSuccess: (user) => {
       setUser(user);
       const selectedRole = useAuthStore.getState().selectedRole;
-      router.replace((selectedRole === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any);
+      router.replace(
+        (selectedRole === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any
+      );
     },
   });
 
@@ -28,7 +30,24 @@ export function useAuth() {
     onSuccess: (user) => {
       setUser(user);
       const selectedRole = useAuthStore.getState().selectedRole;
-      router.replace((selectedRole === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any);
+      router.replace(
+        (selectedRole === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any
+      );
+    },
+  });
+
+  const registerMerchantMutation = useMutation({
+    mutationFn: (data: {
+      email: string;
+      password: string;
+      name: string;
+      businessName: string;
+      phone: string;
+    }) => mockRepositories.auth.registerMerchant(data),
+    onSuccess: (user) => {
+      setUser(user);
+      setRole('merchant');
+      router.replace('/(merchant)/onboarding' as any);
     },
   });
 
@@ -49,19 +68,17 @@ export function useAuth() {
       const currentUser = useAuthStore.getState().user;
       if (!currentUser) return;
 
-      if (role === 'merchant') {
-        if (currentUser.id === TEST_CUSTOMER.id) {
-          setUser({ ...TEST_MERCHANT_USER, roles: ['customer', 'merchant'] });
-        }
-        setRole('merchant');
-        router.replace('/(merchant)/(tabs)' as any);
-      } else {
-        if (currentUser.id === TEST_MERCHANT_USER.id) {
-          setUser({ ...TEST_CUSTOMER, roles: ['customer', 'merchant'] });
-        }
-        setRole('customer');
-        router.replace('/(customer)/(tabs)' as any);
+      if (!currentUser.roles.includes(role)) {
+        // If current user doesn't have the target role, fall back to test account flow
+        const targetUser = role === 'merchant' ? TEST_MERCHANT_USER : TEST_CUSTOMER;
+        setUser({ ...targetUser, roles: ['customer', 'merchant'] });
       }
+
+      setRole(role);
+      // Navigate to a non-index tab to avoid URL collisions between customer and merchant groups
+      const targetRoute =
+        role === 'merchant' ? '/(merchant)/(tabs)/orders' : '/(customer)/(tabs)/discover';
+      router.replace(targetRoute as any);
     },
     [setUser, setRole, router]
   );
@@ -79,6 +96,9 @@ export function useAuth() {
     signUp: signUpMutation.mutate,
     signUpLoading: signUpMutation.isPending,
     signUpError: signUpMutation.error,
+    registerMerchant: registerMerchantMutation.mutate,
+    registerMerchantLoading: registerMerchantMutation.isPending,
+    registerMerchantError: registerMerchantMutation.error,
     continueAsTest,
     switchRole,
     logout,

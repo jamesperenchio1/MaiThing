@@ -185,7 +185,10 @@ export default function ListingDetailScreen() {
           </View>
 
           {isMystery && (
-            <Card variant="outlined" className="mb-4 rounded-2xl border-warning/30 bg-warning/5 p-4">
+            <Card
+              variant="outlined"
+              className="mb-4 rounded-2xl border-warning/30 bg-warning/5 p-4"
+            >
               <Text variant="body-sm" className="font-semibold text-warning">
                 {t('customer.listing.mysteryBoxValue', {
                   value: formatCurrency(listing.estimatedRetailValue),

@@ -2,7 +2,17 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Image, Share, Linking, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LocateFixed, LocateOff, Star, MapPin, X, Phone, Navigation, Share2, Store } from 'lucide-react-native';
+import {
+  LocateFixed,
+  LocateOff,
+  Star,
+  MapPin,
+  X,
+  Phone,
+  Navigation,
+  Share2,
+  Store,
+} from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -19,7 +29,13 @@ import { useListings } from '@/src/hooks/useListings';
 import { useUserLocation } from '@/src/hooks/useUserLocation';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { calculateDistance, formatDistance, getMerchantOpenStatus, cn, formatCurrency } from '@/src/lib/utils';
+import {
+  calculateDistance,
+  formatDistance,
+  getMerchantOpenStatus,
+  cn,
+  formatCurrency,
+} from '@/src/lib/utils';
 import { openDirections } from '@/src/lib/maps';
 import { openLocationSettings } from '@/src/lib/settings';
 
@@ -104,8 +120,6 @@ export default function MapScreen() {
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
   };
-
-
 
   return (
     <Screen testID="map-screen" scrollable={false}>
@@ -253,9 +267,7 @@ export default function MapScreen() {
                       return (
                         <PressableScale
                           key={listing.id}
-                          onPress={() =>
-                            router.push(`/(customer)/listing/${listing.id}` as any)
-                          }
+                          onPress={() => router.push(`/(customer)/listing/${listing.id}` as any)}
                           scale={0.97}
                           className="mx-1"
                         >
@@ -273,7 +285,10 @@ export default function MapScreen() {
                                 <Text variant="caption" className="text-primary font-bold">
                                   {formatCurrency(listing.salePrice)}
                                 </Text>
-                                <Text variant="caption" className="ml-1.5 bg-primary/10 text-primary rounded-full px-1.5 font-semibold">
+                                <Text
+                                  variant="caption"
+                                  className="ml-1.5 bg-primary/10 text-primary rounded-full px-1.5 font-semibold"
+                                >
                                   -{discount}%
                                 </Text>
                               </View>
@@ -288,7 +303,9 @@ export default function MapScreen() {
 
               <View className="mt-3 flex-row items-center justify-between">
                 <PressableScale
-                  onPress={() => openDirections(selectedMerchant.coordinates, selectedMerchant.name)}
+                  onPress={() =>
+                    openDirections(selectedMerchant.coordinates, selectedMerchant.name)
+                  }
                   className="flex-1 items-center rounded-xl bg-primary/10 py-2"
                   scale={0.97}
                 >

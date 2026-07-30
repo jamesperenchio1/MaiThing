@@ -120,11 +120,13 @@ export function ListingCard({
           <Text variant="caption" className="mt-2 text-muted">
             {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })}
             {' · '}
-            {formatPickupWindow(
-              listing.pickupWindowStart,
-              listing.pickupWindowEnd,
-              i18n.language
-            ).split(' · ')[1]}
+            {
+              formatPickupWindow(
+                listing.pickupWindowStart,
+                listing.pickupWindowEnd,
+                i18n.language
+              ).split(' · ')[1]
+            }
             {listing.distance != null
               ? ` · ${formatDistance(listing.distance)} (${formatWalkTime(listing.distance)})`
               : ''}

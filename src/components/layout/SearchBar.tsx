@@ -37,12 +37,7 @@ export function SearchBar({
   };
 
   return (
-    <View
-      className={cn(
-        'flex-row items-center rounded-2xl bg-muted/10 px-4 py-3',
-        className
-      )}
-    >
+    <View className={cn('flex-row items-center rounded-2xl bg-muted/10 px-4 py-3', className)}>
       <Search size={20} color={colors.muted} className="mr-3" />
       <TextInput
         className="flex-1 text-base text-foreground"

@@ -1,15 +1,7 @@
 import { Text as RNText, type TextProps as RNTextProps } from 'react-native';
 import { cn } from '@/src/lib/utils';
 
-export type TextVariant =
-  | 'h1'
-  | 'h2'
-  | 'h3'
-  | 'h4'
-  | 'body'
-  | 'body-sm'
-  | 'caption'
-  | 'label';
+export type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'body-sm' | 'caption' | 'label';
 
 interface TextProps extends RNTextProps {
   variant?: TextVariant;

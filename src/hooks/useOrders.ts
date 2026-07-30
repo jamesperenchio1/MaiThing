@@ -65,6 +65,14 @@ export function useOrder(id: string) {
   });
 }
 
+export function useOrderByPickupCode(merchantId: string, code: string) {
+  return useQuery({
+    queryKey: ['order', 'pickup-code', merchantId, code],
+    queryFn: () => mockRepositories.orders.getOrderByPickupCode(merchantId, code),
+    enabled: !!merchantId && code.length >= 4,
+  });
+}
+
 export function useCancelOrder() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -111,6 +119,21 @@ export function useCancelOrder() {
         'order_update',
         `/(customer)/order/${order.id}`
       ).catch(() => {});
+    },
+  });
+}
+
+export function useRefundOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const order = await mockRepositories.orders.refundOrder(id, reason);
+      await mockRepositories.wallet.refund(order.customerId, order.total, `Refund: ${reason}`);
+      return order;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['order', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 }

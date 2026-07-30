@@ -7,7 +7,7 @@
 Maithing is a surplus-food marketplace for Thailand — a Too Good To Go / Yindii-style mobile app that connects food businesses with buyers who rescue discounted food for self-pickup. The codebase is a single Expo app with two primary user roles:
 
 - **Customer** — browse listings, discover merchants, place orders, manage wallet, view profile.
-- **Merchant** — dashboard, inventory, create listings, view orders, settings.
+- **Merchant** — onboarding, dashboard, inventory, create/edit listings with templates and image upload, orders & QR scanner, payouts & bank accounts, team & staff, promotions/coupons, customer messaging, reviews, analytics, and settings.
 
 The app is currently backed entirely by **mock repositories** with realistic Thai demo data. There is no live backend or Supabase client in UI code; data access is abstracted behind repository interfaces so the backend can be swapped one repository at a time.
 
@@ -38,7 +38,19 @@ maithing/
 │   │   └── [feature]/            # listing, merchant, order, notifications, favorites, saved-addresses
 │   └── (merchant)/               # Merchant screens
 │       ├── (tabs)/               # dashboard, orders, inventory, settings
-│       └── listings/new.tsx      # Create listing
+│       ├── onboarding.tsx        # Merchant onboarding / Why Join
+│       ├── listings/new.tsx      # Create / edit / duplicate listing
+│       ├── order/[id].tsx        # Order detail
+│       ├── scanner.tsx           # QR pickup-code scanner
+│       ├── payouts/              # Payout overview + bank account management
+│       ├── messages/             # Customer conversations + thread
+│       ├── staff.tsx             # Team & staff management
+│       ├── promotions.tsx        # Coupons & promotions
+│       ├── reviews.tsx           # Merchant reviews dashboard
+│       ├── analytics.tsx         # Date-ranged analytics
+│       ├── business-profile.tsx  # Business details
+│       ├── store-hours.tsx       # Opening hours
+│       └── pickup-management.tsx # Pickup instructions
 ├── src/
 │   ├── components/               # UI primitives, composites, layouts, map wrappers, navigation
 │   │   ├── ui/                   # Button, Text, Input, Card, Badge, Avatar, etc.

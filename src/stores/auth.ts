@@ -22,7 +22,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUser: (user) =>
     set({
       user,
-      selectedRole: user ? user.roles[0] ?? 'customer' : null,
+      selectedRole: user ? (user.roles[0] ?? 'customer') : null,
       isLoading: false,
     }),
   setRole: (role) => set({ selectedRole: role }),

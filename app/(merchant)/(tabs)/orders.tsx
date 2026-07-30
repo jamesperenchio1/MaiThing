@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, RefreshControl } from 'react-native';
+import { View, Image, RefreshControl, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ClipboardList, Check } from 'lucide-react-native';
 
@@ -10,16 +10,18 @@ import { Badge } from '@/src/components/ui/Badge';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/layout/Screen';
+import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
-import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
+import { ErrorState } from '@/src/components/ui/ErrorState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
+import { Avatar } from '@/src/components/ui/Avatar';
 import { FlashList } from '@shopify/flash-list';
 import { useOrders, useUpdateOrderStatus } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatCurrency } from '@/src/lib/utils';
-import type { Order } from '@/src/types';
+import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
+import type { Order, OrderStatus } from '@/src/types';
 
 const statusVariantMap: Record<
   Order['status'],
@@ -34,34 +36,48 @@ const statusVariantMap: Record<
   cancelled: 'danger',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  confirmed: 'Confirmed',
-  preparing: 'Preparing',
-  ready: 'Ready for Pickup',
-  picked_up: 'Picked Up',
-  completed: 'Completed',
+const nextStatusMap: Record<Order['status'], Order['status'] | null> = {
+  pending: 'confirmed',
+  confirmed: 'preparing',
+  preparing: 'ready',
+  ready: 'picked_up',
+  picked_up: 'completed',
+  completed: null,
+  cancelled: null,
 };
+
+const statusFilters: { key: OrderStatus | 'all'; labelKey: string }[] = [
+  { key: 'all', labelKey: 'merchant.orders.all' },
+  { key: 'pending', labelKey: 'customer.orders.status.pending' },
+  { key: 'confirmed', labelKey: 'customer.orders.status.confirmed' },
+  { key: 'preparing', labelKey: 'customer.orders.status.preparing' },
+  { key: 'ready', labelKey: 'customer.orders.status.ready' },
+  { key: 'completed', labelKey: 'customer.orders.status.completed' },
+  { key: 'cancelled', labelKey: 'customer.orders.status.cancelled' },
+];
+
+function getGroupKey(start: string) {
+  const now = Date.now();
+  const startTime = new Date(start).getTime();
+  const diffHours = (startTime - now) / 3600000;
+  if (diffHours <= 1) return 'now';
+  if (diffHours <= 3) return 'upcoming';
+  return 'later';
+}
+
+type ListItem = { type: 'header'; key: string; title: string } | { type: 'order'; order: Order };
 
 function OrderCard({ order }: { order: Order }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const colors = useThemeColor();
   const updateStatus = useUpdateOrderStatus();
   const [confirming, setConfirming] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const nextStatus: Record<Order['status'], Order['status'] | null> = {
-    pending: 'confirmed',
-    confirmed: 'preparing',
-    preparing: 'ready',
-    ready: 'picked_up',
-    picked_up: 'completed',
-    completed: null,
-    cancelled: null,
-  };
+  const next = nextStatusMap[order.status];
 
-  const next = nextStatus[order.status];
-
-  const handlePress = () => {
+  const handleAdvance = () => {
     if (!next) return;
     if (!confirming) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -75,54 +91,78 @@ function OrderCard({ order }: { order: Order }) {
     }
   };
 
+  const handleOpenDetail = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(`/(merchant)/order/${order.id}` as any);
+  };
+
   return (
-    <Card variant="elevated" className="mb-3">
-      <View className="mb-3 flex-row items-center justify-between">
-        <View>
-          <Text variant="body-sm" className="font-semibold">
-            {order.merchantName}
-          </Text>
-          <Text variant="caption" className="text-muted">
-            {new Date(order.createdAt).toLocaleString()}
-          </Text>
-        </View>
-        <Badge variant={statusVariantMap[order.status]}>
-          {t(`customer.orders.status.${order.status}`)}
-        </Badge>
-      </View>
-
-      {order.items.map((item) => (
-        <View key={item.listingId} className="mb-2 flex-row items-center">
-          {item.imageUrl && (
-            <Image
-              source={{ uri: item.imageUrl }}
-              className="mr-3 h-10 w-10 rounded-xl"
-              resizeMode="cover"
+    <PressableScale onPress={handleOpenDetail} scale={0.98}>
+      <Card variant="elevated" className="mb-3">
+        <View className="mb-3 flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <Avatar
+              uri={order.customerAvatarUrl}
+              name={order.customerName ?? t('merchant.orders.customer')}
+              size="sm"
+              className="mr-3"
             />
-          )}
-          <Text variant="body-sm" className="flex-1 text-muted" numberOfLines={1}>
-            {item.quantity}x {item.title}
-          </Text>
+            <View>
+              <Text variant="body-sm" className="font-semibold">
+                {order.customerName ?? t('merchant.orders.customer')}
+              </Text>
+              <Text variant="caption" className="text-muted">
+                {order.customerPhone ?? order.pickupCode}
+              </Text>
+            </View>
+          </View>
+          <Badge variant={statusVariantMap[order.status]}>
+            {t(`customer.orders.status.${order.status}`)}
+          </Badge>
         </View>
-      ))}
 
-      <View className="mt-3 flex-row items-center justify-between border-t border-border pt-3">
-        <Text className="font-semibold">{formatCurrency(order.total)}</Text>
-        <Text className="font-mono text-primary">{order.pickupCode}</Text>
-      </View>
+        {order.items.map((item) => (
+          <View key={item.listingId} className="mb-2 flex-row items-center">
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                className="mr-3 h-10 w-10 rounded-xl"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="mr-3 h-10 w-10 rounded-xl bg-muted/20" />
+            )}
+            <Text variant="body-sm" className="flex-1 text-muted" numberOfLines={1}>
+              {item.quantity}x {item.title}
+            </Text>
+          </View>
+        ))}
 
-      {next && (
-        <Button
-          size="sm"
-          className={confirming ? 'mt-3 bg-primary' : 'mt-3'}
-          onPress={handlePress}
-          loading={updateStatus.isPending}
-          leftIcon={confirming ? <Check size={15} color={colors.white} /> : undefined}
-        >
-          {confirming ? `Confirm → ${STATUS_LABELS[next] ?? next}` : `Mark as ${STATUS_LABELS[next] ?? next}`}
-        </Button>
-      )}
-    </Card>
+        <View className="mt-3 flex-row items-center justify-between border-t border-border pt-3">
+          <View>
+            <Text className="font-semibold">{formatCurrency(order.total)}</Text>
+            <Text variant="caption" className="text-muted">
+              {formatPickupWindow(order.pickupWindowStart, order.pickupWindowEnd)}
+            </Text>
+          </View>
+          <Text className="font-mono text-primary">{order.pickupCode}</Text>
+        </View>
+
+        {next && (
+          <Button
+            size="sm"
+            className={confirming ? 'mt-3 bg-primary' : 'mt-3'}
+            onPress={handleAdvance}
+            loading={updateStatus.isPending}
+            leftIcon={confirming ? <Check size={15} color={colors.white} /> : undefined}
+          >
+            {confirming
+              ? `${t('common.confirm')} → ${t(`customer.orders.status.${next}`)}`
+              : `Mark as ${t(`customer.orders.status.${next}`)}`}
+          </Button>
+        )}
+      </Card>
+    </PressableScale>
   );
 }
 
@@ -130,6 +170,9 @@ export default function MerchantOrdersScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
+
   const {
     data: orders,
     isLoading,
@@ -138,6 +181,61 @@ export default function MerchantOrdersScreen() {
     refetch,
     dataUpdatedAt,
   } = useOrders(user?.id ?? '', 'merchant');
+
+  const filtered = useMemo(() => {
+    const list = orders ?? [];
+    const q = query.trim().toLowerCase();
+    return list.filter((order) => {
+      const matchesQuery =
+        !q ||
+        order.pickupCode.toLowerCase().includes(q) ||
+        (order.customerName?.toLowerCase().includes(q) ?? false);
+      const matchesStatus =
+        statusFilter === 'all'
+          ? true
+          : statusFilter === 'completed'
+            ? order.status === 'completed' || order.status === 'picked_up'
+            : order.status === statusFilter;
+      return matchesQuery && matchesStatus;
+    });
+  }, [orders, query, statusFilter]);
+
+  const groupedData = useMemo<ListItem[]>(() => {
+    const sorted = [...filtered].sort(
+      (a, b) => new Date(a.pickupWindowStart).getTime() - new Date(b.pickupWindowStart).getTime()
+    );
+
+    const groups: Record<string, Order[]> = {};
+    for (const order of sorted) {
+      const key = getGroupKey(order.pickupWindowStart);
+      groups[key] ??= [];
+      groups[key].push(order);
+    }
+
+    const orderKeys: Array<keyof typeof groups> = ['now', 'upcoming', 'later'];
+    const groupTitles: Record<string, string> = {
+      now: t('merchant.orders.groupNow'),
+      upcoming: t('merchant.orders.groupUpcoming'),
+      later: t('merchant.orders.groupLater'),
+    };
+
+    const result: ListItem[] = [];
+    for (const key of orderKeys) {
+      const groupOrders = groups[key];
+      if (!groupOrders || groupOrders.length === 0) continue;
+      result.push({ type: 'header', key: `header-${key}`, title: groupTitles[key] });
+      for (const order of groupOrders) {
+        result.push({ type: 'order', order });
+      }
+    }
+    return result;
+  }, [filtered, t]);
+
+  const stickyHeaderIndices = useMemo(
+    () =>
+      groupedData.map((item, index) => (item.type === 'header' ? index : -1)).filter((i) => i >= 0),
+    [groupedData]
+  );
 
   const lastUpdated = dataUpdatedAt
     ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -149,10 +247,44 @@ export default function MerchantOrdersScreen() {
   };
 
   const listHeader = (
-    <View className="pt-4 pb-2">
+    <View className="pb-2 pt-4">
       <Text testID="orders-title" variant="h1" className="mb-4">
         {t('merchant.orders.title')}
       </Text>
+      <SearchBar
+        value={query}
+        onChangeText={setQuery}
+        placeholder={t('merchant.orders.search')}
+        className="mb-4"
+      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingRight: 24 }}
+        className="mb-2"
+      >
+        {statusFilters.map((filter) => {
+          const active = statusFilter === filter.key;
+          return (
+            <PressableScale
+              key={filter.key}
+              onPress={() => setStatusFilter(filter.key)}
+              scale={0.95}
+            >
+              <View
+                className={`mr-2 rounded-full px-4 py-2 ${active ? 'bg-primary' : 'bg-muted/10'}`}
+              >
+                <Text
+                  variant="body-sm"
+                  className={`font-semibold ${active ? 'text-white' : 'text-foreground'}`}
+                >
+                  {t(filter.labelKey)}
+                </Text>
+              </View>
+            </PressableScale>
+          );
+        })}
+      </ScrollView>
       {lastUpdated && (
         <Text variant="caption" className="mb-2 text-muted">
           Last updated: {lastUpdated}
@@ -181,17 +313,28 @@ export default function MerchantOrdersScreen() {
           )}
         </View>
       ) : (
-        <FlashList
+        <FlashList<ListItem>
           className="flex-1"
-          data={orders ?? []}
-          renderItem={({ item }) => <OrderCard order={item} />}
-          keyExtractor={(item) => item.id}
+          data={groupedData}
+          renderItem={({ item }) => {
+            if (item.type === 'header') {
+              return (
+                <View className="bg-background py-2">
+                  <Text variant="label">{item.title}</Text>
+                </View>
+              );
+            }
+            return <OrderCard order={item.order} />;
+          }}
+          keyExtractor={(item) => (item.type === 'header' ? item.key : item.order.id)}
+          getItemType={(item) => item.type}
+          stickyHeaderIndices={stickyHeaderIndices}
           estimatedItemSize={168}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={
             <EmptyState
               icon={<ClipboardList size={32} color={colors.muted} />}
-              title="No orders yet"
+              title={t('merchant.orders.noOrders')}
               description="Orders will appear here when customers make purchases."
             />
           }

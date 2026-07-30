@@ -52,10 +52,7 @@ export function Input({
       >
         {leftIcon && <View className="mr-3">{leftIcon}</View>}
         <TextInput
-          className={cn(
-            'flex-1 text-base text-foreground',
-            inputClassName
-          )}
+          className={cn('flex-1 text-base text-foreground', inputClassName)}
           placeholderTextColor="#9CA3AF"
           onFocus={(e) => {
             setIsFocused(true);

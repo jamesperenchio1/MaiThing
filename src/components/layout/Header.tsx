@@ -24,7 +24,10 @@ export function Header({ title, showBack = true, right, className, onBack, testI
   return (
     <View
       testID={testID}
-      className={cn('flex-row items-center justify-between border-b border-border px-4 pb-3 pt-2', className)}
+      className={cn(
+        'flex-row items-center justify-between border-b border-border px-4 pb-3 pt-2',
+        className
+      )}
       style={{ paddingTop: insets.top + 8 }}
     >
       <View className="w-12">

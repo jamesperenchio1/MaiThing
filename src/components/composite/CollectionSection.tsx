@@ -12,11 +12,20 @@ interface CollectionSectionProps {
   onSeeAll?: () => void;
 }
 
-export function CollectionSection({ title, listings, isLoading, onSeeAll }: CollectionSectionProps) {
+export function CollectionSection({
+  title,
+  listings,
+  isLoading,
+  onSeeAll,
+}: CollectionSectionProps) {
   const { t } = useTranslation();
   return (
     <View className="mb-6">
-      <SectionHeader title={title} action={onSeeAll ? t('common.seeAll') : undefined} onPress={onSeeAll} />
+      <SectionHeader
+        title={title}
+        action={onSeeAll ? t('common.seeAll') : undefined}
+        onPress={onSeeAll}
+      />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4">
         {isLoading
           ? Array.from({ length: 3 }).map((_, i) => (

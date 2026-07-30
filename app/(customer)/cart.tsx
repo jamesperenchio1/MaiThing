@@ -134,9 +134,7 @@ export default function CartScreen() {
           <Text variant="h2" className="mb-2 text-center">
             {t('customer.cart.emptyTitle')}
           </Text>
-          <Text className="mb-8 text-center text-muted">
-            {t('customer.cart.emptySubtitle')}
-          </Text>
+          <Text className="mb-8 text-center text-muted">{t('customer.cart.emptySubtitle')}</Text>
           <Button fullWidth onPress={() => router.replace('/(customer)/(tabs)/discover' as any)}>
             {t('customer.cart.browseDeals')}
           </Button>
@@ -220,9 +218,7 @@ export default function CartScreen() {
                         <View className="items-end">
                           <View className="mb-3 flex-row items-center">
                             <PressableScale
-                              onPress={() =>
-                                updateQuantity(item.listing.id, item.quantity - 1)
-                              }
+                              onPress={() => updateQuantity(item.listing.id, item.quantity - 1)}
                               className="rounded-xl bg-muted/10 p-2"
                               scale={0.9}
                               disabled={item.quantity <= 1}

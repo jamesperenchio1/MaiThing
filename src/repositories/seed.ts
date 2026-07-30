@@ -1,18 +1,27 @@
 import type {
   Address,
+  BankAccount,
   BusinessHours,
   Category,
   Coordinates,
+  Coupon,
   CustomerProfile,
   Listing,
+  ListingTemplate,
   Merchant,
   MerchantAnalytics,
+  MerchantMessage,
+  MerchantNotificationPreferences,
+  MerchantOnboarding,
+  MerchantWallet,
   MysteryBoxListing,
   FixedItemListing,
   Notification,
   NotificationPreferences,
   Order,
+  PayoutTransaction,
   Review,
+  StaffMember,
   User,
   Wallet,
   WalletTransaction,
@@ -82,11 +91,28 @@ const defaultHours: BusinessHours[] = [
   { day: 6, open: '08:00', close: '22:00' },
 ];
 
-function addr(street: string, subDistrict: string, district: string, province: string, postal: string): Address {
+function addr(
+  street: string,
+  subDistrict: string,
+  district: string,
+  province: string,
+  postal: string
+): Address {
   return { street, subDistrict, district, province, postalCode: postal, country: 'Thailand' };
 }
 
-const MERCHANT_SEEDS: { name: string; nameTh?: string; description: string; categories: string[]; address: Address; coords: Coordinates; rating: number; reviews: number; followers: number; pickupInstructions: string }[] = [
+const MERCHANT_SEEDS: {
+  name: string;
+  nameTh?: string;
+  description: string;
+  categories: string[];
+  address: Address;
+  coords: Coordinates;
+  rating: number;
+  reviews: number;
+  followers: number;
+  pickupInstructions: string;
+}[] = [
   {
     name: 'After You Siam',
     nameTh: 'After You สยาม',
@@ -322,7 +348,10 @@ export const MERCHANTS: Merchant[] = MERCHANT_SEEDS.map((m, idx) => ({
   id: `merchant-${idx + 1}`,
   ownerId: idx === 0 ? TEST_MERCHANT_USER.id : `user-merchant-${idx + 1}`,
   name: m.name,
-  slug: m.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+  slug: m.name
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, ''),
   description: m.description,
   logoUrl: `https://placehold.co/200x200/F97316/FFFFFF/png?text=${encodeURIComponent(m.name.charAt(0))}`,
   coverUrl: getFoodImage(m.categories[0], m.name + '-cover') + '&w=800&h=400',
@@ -445,9 +474,7 @@ function generateMysteryBox(merchant: Merchant, index: number): MysteryBoxListin
     type: 'mystery_box',
     title: `${merchant.name} ${title}`,
     description: `A delicious mystery box from ${merchant.name}. Contents vary based on daily surplus. Great value and helps reduce food waste.`,
-    images: [
-      getFoodImage(merchant.categories[0], `${merchant.id}-${index}-box`),
-    ],
+    images: [getFoodImage(merchant.categories[0], `${merchant.id}-${index}-box`)],
     category: merchant.categories[0],
     originalPrice: originalPrices[size],
     salePrice: prices[size],
@@ -476,9 +503,7 @@ function generateFixedItem(merchant: Merchant, index: number): FixedItemListing 
     type: 'fixed_item',
     title: `${title} @ ${merchant.name}`,
     description: `Surplus ${title.toLowerCase()} ready for pickup. Fresh and delicious, available at a discounted price while stocks last.`,
-    images: [
-      getFoodImage(merchant.categories[0], `${merchant.id}-${index}-fixed`),
-    ],
+    images: [getFoodImage(merchant.categories[0], `${merchant.id}-${index}-fixed`)],
     category: merchant.categories[0],
     originalPrice,
     salePrice,
@@ -509,42 +534,74 @@ export const CUSTOMER_WALLET: Wallet = {
   currency: 'THB',
 };
 
-export function generateOrders(count: number): Order[] {
-  const statuses: Order['status'][] = ['completed', 'completed', 'completed', 'completed', 'picked_up', 'ready', 'preparing', 'confirmed'];
-  return Array.from({ length: count }).map((_, i) => {
-    const merchant = pick(MERCHANTS);
-    const listing = pick(LISTINGS.filter((l) => l.merchantId === merchant.id));
-    const quantity = randomInt(1, 3);
-    const status = i < 5 ? statuses[i] : pick(statuses);
-    const createdAt = new Date(Date.now() - i * 43200000 - randomInt(0, 3600000)).toISOString();
+const CUSTOMER_NAMES = [
+  'Ariya Wong',
+  'Kornchai Srisuk',
+  'Somchai Jaidee',
+  'Nattawadee Praphai',
+  'Pimchanok Lim',
+  'Thanakrit Maneerat',
+  'Wipada Suksawat',
+  'Jirayu Khemjira',
+  'Suthida Rattanakosin',
+  'Chaiwat Thongchai',
+];
 
-    return {
-      id: `order-${i + 1}`,
-      customerId: TEST_CUSTOMER.id,
-      merchantId: merchant.id,
-      merchantName: merchant.name,
-      merchantLogoUrl: merchant.logoUrl,
-      items: [
-        {
-          listingId: listing.id,
-          title: listing.title,
-          quantity,
-          unitPrice: listing.salePrice,
-          totalPrice: listing.salePrice * quantity,
-          imageUrl: listing.images[0],
-        },
-      ],
-      subtotal: listing.salePrice * quantity,
-      discount: listing.originalPrice - listing.salePrice,
-      total: listing.salePrice * quantity,
-      status,
-      pickupCode: `MTH${randomInt(1000, 9999)}`,
-      pickupWindowStart: listing.pickupWindowStart,
-      pickupWindowEnd: listing.pickupWindowEnd,
-      createdAt,
-      updatedAt: createdAt,
-    };
-  });
+export function generateOrders(count: number): Order[] {
+  const statuses: Order['status'][] = [
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'picked_up',
+    'ready',
+    'preparing',
+    'confirmed',
+  ];
+  return Array.from({ length: count })
+    .map((_, i) => {
+      const merchant = pick(MERCHANTS);
+      const listing = pick(LISTINGS.filter((l) => l.merchantId === merchant.id));
+      const quantity = randomInt(1, 3);
+      const status = i < 5 ? statuses[i] : pick(statuses);
+      const createdAt = new Date(Date.now() - i * 43200000 - randomInt(0, 3600000)).toISOString();
+      const customerIndex = i % CUSTOMER_NAMES.length;
+      const customerName = CUSTOMER_NAMES[customerIndex];
+      const customerId =
+        customerIndex === 0 ? TEST_CUSTOMER.id : `user-customer-${customerIndex + 1}`;
+
+      return {
+        id: `order-${i + 1}`,
+        customerId,
+        customerName,
+        customerPhone: `08${randomInt(10000000, 99999999)}`,
+        customerAvatarUrl: `https://i.pravatar.cc/150?u=${customerId}`,
+        merchantId: merchant.id,
+        merchantName: merchant.name,
+        merchantLogoUrl: merchant.logoUrl,
+        items: [
+          {
+            listingId: listing.id,
+            title: listing.title,
+            quantity,
+            unitPrice: listing.salePrice,
+            totalPrice: listing.salePrice * quantity,
+            imageUrl: listing.images[0],
+          },
+        ],
+        subtotal: listing.salePrice * quantity,
+        discount: (listing.originalPrice - listing.salePrice) * quantity,
+        total: listing.salePrice * quantity,
+        status,
+        pickupCode: `MTH${randomInt(1000, 9999)}`,
+        pickupWindowStart: listing.pickupWindowStart,
+        pickupWindowEnd: listing.pickupWindowEnd,
+        notes: randomInt(0, 4) === 0 ? 'Please pack separately. Thank you!' : undefined,
+        createdAt,
+        updatedAt: createdAt,
+      };
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export const ORDERS: Order[] = generateOrders(150);
@@ -552,8 +609,14 @@ export const ORDERS: Order[] = generateOrders(150);
 export const WALLET_TRANSACTIONS: WalletTransaction[] = Array.from({ length: 20 }).map((_, i) => {
   const type = pick(['top_up', 'purchase', 'refund'] as const);
   const order = type !== 'top_up' ? pick(ORDERS) : null;
-  const amount = type === 'purchase' && order ? order.total : type === 'refund' && order ? order.total : randomInt(50, 500);
-  const description = type === 'top_up' ? 'Top up' : `Order at ${order?.merchantName ?? 'After You Siam'}`;
+  const amount =
+    type === 'purchase' && order
+      ? order.total
+      : type === 'refund' && order
+        ? order.total
+        : randomInt(50, 500);
+  const description =
+    type === 'top_up' ? 'Top up' : `Order at ${order?.merchantName ?? 'After You Siam'}`;
   return {
     id: `txn-${i + 1}`,
     userId: TEST_CUSTOMER.id,
@@ -611,6 +674,55 @@ export const MERCHANT_ANALYTICS: MerchantAnalytics = {
   weeklyRevenue: [5200, 6100, 4800, 7300, 5400, 6900, 4200],
   weeklyOrders: [12, 15, 11, 18, 13, 16, 11],
   weeklyItemsSaved: [38, 45, 32, 51, 41, 48, 35],
+  views: 4820,
+  conversionRate: 6.4,
+  avgOrderValue: 118,
+  topListings: [
+    {
+      listingId: 'listing-merchant-1-0-box',
+      title: 'After You Siam Surprise Bread Box',
+      revenue: 12800,
+      orders: 86,
+    },
+    {
+      listingId: 'listing-merchant-1-100-fixed',
+      title: 'Croissant Set @ After You Siam',
+      revenue: 9200,
+      orders: 64,
+    },
+    {
+      listingId: 'listing-merchant-1-1-box',
+      title: 'After You Siam Pastry Rescue Box',
+      revenue: 7100,
+      orders: 52,
+    },
+  ],
+  hourlyRevenue: [
+    { hour: 8, revenue: 0 },
+    { hour: 9, revenue: 0 },
+    { hour: 10, revenue: 0 },
+    { hour: 11, revenue: 0 },
+    { hour: 12, revenue: 0 },
+    { hour: 13, revenue: 0 },
+    { hour: 14, revenue: 0 },
+    { hour: 15, revenue: 0 },
+    { hour: 16, revenue: 0 },
+    { hour: 17, revenue: 0 },
+    { hour: 18, revenue: 0 },
+    { hour: 19, revenue: 0 },
+    { hour: 20, revenue: 0 },
+    { hour: 21, revenue: 0 },
+    { hour: 22, revenue: 0 },
+    { hour: 23, revenue: 0 },
+    { hour: 0, revenue: 0 },
+    { hour: 1, revenue: 0 },
+    { hour: 2, revenue: 0 },
+    { hour: 3, revenue: 0 },
+    { hour: 4, revenue: 0 },
+    { hour: 5, revenue: 0 },
+    { hour: 6, revenue: 0 },
+    { hour: 7, revenue: 0 },
+  ],
 };
 
 export const ALL_USERS: User[] = [TEST_CUSTOMER, TEST_MERCHANT_USER];
@@ -660,3 +772,208 @@ export const REVIEWS: Review[] = MERCHANTS.flatMap((merchant) => {
     };
   });
 });
+
+export const LISTING_TEMPLATES: ListingTemplate[] = [
+  {
+    id: 'template-1',
+    merchantId: TEST_MERCHANT_ID,
+    name: 'Evening Bread Box',
+    type: 'mystery_box',
+    title: 'Surprise Bread Box',
+    description: 'A mix of surplus breads and pastries from today.',
+    category: 'bakery',
+    originalPrice: 300,
+    salePrice: 99,
+    quantity: 8,
+    boxSize: 'medium',
+    estimatedRetailValue: 300,
+    dietaryTags: [],
+    allergens: ['wheat'],
+    images: ['https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=400&fit=crop'],
+    pickupWindowDurationHours: 2,
+    autoExpiry: true,
+    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+  },
+  {
+    id: 'template-2',
+    merchantId: TEST_MERCHANT_ID,
+    name: 'Lunch Set',
+    type: 'fixed_item',
+    title: 'Chef Surprise Lunch',
+    description: 'One main dish plus a side. Contents vary by day.',
+    category: 'restaurant',
+    originalPrice: 250,
+    salePrice: 129,
+    quantity: 10,
+    dietaryTags: [],
+    allergens: [],
+    images: ['https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop'],
+    pickupWindowDurationHours: 1.5,
+    autoExpiry: true,
+    createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+  },
+];
+
+export const MERCHANT_WALLET: MerchantWallet = {
+  merchantId: TEST_MERCHANT_ID,
+  balance: 12450,
+  currency: 'THB',
+  totalEarnings: 148500,
+  pendingPayout: 8750,
+  lastPayoutDate: new Date(Date.now() - 7 * 86400000).toISOString(),
+  nextPayoutDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+  commissionRate: 0.12,
+};
+
+export const PAYOUT_TRANSACTIONS: PayoutTransaction[] = Array.from({ length: 8 }).map((_, i) => ({
+  id: `payout-${i + 1}`,
+  merchantId: TEST_MERCHANT_ID,
+  amount: [8750, 9200, 8100, 10500, 7800, 9400, 11200, 8600][i],
+  status: (i < 2 ? 'pending' : 'completed') as PayoutTransaction['status'],
+  method: 'bank_transfer',
+  bankAccountId: 'bank-1',
+  bankAccountName: 'Kornchai Srisuk - SCB',
+  createdAt: new Date(Date.now() - i * 7 * 86400000).toISOString(),
+  completedAt:
+    i < 2 ? undefined : new Date(Date.now() - i * 7 * 86400000 + 2 * 86400000).toISOString(),
+}));
+
+export const BANK_ACCOUNTS: BankAccount[] = [
+  {
+    id: 'bank-1',
+    merchantId: TEST_MERCHANT_ID,
+    bankName: 'Siam Commercial Bank',
+    accountName: 'Kornchai Srisuk',
+    accountNumber: '123-4-56789-0',
+    branch: 'Siam Square',
+    isDefault: true,
+  },
+  {
+    id: 'bank-2',
+    merchantId: TEST_MERCHANT_ID,
+    bankName: 'Kasikornbank',
+    accountName: 'Kornchai Srisuk',
+    accountNumber: '987-6-54321-0',
+    branch: 'Sukhumvit',
+    isDefault: false,
+  },
+];
+
+export const STAFF_MEMBERS: StaffMember[] = [
+  {
+    id: 'staff-1',
+    merchantId: TEST_MERCHANT_ID,
+    name: 'Kornchai Srisuk',
+    email: 'merchant@maithing.test',
+    phone: '089-876-5432',
+    role: 'owner',
+    avatarUrl: 'https://i.pravatar.cc/150?u=kornchai',
+    createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
+  },
+  {
+    id: 'staff-2',
+    merchantId: TEST_MERCHANT_ID,
+    name: 'Nattapong Kaew',
+    email: 'nattapong@maithing.test',
+    phone: '081-111-2233',
+    role: 'manager',
+    avatarUrl: 'https://i.pravatar.cc/150?u=nattapong',
+    createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
+  },
+  {
+    id: 'staff-3',
+    merchantId: TEST_MERCHANT_ID,
+    name: 'Supansa Boon',
+    email: 'supansa@maithing.test',
+    phone: '082-333-4455',
+    role: 'staff',
+    avatarUrl: 'https://i.pravatar.cc/150?u=supansa',
+    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+  },
+];
+
+export const COUPONS: Coupon[] = [
+  {
+    id: 'coupon-1',
+    merchantId: TEST_MERCHANT_ID,
+    code: 'WELCOME20',
+    description: '20% off first rescue',
+    discountType: 'percentage',
+    discountValue: 20,
+    minOrderAmount: 100,
+    maxUses: 100,
+    usesCount: 34,
+    status: 'active',
+    validFrom: new Date(Date.now() - 30 * 86400000).toISOString(),
+    validUntil: new Date(Date.now() + 60 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+  },
+  {
+    id: 'coupon-2',
+    merchantId: TEST_MERCHANT_ID,
+    code: 'LUNCH50',
+    description: '฿50 off lunch boxes',
+    discountType: 'fixed',
+    discountValue: 50,
+    minOrderAmount: 150,
+    maxUses: 50,
+    usesCount: 12,
+    status: 'active',
+    validFrom: new Date(Date.now() - 10 * 86400000).toISOString(),
+    validUntil: new Date(Date.now() + 20 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+  },
+];
+
+export const MERCHANT_MESSAGES: MerchantMessage[] = [
+  {
+    id: 'msg-1',
+    merchantId: TEST_MERCHANT_ID,
+    customerId: 'user-customer-1',
+    customerName: 'Ariya Wong',
+    customerAvatarUrl: 'https://i.pravatar.cc/150?u=ariya',
+    orderId: 'order-1',
+    content: 'Hi, can I pick up a bit later tonight?',
+    sentBy: 'customer',
+    read: false,
+    createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+  },
+  {
+    id: 'msg-2',
+    merchantId: TEST_MERCHANT_ID,
+    customerId: 'user-customer-1',
+    customerName: 'Ariya Wong',
+    customerAvatarUrl: 'https://i.pravatar.cc/150?u=ariya',
+    orderId: 'order-1',
+    content: 'Sure, pickup is available until 9 PM. See you then!',
+    sentBy: 'merchant',
+    read: true,
+    createdAt: new Date(Date.now() - 1.5 * 3600000).toISOString(),
+  },
+  {
+    id: 'msg-3',
+    merchantId: TEST_MERCHANT_ID,
+    customerId: 'user-customer-2',
+    customerName: 'Kornchai Srisuk',
+    customerAvatarUrl: 'https://i.pravatar.cc/150?u=kornchai',
+    orderId: 'order-3',
+    content: 'Is the mystery box vegetarian today?',
+    sentBy: 'customer',
+    read: false,
+    createdAt: new Date(Date.now() - 5 * 3600000).toISOString(),
+  },
+];
+
+export const MERCHANT_NOTIFICATION_PREFS: MerchantNotificationPreferences = {
+  newOrders: true,
+  lowStock: true,
+  payoutUpdates: true,
+  customerReviews: true,
+  pickupReminders: true,
+};
+
+export const MERCHANT_ONBOARDING: MerchantOnboarding = {
+  merchantId: TEST_MERCHANT_ID,
+  completedSteps: ['welcome', 'business_info', 'verification', 'bank_account', 'first_listing'],
+  currentStep: 'complete',
+};

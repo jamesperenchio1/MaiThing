@@ -200,55 +200,57 @@ export default function DiscoverScreen() {
         </PressableScale>
       </View>
 
-      {!searchQuery && listings && listings.length > 0 && (() => {
-        const featured = [...listings].sort(
-          (a, b) =>
-            1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice)
-        )[0];
-        const discount = Math.round((1 - featured.salePrice / featured.originalPrice) * 100);
-        return (
-          <PressableScale
-            onPress={() => router.push(`/(customer)/listing/${featured.id}` as any)}
-            scale={0.98}
-            className="mb-4"
-          >
-            <View className="h-36 rounded-3xl overflow-hidden">
-              <Image
-                source={{ uri: featured.images[0] }}
-                className="absolute inset-0 h-full w-full"
-                resizeMode="cover"
-              />
-              <View className="absolute inset-0 bg-black/50" />
-              <View className="absolute bottom-0 left-0 right-0 bg-black/40 h-1/2" />
-              <View className="absolute inset-0 p-4 justify-between">
-                <View className="self-start bg-primary rounded-full px-2.5 py-1">
-                  <Text variant="caption" className="text-white font-bold">
-                    🔥 Deal of the Day
-                  </Text>
-                </View>
-                <View>
-                  <Text variant="body-sm" className="text-white font-semibold" numberOfLines={1}>
-                    {featured.title}
-                  </Text>
-                  <View className="flex-row items-center mt-0.5">
-                    <Text className="text-white text-lg font-bold">
-                      {formatCurrency(featured.salePrice)}
+      {!searchQuery &&
+        listings &&
+        listings.length > 0 &&
+        (() => {
+          const featured = [...listings].sort(
+            (a, b) => 1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice)
+          )[0];
+          const discount = Math.round((1 - featured.salePrice / featured.originalPrice) * 100);
+          return (
+            <PressableScale
+              onPress={() => router.push(`/(customer)/listing/${featured.id}` as any)}
+              scale={0.98}
+              className="mb-4"
+            >
+              <View className="h-36 rounded-3xl overflow-hidden">
+                <Image
+                  source={{ uri: featured.images[0] }}
+                  className="absolute inset-0 h-full w-full"
+                  resizeMode="cover"
+                />
+                <View className="absolute inset-0 bg-black/50" />
+                <View className="absolute bottom-0 left-0 right-0 bg-black/40 h-1/2" />
+                <View className="absolute inset-0 p-4 justify-between">
+                  <View className="self-start bg-primary rounded-full px-2.5 py-1">
+                    <Text variant="caption" className="text-white font-bold">
+                      🔥 Deal of the Day
                     </Text>
-                    <Text className="text-white/70 text-sm line-through ml-2">
-                      {formatCurrency(featured.originalPrice)}
+                  </View>
+                  <View>
+                    <Text variant="body-sm" className="text-white font-semibold" numberOfLines={1}>
+                      {featured.title}
                     </Text>
-                    <View className="ml-2 bg-white rounded-full px-2 py-0.5">
-                      <Text variant="caption" className="text-primary font-bold">
-                        -{discount}%
+                    <View className="flex-row items-center mt-0.5">
+                      <Text className="text-white text-lg font-bold">
+                        {formatCurrency(featured.salePrice)}
                       </Text>
+                      <Text className="text-white/70 text-sm line-through ml-2">
+                        {formatCurrency(featured.originalPrice)}
+                      </Text>
+                      <View className="ml-2 bg-white rounded-full px-2 py-0.5">
+                        <Text variant="caption" className="text-primary font-bold">
+                          -{discount}%
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </View>
               </View>
-            </View>
-          </PressableScale>
-        );
-      })()}
+            </PressableScale>
+          );
+        })()}
 
       {topRatedMerchants.length > 0 && !searchQuery && (
         <View className="mb-4">

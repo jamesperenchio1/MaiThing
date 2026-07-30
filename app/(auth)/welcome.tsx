@@ -12,13 +12,17 @@ import {
   ShieldCheck,
   Users,
   UtensilsCrossed,
+  Store,
+  ArrowRight,
 } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuth } from '@/src/hooks/useAuth';
+import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { APP_NAME } from '@/src/lib/constants';
 import { APP_STATS } from '@/src/lib/constants';
@@ -56,6 +60,8 @@ export default function WelcomeScreen() {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const { continueAsTest } = useAuth();
+  const user = useAuthStore((s) => s.user);
+  const selectedRole = useAuthStore((s) => s.selectedRole);
 
   const handleContinueAsCustomer = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -77,6 +83,15 @@ export default function WelcomeScreen() {
     router.push('/(auth)/sign-up' as any);
   };
 
+  const handleSellOnMaithing = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (user && selectedRole === 'merchant') {
+      router.push('/(merchant)/(tabs)' as any);
+    } else {
+      router.push('/(merchant)/onboarding' as any);
+    }
+  };
+
   return (
     <ScrollView
       testID="welcome-screen"
@@ -84,10 +99,7 @@ export default function WelcomeScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View className="px-6 pt-16 pb-10">
-        <Animated.View
-          entering={FadeInUp.duration(600).delay(100)}
-          className="items-center"
-        >
+        <Animated.View entering={FadeInUp.duration(600).delay(100)} className="items-center">
           <View className="mb-6 h-24 w-24 items-center justify-center rounded-3xl bg-primary/10">
             <Leaf size={48} color={colors.primary} />
           </View>
@@ -151,10 +163,7 @@ export default function WelcomeScreen() {
 
           <View className="mb-8 w-full space-y-3">
             {getHowItWorksSteps(t).map((step, index) => (
-              <View
-                key={step.title}
-                className="flex-row items-center rounded-2xl bg-card p-4"
-              >
+              <View key={step.title} className="flex-row items-center rounded-2xl bg-card p-4">
                 <View className="mr-4 h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                   <step.icon size={20} color={colors.primary} />
                 </View>
@@ -226,6 +235,29 @@ export default function WelcomeScreen() {
           >
             {t('auth.continueAsTestMerchant')}
           </Button>
+
+          {/* Merchant pitch */}
+          <PressableScale
+            testID="sell-on-maithing-button"
+            onPress={handleSellOnMaithing}
+            scale={0.98}
+            className="mt-4 overflow-hidden rounded-3xl bg-card"
+          >
+            <View className="flex-row items-center p-4">
+              <View className="mr-4 h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                <Store size={24} color={colors.primary} />
+              </View>
+              <View className="flex-1">
+                <Text variant="h4" className="mb-0.5">
+                  Sell on Maithing
+                </Text>
+                <Text variant="body-sm" className="text-muted">
+                  Become a Partner and turn surplus food into revenue.
+                </Text>
+              </View>
+              <ArrowRight size={20} color={colors.primary} />
+            </View>
+          </PressableScale>
         </Animated.View>
       </View>
     </ScrollView>

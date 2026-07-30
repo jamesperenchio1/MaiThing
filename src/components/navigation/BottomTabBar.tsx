@@ -29,7 +29,9 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
   const reducedMotion = useReducedMotion();
   const [containerWidth, setContainerWidth] = React.useState(0);
 
-  const isTabRoute = tabs.some((tab) => pathname === tab.name || pathname.startsWith(`${tab.name}/`));
+  const isTabRoute = tabs.some(
+    (tab) => pathname === tab.name || pathname.startsWith(`${tab.name}/`)
+  );
   const activeIndex = Math.max(
     0,
     tabs.findIndex((tab) => pathname === tab.name || pathname.startsWith(`${tab.name}/`))
@@ -40,7 +42,13 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
     const targetX = activeIndex * tabWidth + tabWidth * 0.1;
     const targetWidth = tabWidth * 0.8;
     return {
-      transform: [{ translateX: reducedMotion ? targetX : withSpring(targetX, { damping: 20, stiffness: 250 }) }],
+      transform: [
+        {
+          translateX: reducedMotion
+            ? targetX
+            : withSpring(targetX, { damping: 20, stiffness: 250 }),
+        },
+      ],
       width: reducedMotion ? targetWidth : withSpring(targetWidth, { damping: 20, stiffness: 250 }),
     };
   }, [activeIndex, tabWidth, reducedMotion]);
@@ -86,7 +94,10 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
             android_ripple={{ color: colors.primary + '20' }}
           >
             <Icon size={24} color={isActive ? colors.primary : colors.muted} />
-            <Text variant="caption" className={cn('mt-1', isActive ? 'text-primary' : 'text-muted')}>
+            <Text
+              variant="caption"
+              className={cn('mt-1', isActive ? 'text-primary' : 'text-muted')}
+            >
               {tab.label}
             </Text>
           </Pressable>

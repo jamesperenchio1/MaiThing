@@ -42,10 +42,34 @@ export const ALLERGENS = [
 ];
 
 export const BOX_SIZES = [
-  { id: 'small', name: 'Small', nameTh: 'เล็ก', description: '1-2 items', descriptionTh: '1-2 รายการ' },
-  { id: 'medium', name: 'Medium', nameTh: 'กลาง', description: '2-4 items', descriptionTh: '2-4 รายการ' },
-  { id: 'large', name: 'Large', nameTh: 'ใหญ่', description: '4-6 items', descriptionTh: '4-6 รายการ' },
-  { id: 'xl', name: 'XL', nameTh: 'XL', description: 'Family size', descriptionTh: 'สำหรับครอบครัว' },
+  {
+    id: 'small',
+    name: 'Small',
+    nameTh: 'เล็ก',
+    description: '1-2 items',
+    descriptionTh: '1-2 รายการ',
+  },
+  {
+    id: 'medium',
+    name: 'Medium',
+    nameTh: 'กลาง',
+    description: '2-4 items',
+    descriptionTh: '2-4 รายการ',
+  },
+  {
+    id: 'large',
+    name: 'Large',
+    nameTh: 'ใหญ่',
+    description: '4-6 items',
+    descriptionTh: '4-6 รายการ',
+  },
+  {
+    id: 'xl',
+    name: 'XL',
+    nameTh: 'XL',
+    description: 'Family size',
+    descriptionTh: 'สำหรับครอบครัว',
+  },
 ];
 
 export const MEAL_TIMES = [

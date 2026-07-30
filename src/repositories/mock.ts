@@ -6,36 +6,58 @@ import type {
   ListingRepository,
   OrderRepository,
   WalletRepository,
+  PayoutRepository,
+  CouponRepository,
+  MessageRepository,
   NotificationRepository,
   AnalyticsRepository,
 } from './interfaces';
 import {
   ALL_USERS,
+  BANK_ACCOUNTS,
   CATEGORIES,
+  COUPONS,
   CUSTOMER_WALLET,
   LISTINGS,
+  LISTING_TEMPLATES,
   MERCHANTS,
   MERCHANT_ANALYTICS,
+  MERCHANT_MESSAGES,
+  MERCHANT_NOTIFICATION_PREFS,
+  MERCHANT_ONBOARDING,
+  MERCHANT_WALLET,
   NOTIFICATIONS,
   ORDERS,
+  PAYOUT_TRANSACTIONS,
   REVIEWS,
+  STAFF_MEMBERS,
   TEST_CUSTOMER,
   TEST_CUSTOMER_PROFILE,
+  TEST_MERCHANT_ID,
   TEST_MERCHANT_USER,
   WALLET_TRANSACTIONS,
 } from './seed';
 import type {
+  BankAccount,
   BusinessHours,
+  Coupon,
   CustomerImpact,
   CustomerProfile,
   Listing,
   ListingStatus,
+  ListingTemplate,
   Merchant,
   MerchantAnalytics,
+  MerchantMessage,
+  MerchantNotificationPreferences,
+  MerchantOnboarding,
+  MerchantWallet,
   Notification,
   NotificationPreferences,
   Order,
+  PayoutTransaction,
   Review,
+  StaffMember,
   User,
   Wallet,
   WalletTransaction,
@@ -68,6 +90,67 @@ class MockAuthRepository implements AuthRepository {
       createdAt: new Date().toISOString(),
     };
     ALL_USERS.push(user);
+    return user;
+  }
+
+  async registerMerchant(data: {
+    email: string;
+    password: string;
+    name: string;
+    businessName: string;
+    phone: string;
+  }): Promise<User> {
+    await sleep(600);
+    const userId = `user-${Date.now()}`;
+    const merchantId = `merchant-${Date.now()}`;
+    const user: User = {
+      id: userId,
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      roles: ['merchant'],
+      preferredLanguage: 'en',
+      createdAt: new Date().toISOString(),
+    };
+    const merchant: Merchant = {
+      id: merchantId,
+      ownerId: userId,
+      name: data.businessName,
+      slug: data.businessName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, ''),
+      description: '',
+      address: {
+        street: '',
+        subDistrict: '',
+        district: '',
+        province: 'Bangkok',
+        postalCode: '',
+        country: 'Thailand',
+      },
+      coordinates: { latitude: 13.7563, longitude: 100.5018 },
+      phone: data.phone,
+      categories: [],
+      rating: 0,
+      reviewCount: 0,
+      businessHours: [
+        { day: 1, open: '08:00', close: '20:00' },
+        { day: 2, open: '08:00', close: '20:00' },
+        { day: 3, open: '08:00', close: '20:00' },
+        { day: 4, open: '08:00', close: '20:00' },
+        { day: 5, open: '08:00', close: '20:00' },
+      ],
+      isOpen: false,
+      pickupInstructions: '',
+      followers: 0,
+      createdAt: new Date().toISOString(),
+      isVerified: false,
+      joinedAt: new Date().toISOString(),
+      hygieneRating: 5,
+    };
+    ALL_USERS.push(user);
+    MERCHANTS.push(merchant);
     return user;
   }
 
@@ -227,6 +310,77 @@ class MockMerchantRepository implements MerchantRepository {
     );
   }
 
+  async replyToReview(reviewId: string, reply: string): Promise<Review> {
+    await sleep(300);
+    const review = REVIEWS.find((r) => r.id === reviewId);
+    if (!review) throw new Error('Review not found');
+    review.merchantReply = reply;
+    review.merchantRepliedAt = new Date().toISOString();
+    return review;
+  }
+
+  async getStaff(merchantId: string): Promise<StaffMember[]> {
+    await sleep(200);
+    return STAFF_MEMBERS.filter((s) => s.merchantId === merchantId).sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }
+
+  async addStaff(
+    merchantId: string,
+    data: Omit<StaffMember, 'id' | 'merchantId' | 'createdAt'>
+  ): Promise<StaffMember> {
+    await sleep(300);
+    const staff: StaffMember = {
+      ...data,
+      id: `staff-${Date.now()}`,
+      merchantId,
+      createdAt: new Date().toISOString(),
+    };
+    STAFF_MEMBERS.push(staff);
+    return staff;
+  }
+
+  async removeStaff(merchantId: string, staffId: string): Promise<void> {
+    await sleep(300);
+    const index = STAFF_MEMBERS.findIndex((s) => s.merchantId === merchantId && s.id === staffId);
+    if (index !== -1) STAFF_MEMBERS.splice(index, 1);
+  }
+
+  async getMerchantNotificationPreferences(
+    merchantId: string
+  ): Promise<MerchantNotificationPreferences> {
+    await sleep(200);
+    return { ...MERCHANT_NOTIFICATION_PREFS };
+  }
+
+  async updateMerchantNotificationPreferences(
+    merchantId: string,
+    preferences: MerchantNotificationPreferences
+  ): Promise<MerchantNotificationPreferences> {
+    await sleep(200);
+    Object.assign(MERCHANT_NOTIFICATION_PREFS, preferences);
+    return { ...MERCHANT_NOTIFICATION_PREFS };
+  }
+
+  async getOnboarding(merchantId: string): Promise<MerchantOnboarding> {
+    await sleep(200);
+    return { ...MERCHANT_ONBOARDING, merchantId };
+  }
+
+  async updateOnboarding(
+    merchantId: string,
+    step: keyof MerchantOnboarding
+  ): Promise<MerchantOnboarding> {
+    await sleep(200);
+    if (step === 'currentStep') {
+      MERCHANT_ONBOARDING.currentStep = 'complete';
+    } else if (step === 'completedSteps') {
+      // no-op marker
+    }
+    return { ...MERCHANT_ONBOARDING, merchantId };
+  }
+
   async followMerchant(userId: string, merchantId: string): Promise<void> {
     await sleep(200);
     const merchant = MERCHANTS.find((m) => m.id === merchantId);
@@ -367,6 +521,32 @@ class MockListingRepository implements ListingRepository {
     const index = LISTINGS.findIndex((l) => l.id === id);
     if (index !== -1) LISTINGS.splice(index, 1);
   }
+
+  async getListingTemplates(merchantId: string): Promise<ListingTemplate[]> {
+    await sleep(200);
+    return LISTING_TEMPLATES.filter((t) => t.merchantId === merchantId).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async createListingTemplate(
+    data: Omit<ListingTemplate, 'id' | 'createdAt'>
+  ): Promise<ListingTemplate> {
+    await sleep(300);
+    const template: ListingTemplate = {
+      ...data,
+      id: `template-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    LISTING_TEMPLATES.push(template);
+    return template;
+  }
+
+  async deleteListingTemplate(id: string): Promise<void> {
+    await sleep(300);
+    const index = LISTING_TEMPLATES.findIndex((t) => t.id === id);
+    if (index !== -1) LISTING_TEMPLATES.splice(index, 1);
+  }
 }
 
 class MockOrderRepository implements OrderRepository {
@@ -387,6 +567,20 @@ class MockOrderRepository implements OrderRepository {
   async getOrder(id: string): Promise<Order | null> {
     await sleep(200);
     return ORDERS.find((o) => o.id === id) ?? null;
+  }
+
+  async getOrderByPickupCode(merchantId: string, code: string): Promise<Order | null> {
+    await sleep(200);
+    const normalized = code.trim().toUpperCase();
+    return (
+      ORDERS.find(
+        (o) =>
+          o.merchantId === merchantId &&
+          o.pickupCode.toUpperCase() === normalized &&
+          o.status !== 'cancelled' &&
+          o.status !== 'completed'
+      ) ?? null
+    );
   }
 
   async createOrder(data: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
@@ -420,12 +614,33 @@ class MockOrderRepository implements OrderRepository {
     return ORDERS[index];
   }
 
-  async cancelOrder(id: string, _reason: string): Promise<Order> {
+  async cancelOrder(id: string, reason: string): Promise<Order> {
     await sleep(300);
     const order = ORDERS.find((o) => o.id === id);
     if (!order) throw new Error('Order not found');
 
     order.status = 'cancelled';
+    order.cancellationReason = reason;
+    order.updatedAt = new Date().toISOString();
+
+    for (const item of order.items) {
+      const listing = LISTINGS.find((l) => l.id === item.listingId);
+      if (listing) {
+        listing.quantityRemaining += item.quantity;
+        if (listing.status === 'sold_out') listing.status = 'active';
+      }
+    }
+
+    return order;
+  }
+
+  async refundOrder(id: string, reason: string): Promise<Order> {
+    await sleep(300);
+    const order = ORDERS.find((o) => o.id === id);
+    if (!order) throw new Error('Order not found');
+
+    order.status = 'cancelled';
+    order.cancellationReason = reason;
     order.updatedAt = new Date().toISOString();
 
     for (const item of order.items) {
@@ -472,6 +687,167 @@ class MockWalletRepository implements WalletRepository {
   }
 }
 
+class MockPayoutRepository implements PayoutRepository {
+  async getMerchantWallet(merchantId: string): Promise<MerchantWallet> {
+    await sleep(200);
+    return { ...MERCHANT_WALLET, merchantId };
+  }
+
+  async getPayoutTransactions(merchantId: string): Promise<PayoutTransaction[]> {
+    await sleep(200);
+    return PAYOUT_TRANSACTIONS.filter((p) => p.merchantId === merchantId).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getBankAccounts(merchantId: string): Promise<BankAccount[]> {
+    await sleep(200);
+    return BANK_ACCOUNTS.filter((b) => b.merchantId === merchantId).sort((a) =>
+      a.isDefault ? -1 : 1
+    );
+  }
+
+  async addBankAccount(
+    merchantId: string,
+    data: Omit<BankAccount, 'id' | 'merchantId'>
+  ): Promise<BankAccount> {
+    await sleep(300);
+    const account: BankAccount = {
+      ...data,
+      id: `bank-${Date.now()}`,
+      merchantId,
+    };
+    if (account.isDefault) {
+      BANK_ACCOUNTS.filter((b) => b.merchantId === merchantId).forEach(
+        (b) => (b.isDefault = false)
+      );
+    }
+    BANK_ACCOUNTS.push(account);
+    return account;
+  }
+
+  async setDefaultBankAccount(merchantId: string, accountId: string): Promise<void> {
+    await sleep(300);
+    BANK_ACCOUNTS.filter((b) => b.merchantId === merchantId).forEach((b) => {
+      b.isDefault = b.id === accountId;
+    });
+  }
+
+  async requestPayout(merchantId: string, amount: number): Promise<PayoutTransaction> {
+    await sleep(400);
+    const account = BANK_ACCOUNTS.find((b) => b.merchantId === merchantId && b.isDefault);
+    const payout: PayoutTransaction = {
+      id: `payout-${Date.now()}`,
+      merchantId,
+      amount,
+      status: 'pending',
+      method: 'bank_transfer',
+      bankAccountId: account?.id ?? '',
+      bankAccountName: account ? `${account.accountName} - ${account.bankName}` : '',
+      createdAt: new Date().toISOString(),
+    };
+    MERCHANT_WALLET.pendingPayout += amount;
+    MERCHANT_WALLET.balance = Math.max(0, MERCHANT_WALLET.balance - amount);
+    PAYOUT_TRANSACTIONS.unshift(payout);
+    return payout;
+  }
+}
+
+class MockCouponRepository implements CouponRepository {
+  async getCoupons(merchantId: string): Promise<Coupon[]> {
+    await sleep(200);
+    return COUPONS.filter((c) => c.merchantId === merchantId).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async createCoupon(
+    merchantId: string,
+    data: Omit<Coupon, 'id' | 'merchantId' | 'usesCount' | 'createdAt'>
+  ): Promise<Coupon> {
+    await sleep(300);
+    const coupon: Coupon = {
+      ...data,
+      id: `coupon-${Date.now()}`,
+      merchantId,
+      usesCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    COUPONS.push(coupon);
+    return coupon;
+  }
+
+  async updateCoupon(id: string, data: Partial<Coupon>): Promise<Coupon> {
+    await sleep(300);
+    const index = COUPONS.findIndex((c) => c.id === id);
+    if (index === -1) throw new Error('Coupon not found');
+    COUPONS[index] = { ...COUPONS[index], ...data };
+    return COUPONS[index];
+  }
+
+  async deleteCoupon(id: string): Promise<void> {
+    await sleep(300);
+    const index = COUPONS.findIndex((c) => c.id === id);
+    if (index !== -1) COUPONS.splice(index, 1);
+  }
+}
+
+class MockMessageRepository implements MessageRepository {
+  async getConversations(merchantId: string): Promise<MerchantMessage[]> {
+    await sleep(200);
+    const messages = MERCHANT_MESSAGES.filter((m) => m.merchantId === merchantId);
+    const latestByCustomer = new Map<string, MerchantMessage>();
+    for (const message of messages) {
+      const existing = latestByCustomer.get(message.customerId);
+      if (!existing || new Date(message.createdAt) > new Date(existing.createdAt)) {
+        latestByCustomer.set(message.customerId, message);
+      }
+    }
+    return Array.from(latestByCustomer.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getMessages(merchantId: string, customerId: string): Promise<MerchantMessage[]> {
+    await sleep(200);
+    return MERCHANT_MESSAGES.filter(
+      (m) => m.merchantId === merchantId && m.customerId === customerId
+    ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  async sendMessage(
+    merchantId: string,
+    customerId: string,
+    content: string,
+    sentBy: 'merchant' | 'customer'
+  ): Promise<MerchantMessage> {
+    await sleep(300);
+    const conversation = MERCHANT_MESSAGES.find(
+      (m) => m.merchantId === merchantId && m.customerId === customerId
+    );
+    const message: MerchantMessage = {
+      id: `msg-${Date.now()}`,
+      merchantId,
+      customerId,
+      customerName: conversation?.customerName ?? 'Customer',
+      customerAvatarUrl: conversation?.customerAvatarUrl,
+      content,
+      sentBy,
+      read: sentBy === 'merchant',
+      createdAt: new Date().toISOString(),
+    };
+    MERCHANT_MESSAGES.push(message);
+    return message;
+  }
+
+  async markConversationAsRead(merchantId: string, customerId: string): Promise<void> {
+    await sleep(200);
+    MERCHANT_MESSAGES.filter(
+      (m) => m.merchantId === merchantId && m.customerId === customerId && m.sentBy === 'customer'
+    ).forEach((m) => (m.read = true));
+  }
+}
+
 class MockNotificationRepository implements NotificationRepository {
   async getNotifications(userId: string): Promise<Notification[]> {
     await sleep(200);
@@ -495,10 +871,97 @@ class MockNotificationRepository implements NotificationRepository {
 class MockAnalyticsRepository implements AnalyticsRepository {
   async getMerchantAnalytics(merchantIdOrUserId: string): Promise<MerchantAnalytics> {
     await sleep(300);
-    if (merchantIdOrUserId === MERCHANT_ANALYTICS.merchantId) return MERCHANT_ANALYTICS;
-    const merchant = MERCHANTS.find((m) => m.ownerId === merchantIdOrUserId);
-    if (merchant) return { ...MERCHANT_ANALYTICS, merchantId: merchant.id };
-    return MERCHANT_ANALYTICS;
+    const merchant =
+      MERCHANTS.find((m) => m.id === merchantIdOrUserId) ??
+      MERCHANTS.find((m) => m.ownerId === merchantIdOrUserId);
+    const merchantId = merchant?.id ?? merchantIdOrUserId;
+
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(startOfDay.getTime() - 6 * 86400000);
+
+    const merchantOrders = ORDERS.filter((o) => o.merchantId === merchantId);
+    const completedOrders = merchantOrders.filter((o) =>
+      ['completed', 'picked_up'].includes(o.status)
+    );
+
+    const totalRevenue = completedOrders.reduce((sum, o) => sum + o.total, 0);
+    const totalOrders = completedOrders.length;
+    const totalItemsSaved = completedOrders.reduce(
+      (sum, o) => sum + o.items.reduce((is, item) => is + item.quantity, 0),
+      0
+    );
+
+    const todayOrders = completedOrders.filter((o) => new Date(o.createdAt) >= startOfDay);
+    const todayRevenue = todayOrders.reduce((sum, o) => sum + o.total, 0);
+
+    const weeklyRevenue: number[] = [];
+    const weeklyOrders: number[] = [];
+    const weeklyItemsSaved: number[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(startOfDay.getTime() - i * 86400000);
+      const dayEnd = new Date(dayStart.getTime() + 86400000);
+      const dayOrders = completedOrders.filter(
+        (o) => new Date(o.createdAt) >= dayStart && new Date(o.createdAt) < dayEnd
+      );
+      weeklyRevenue.push(dayOrders.reduce((sum, o) => sum + o.total, 0));
+      weeklyOrders.push(dayOrders.length);
+      weeklyItemsSaved.push(
+        dayOrders.reduce((sum, o) => sum + o.items.reduce((is, item) => is + item.quantity, 0), 0)
+      );
+    }
+
+    const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+    const views = Math.max(100, totalOrders * 12);
+    const conversionRate = Math.round((totalOrders / views) * 1000) / 10;
+
+    const listingRevenue = new Map<
+      string,
+      { listingId: string; title: string; revenue: number; orders: number }
+    >();
+    for (const order of completedOrders) {
+      for (const item of order.items) {
+        const existing = listingRevenue.get(item.listingId);
+        if (existing) {
+          existing.revenue += item.totalPrice;
+          existing.orders += item.quantity;
+        } else {
+          listingRevenue.set(item.listingId, {
+            listingId: item.listingId,
+            title: item.title,
+            revenue: item.totalPrice,
+            orders: item.quantity,
+          });
+        }
+      }
+    }
+    const topListings = Array.from(listingRevenue.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
+    const hourlyRevenue = Array.from({ length: 24 }).map((_, hour) => {
+      const hourRevenue = completedOrders
+        .filter((o) => new Date(o.createdAt).getHours() === hour)
+        .reduce((sum, o) => sum + o.total, 0);
+      return { hour, revenue: hourRevenue };
+    });
+
+    return {
+      merchantId,
+      totalRevenue,
+      totalOrders,
+      totalItemsSaved,
+      todayRevenue,
+      todayOrders: todayOrders.length,
+      weeklyRevenue,
+      weeklyOrders,
+      weeklyItemsSaved,
+      views,
+      conversionRate,
+      avgOrderValue,
+      topListings,
+      hourlyRevenue,
+    };
   }
 
   async getCustomerImpact(userId: string): Promise<CustomerImpact> {
@@ -506,7 +969,10 @@ class MockAnalyticsRepository implements AnalyticsRepository {
     const userOrders = ORDERS.filter(
       (o) => o.customerId === userId && ['completed', 'picked_up'].includes(o.status)
     );
-    const mealsSaved = userOrders.reduce((sum, o) => sum + o.items.reduce((is, item) => is + item.quantity, 0), 0);
+    const mealsSaved = userOrders.reduce(
+      (sum, o) => sum + o.items.reduce((is, item) => is + item.quantity, 0),
+      0
+    );
     const moneySaved = userOrders.reduce((sum, o) => sum + o.discount, 0);
     return {
       mealsSaved,
@@ -524,6 +990,9 @@ export const mockRepositories = {
   listings: new MockListingRepository(),
   orders: new MockOrderRepository(),
   wallet: new MockWalletRepository(),
+  payouts: new MockPayoutRepository(),
+  coupons: new MockCouponRepository(),
+  messages: new MockMessageRepository(),
   notifications: new MockNotificationRepository(),
   analytics: new MockAnalyticsRepository(),
 };

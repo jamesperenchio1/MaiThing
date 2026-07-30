@@ -13,12 +13,9 @@ export function useReducedMotion(): boolean {
       })
       .catch(() => {});
 
-    const subscription = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      (enabled) => {
-        setReducedMotion(enabled);
-      }
-    );
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled) => {
+      setReducedMotion(enabled);
+    });
 
     return () => {
       isMounted = false;

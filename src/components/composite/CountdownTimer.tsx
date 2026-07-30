@@ -25,7 +25,9 @@ export function CountdownTimer({ targetDate, label = 'Ends' }: CountdownTimerPro
   return (
     <View className="flex-row items-center self-start rounded-full bg-warning/10 px-2.5 py-1">
       <Clock size={12} color={colors.warning} />
-      <Text className="ml-1 text-xs font-semibold text-warning">{label} {text}</Text>
+      <Text className="ml-1 text-xs font-semibold text-warning">
+        {label} {text}
+      </Text>
     </View>
   );
 }

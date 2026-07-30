@@ -8,33 +8,30 @@ import { Text } from './Text';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const buttonVariants = cva(
-  'flex-row items-center justify-center rounded-2xl px-5 py-3.5',
-  {
-    variants: {
-      variant: {
-        primary: 'bg-primary shadow-sm shadow-primary/20',
-        secondary: 'bg-muted/10',
-        outline: 'border border-border bg-transparent',
-        ghost: 'bg-transparent',
-        danger: 'bg-danger',
-      },
-      size: {
-        sm: 'px-4 py-2.5 rounded-xl',
-        md: 'px-5 py-3.5 rounded-2xl',
-        lg: 'px-6 py-4 rounded-2xl',
-        icon: 'p-3 rounded-full',
-      },
-      fullWidth: {
-        true: 'w-full',
-      },
+const buttonVariants = cva('flex-row items-center justify-center rounded-2xl px-5 py-3.5', {
+  variants: {
+    variant: {
+      primary: 'bg-primary shadow-sm shadow-primary/20',
+      secondary: 'bg-muted/10',
+      outline: 'border border-border bg-transparent',
+      ghost: 'bg-transparent',
+      danger: 'bg-danger',
     },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'md',
+    size: {
+      sm: 'px-4 py-2.5 rounded-xl',
+      md: 'px-5 py-3.5 rounded-2xl',
+      lg: 'px-6 py-4 rounded-2xl',
+      icon: 'p-3 rounded-full',
     },
-  }
-);
+    fullWidth: {
+      true: 'w-full',
+    },
+  },
+  defaultVariants: {
+    variant: 'primary',
+    size: 'md',
+  },
+});
 
 interface ButtonProps extends PressableProps, VariantProps<typeof buttonVariants> {
   children: React.ReactNode;
@@ -74,8 +71,8 @@ export function Button({
     variant === 'primary' || variant === 'danger'
       ? 'text-white'
       : variant === 'secondary' || variant === 'outline' || variant === 'ghost'
-      ? 'text-foreground'
-      : 'text-white';
+        ? 'text-foreground'
+        : 'text-white';
 
   return (
     <AnimatedPressable
@@ -106,9 +103,7 @@ export function Button({
         />
       )}
       {!loading && leftIcon && <View className="mr-2">{leftIcon}</View>}
-      <Text className={cn(textColor, 'font-semibold', textClassName)}>
-        {children}
-      </Text>
+      <Text className={cn(textColor, 'font-semibold', textClassName)}>{children}</Text>
       {!loading && rightIcon && <View className="ml-2">{rightIcon}</View>}
     </AnimatedPressable>
   );

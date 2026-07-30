@@ -40,7 +40,9 @@ export default function StoreHoursScreen() {
 
   const toggleDay = (day: number) => {
     setHours((prev) =>
-      prev.map((h) => (h.day === day ? { ...h, open: h.open ? '' : '07:00', close: h.close ? '' : '21:00' } : h))
+      prev.map((h) =>
+        h.day === day ? { ...h, open: h.open ? '' : '07:00', close: h.close ? '' : '21:00' } : h
+      )
     );
   };
 

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { mockRepositories } from '@/src/repositories/mock';
+import type { Listing, ListingTemplate } from '@/src/types';
 
 export interface ListingFilters {
   merchantId?: string;
@@ -13,6 +14,7 @@ export interface ListingFilters {
   dietaryTags?: string[];
   allergens?: string[];
   maxPrice?: number;
+  status?: string;
 }
 
 export function useListings(params?: ListingFilters) {
@@ -30,13 +32,64 @@ export function useListing(id: string) {
   });
 }
 
+export function useCreateListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Omit<Listing, 'id' | 'createdAt'>) =>
+      mockRepositories.listings.createListing(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+  });
+}
+
 export function useUpdateListing() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<import('@/src/types').Listing> }) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<Listing> }) =>
       mockRepositories.listings.updateListing(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listing'] });
+    },
+  });
+}
+
+export function useDeleteListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => mockRepositories.listings.deleteListing(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+  });
+}
+
+export function useListingTemplates(merchantId: string) {
+  return useQuery({
+    queryKey: ['listing-templates', merchantId],
+    queryFn: () => mockRepositories.listings.getListingTemplates(merchantId),
+    enabled: !!merchantId,
+  });
+}
+
+export function useCreateListingTemplate(merchantId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Omit<ListingTemplate, 'id' | 'merchantId' | 'createdAt'>) =>
+      mockRepositories.listings.createListingTemplate({ ...data, merchantId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listing-templates', merchantId] });
+    },
+  });
+}
+
+export function useDeleteListingTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => mockRepositories.listings.deleteListingTemplate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listing-templates'] });
     },
   });
 }

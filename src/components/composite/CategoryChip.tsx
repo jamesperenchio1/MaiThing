@@ -1,5 +1,14 @@
 import { View } from 'react-native';
-import { Cake, Coffee, Utensils, ShoppingBasket, Bed, IceCream, Leaf, Flame } from 'lucide-react-native';
+import {
+  Cake,
+  Coffee,
+  Utensils,
+  ShoppingBasket,
+  Bed,
+  IceCream,
+  Leaf,
+  Flame,
+} from 'lucide-react-native';
 import { cn } from '@/src/lib/utils';
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -27,11 +36,7 @@ export function CategoryChip({ category, isActive, onPress, locale = 'en' }: Cat
   const Icon = iconMap[category.icon] ?? Coffee;
 
   return (
-    <PressableScale
-      testID={`category-chip-${category.id}`}
-      onPress={onPress}
-      scale={0.95}
-    >
+    <PressableScale testID={`category-chip-${category.id}`} onPress={onPress} scale={0.95}>
       <View
         className={cn(
           'mr-3 items-center rounded-2xl border border-border px-4 py-3',

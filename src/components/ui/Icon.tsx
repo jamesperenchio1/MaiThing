@@ -11,5 +11,11 @@ interface IconProps {
 
 export function Icon({ icon: LucideIcon, size = 24, className, color }: IconProps) {
   const colors = useThemeColor();
-  return <LucideIcon size={size} color={color ?? colors.foreground} className={cn('text-foreground', className)} />;
+  return (
+    <LucideIcon
+      size={size}
+      color={color ?? colors.foreground}
+      className={cn('text-foreground', className)}
+    />
+  );
 }

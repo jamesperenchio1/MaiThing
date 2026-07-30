@@ -18,11 +18,7 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return permissionGranted;
 }
 
-export type NotificationCategory =
-  | 'new_deal'
-  | 'order_update'
-  | 'merchant_message'
-  | 'promotion';
+export type NotificationCategory = 'new_deal' | 'order_update' | 'merchant_message' | 'promotion';
 
 export function shouldScheduleNotification(
   preferences: NotificationPreferences | undefined,

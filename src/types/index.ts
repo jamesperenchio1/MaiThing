@@ -110,13 +110,7 @@ export interface FixedItemListing extends ListingBase {
 export type Listing = MysteryBoxListing | FixedItemListing;
 
 export type OrderStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'preparing'
-  | 'ready'
-  | 'picked_up'
-  | 'completed'
-  | 'cancelled';
+  'pending' | 'confirmed' | 'preparing' | 'ready' | 'picked_up' | 'completed' | 'cancelled';
 
 export interface OrderItem {
   listingId: string;
@@ -130,6 +124,9 @@ export interface OrderItem {
 export interface Order {
   id: string;
   customerId: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerAvatarUrl?: string;
   merchantId: string;
   merchantName: string;
   merchantLogoUrl?: string;
@@ -141,6 +138,8 @@ export interface Order {
   pickupCode: string;
   pickupWindowStart: string;
   pickupWindowEnd: string;
+  notes?: string;
+  cancellationReason?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -180,6 +179,8 @@ export interface Review {
   listingId?: string;
   rating: number;
   comment: string;
+  merchantReply?: string;
+  merchantRepliedAt?: string;
   createdAt: string;
 }
 
@@ -193,6 +194,11 @@ export interface MerchantAnalytics {
   weeklyRevenue: number[];
   weeklyOrders: number[];
   weeklyItemsSaved: number[];
+  views: number;
+  conversionRate: number;
+  avgOrderValue: number;
+  topListings: { listingId: string; title: string; revenue: number; orders: number }[];
+  hourlyRevenue: { hour: number; revenue: number }[];
 }
 
 export interface CustomerImpact {
@@ -214,4 +220,123 @@ export interface FoodTag {
   name: string;
   nameTh: string;
   type: 'dietary' | 'allergen' | 'category';
+}
+
+export interface ListingTemplate {
+  id: string;
+  merchantId: string;
+  name: string;
+  type: ListingType;
+  title: string;
+  description: string;
+  category: string;
+  originalPrice: number;
+  salePrice: number;
+  quantity: number;
+  boxSize?: 'small' | 'medium' | 'large' | 'xl';
+  estimatedRetailValue?: number;
+  dietaryTags: string[];
+  allergens: string[];
+  images: string[];
+  pickupWindowDurationHours: number;
+  autoExpiry: boolean;
+  createdAt: string;
+}
+
+export interface MerchantWallet {
+  merchantId: string;
+  balance: number;
+  currency: string;
+  totalEarnings: number;
+  pendingPayout: number;
+  lastPayoutDate?: string;
+  nextPayoutDate?: string;
+  commissionRate: number;
+}
+
+export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface PayoutTransaction {
+  id: string;
+  merchantId: string;
+  amount: number;
+  status: PayoutStatus;
+  method: 'bank_transfer';
+  bankAccountId: string;
+  bankAccountName?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface BankAccount {
+  id: string;
+  merchantId: string;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  branch?: string;
+  isDefault: boolean;
+}
+
+export type StaffRole = 'owner' | 'manager' | 'staff';
+
+export interface StaffMember {
+  id: string;
+  merchantId: string;
+  userId?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: StaffRole;
+  avatarUrl?: string;
+  createdAt: string;
+}
+
+export type CouponDiscountType = 'percentage' | 'fixed';
+export type CouponStatus = 'active' | 'inactive' | 'expired';
+
+export interface Coupon {
+  id: string;
+  merchantId: string;
+  code: string;
+  description: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  minOrderAmount?: number;
+  maxUses?: number;
+  usesCount: number;
+  status: CouponStatus;
+  validFrom: string;
+  validUntil: string;
+  createdAt: string;
+}
+
+export interface MerchantMessage {
+  id: string;
+  merchantId: string;
+  customerId: string;
+  customerName: string;
+  customerAvatarUrl?: string;
+  orderId?: string;
+  content: string;
+  sentBy: 'merchant' | 'customer';
+  read: boolean;
+  createdAt: string;
+}
+
+export interface MerchantNotificationPreferences {
+  newOrders: boolean;
+  lowStock: boolean;
+  payoutUpdates: boolean;
+  customerReviews: boolean;
+  pickupReminders: boolean;
+}
+
+export type OnboardingStep =
+  'welcome' | 'business_info' | 'verification' | 'bank_account' | 'first_listing' | 'complete';
+
+export interface MerchantOnboarding {
+  merchantId: string;
+  completedSteps: OnboardingStep[];
+  currentStep: OnboardingStep;
 }

@@ -159,16 +159,30 @@ export interface ListingUrgency {
   color: 'success' | 'warning' | 'danger';
 }
 
-export function getListingUrgency(listing: { quantityRemaining: number; pickupWindowEnd: string }): ListingUrgency | null {
+export function getListingUrgency(listing: {
+  quantityRemaining: number;
+  pickupWindowEnd: string;
+}): ListingUrgency | null {
   const remaining = listing.quantityRemaining;
-  const minsUntilEnd = Math.max(0, Math.round((new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000));
+  const minsUntilEnd = Math.max(
+    0,
+    Math.round((new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000)
+  );
 
   if (remaining === 0) return null;
   if (remaining <= 2 || minsUntilEnd <= 30) {
-    return { level: 'critical', label: remaining <= 2 ? `Only ${remaining} left` : 'Ends in 30 min', color: 'danger' };
+    return {
+      level: 'critical',
+      label: remaining <= 2 ? `Only ${remaining} left` : 'Ends in 30 min',
+      color: 'danger',
+    };
   }
   if (remaining <= 5 || minsUntilEnd <= 90) {
-    return { level: 'high', label: remaining <= 5 ? `Only ${remaining} left` : 'Ends soon', color: 'warning' };
+    return {
+      level: 'high',
+      label: remaining <= 5 ? `Only ${remaining} left` : 'Ends soon',
+      color: 'warning',
+    };
   }
   if (minsUntilEnd <= 240) {
     return { level: 'medium', label: 'Selling fast', color: 'warning' };

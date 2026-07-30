@@ -115,7 +115,12 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
           <ErrorBoundary>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+              }}
+            >
               <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
               <Stack.Screen name="(customer)" options={{ animation: 'default' }} />
               <Stack.Screen name="(merchant)" options={{ animation: 'default' }} />
