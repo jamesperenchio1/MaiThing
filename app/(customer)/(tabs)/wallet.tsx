@@ -7,7 +7,6 @@ import {
   Modal,
   TouchableWithoutFeedback,
   RefreshControl,
-  TextInput,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
@@ -22,6 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
+import { Input } from '@/src/components/ui/Input';
 import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -175,10 +175,9 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
                 </PressableScale>
               </View>
               {isCustom && (
-                <TextInput
-                  className="mb-6 rounded-2xl border-2 border-primary bg-primary/5 px-5 py-3 text-base font-semibold text-foreground"
+                <Input
+                  containerClassName="mb-6"
                   placeholder="Enter amount"
-                  placeholderTextColor={colors.muted}
                   keyboardType="numeric"
                   value={customAmount}
                   onChangeText={setCustomAmount}

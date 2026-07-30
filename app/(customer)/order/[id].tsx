@@ -190,20 +190,24 @@ export default function OrderDetailScreen() {
 
   const handleAddToCalendar = async () => {
     if (!order || Platform.OS === 'web') return;
-    const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
-    if (status !== 'granted') return;
-    const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
-    const writable = calendars.find((c) => c.allowsModifications);
-    if (!writable) return;
-    await ExpoCalendar.createEventAsync(writable.id, {
-      title: `Pickup: ${order.merchantName}`,
-      startDate: new Date(order.pickupWindowStart),
-      endDate: new Date(order.pickupWindowEnd),
-      notes: `Pickup code: ${order.pickupCode}`,
-      location: order.merchantName,
-    });
-    setCalendarAdded(true);
-    setTimeout(() => setCalendarAdded(false), 2000);
+    try {
+      const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
+      if (status !== 'granted') return;
+      const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
+      const writable = calendars.find((c) => c.allowsModifications);
+      if (!writable) return;
+      await ExpoCalendar.createEventAsync(writable.id, {
+        title: `Pickup: ${order.merchantName}`,
+        startDate: new Date(order.pickupWindowStart),
+        endDate: new Date(order.pickupWindowEnd),
+        notes: `Pickup code: ${order.pickupCode}`,
+        location: order.merchantName,
+      });
+      setCalendarAdded(true);
+      setTimeout(() => setCalendarAdded(false), 2000);
+    } catch {
+      // silently ignore calendar write failures
+    }
   };
 
   useEffect(() => {

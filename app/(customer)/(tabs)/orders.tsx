@@ -96,7 +96,7 @@ function OrderCard({ order }: { order: Order }) {
               <Button
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push(`/listing/${order.items[0].listingId}`);
+                  router.push(`/(customer)/listing/${order.items[0].listingId}`);
                 }}
                 variant="outline"
                 size="sm"

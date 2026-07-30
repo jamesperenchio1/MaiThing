@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, Platform, ActivityIndicator, Modal, Pressable } from 'react-native';
+import { View, ScrollView, Image, Platform, ActivityIndicator, Modal } from 'react-native';
 import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ExpoCalendar from 'expo-calendar';
@@ -56,20 +56,24 @@ export default function ConfirmOrderScreen() {
 
   const handleAddToCalendar = async (o: Order) => {
     if (Platform.OS === 'web') return;
-    const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
-    if (status !== 'granted') return;
-    const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
-    const writable = calendars.find((c) => c.allowsModifications);
-    if (!writable) return;
-    await ExpoCalendar.createEventAsync(writable.id, {
-      title: `Pickup: ${o.merchantName}`,
-      startDate: new Date(o.pickupWindowStart),
-      endDate: new Date(o.pickupWindowEnd),
-      notes: `Pickup code: ${o.pickupCode}`,
-      location: o.merchantName,
-    });
-    setCalendarAdded(true);
-    setTimeout(() => setCalendarAdded(false), 2000);
+    try {
+      const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
+      if (status !== 'granted') return;
+      const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
+      const writable = calendars.find((c) => c.allowsModifications);
+      if (!writable) return;
+      await ExpoCalendar.createEventAsync(writable.id, {
+        title: `Pickup: ${o.merchantName}`,
+        startDate: new Date(o.pickupWindowStart),
+        endDate: new Date(o.pickupWindowEnd),
+        notes: `Pickup code: ${o.pickupCode}`,
+        location: o.merchantName,
+      });
+      setCalendarAdded(true);
+      setTimeout(() => setCalendarAdded(false), 2000);
+    } catch {
+      // silently ignore calendar write failures
+    }
   };
 
   useEffect(() => {
@@ -131,7 +135,14 @@ export default function ConfirmOrderScreen() {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       mockRepositories.listings.getListings().then((all) => {
-        const nearby = all.filter((l) => l.merchantId !== newOrder.merchantId).slice(0, 3);
+        const nearby = all
+          .filter(
+            (l) =>
+              l.merchantId !== newOrder.merchantId &&
+              l.status === 'active' &&
+              l.quantityRemaining > 0
+          )
+          .slice(0, 3);
         setUpsellListings(nearby);
         setShowUpsell(true);
       });
@@ -191,9 +202,11 @@ export default function ConfirmOrderScreen() {
                   ((item.originalPrice - item.salePrice) / item.originalPrice) * 100
                 );
                 return (
-                  <Pressable
+                  <PressableScale
                     key={item.id}
+                    scale={0.97}
                     onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       setShowUpsell(false);
                       router.push(`/(customer)/listing/${item.id}`);
                     }}
@@ -226,7 +239,7 @@ export default function ConfirmOrderScreen() {
                         </Badge>
                       </View>
                     </View>
-                  </Pressable>
+                  </PressableScale>
                 );
               })}
               <Button
