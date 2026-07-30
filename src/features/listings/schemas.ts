@@ -22,6 +22,10 @@ export const createListingSchema = z
   .refine((data) => data.pickupWindowEnd > data.pickupWindowStart, {
     message: 'End time must be after start time',
     path: ['pickupWindowEnd'],
+  })
+  .refine((data) => data.salePrice <= data.originalPrice * 0.7, {
+    message: 'Listings must be at least 30% off the original price',
+    path: ['salePrice'],
   });
 
 export type CreateListingForm = z.infer<typeof createListingSchema>;
