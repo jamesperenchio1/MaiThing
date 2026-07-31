@@ -38,6 +38,7 @@ import {
   useDeleteListingTemplate,
 } from '@/src/hooks/useListings';
 import { useMerchantByOwner } from '@/src/hooks/useMerchants';
+import { useCoupons } from '@/src/hooks/useCoupons';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
@@ -64,6 +65,7 @@ function shiftWindowToToday(isoString: string): string {
 
 function InventoryCard({
   listing,
+  merchantId,
   onEdit,
   onDuplicate,
   onToggleStatus,
@@ -74,6 +76,7 @@ function InventoryCard({
   onSelect,
 }: {
   listing: Listing;
+  merchantId: string;
   onEdit: () => void;
   onDuplicate: () => void;
   onToggleStatus: () => void;
@@ -86,6 +89,11 @@ function InventoryCard({
   const { t } = useTranslation();
   const colors = useThemeColor();
   const updateListing = useUpdateListing();
+  const [showPromoModal, setShowPromoModal] = useState(false);
+
+  const { data: coupons } = useCoupons(merchantId);
+
+  const attachedCoupon = coupons?.find((c) => c.id === listing.couponId) ?? null;
 
   const isActive = listing.status === 'active';
   const pickupStart = new Date(listing.pickupWindowStart).toLocaleTimeString([], {
@@ -167,6 +175,16 @@ function InventoryCard({
               {pickupStart} – {pickupEnd}
             </Text>
           </View>
+          {attachedCoupon && (
+            <View className="mb-2 flex-row items-center">
+              <View className="flex-row items-center rounded-full bg-primary/10 px-2 py-0.5">
+                <Tag size={10} color={colors.primary} />
+                <Text variant="caption" className="ml-1 font-semibold text-primary">
+                  {attachedCoupon.code}
+                </Text>
+              </View>
+            </View>
+          )}
           {!isSelecting && (
             <View className="mt-auto flex-row items-center justify-between border-t border-border pt-2">
               <View className="flex-row items-center">
@@ -201,9 +219,19 @@ function InventoryCard({
                     onDelete();
                   }}
                   scale={0.9}
-                  className="p-1"
+                  className="p-1 mr-3"
                 >
                   <Trash2 size={16} color={colors.danger} />
+                </PressableScale>
+                <PressableScale
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowPromoModal(true);
+                  }}
+                  scale={0.9}
+                  className="p-1"
+                >
+                  <Tag size={16} color={listing.couponId ? colors.primary : colors.muted} />
                 </PressableScale>
               </View>
               <PressableScale
@@ -229,6 +257,105 @@ function InventoryCard({
           )}
         </View>
       </Card>
+
+      <Modal
+        visible={showPromoModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPromoModal(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="max-h-[70%] rounded-t-3xl bg-card px-4 pb-8 pt-4">
+            <View className="mb-4 flex-row items-center justify-between">
+              <PressableScale
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowPromoModal(false);
+                }}
+                scale={0.95}
+              >
+                <X size={22} color={colors.muted} />
+              </PressableScale>
+              <Text variant="h3">Attach promotion</Text>
+              <View style={{ width: 22 }} />
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {coupons && coupons.length > 0 ? (
+                coupons.map((coupon) => {
+                  const isAttached = listing.couponId === coupon.id;
+                  return (
+                    <PressableScale
+                      key={coupon.id}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        updateListing.mutate(
+                          { id: listing.id, data: { couponId: coupon.id } },
+                          { onSuccess: () => setShowPromoModal(false) }
+                        );
+                      }}
+                      scale={0.98}
+                      className="mb-3"
+                    >
+                      <View
+                        className={`rounded-xl border p-3 ${
+                          isAttached ? 'border-primary bg-primary/10' : 'border-border bg-background'
+                        }`}
+                      >
+                        <View className="flex-row items-center justify-between">
+                          <View className="flex-1">
+                            <Text variant="body-sm" className="font-semibold">
+                              {coupon.code}
+                            </Text>
+                            <Text variant="caption" className="text-muted">
+                              {coupon.discountType === 'percentage'
+                                ? `${coupon.discountValue}% off`
+                                : `฿${coupon.discountValue} off`}
+                              {coupon.minOrderAmount
+                                ? ` · min ฿${coupon.minOrderAmount}`
+                                : ''}
+                            </Text>
+                            {coupon.description ? (
+                              <Text variant="caption" className="mt-0.5 text-muted" numberOfLines={1}>
+                                {coupon.description}
+                              </Text>
+                            ) : null}
+                          </View>
+                          {isAttached && <Check size={18} color={colors.primary} />}
+                        </View>
+                      </View>
+                    </PressableScale>
+                  );
+                })
+              ) : (
+                <Text variant="body-sm" className="text-center text-muted py-6">
+                  No active promotions. Create one in the Promotions tab.
+                </Text>
+              )}
+
+              {listing.couponId && (
+                <PressableScale
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    updateListing.mutate(
+                      { id: listing.id, data: { couponId: undefined } },
+                      { onSuccess: () => setShowPromoModal(false) }
+                    );
+                  }}
+                  scale={0.97}
+                  className="mt-2"
+                >
+                  <View className="rounded-xl border border-danger/30 bg-danger/5 p-3 items-center">
+                    <Text variant="body-sm" className="font-semibold text-danger">
+                      Remove promo
+                    </Text>
+                  </View>
+                </PressableScale>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </PressableScale>
   );
 }
@@ -580,6 +707,7 @@ export default function InventoryScreen() {
           renderItem={({ item }) => (
             <InventoryCard
               listing={item}
+              merchantId={merchantId ?? ''}
               onEdit={() => handleEdit(item)}
               onDuplicate={() => handleDuplicate(item)}
               onToggleStatus={() => handleToggleStatus(item)}

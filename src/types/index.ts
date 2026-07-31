@@ -98,6 +98,7 @@ export interface ListingBase {
   createdAt: string;
   distance?: number;
   lowStockThreshold?: number;
+  couponId?: string;
 }
 
 export interface MysteryBoxListing extends ListingBase {
