@@ -258,7 +258,7 @@ export default function MerchantOrdersScreen() {
   const handleScanPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS !== 'web') {
-      router.push('/(merchant)/scanner' as any);
+      router.push({ pathname: '/(merchant)/scanner' as const });
     } else {
       setShowWebScanner((prev) => !prev);
       setPickupCode('');
@@ -271,7 +271,7 @@ export default function MerchantOrdersScreen() {
     if (!code || !merchant?.id) return;
     const order = await mockRepositories.orders.getOrderByPickupCode(merchant.id, code);
     if (order) {
-      router.push(`/(merchant)/order/${order.id}` as any);
+      router.push({ pathname: '/(merchant)/order/[id]' as const, params: { id: order.id } });
       setShowWebScanner(false);
     } else {
       setCodeError('Code not found');
