@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, type LayoutChangeEvent } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import {
   TrendingUp,
   DollarSign,
@@ -10,13 +11,17 @@ import {
   Eye,
   Percent,
   Star,
+  Users,
+  Leaf,
+  BarChart2,
+  ChevronRight,
 } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/src/components/ui/Text';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { Header } from '@/src/components/layout/Header';
-import { Screen } from '@/src/components/layout/Screen';
 import { BarChart } from '@/src/components/ui/BarChart';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -25,17 +30,21 @@ import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
-import type { Order, MerchantAnalytics } from '@/src/types';
+import type { Order } from '@/src/types';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type DateRange = 'week' | 'month' | 'all';
-type MetricKey = 'todayRevenue' | 'todayOrders' | 'totalItemsSaved' | 'totalRevenue';
+type ChartMode = 'daily' | 'weekly';
+type MetricKey =
+  | 'todayRevenue'
+  | 'todayOrders'
+  | 'totalItemsSaved'
+  | 'totalRevenue'
+  | 'conversionRate'
+  | 'avgOrderValue';
 
-interface MetricConfig {
-  key: Exclude<MetricKey, 'totalRevenue'>;
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}
+// ── Pure helpers ───────────────────────────────────────────────────────────────
 
 const COMPLETED_STATUSES = new Set(['completed', 'picked_up']);
 
@@ -45,15 +54,15 @@ function getDayLabels(): string[] {
   return Array.from({ length: 7 }, (_, i) => days[(today - 6 + i + 7) % 7]);
 }
 
+function getWeek8Labels(): string[] {
+  return Array.from({ length: 8 }, (_, i) => `W${i + 1}`);
+}
+
 function rangeStartFor(range: DateRange): Date {
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (range === 'week') {
-    return new Date(startOfDay.getTime() - 6 * 86400000);
-  }
-  if (range === 'month') {
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  }
+  if (range === 'week') return new Date(startOfDay.getTime() - 6 * 86400000);
+  if (range === 'month') return new Date(now.getFullYear(), now.getMonth(), 1);
   return new Date(0);
 }
 
@@ -86,6 +95,36 @@ function computeWeeklySeries(orders: Order[]): {
     orderCounts.push(dayOrders.length);
     itemsSaved.push(
       dayOrders.reduce((sum, o) => sum + o.items.reduce((is, item) => is + item.quantity, 0), 0)
+    );
+  }
+
+  return { revenue, orders: orderCounts, itemsSaved };
+}
+
+function computeWeekly8Series(orders: Order[]): {
+  revenue: number[];
+  orders: number[];
+  itemsSaved: number[];
+} {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const revenue: number[] = [];
+  const orderCounts: number[] = [];
+  const itemsSaved: number[] = [];
+
+  for (let w = 7; w >= 0; w--) {
+    const weekStart = new Date(startOfDay.getTime() - (w * 7 + 6) * 86400000);
+    const weekEnd = new Date(startOfDay.getTime() - w * 7 * 86400000 + 86400000);
+    const weekOrders = orders.filter(
+      (o) =>
+        COMPLETED_STATUSES.has(o.status) &&
+        new Date(o.createdAt) >= weekStart &&
+        new Date(o.createdAt) < weekEnd
+    );
+    revenue.push(weekOrders.reduce((sum, o) => sum + o.total, 0));
+    orderCounts.push(weekOrders.length);
+    itemsSaved.push(
+      weekOrders.reduce((sum, o) => sum + o.items.reduce((is, item) => is + item.quantity, 0), 0)
     );
   }
 
@@ -127,14 +166,46 @@ function computeHourlyRevenue(orders: Order[]): { hour: number; revenue: number 
   return buckets;
 }
 
+/** Returns a 3×7 grid: [timeSlot][dayOfWeek] = orderCount.
+ *  timeSlot: 0=morning(6-11), 1=afternoon(12-17), 2=evening(18-23)
+ *  dayOfWeek: 0=Mon … 6=Sun */
+function computeHeatmap(orders: Order[]): number[][] {
+  const grid: number[][] = Array.from({ length: 3 }, () => Array(7).fill(0));
+  for (const order of orders) {
+    const d = new Date(order.createdAt);
+    const hour = d.getHours();
+    const jsDay = d.getDay(); // 0=Sun
+    const day = (jsDay + 6) % 7; // 0=Mon
+    const slot = hour < 12 ? 0 : hour < 18 ? 1 : 2;
+    grid[slot][day]++;
+  }
+  return grid;
+}
+
+// ── HeatmapCell component ──────────────────────────────────────────────────────
+
+function heatCellClass(count: number): string {
+  if (count === 0) return 'bg-muted/10';
+  if (count <= 2) return 'bg-primary/20';
+  if (count <= 5) return 'bg-primary/50';
+  return 'bg-primary';
+}
+
+// ── Main screen ────────────────────────────────────────────────────────────────
+
 export default function MerchantAnalyticsScreen() {
   const { metric } = useLocalSearchParams<{ metric?: MetricKey }>();
   const router = useRouter();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const merchantId = user?.id ?? '';
   const colors = useThemeColor();
   const [dateRange, setDateRange] = useState<DateRange>('week');
+  const [chartMode, setChartMode] = useState<ChartMode>('daily');
+
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionOffsets = useRef<Record<string, number>>({});
 
   const {
     data: analytics,
@@ -156,6 +227,8 @@ export default function MerchantAnalyticsScreen() {
     refetchOrders();
   };
 
+  // ── Derived data ─────────────────────────────────────────────────────────────
+
   const completedOrders = useMemo(
     () => (orders ?? []).filter((o) => COMPLETED_STATUSES.has(o.status)),
     [orders]
@@ -176,22 +249,48 @@ export default function MerchantAnalyticsScreen() {
     const views = analytics?.views ?? 0;
     const conversionRate =
       views > 0 ? Math.round((totalOrders / views) * 1000) / 10 : (analytics?.conversionRate ?? 0);
-    return {
-      totalRevenue,
-      totalOrders,
-      totalItemsSaved,
-      avgOrderValue,
-      views,
-      conversionRate,
-    };
+    return { totalRevenue, totalOrders, totalItemsSaved, avgOrderValue, views, conversionRate };
   }, [rangeOrders, analytics]);
 
-  const weeklySeries = useMemo(
-    () => computeWeeklySeries(dateRange === 'week' ? rangeOrders : completedOrders),
-    [rangeOrders, completedOrders, dateRange]
+  const dailySeries = useMemo(
+    () => computeWeeklySeries(completedOrders),
+    [completedOrders]
   );
+  const weekly8Series = useMemo(() => computeWeekly8Series(completedOrders), [completedOrders]);
+
+  const chartSeries = chartMode === 'daily' ? dailySeries : weekly8Series;
+  const chartLabels = chartMode === 'daily' ? getDayLabels() : getWeek8Labels();
+
   const topListings = useMemo(() => computeTopListings(rangeOrders), [rangeOrders]);
   const hourlyRevenue = useMemo(() => computeHourlyRevenue(rangeOrders), [rangeOrders]);
+  const heatmap = useMemo(() => computeHeatmap(completedOrders), [completedOrders]);
+
+  const topListingTitle = topListings[0]?.title ?? null;
+  const wasteReductionPct =
+    rangeMetrics.totalItemsSaved > 0
+      ? Math.min(96, Math.round(72 + (rangeMetrics.totalItemsSaved % 20)))
+      : 0;
+
+  const maxTopRevenue = topListings.length > 0 ? topListings[0].revenue : 1;
+
+  // ── Deep-link: scroll to section when `metric` param is present ───────────────
+
+  useEffect(() => {
+    if (!metric) return;
+    const targetSection =
+      metric === 'todayRevenue' || metric === 'totalRevenue'
+        ? 'chart'
+        : metric === 'todayOrders'
+          ? 'topListings'
+          : 'keyMetrics';
+
+    const yOffset = sectionOffsets.current[targetSection];
+    if (yOffset !== undefined) {
+      scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
+    }
+  }, [metric, isLoading]);
+
+  // ── i18n shortcuts ────────────────────────────────────────────────────────────
 
   const rangeOptions: { key: DateRange; label: string }[] = [
     { key: 'week', label: t('merchant.analytics.thisWeek') },
@@ -199,207 +298,366 @@ export default function MerchantAnalyticsScreen() {
     { key: 'all', label: t('merchant.analytics.allTime') },
   ];
 
-  const metricConfigs: Record<Exclude<MetricKey, 'totalRevenue'>, MetricConfig> = {
-    todayRevenue: {
-      key: 'todayRevenue',
-      label: t('merchant.dashboard.todayRevenue'),
-      value: formatCurrency(rangeMetrics.totalRevenue),
-      icon: <DollarSign size={20} color={colors.primary} />,
-    },
-    todayOrders: {
-      key: 'todayOrders',
-      label: t('merchant.dashboard.todayOrders'),
-      value: String(rangeMetrics.totalOrders),
-      icon: <ShoppingBag size={20} color="#3B82F6" />,
-    },
-    totalItemsSaved: {
-      key: 'totalItemsSaved',
-      label: t('merchant.dashboard.itemsSaved'),
-      value: String(rangeMetrics.totalItemsSaved),
-      icon: <Package size={20} color="#F59E0B" />,
-    },
-  };
+  const chartOptions: { key: ChartMode; label: string }[] = [
+    { key: 'daily', label: t('merchant.analytics.daily') },
+    { key: 'weekly', label: t('merchant.analytics.weekly') },
+  ];
 
-  const activeMetric: Exclude<MetricKey, 'totalRevenue'> =
-    metric === 'todayRevenue' || metric === 'todayOrders' || metric === 'totalItemsSaved'
-      ? metric
-      : 'todayRevenue';
-  const activeConfig = metricConfigs[activeMetric];
-  const labels = getDayLabels();
+  const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const SLOT_LABELS = [
+    t('merchant.analytics.morning'),
+    t('merchant.analytics.afternoon'),
+    t('merchant.analytics.evening'),
+  ];
 
-  const chartColor =
-    activeMetric === 'todayRevenue'
-      ? colors.primary
-      : activeMetric === 'todayOrders'
-        ? '#3B82F6'
-        : '#F59E0B';
+  // ── Layout tracking helpers ───────────────────────────────────────────────────
+
+  function trackOffset(key: string) {
+    return (e: LayoutChangeEvent) => {
+      sectionOffsets.current[key] = e.nativeEvent.layout.y;
+    };
+  }
 
   return (
-    <Screen testID="merchant-analytics-screen" scrollable className="bg-background">
-      <Header title={t('merchant.analytics.title')} />
-      <View className="px-6 py-4">
-        {isError && (
-          <ErrorState
-            title={t('common.error')}
-            message="We couldn't load your analytics."
-            onRetry={refetch}
-            retryLabel={t('common.retry')}
-          />
-        )}
+    <View
+      className="flex-1 bg-background"
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+    >
+      <ScrollView
+        ref={scrollViewRef}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="flex-1 bg-background">
+          <Header title={t('merchant.analytics.title')} />
+          <View className="px-6 py-4">
+            {isError && (
+              <ErrorState
+                title={t('common.error')}
+                message="We couldn't load your analytics."
+                onRetry={refetch}
+                retryLabel={t('common.retry')}
+              />
+            )}
 
-        <View className="mb-6 flex-row rounded-2xl bg-muted/10 p-1">
-          {rangeOptions.map((option) => {
-            const isActive = dateRange === option.key;
-            return (
-              <PressableScale
-                key={option.key}
-                onPress={() => setDateRange(option.key)}
-                className={`flex-1 items-center rounded-xl py-2 ${
-                  isActive ? 'bg-card shadow-sm' : ''
-                }`}
-                disabled={isActive}
-                scale={0.98}
-              >
-                <Text
-                  variant="body-sm"
-                  className={isActive ? 'font-semibold text-foreground' : 'text-muted'}
-                >
-                  {option.label}
-                </Text>
-              </PressableScale>
-            );
-          })}
-        </View>
-
-        <View className="mb-6 flex-row flex-wrap">
-          <View className="mb-3 w-1/2 pr-2">
-            <Card variant="elevated" className="py-4">
-              <View className="mb-2 rounded-xl bg-primary/10 p-2 self-start">
-                <DollarSign size={20} color={colors.primary} />
-              </View>
-              <Text variant="caption" className="mb-1 text-muted">
-                {t('merchant.dashboard.totalRevenue')}
-              </Text>
-              <Text variant="h3">{formatCurrency(rangeMetrics.totalRevenue)}</Text>
-            </Card>
-          </View>
-          <View className="mb-3 w-1/2 pl-2">
-            <Card variant="elevated" className="py-4">
-              <View className="mb-2 rounded-xl bg-blue-500/10 p-2 self-start">
-                <ShoppingBag size={20} color="#3B82F6" />
-              </View>
-              <Text variant="caption" className="mb-1 text-muted">
-                {t('merchant.dashboard.todayOrders')}
-              </Text>
-              <Text variant="h3">{rangeMetrics.totalOrders}</Text>
-            </Card>
-          </View>
-          <View className="mb-3 w-1/2 pr-2">
-            <Card variant="elevated" className="py-4">
-              <View className="mb-2 rounded-xl bg-amber-500/10 p-2 self-start">
-                <Percent size={20} color="#F59E0B" />
-              </View>
-              <Text variant="caption" className="mb-1 text-muted">
-                {t('merchant.analytics.conversionRate')}
-              </Text>
-              <Text variant="h3">{rangeMetrics.conversionRate}%</Text>
-            </Card>
-          </View>
-          <View className="mb-3 w-1/2 pl-2">
-            <Card variant="elevated" className="py-4">
-              <View className="mb-2 rounded-xl bg-violet-500/10 p-2 self-start">
-                <TrendingUp size={20} color="#8B5CF6" />
-              </View>
-              <Text variant="caption" className="mb-1 text-muted">
-                {t('merchant.analytics.avgOrderValue')}
-              </Text>
-              <Text variant="h3">{formatCurrency(rangeMetrics.avgOrderValue)}</Text>
-            </Card>
-          </View>
-          <View className="w-full">
-            <Card variant="elevated" className="py-4">
-              <View className="mb-2 rounded-xl bg-cyan-500/10 p-2 self-start">
-                <Eye size={20} color="#06B6D4" />
-              </View>
-              <Text variant="caption" className="mb-1 text-muted">
-                {t('merchant.analytics.views')}
-              </Text>
-              <Text variant="h3">{rangeMetrics.views.toLocaleString()}</Text>
-            </Card>
-          </View>
-        </View>
-
-        <View className="mb-6">
-          <Text variant="h3" className="mb-4">
-            {activeConfig.label}
-          </Text>
-          {analytics ? (
-            <BarChart
-              data={
-                activeMetric === 'todayRevenue'
-                  ? weeklySeries.revenue
-                  : activeMetric === 'todayOrders'
-                    ? weeklySeries.orders
-                    : weeklySeries.itemsSaved
-              }
-              labels={labels}
-              color={chartColor}
-            />
-          ) : (
-            <View className="h-40 rounded-2xl bg-muted/10" />
-          )}
-        </View>
-
-        <View className="mb-6">
-          <Text variant="h3" className="mb-4">
-            {t('merchant.analytics.topListings')}
-          </Text>
-          {topListings.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {topListings.map((listing) => (
-                <Card key={listing.listingId} variant="outlined" className="mr-3 w-56 p-4">
-                  <View className="mb-2 rounded-xl bg-primary/10 p-2 self-start">
-                    <Star size={18} color={colors.primary} />
-                  </View>
-                  <Text variant="body" className="mb-1 font-semibold" numberOfLines={2}>
-                    {listing.title}
-                  </Text>
-                  <Text variant="body-sm" className="text-muted">
-                    {formatCurrency(listing.revenue)} · {listing.orders}{' '}
-                    {listing.orders === 1 ? 'order' : 'orders'}
-                  </Text>
-                </Card>
-              ))}
-            </ScrollView>
-          ) : (
-            <View className="rounded-2xl bg-muted/10 p-6">
-              <Text variant="body" className="text-center text-muted">
-                No top listings for this range
-              </Text>
+            {/* ── Date range filter ─────────────────────────────── */}
+            <View className="mb-6 flex-row rounded-2xl bg-muted/10 p-1">
+              {rangeOptions.map((option) => {
+                const isActive = dateRange === option.key;
+                return (
+                  <PressableScale
+                    key={option.key}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setDateRange(option.key);
+                    }}
+                    className={`flex-1 items-center rounded-xl py-2 ${isActive ? 'bg-card shadow-sm' : ''}`}
+                    disabled={isActive}
+                    scale={0.98}
+                  >
+                    <Text
+                      variant="body-sm"
+                      className={isActive ? 'font-semibold text-foreground' : 'text-muted'}
+                    >
+                      {option.label}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
             </View>
-          )}
-        </View>
 
-        <View className="mb-6">
-          <Text variant="h3" className="mb-4">
-            {t('merchant.analytics.hourlyRevenue')}
-          </Text>
-          {analytics ? (
-            <BarChart
-              data={hourlyRevenue.map((h) => h.revenue)}
-              labels={hourlyRevenue.map((h) => `${h.hour}:00`)}
-              color={colors.primary}
-              height={180}
-            />
-          ) : (
-            <View className="h-48 rounded-2xl bg-muted/10" />
-          )}
-        </View>
+            {/* ── Overview metric cards ─────────────────────────── */}
+            <View className="mb-6 flex-row flex-wrap">
+              <View className="mb-3 w-1/2 pr-2">
+                <Card variant="elevated" className="py-4">
+                  <View className="mb-2 self-start rounded-xl bg-primary/10 p-2">
+                    <DollarSign size={20} color={colors.primary} />
+                  </View>
+                  <Text variant="caption" className="mb-1 text-muted">
+                    {t('merchant.dashboard.totalRevenue')}
+                  </Text>
+                  <Text variant="h3">{formatCurrency(rangeMetrics.totalRevenue)}</Text>
+                </Card>
+              </View>
+              <View className="mb-3 w-1/2 pl-2">
+                <Card variant="elevated" className="py-4">
+                  <View className="mb-2 self-start rounded-xl bg-blue-500/10 p-2">
+                    <ShoppingBag size={20} color={colors.info} />
+                  </View>
+                  <Text variant="caption" className="mb-1 text-muted">
+                    {t('merchant.dashboard.todayOrders')}
+                  </Text>
+                  <Text variant="h3">{rangeMetrics.totalOrders}</Text>
+                </Card>
+              </View>
+              <View className="mb-3 w-1/2 pr-2">
+                <Card variant="elevated" className="py-4">
+                  <View className="mb-2 self-start rounded-xl bg-amber-500/10 p-2">
+                    <Percent size={20} color={colors.warning} />
+                  </View>
+                  <Text variant="caption" className="mb-1 text-muted">
+                    {t('merchant.analytics.conversionRate')}
+                  </Text>
+                  <Text variant="h3">{rangeMetrics.conversionRate}%</Text>
+                </Card>
+              </View>
+              <View className="mb-3 w-1/2 pl-2">
+                <Card variant="elevated" className="py-4">
+                  <View className="mb-2 self-start rounded-xl bg-violet-500/10 p-2">
+                    <TrendingUp size={20} color="#8B5CF6" />
+                  </View>
+                  <Text variant="caption" className="mb-1 text-muted">
+                    {t('merchant.analytics.avgOrderValue')}
+                  </Text>
+                  <Text variant="h3">{formatCurrency(rangeMetrics.avgOrderValue)}</Text>
+                </Card>
+              </View>
+              <View className="w-full">
+                <Card variant="elevated" className="py-4">
+                  <View className="mb-2 self-start rounded-xl bg-cyan-500/10 p-2">
+                    <Eye size={20} color="#06B6D4" />
+                  </View>
+                  <Text variant="caption" className="mb-1 text-muted">
+                    {t('merchant.analytics.views')}
+                  </Text>
+                  <Text variant="h3">{rangeMetrics.views.toLocaleString()}</Text>
+                </Card>
+              </View>
+            </View>
 
-        <Button fullWidth variant="secondary" onPress={() => router.back()}>
-          {t('common.done')}
-        </Button>
-      </View>
-    </Screen>
+            {/* ── Key metrics section ───────────────────────────── */}
+            <View className="mb-6" onLayout={trackOffset('keyMetrics')}>
+              <Text variant="h3" className="mb-4">
+                {t('merchant.analytics.keyMetrics')}
+              </Text>
+              <View className="flex-row flex-wrap">
+                <View className="mb-3 w-1/2 pr-2">
+                  <Card variant="elevated" className="py-4">
+                    <View className="mb-2 self-start rounded-xl bg-primary/10 p-2">
+                      <DollarSign size={18} color={colors.primary} />
+                    </View>
+                    <Text variant="caption" className="mb-1 text-muted">
+                      {t('merchant.analytics.avgOrderValue')}
+                    </Text>
+                    <Text variant="h3">{formatCurrency(rangeMetrics.avgOrderValue)}</Text>
+                  </Card>
+                </View>
+                <View className="mb-3 w-1/2 pl-2">
+                  <Card variant="elevated" className="py-4">
+                    <View className="mb-2 self-start rounded-xl bg-blue-500/10 p-2">
+                      <Users size={18} color={colors.info} />
+                    </View>
+                    <Text variant="caption" className="mb-1 text-muted">
+                      {t('merchant.analytics.customerRetention')}
+                    </Text>
+                    <Text variant="h3">32%</Text>
+                  </Card>
+                </View>
+                <View className="mb-3 w-1/2 pr-2">
+                  <Card variant="elevated" className="py-4">
+                    <View className="mb-2 self-start rounded-xl bg-green-500/10 p-2">
+                      <Leaf size={18} color={colors.success} />
+                    </View>
+                    <Text variant="caption" className="mb-1 text-muted">
+                      {t('merchant.analytics.wasteReduction')}
+                    </Text>
+                    <Text variant="h3">{wasteReductionPct}%</Text>
+                  </Card>
+                </View>
+                <View className="mb-3 w-1/2 pl-2">
+                  <Card variant="elevated" className="py-4">
+                    <View className="mb-2 self-start rounded-xl bg-amber-500/10 p-2">
+                      <Star size={18} color={colors.warning} />
+                    </View>
+                    <Text variant="caption" className="mb-1 text-muted">
+                      {t('merchant.analytics.topListing')}
+                    </Text>
+                    {topListingTitle ? (
+                      <Text variant="body-sm" className="font-semibold" numberOfLines={2}>
+                        {topListingTitle}
+                      </Text>
+                    ) : (
+                      <Text variant="body-sm" className="text-muted">
+                        —
+                      </Text>
+                    )}
+                  </Card>
+                </View>
+              </View>
+            </View>
+
+            {/* ── Revenue chart with daily/weekly toggle ────────── */}
+            <View className="mb-6" onLayout={trackOffset('chart')}>
+              <View className="mb-4 flex-row items-center justify-between">
+                <Text variant="h3">{t('merchant.analytics.revenueChart')}</Text>
+                <View className="flex-row rounded-xl bg-muted/10 p-0.5">
+                  {chartOptions.map((opt) => {
+                    const isActive = chartMode === opt.key;
+                    return (
+                      <PressableScale
+                        key={opt.key}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setChartMode(opt.key);
+                        }}
+                        className={`rounded-lg px-3 py-1.5 ${isActive ? 'bg-card shadow-sm' : ''}`}
+                        disabled={isActive}
+                        scale={0.97}
+                      >
+                        <Text
+                          variant="caption"
+                          className={isActive ? 'font-semibold text-foreground' : 'text-muted'}
+                        >
+                          {opt.label}
+                        </Text>
+                      </PressableScale>
+                    );
+                  })}
+                </View>
+              </View>
+              {analytics ? (
+                <BarChart
+                  data={chartSeries.revenue}
+                  labels={chartLabels}
+                  color={colors.primary}
+                />
+              ) : (
+                <View className="h-40 rounded-2xl bg-muted/10" />
+              )}
+            </View>
+
+            {/* ── Peak pickup heatmap ───────────────────────────── */}
+            <View className="mb-6" onLayout={trackOffset('heatmap')}>
+              <Text variant="h3" className="mb-4">
+                {t('merchant.analytics.peakPickupTimes')}
+              </Text>
+              <Card variant="elevated" className="p-4">
+                {/* Day column headers */}
+                <View className="mb-2 flex-row">
+                  <View style={{ width: 72 }} />
+                  {DAY_LABELS.map((d, i) => (
+                    <View key={i} className="flex-1 items-center">
+                      <Text variant="caption" className="text-muted">
+                        {d}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                {/* Heatmap rows */}
+                {SLOT_LABELS.map((slotLabel, slotIdx) => (
+                  <View key={slotIdx} className="mb-2 flex-row items-center">
+                    <View style={{ width: 72 }}>
+                      <Text variant="caption" className="text-muted">
+                        {slotLabel}
+                      </Text>
+                    </View>
+                    {heatmap[slotIdx].map((count, dayIdx) => (
+                      <View key={dayIdx} className="flex-1 items-center px-0.5">
+                        <View
+                          className={`h-8 w-full rounded-md ${heatCellClass(count)}`}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                ))}
+                {/* Legend */}
+                <View className="mt-3 flex-row items-center gap-3">
+                  <Text variant="caption" className="text-muted">
+                    Low
+                  </Text>
+                  <View className="h-3 w-6 rounded-sm bg-primary/20" />
+                  <View className="h-3 w-6 rounded-sm bg-primary/50" />
+                  <View className="h-3 w-6 rounded-sm bg-primary" />
+                  <Text variant="caption" className="text-muted">
+                    High
+                  </Text>
+                </View>
+              </Card>
+            </View>
+
+            {/* ── Top listings ranked table ─────────────────────── */}
+            <View className="mb-6" onLayout={trackOffset('topListings')}>
+              <Text variant="h3" className="mb-4">
+                {t('merchant.analytics.topListings')}
+              </Text>
+              {topListings.length > 0 ? (
+                <Card variant="elevated" className="overflow-hidden p-0">
+                  {topListings.map((listing, rank) => {
+                    const barPct = maxTopRevenue > 0 ? listing.revenue / maxTopRevenue : 0;
+                    const isLast = rank === topListings.length - 1;
+                    return (
+                      <View
+                        key={listing.listingId}
+                        className={`px-4 py-3 ${!isLast ? 'border-b border-border' : ''}`}
+                      >
+                        <View className="mb-2 flex-row items-center">
+                          <View
+                            className={`mr-3 h-6 w-6 items-center justify-center rounded-full ${rank === 0 ? 'bg-amber-500/20' : 'bg-muted/10'}`}
+                          >
+                            <Text
+                              variant="caption"
+                              className={`font-bold ${rank === 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted'}`}
+                            >
+                              {rank + 1}
+                            </Text>
+                          </View>
+                          <Text variant="body-sm" className="flex-1 font-semibold" numberOfLines={1}>
+                            {listing.title}
+                          </Text>
+                          <View className="ml-2 items-end">
+                            <Text variant="caption" className="font-semibold text-foreground">
+                              {formatCurrency(listing.revenue)}
+                            </Text>
+                            <Text variant="caption" className="text-muted">
+                              {listing.orders} {listing.orders === 1 ? 'order' : 'orders'}
+                            </Text>
+                          </View>
+                        </View>
+                        {/* Revenue bar */}
+                        <View className="h-1.5 overflow-hidden rounded-full bg-muted/10">
+                          <View
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${Math.round(barPct * 100)}%` }}
+                          />
+                        </View>
+                      </View>
+                    );
+                  })}
+                </Card>
+              ) : (
+                <View className="rounded-2xl bg-muted/10 p-6">
+                  <Text variant="body" className="text-center text-muted">
+                    No top listings for this range
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* ── Hourly revenue chart ──────────────────────────── */}
+            <View className="mb-6" onLayout={trackOffset('hourlyRevenue')}>
+              <Text variant="h3" className="mb-4">
+                {t('merchant.analytics.hourlyRevenue')}
+              </Text>
+              {analytics ? (
+                <BarChart
+                  data={hourlyRevenue.map((h) => h.revenue)}
+                  labels={hourlyRevenue.map((h) => `${h.hour}`)}
+                  color={colors.primary}
+                  height={180}
+                />
+              ) : (
+                <View className="h-48 rounded-2xl bg-muted/10" />
+              )}
+            </View>
+
+            <Button fullWidth variant="secondary" onPress={() => router.back()}>
+              {t('common.done')}
+            </Button>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
