@@ -114,7 +114,7 @@ function InventoryCard({
         <Text variant="body-sm" className="mb-1 text-muted">
           {formatCurrency(listing.salePrice)} ·{' '}
           {t('merchant.inventory.lowStock', { count: listing.quantityRemaining })}
-          {listing.quantityRemaining > 0 && listing.quantityRemaining <= 3 && (
+          {listing.quantityRemaining > 0 && listing.quantityRemaining <= (listing.lowStockThreshold ?? 3) && (
             <Text variant="body-sm" className="font-semibold text-danger">
               {' '}
               · Low stock

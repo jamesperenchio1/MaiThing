@@ -96,6 +96,7 @@ export interface ListingBase {
   status: ListingStatus;
   createdAt: string;
   distance?: number;
+  lowStockThreshold?: number;
 }
 
 export interface MysteryBoxListing extends ListingBase {

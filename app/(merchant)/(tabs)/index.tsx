@@ -211,7 +211,7 @@ export default function MerchantDashboardScreen() {
   );
 
   const lowStockListings = (listings ?? [])
-    .filter((l) => l.status === 'active' && l.quantityRemaining <= 3)
+    .filter((l) => l.status === 'active' && l.quantityRemaining <= (l.lowStockThreshold ?? 3))
     .sort((a, b) => a.quantityRemaining - b.quantityRemaining)
     .slice(0, 5);
 
