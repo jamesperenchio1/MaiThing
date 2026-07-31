@@ -70,7 +70,19 @@ function getGroupKey(start: string) {
 
 type ListItem = { type: 'header'; key: string; title: string } | { type: 'order'; order: Order };
 
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({
+  order,
+  selectionMode = false,
+  isSelected = false,
+  onSelect,
+  onLongPress,
+}: {
+  order: Order;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  onLongPress?: () => void;
+}) {
   const { t } = useTranslation();
   const router = useRouter();
   const colors = useThemeColor();
@@ -99,72 +111,100 @@ function OrderCard({ order }: { order: Order }) {
     router.push({ pathname: '/(merchant)/order/[id]' as const, params: { id: order.id } });
   };
 
+  const handlePress = () => {
+    if (selectionMode) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onSelect?.();
+    } else {
+      handleOpenDetail();
+    }
+  };
+
   return (
-    <PressableScale onPress={handleOpenDetail} scale={0.98}>
-      <Card variant="elevated" className="mb-3">
-        <View className="mb-3 flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Avatar
-              uri={order.customerAvatarUrl}
-              name={order.customerName ?? t('merchant.orders.customer')}
-              size="sm"
-              className="mr-3"
-            />
-            <View>
-              <Text variant="body-sm" className="font-semibold">
-                {order.customerName ?? t('merchant.orders.customer')}
-              </Text>
-              <Text variant="caption" className="text-muted">
-                {order.customerPhone ?? order.pickupCode}
-              </Text>
-            </View>
-          </View>
-          <Badge variant={statusVariantMap[order.status]}>
-            {t(`customer.orders.status.${order.status}`)}
-          </Badge>
-        </View>
-
-        {order.items.map((item) => (
-          <View key={item.listingId} className="mb-2 flex-row items-center">
-            {item.imageUrl ? (
-              <Image
-                source={{ uri: item.imageUrl }}
-                className="mr-3 h-10 w-10 rounded-xl"
-                resizeMode="cover"
-              />
+    <PressableScale
+      onPress={handlePress}
+      onLongPress={!selectionMode ? onLongPress : undefined}
+      scale={0.98}
+    >
+      <View className={selectionMode ? 'mb-3 flex-row items-center' : ''}>
+        {selectionMode && (
+          <View className="mr-3 items-center justify-center">
+            {isSelected ? (
+              <View className="h-6 w-6 items-center justify-center rounded-full bg-primary">
+                <Check size={14} color={colors.white} />
+              </View>
             ) : (
-              <View className="mr-3 h-10 w-10 rounded-xl bg-muted/20" />
+              <View className="h-6 w-6 rounded-full border-2 border-primary" />
             )}
-            <Text variant="body-sm" className="flex-1 text-muted" numberOfLines={1}>
-              {item.quantity}x {item.title}
-            </Text>
           </View>
-        ))}
-
-        <View className="mt-3 flex-row items-center justify-between border-t border-border pt-3">
-          <View>
-            <Text className="font-semibold">{formatCurrency(order.total)}</Text>
-            <Text variant="caption" className="text-muted">
-              {formatPickupWindow(order.pickupWindowStart, order.pickupWindowEnd)}
-            </Text>
-          </View>
-          <Text className="font-mono text-primary">{order.pickupCode}</Text>
-        </View>
-
-        {next && (
-          <Button
-            size="sm"
-            className={confirming ? 'mt-3 bg-primary' : 'mt-3'}
-            onPress={handleAdvance}
-            loading={updateStatus.isPending}
-            leftIcon={confirming ? <Check size={15} color={colors.white} /> : undefined}
-          >
-            {confirming
-              ? `${t('common.confirm')} → ${t(`customer.orders.status.${next}`)}`
-              : `Mark as ${t(`customer.orders.status.${next}`)}`}
-          </Button>
         )}
-      </Card>
+        <View className="flex-1">
+          <Card variant="elevated" className={selectionMode ? '' : 'mb-3'}>
+            <View className="mb-3 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Avatar
+                  uri={order.customerAvatarUrl}
+                  name={order.customerName ?? t('merchant.orders.customer')}
+                  size="sm"
+                  className="mr-3"
+                />
+                <View>
+                  <Text variant="body-sm" className="font-semibold">
+                    {order.customerName ?? t('merchant.orders.customer')}
+                  </Text>
+                  <Text variant="caption" className="text-muted">
+                    {order.customerPhone ?? order.pickupCode}
+                  </Text>
+                </View>
+              </View>
+              <Badge variant={statusVariantMap[order.status]}>
+                {t(`customer.orders.status.${order.status}`)}
+              </Badge>
+            </View>
+
+            {order.items.map((item) => (
+              <View key={item.listingId} className="mb-2 flex-row items-center">
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    className="mr-3 h-10 w-10 rounded-xl"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="mr-3 h-10 w-10 rounded-xl bg-muted/20" />
+                )}
+                <Text variant="body-sm" className="flex-1 text-muted" numberOfLines={1}>
+                  {item.quantity}x {item.title}
+                </Text>
+              </View>
+            ))}
+
+            <View className="mt-3 flex-row items-center justify-between border-t border-border pt-3">
+              <View>
+                <Text className="font-semibold">{formatCurrency(order.total)}</Text>
+                <Text variant="caption" className="text-muted">
+                  {formatPickupWindow(order.pickupWindowStart, order.pickupWindowEnd)}
+                </Text>
+              </View>
+              <Text className="font-mono text-primary">{order.pickupCode}</Text>
+            </View>
+
+            {!selectionMode && next && (
+              <Button
+                size="sm"
+                className={confirming ? 'mt-3 bg-primary' : 'mt-3'}
+                onPress={handleAdvance}
+                loading={updateStatus.isPending}
+                leftIcon={confirming ? <Check size={15} color={colors.white} /> : undefined}
+              >
+                {confirming
+                  ? `${t('common.confirm')} → ${t(`customer.orders.status.${next}`)}`
+                  : `Mark as ${t(`customer.orders.status.${next}`)}`}
+              </Button>
+            )}
+          </Card>
+        </View>
+      </View>
     </PressableScale>
   );
 }
@@ -179,8 +219,11 @@ export default function MerchantOrdersScreen() {
   const [showWebScanner, setShowWebScanner] = useState(false);
   const [pickupCode, setPickupCode] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: merchant } = useMerchantByOwner(user?.id ?? '');
+  const bulkUpdate = useUpdateOrderStatus();
 
   const {
     data: orders,
@@ -245,6 +288,60 @@ export default function MerchantOrdersScreen() {
       groupedData.map((item, index) => (item.type === 'header' ? index : -1)).filter((i) => i >= 0),
     [groupedData]
   );
+
+  const selectedOrders = useMemo(
+    () => filtered.filter((o) => selectedIds.has(o.id)),
+    [filtered, selectedIds]
+  );
+
+  const canConfirmAll = selectedOrders.some((o) => o.status === 'pending');
+  const canMarkReady = selectedOrders.some(
+    (o) => o.status === 'confirmed' || o.status === 'preparing'
+  );
+
+  const enterSelectionMode = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectionMode(true);
+    setSelectedIds(new Set([id]));
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const exitSelectionMode = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleConfirmAll = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const toConfirm = selectedOrders.filter((o) => o.status === 'pending');
+    await Promise.all(
+      toConfirm.map((o) => bulkUpdate.mutateAsync({ id: o.id, status: 'confirmed' }))
+    );
+    exitSelectionMode();
+  };
+
+  const handleMarkReady = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const toReady = selectedOrders.filter(
+      (o) => o.status === 'confirmed' || o.status === 'preparing'
+    );
+    await Promise.all(
+      toReady.map((o) => bulkUpdate.mutateAsync({ id: o.id, status: 'ready' }))
+    );
+    exitSelectionMode();
+  };
 
   const lastUpdated = dataUpdatedAt
     ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -358,53 +455,87 @@ export default function MerchantOrdersScreen() {
 
   return (
     <Screen testID="orders-screen" scrollable={false} className="bg-background">
-      {isError || isLoading ? (
-        <View className="flex-1 px-6 pb-6">
-          {listHeader}
-          {isError ? (
-            <ErrorState
-              title={t('common.error')}
-              message="We couldn't load your orders."
-              onRetry={refetch}
-              retryLabel={t('common.retry')}
-            />
-          ) : (
-            <>
-              <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
-              <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
-            </>
-          )}
-        </View>
-      ) : (
-        <FlashList<ListItem>
-          className="flex-1"
-          data={groupedData}
-          renderItem={({ item }) => {
-            if (item.type === 'header') {
+      <View className="flex-1">
+        {isError || isLoading ? (
+          <View className="flex-1 px-6 pb-6">
+            {listHeader}
+            {isError ? (
+              <ErrorState
+                title={t('common.error')}
+                message="We couldn't load your orders."
+                onRetry={refetch}
+                retryLabel={t('common.retry')}
+              />
+            ) : (
+              <>
+                <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
+                <Skeleton width="100%" height={180} className="mb-3 rounded-2xl" />
+              </>
+            )}
+          </View>
+        ) : (
+          <FlashList<ListItem>
+            className="flex-1"
+            data={groupedData}
+            renderItem={({ item }) => {
+              if (item.type === 'header') {
+                return (
+                  <View className="bg-background py-2">
+                    <Text variant="label">{item.title}</Text>
+                  </View>
+                );
+              }
               return (
-                <View className="bg-background py-2">
-                  <Text variant="label">{item.title}</Text>
-                </View>
+                <OrderCard
+                  order={item.order}
+                  selectionMode={selectionMode}
+                  isSelected={selectedIds.has(item.order.id)}
+                  onSelect={() => toggleSelection(item.order.id)}
+                  onLongPress={() => enterSelectionMode(item.order.id)}
+                />
               );
+            }}
+            keyExtractor={(item) => (item.type === 'header' ? item.key : item.order.id)}
+            getItemType={(item) => item.type}
+            stickyHeaderIndices={stickyHeaderIndices}
+            estimatedItemSize={168}
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={
+              <EmptyState
+                icon={<ClipboardList size={32} color={colors.muted} />}
+                title={t('merchant.orders.noOrders')}
+                description="Orders will appear here when customers make purchases."
+              />
             }
-            return <OrderCard order={item.order} />;
-          }}
-          keyExtractor={(item) => (item.type === 'header' ? item.key : item.order.id)}
-          getItemType={(item) => item.type}
-          stickyHeaderIndices={stickyHeaderIndices}
-          estimatedItemSize={168}
-          ListHeaderComponent={listHeader}
-          ListEmptyComponent={
-            <EmptyState
-              icon={<ClipboardList size={32} color={colors.muted} />}
-              title={t('merchant.orders.noOrders')}
-              description="Orders will appear here when customers make purchases."
-            />
-          }
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
-        />
+            refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+          />
+        )}
+      </View>
+      {selectionMode && selectedIds.size > 0 && (
+        <View className="flex-row items-center gap-2 border-t border-border bg-card px-4 py-3">
+          <View className="flex-row gap-2">
+            {canConfirmAll && (
+              <Button size="sm" onPress={handleConfirmAll} loading={bulkUpdate.isPending}>
+                Confirm all
+              </Button>
+            )}
+            {canMarkReady && (
+              <Button size="sm" onPress={handleMarkReady} loading={bulkUpdate.isPending}>
+                Mark ready
+              </Button>
+            )}
+          </View>
+          <Text variant="body-sm" className="flex-1 text-center text-muted">
+            {selectedIds.size} selected
+          </Text>
+          <PressableScale onPress={exitSelectionMode} scale={0.95}>
+            <Text variant="body-sm" className="font-semibold text-primary">
+              Cancel
+            </Text>
+          </PressableScale>
+        </View>
       )}
     </Screen>
   );
