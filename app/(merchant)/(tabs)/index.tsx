@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   ChevronRight,
   CalendarClock,
-  CheckCircle2,
   Minus,
   X,
   MessageSquare,

@@ -442,7 +442,7 @@ class MockMerchantRepository implements MerchantRepository {
     if (merchant) merchant.followers = Math.max(0, merchant.followers - 1);
   }
 
-  async verifyMerchant(merchantId: string): Promise<Merchant> {
+  async verifyMerchant(merchantId: string, override?: boolean): Promise<Merchant> {
     await sleep(600);
     const index = MERCHANTS.findIndex((m) => m.id === merchantId);
     if (index === -1) throw new Error('Merchant not found');

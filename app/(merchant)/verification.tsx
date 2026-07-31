@@ -17,6 +17,7 @@ import { Text } from '@/src/components/ui/Text';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/layout/Screen';
+import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -157,6 +158,7 @@ export default function VerificationScreen() {
 
   return (
     <Screen scrollable className="bg-background">
+      <Header title="Get Verified" showBack />
       <View className="px-6 pt-4 pb-8">
         {/* Header card */}
         <Card variant="elevated" className="mb-6">
@@ -205,10 +207,10 @@ export default function VerificationScreen() {
             <View className="flex-row items-start">
               <CheckCircle2 size={20} color={colors.success} />
               <View className="ml-3 flex-1">
-                <Text variant="body-sm" className="font-semibold text-green-800">
+                <Text variant="body-sm" className="font-semibold text-green-700 dark:text-green-400">
                   You qualify for verification!
                 </Text>
-                <Text variant="caption" className="mt-0.5 text-green-700">
+                <Text variant="caption" className="mt-0.5 text-green-700 dark:text-green-400">
                   All criteria are met. Tap "Submit for Verification" to complete your application.
                 </Text>
               </View>
