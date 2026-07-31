@@ -321,6 +321,20 @@ class MockMerchantRepository implements MerchantRepository {
     return MERCHANTS[index];
   }
 
+  async setStoreClosure(merchantId: string, closedUntil: string | null): Promise<Merchant> {
+    await sleep(300);
+    const index = MERCHANTS.findIndex((m) => m.id === merchantId);
+    if (index === -1) throw new Error('Merchant not found');
+    if (closedUntil === null) {
+      delete MERCHANTS[index].closedUntil;
+      MERCHANTS[index].isOpen = true;
+    } else {
+      MERCHANTS[index].closedUntil = closedUntil;
+      MERCHANTS[index].isOpen = new Date(closedUntil) <= new Date();
+    }
+    return MERCHANTS[index];
+  }
+
   async getReviews(merchantId: string): Promise<Review[]> {
     await sleep(200);
     return REVIEWS.filter((r) => r.merchantId === merchantId).sort(

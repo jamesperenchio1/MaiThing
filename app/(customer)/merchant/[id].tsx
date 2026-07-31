@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image } from 'react-native';
-import { MapPin, Phone, Navigation, AlertCircle, Calendar } from 'lucide-react-native';
+import { MapPin, Phone, Navigation, AlertCircle, Calendar, Clock } from 'lucide-react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -37,6 +37,12 @@ export default function MerchantDetailScreen() {
   const { data: merchant, isLoading } = useMerchant(id);
   const { data: listings } = useListings({ merchantId: id });
   const { data: reviews } = useReviews(id);
+  const isTemporarilyClosed =
+    !!(merchant?.closedUntil && new Date(merchant.closedUntil) > new Date());
+  const closedUntilFormatted = merchant?.closedUntil
+    ? `${new Date(merchant.closedUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at midnight`
+    : '';
+
   const openStatus = merchant ? getMerchantOpenStatus(merchant, i18n.language) : null;
   const openStatusLabel = openStatus
     ? openStatus.isOpen
@@ -99,6 +105,20 @@ export default function MerchantDetailScreen() {
             </View>
             <FavoriteButton merchantId={merchant.id} />
           </View>
+
+          {isTemporarilyClosed && (
+            <View className="mb-4 flex-row items-center rounded-2xl bg-red-50 px-4 py-3 dark:bg-red-950/30">
+              <Clock size={18} color={colors.danger} />
+              <View className="ml-3 flex-1">
+                <Text variant="body-sm" className="font-semibold text-red-700 dark:text-red-400">
+                  Temporarily closed
+                </Text>
+                <Text variant="caption" className="text-red-600 dark:text-red-500">
+                  This store is closed until {closedUntilFormatted}
+                </Text>
+              </View>
+            </View>
+          )}
 
           <View className="mb-4 flex-row flex-wrap">
             {merchant.isVerified && <TrustBadge type="verified" />}

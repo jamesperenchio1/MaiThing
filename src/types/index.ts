@@ -65,6 +65,7 @@ export interface Merchant {
   reviewCount: number;
   businessHours: BusinessHours[];
   isOpen: boolean;
+  closedUntil?: string;
   pickupInstructions?: string;
   followers: number;
   createdAt: string;

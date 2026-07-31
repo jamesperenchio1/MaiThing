@@ -136,6 +136,18 @@ export function useMerchantNotificationPreferences(merchantId: string) {
   });
 }
 
+export function useSetStoreClosure(merchantId: string, ownerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (closedUntil: string | null) =>
+      mockRepositories.merchants.setStoreClosure(merchantId, closedUntil),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['merchant'] });
+      queryClient.invalidateQueries({ queryKey: ['merchants'] });
+    },
+  });
+}
+
 export function useUpdateMerchantNotificationPreferences(merchantId: string) {
   const queryClient = useQueryClient();
   return useMutation({

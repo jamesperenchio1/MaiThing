@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image } from 'react-native';
+import { View, Image, Modal } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   Plus,
@@ -15,6 +16,8 @@ import {
   AlertTriangle,
   ChevronRight,
   CalendarClock,
+  Minus,
+  X,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -28,7 +31,7 @@ import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useAuthStore } from '@/src/stores/auth';
 import { useAnalytics } from '@/src/hooks/useAnalytics';
-import { useMerchantByOwner } from '@/src/hooks/useMerchants';
+import { useMerchantByOwner, useSetStoreClosure } from '@/src/hooks/useMerchants';
 import { useMerchantWallet } from '@/src/hooks/usePayouts';
 import { useListings } from '@/src/hooks/useListings';
 import { useOrders } from '@/src/hooks/useOrders';
@@ -43,6 +46,8 @@ type MetricKey =
   | 'totalRevenue'
   | 'conversionRate'
   | 'avgOrderValue';
+
+type ClosureOption = 'tonight' | 'tomorrow' | 'custom';
 
 const ACTIONABLE_STATUSES = new Set<Order['status']>([
   'pending',
@@ -153,6 +158,12 @@ export default function MerchantDashboardScreen() {
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
 
+  // Closure sheet state
+  const [closureSheetVisible, setClosureSheetVisible] = useState(false);
+  const [reopenConfirmVisible, setReopenConfirmVisible] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<ClosureOption | null>(null);
+  const [customDays, setCustomDays] = useState(1);
+
   const {
     data: merchant,
     isLoading: merchantLoading,
@@ -191,8 +202,29 @@ export default function MerchantDashboardScreen() {
     refetch: refetchWallet,
   } = useMerchantWallet(merchantId);
 
+  const setStoreClosure = useSetStoreClosure(merchantId, user?.id ?? '');
+
   const hour = new Date().getHours();
   const firstName = user?.name?.split(' ')[0] ?? 'Partner';
+
+  // Determine closed status
+  const isClosed = !!(merchant?.closedUntil && new Date(merchant.closedUntil) > new Date());
+
+  // Compute dates for closure options
+  const tonight = new Date();
+  tonight.setHours(23, 59, 59, 0);
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(23, 59, 59, 0);
+
+  const customDate = new Date();
+  customDate.setDate(customDate.getDate() + customDays);
+  customDate.setHours(23, 59, 59, 0);
+
+  const closedUntilFormatted = merchant?.closedUntil
+    ? `${new Date(merchant.closedUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at midnight`
+    : '';
 
   const actionableOrders = (orders ?? [])
     .filter((o) => ACTIONABLE_STATUSES.has(o.status))
@@ -224,6 +256,38 @@ export default function MerchantDashboardScreen() {
       refetchListings(),
       refetchWallet(),
     ]);
+  };
+
+  const handleStatusPillPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (isClosed) {
+      setReopenConfirmVisible(true);
+    } else {
+      setSelectedOption(null);
+      setCustomDays(1);
+      setClosureSheetVisible(true);
+    }
+  };
+
+  const handleConfirmClosure = () => {
+    if (!selectedOption) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    let closedUntil: string;
+    if (selectedOption === 'tonight') {
+      closedUntil = tonight.toISOString();
+    } else if (selectedOption === 'tomorrow') {
+      closedUntil = tomorrow.toISOString();
+    } else {
+      closedUntil = customDate.toISOString();
+    }
+    setStoreClosure.mutate(closedUntil);
+    setClosureSheetVisible(false);
+  };
+
+  const handleReopen = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setStoreClosure.mutate(null);
+    setReopenConfirmVisible(false);
   };
 
   const isRefetching =
@@ -277,6 +341,32 @@ export default function MerchantDashboardScreen() {
       <View className="px-6 pt-4 pb-2">
         {/* Greeting banner */}
         <View className="mb-6 rounded-3xl bg-primary p-5 overflow-hidden">
+          {/* Open/Closed status pill — top left */}
+          {merchant && (
+            <View className="absolute left-4 top-4 z-10">
+              <PressableScale onPress={handleStatusPillPress} scale={0.95}>
+                <View
+                  className={`flex-row items-center rounded-2xl px-3 py-1.5 ${
+                    isClosed ? 'bg-red-500/30' : 'bg-white/10'
+                  }`}
+                >
+                  <View
+                    className={`mr-1.5 h-2 w-2 rounded-full ${
+                      isClosed ? 'bg-red-400' : 'bg-green-300'
+                    }`}
+                  />
+                  <Text
+                    variant="caption"
+                    className={`font-semibold ${isClosed ? 'text-red-200' : 'text-white'}`}
+                  >
+                    {isClosed ? 'Closed' : 'Open'}
+                  </Text>
+                </View>
+              </PressableScale>
+            </View>
+          )}
+
+          {/* Date chip — top right */}
           <View className="absolute right-4 top-4 bg-white/10 rounded-2xl px-3 py-1.5">
             <Text variant="caption" className="text-white/80 font-medium">
               {new Date().toLocaleDateString('en-US', {
@@ -286,7 +376,9 @@ export default function MerchantDashboardScreen() {
               })}
             </Text>
           </View>
-          <Text variant="caption" className="text-white/70 mb-1">
+
+          {/* Content — mt-8 to avoid overlapping the pills row */}
+          <Text variant="caption" className="text-white/70 mb-1 mt-8">
             {t('merchant.dashboard.greeting', { timeOfDay: getTimeOfDay(hour), name: firstName })}
           </Text>
           <Text variant="h2" className="text-white mb-4">
@@ -566,6 +658,220 @@ export default function MerchantDashboardScreen() {
           </View>
         )}
       </View>
+
+      {/* ── Closure Duration Bottom Sheet ── */}
+      <Modal
+        visible={closureSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setClosureSheetVisible(false);
+        }}
+      >
+        <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View className="rounded-t-3xl bg-background px-6 pt-6 pb-10">
+            {/* Sheet header */}
+            <View className="mb-6 flex-row items-center justify-between">
+              <Text variant="h3">Temporarily close your store</Text>
+              <PressableScale
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setClosureSheetVisible(false);
+                }}
+                scale={0.9}
+              >
+                <View className="h-8 w-8 items-center justify-center rounded-full bg-muted/10">
+                  <X size={18} color={colors.muted} />
+                </View>
+              </PressableScale>
+            </View>
+
+            {/* Option: Tonight */}
+            <PressableScale
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedOption('tonight');
+              }}
+              scale={0.98}
+              className="mb-3"
+            >
+              <View
+                className={`rounded-2xl border p-4 ${
+                  selectedOption === 'tonight'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-card'
+                }`}
+              >
+                <Text variant="body-sm" className="font-semibold">
+                  Tonight
+                </Text>
+                <Text variant="caption" className="mt-0.5 text-muted">
+                  Until today at 11:59 PM
+                </Text>
+              </View>
+            </PressableScale>
+
+            {/* Option: Tomorrow */}
+            <PressableScale
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedOption('tomorrow');
+              }}
+              scale={0.98}
+              className="mb-3"
+            >
+              <View
+                className={`rounded-2xl border p-4 ${
+                  selectedOption === 'tomorrow'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-card'
+                }`}
+              >
+                <Text variant="body-sm" className="font-semibold">
+                  Tomorrow
+                </Text>
+                <Text variant="caption" className="mt-0.5 text-muted">
+                  Until tomorrow at 11:59 PM
+                </Text>
+              </View>
+            </PressableScale>
+
+            {/* Option: Custom date */}
+            <PressableScale
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedOption('custom');
+              }}
+              scale={0.98}
+              className={selectedOption === 'custom' ? 'mb-0' : 'mb-6'}
+            >
+              <View
+                className={`border p-4 ${
+                  selectedOption === 'custom'
+                    ? 'rounded-t-2xl border-b-0 border-primary bg-primary/5'
+                    : 'rounded-2xl border-border bg-card'
+                }`}
+              >
+                <Text variant="body-sm" className="font-semibold">
+                  Custom date…
+                </Text>
+                {selectedOption !== 'custom' && (
+                  <Text variant="caption" className="mt-0.5 text-muted">
+                    Pick how many days to close
+                  </Text>
+                )}
+              </View>
+            </PressableScale>
+
+            {/* Custom day counter (shown below when custom selected) */}
+            {selectedOption === 'custom' && (
+              <View className="mb-6 rounded-b-2xl border border-t-0 border-primary bg-primary/5 px-4 pb-4 pt-3">
+                <View className="flex-row items-center justify-between">
+                  <PressableScale
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setCustomDays((d) => Math.max(1, d - 1));
+                    }}
+                    scale={0.9}
+                  >
+                    <View className="h-9 w-9 items-center justify-center rounded-full bg-background">
+                      <Minus size={16} color={colors.primary} />
+                    </View>
+                  </PressableScale>
+                  <View className="items-center">
+                    <Text variant="body-sm" className="font-semibold">
+                      {customDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </Text>
+                    <Text variant="caption" className="text-muted">
+                      {customDays} day{customDays !== 1 ? 's' : ''} from now
+                    </Text>
+                  </View>
+                  <PressableScale
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setCustomDays((d) => Math.min(30, d + 1));
+                    }}
+                    scale={0.9}
+                  >
+                    <View className="h-9 w-9 items-center justify-center rounded-full bg-background">
+                      <Plus size={16} color={colors.primary} />
+                    </View>
+                  </PressableScale>
+                </View>
+              </View>
+            )}
+
+            {/* Actions */}
+            <Button
+              variant="primary"
+              onPress={handleConfirmClosure}
+              disabled={!selectedOption || setStoreClosure.isPending}
+              className="mb-2"
+            >
+              Close Store
+            </Button>
+            <Button
+              variant="ghost"
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setClosureSheetVisible(false);
+              }}
+            >
+              Cancel
+            </Button>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Reopen Confirmation Modal ── */}
+      <Modal
+        visible={reopenConfirmVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setReopenConfirmVisible(false);
+        }}
+      >
+        <View
+          className="flex-1 items-center justify-center px-6"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+        >
+          <View className="w-full rounded-3xl bg-background p-6">
+            <Text variant="h3" className="mb-2 text-center">
+              Reopen your store?
+            </Text>
+            <Text variant="body-sm" className="mb-2 text-center text-muted">
+              Currently closed until {closedUntilFormatted}.
+            </Text>
+            <Text variant="body-sm" className="mb-6 text-center text-muted">
+              Your store will be visible to customers again immediately.
+            </Text>
+            <Button
+              variant="primary"
+              onPress={handleReopen}
+              disabled={setStoreClosure.isPending}
+              className="mb-2"
+            >
+              Reopen now
+            </Button>
+            <Button
+              variant="ghost"
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setReopenConfirmVisible(false);
+              }}
+            >
+              Keep closed
+            </Button>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
