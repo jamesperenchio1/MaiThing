@@ -354,3 +354,11 @@ export interface MerchantOnboarding {
   completedSteps: OnboardingStep[];
   currentStep: OnboardingStep;
 }
+
+export interface BroadcastMessage {
+  id: string;
+  merchantId: string;
+  content: string;
+  sentAt: string;
+  recipientCount: number;
+}

@@ -20,6 +20,7 @@ import {
   X,
   MessageSquare,
   Settings,
+  Megaphone,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -338,6 +339,13 @@ export default function MerchantDashboardScreen() {
       color: colors.foreground,
       bg: 'bg-muted/10',
       route: '/(merchant)/analytics',
+    },
+    {
+      icon: Megaphone,
+      label: 'Broadcast',
+      color: colors.foreground,
+      bg: 'bg-muted/10',
+      route: '/(merchant)/broadcast',
     },
   ];
 

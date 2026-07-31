@@ -39,6 +39,7 @@ import {
 } from './seed';
 import type {
   BankAccount,
+  BroadcastMessage,
   BusinessHours,
   Coupon,
   CustomerImpact,
@@ -63,6 +64,9 @@ import type {
   WalletReward,
   WalletTransaction,
 } from '@/src/types';
+
+// In-memory store for broadcast messages
+const BROADCAST_MESSAGES: BroadcastMessage[] = [];
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -436,6 +440,32 @@ class MockMerchantRepository implements MerchantRepository {
     await sleep(200);
     const merchant = MERCHANTS.find((m) => m.id === merchantId);
     if (merchant) merchant.followers = Math.max(0, merchant.followers - 1);
+  }
+
+  async sendBroadcast(merchantId: string, content: string): Promise<BroadcastMessage> {
+    await sleep(400);
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentBroadcast = BROADCAST_MESSAGES.find(
+      (b) => b.merchantId === merchantId && new Date(b.sentAt) > oneDayAgo
+    );
+    if (recentBroadcast) {
+      throw new Error('Rate limit: one broadcast per day');
+    }
+    const merchant = MERCHANTS.find((m) => m.id === merchantId);
+    const broadcast: BroadcastMessage = {
+      id: `broadcast-${Date.now()}`,
+      merchantId,
+      content,
+      sentAt: new Date().toISOString(),
+      recipientCount: merchant?.followers ?? 0,
+    };
+    BROADCAST_MESSAGES.unshift(broadcast);
+    return broadcast;
+  }
+
+  async getRecentBroadcasts(merchantId: string): Promise<BroadcastMessage[]> {
+    await sleep(200);
+    return BROADCAST_MESSAGES.filter((b) => b.merchantId === merchantId).slice(0, 5);
   }
 }
 

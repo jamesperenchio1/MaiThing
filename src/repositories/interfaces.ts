@@ -1,4 +1,5 @@
 import type {
+  BroadcastMessage,
   BusinessHours,
   Category,
   Coupon,
@@ -89,6 +90,8 @@ export interface MerchantRepository {
   ): Promise<MerchantNotificationPreferences>;
   getOnboarding(merchantId: string): Promise<MerchantOnboarding>;
   updateOnboarding(merchantId: string, step: keyof MerchantOnboarding): Promise<MerchantOnboarding>;
+  sendBroadcast(merchantId: string, content: string): Promise<BroadcastMessage>;
+  getRecentBroadcasts(merchantId: string): Promise<BroadcastMessage[]>;
 }
 
 export interface ListingRepository {
