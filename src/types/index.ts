@@ -73,6 +73,10 @@ export interface Merchant {
   isVerified?: boolean;
   joinedAt?: string;
   hygieneRating?: number;
+  verificationStatus?: 'unverified' | 'pending' | 'verified' | 'suspended';
+  completedOrders?: number;
+  refundDisputes?: number;
+  foodSafetyCertUrl?: string;
 }
 
 export type ListingType = 'mystery_box' | 'fixed_item';

@@ -367,7 +367,12 @@ export const MERCHANTS: Merchant[] = MERCHANT_SEEDS.map((m, idx) => ({
   pickupInstructions: m.pickupInstructions,
   followers: m.followers,
   createdAt: '2025-01-01T00:00:00Z',
-  isVerified: idx < 12,
+  // Test merchant (idx 0) starts unverified so the dashboard progress card is visible
+  isVerified: idx !== 0 && idx < 12,
+  verificationStatus:
+    idx === 0 ? 'unverified' : idx < 12 ? 'verified' : ('unverified' as const),
+  completedOrders: idx === 0 ? 8 : 10 + idx * 5,
+  refundDisputes: 0,
   joinedAt: new Date(Date.now() - (idx + 1) * 30 * 86400000).toISOString(),
   hygieneRating: Math.round((4.2 + (idx % 8) / 10) * 10) / 10,
 }));

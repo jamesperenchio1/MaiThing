@@ -442,6 +442,23 @@ class MockMerchantRepository implements MerchantRepository {
     if (merchant) merchant.followers = Math.max(0, merchant.followers - 1);
   }
 
+  async verifyMerchant(merchantId: string): Promise<Merchant> {
+    await sleep(600);
+    const index = MERCHANTS.findIndex((m) => m.id === merchantId);
+    if (index === -1) throw new Error('Merchant not found');
+    MERCHANTS[index].verificationStatus = 'verified';
+    MERCHANTS[index].isVerified = true;
+    return MERCHANTS[index];
+  }
+
+  async uploadFoodSafetyCert(merchantId: string, certUrl: string): Promise<Merchant> {
+    await sleep(400);
+    const index = MERCHANTS.findIndex((m) => m.id === merchantId);
+    if (index === -1) throw new Error('Merchant not found');
+    MERCHANTS[index].foodSafetyCertUrl = certUrl;
+    return MERCHANTS[index];
+  }
+
   async sendBroadcast(merchantId: string, content: string): Promise<BroadcastMessage> {
     await sleep(400);
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -688,6 +705,27 @@ class MockOrderRepository implements OrderRepository {
     if (index === -1) throw new Error('Order not found');
     ORDERS[index].status = status;
     ORDERS[index].updatedAt = new Date().toISOString();
+
+    // Auto-verify: when an order completes, check if merchant now qualifies
+    if (status === 'completed' || status === 'picked_up') {
+      const order = ORDERS[index];
+      const merchantIdx = MERCHANTS.findIndex((m) => m.id === order.merchantId);
+      if (merchantIdx !== -1) {
+        const merchant = MERCHANTS[merchantIdx];
+        if (merchant.verificationStatus !== 'verified') {
+          merchant.completedOrders = (merchant.completedOrders ?? 0) + 1;
+          if (
+            merchant.completedOrders >= 10 &&
+            merchant.rating >= 4.0 &&
+            (merchant.refundDisputes ?? 0) === 0
+          ) {
+            merchant.verificationStatus = 'verified';
+            merchant.isVerified = true;
+          }
+        }
+      }
+    }
+
     return ORDERS[index];
   }
 

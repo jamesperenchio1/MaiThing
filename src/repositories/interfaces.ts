@@ -92,6 +92,8 @@ export interface MerchantRepository {
   updateOnboarding(merchantId: string, step: keyof MerchantOnboarding): Promise<MerchantOnboarding>;
   sendBroadcast(merchantId: string, content: string): Promise<BroadcastMessage>;
   getRecentBroadcasts(merchantId: string): Promise<BroadcastMessage[]>;
+  verifyMerchant(merchantId: string): Promise<Merchant>;
+  uploadFoodSafetyCert(merchantId: string, certUrl: string): Promise<Merchant>;
 }
 
 export interface ListingRepository {
