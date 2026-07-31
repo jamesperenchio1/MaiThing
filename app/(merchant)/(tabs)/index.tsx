@@ -359,7 +359,7 @@ export default function MerchantDashboardScreen() {
                     variant="caption"
                     className={`font-semibold ${isClosed ? 'text-red-200' : 'text-white'}`}
                   >
-                    {isClosed ? 'Closed' : 'Open'}
+                    {isClosed ? `Closed · ${closedUntilFormatted}` : 'Open'}
                   </Text>
                 </View>
               </PressableScale>
@@ -669,7 +669,7 @@ export default function MerchantDashboardScreen() {
           setClosureSheetVisible(false);
         }}
       >
-        <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View className="flex-1 justify-end bg-black/50">
           <View className="rounded-t-3xl bg-background px-6 pt-6 pb-10">
             {/* Sheet header */}
             <View className="mb-6 flex-row items-center justify-between">
@@ -838,10 +838,7 @@ export default function MerchantDashboardScreen() {
           setReopenConfirmVisible(false);
         }}
       >
-        <View
-          className="flex-1 items-center justify-center px-6"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-        >
+        <View className="flex-1 items-center justify-center bg-black/50 px-6">
           <View className="w-full rounded-3xl bg-background p-6">
             <Text variant="h3" className="mb-2 text-center">
               Reopen your store?
