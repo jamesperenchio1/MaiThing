@@ -230,6 +230,7 @@ export default {
       manageInventory: 'จัดการสินค้า',
       viewAnalytics: 'ดูวิเคราะห์',
       scanPickup: 'สแกนรับสินค้า',
+      broadcast: 'ส่งข้อความถึงผู้ติดตาม',
       upcomingPickups: 'รอรับเร็วๆ นี้',
       lowStockAlerts: 'ใกล้หมด',
       noUpcomingPickups: 'ไม่มีรายการรอรับ',

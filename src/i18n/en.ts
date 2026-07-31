@@ -232,6 +232,7 @@ export default {
       manageInventory: 'Manage Inventory',
       viewAnalytics: 'View Analytics',
       scanPickup: 'Scan Pickup',
+      broadcast: 'Broadcast',
       upcomingPickups: 'Upcoming Pickups',
       lowStockAlerts: 'Low Stock',
       noUpcomingPickups: 'No upcoming pickups',

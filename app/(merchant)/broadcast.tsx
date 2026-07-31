@@ -129,7 +129,7 @@ export default function BroadcastScreen() {
                 and recent buyers.
               </Text>
               <PressableScale onPress={handleDismissSuccess} scale={0.97} className="w-full">
-                <Button variant="primary" onPress={handleDismissSuccess}>
+                <Button variant="primary">
                   Done
                 </Button>
               </PressableScale>
@@ -191,7 +191,7 @@ export default function BroadcastScreen() {
               numberOfLines={5}
               value={content}
               onChangeText={setContent}
-              maxLength={MAX_CHARS + 20}
+              maxLength={MAX_CHARS}
               showCharacterCount
               inputClassName="min-h-[120px] text-base leading-6"
               containerClassName="mb-2"
