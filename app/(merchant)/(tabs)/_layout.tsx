@@ -1,10 +1,146 @@
-import { Tabs } from 'expo-router';
-import { LayoutDashboard, ShoppingBag, Package, Settings } from 'lucide-react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { View, Pressable, Platform } from 'react-native';
+import { LayoutDashboard, ShoppingBag, Package, Settings, QrCode } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
+import { PressableScale } from '@/src/components/ui/PressableScale';
+import { Text } from '@/src/components/ui/Text';
 
 const ACTIONABLE_STATUSES = new Set(['pending', 'confirmed', 'preparing', 'ready']);
+
+function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const router = useRouter();
+  const colors = useThemeColor();
+  const insets = useSafeAreaInsets();
+
+  const leftRoutes = state.routes.slice(0, 2); // Dashboard (0), Orders (1)
+  const rightRoutes = state.routes.slice(2); // Inventory (2), Settings (3)
+
+  const renderTab = (route: (typeof state.routes)[number], routeIndex: number) => {
+    const descriptor = descriptors[route.key];
+    const isFocused = state.index === routeIndex;
+    const { options } = descriptor;
+    const color = isFocused ? colors.primary : colors.muted;
+    const badge = options.tabBarBadge;
+
+    const onPress = () => {
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    };
+
+    const onLongPress = () => {
+      navigation.emit({
+        type: 'tabLongPress',
+        target: route.key,
+      });
+    };
+
+    return (
+      <Pressable
+        key={route.key}
+        accessibilityRole="button"
+        accessibilityState={isFocused ? { selected: true } : {}}
+        accessibilityLabel={options.tabBarAccessibilityLabel}
+        testID={options.tabBarButtonTestID}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 8 }}
+        android_ripple={{ color: colors.primary + '20', borderless: false }}
+      >
+        <View style={{ position: 'relative' }}>
+          {options.tabBarIcon?.({ focused: isFocused, color, size: 24 })}
+          {badge !== undefined && badge !== null && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -8,
+                backgroundColor: colors.danger,
+                borderRadius: 9,
+                minWidth: 18,
+                height: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 3,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700', lineHeight: 14 }}>
+                {String(badge)}
+              </Text>
+            </View>
+          )}
+        </View>
+        <Text
+          variant="caption"
+          style={{ color, marginTop: 2 }}
+          numberOfLines={1}
+        >
+          {String(options.title ?? route.name)}
+        </Text>
+      </Pressable>
+    );
+  };
+
+  const handleQRPress = async () => {
+    if (Platform.OS !== 'web') {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    router.push('/(merchant)/scanner');
+  };
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        height: 70 + insets.bottom,
+        paddingBottom: insets.bottom,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        backgroundColor: colors.background,
+        alignItems: 'center',
+      }}
+    >
+      {leftRoutes.map((route, i) => renderTab(route, i))}
+
+      {/* QR FAB — not a real tab, floating above the bar */}
+      <View style={{ width: 70, alignItems: 'center', justifyContent: 'center' }}>
+        <PressableScale
+          onPress={handleQRPress}
+          scale={0.92}
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: -20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
+        >
+          <QrCode size={28} color="#fff" />
+        </PressableScale>
+      </View>
+
+      {rightRoutes.map((route, i) => renderTab(route, i + 2))}
+    </View>
+  );
+}
 
 export default function MerchantTabsLayout() {
   const colors = useThemeColor();
@@ -16,17 +152,11 @@ export default function MerchantTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        // tabBarStyle unused when custom tabBar is provided; kept for safety
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: {
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 8,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          backgroundColor: colors.background,
-        },
       }}
+      tabBar={(props) => <MerchantTabBar {...props} />}
     >
       <Tabs.Screen
         name="index"

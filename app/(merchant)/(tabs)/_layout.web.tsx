@@ -1,9 +1,11 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { LayoutDashboard, ClipboardList, Package, Settings } from 'lucide-react-native';
+import { LayoutDashboard, ClipboardList, Package, Settings, QrCode } from 'lucide-react-native';
 
 import { BottomTabBar } from '@/src/components/navigation/BottomTabBar';
 import type { TabItem } from '@/src/components/navigation/BottomTabBar';
+import { PressableScale } from '@/src/components/ui/PressableScale';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 
 const tabs: TabItem[] = [
   { name: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,6 +15,13 @@ const tabs: TabItem[] = [
 ];
 
 export default function MerchantTabsWebLayout() {
+  const router = useRouter();
+  const colors = useThemeColor();
+
+  const handleQRPress = () => {
+    router.push('/(merchant)/scanner');
+  };
+
   return (
     <View className="flex-1">
       <View className="flex-1">
@@ -23,7 +32,41 @@ export default function MerchantTabsWebLayout() {
           <Stack.Screen name="settings" />
         </Stack>
       </View>
+
+      {/* Existing tab bar (absolute bottom-0) */}
       <BottomTabBar tabs={tabs} />
+
+      {/* QR FAB — centered above the tab bar, elevated with negative bottom offset */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+        }}
+        pointerEvents="box-none"
+      >
+        <PressableScale
+          onPress={handleQRPress}
+          scale={0.92}
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
+        >
+          <QrCode size={28} color="#fff" />
+        </PressableScale>
+      </View>
     </View>
   );
 }
