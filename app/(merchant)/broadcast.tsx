@@ -128,11 +128,9 @@ export default function BroadcastScreen() {
                 </Text>{' '}
                 and recent buyers.
               </Text>
-              <PressableScale onPress={handleDismissSuccess} scale={0.97} className="w-full">
-                <Button variant="primary">
-                  Done
-                </Button>
-              </PressableScale>
+              <Button variant="primary" onPress={handleDismissSuccess} className="w-full">
+                Done
+              </Button>
             </View>
           </Card>
         )}

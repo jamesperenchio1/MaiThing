@@ -18,12 +18,11 @@ import { ErrorState } from '@/src/components/ui/ErrorState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { FlashList } from '@shopify/flash-list';
-import { useOrders, useUpdateOrderStatus } from '@/src/hooks/useOrders';
+import { useOrders, useUpdateOrderStatus, useLookupOrderByPickupCode } from '@/src/hooks/useOrders';
 import { useMerchantByOwner } from '@/src/hooks/useMerchants';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
-import { mockRepositories } from '@/src/repositories/mock';
 import type { Order, OrderStatus } from '@/src/types';
 
 const statusVariantMap: Record<
@@ -224,6 +223,7 @@ export default function MerchantOrdersScreen() {
 
   const { data: merchant } = useMerchantByOwner(user?.id ?? '');
   const bulkUpdate = useUpdateOrderStatus();
+  const lookupOrder = useLookupOrderByPickupCode();
 
   const {
     data: orders,
@@ -367,17 +367,23 @@ export default function MerchantOrdersScreen() {
     }
   };
 
-  const handleWebLookup = async () => {
+  const handleWebLookup = () => {
     const code = pickupCode.toUpperCase().trim();
     if (!code || !merchant?.id) return;
-    const order = await mockRepositories.orders.getOrderByPickupCode(merchant.id, code);
-    if (order) {
-      router.push({ pathname: '/(merchant)/order/[id]' as const, params: { id: order.id } });
-      setShowWebScanner(false);
-    } else {
-      setCodeError('Code not found');
-      setTimeout(() => setCodeError(null), 3000);
-    }
+    lookupOrder.mutate(
+      { merchantId: merchant.id, code },
+      {
+        onSuccess: (order) => {
+          if (order) {
+            router.push({ pathname: '/(merchant)/order/[id]' as const, params: { id: order.id } });
+            setShowWebScanner(false);
+          } else {
+            setCodeError('Code not found');
+            setTimeout(() => setCodeError(null), 3000);
+          }
+        },
+      }
+    );
   };
 
   const listHeader = (
@@ -409,7 +415,7 @@ export default function MerchantOrdersScreen() {
             </Button>
           </View>
           {codeError !== null && (
-            <Text variant="caption" className="mt-1 text-destructive">
+            <Text variant="caption" className="mt-1 text-danger">
               {codeError}
             </Text>
           )}

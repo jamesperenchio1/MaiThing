@@ -14,6 +14,8 @@ export function useThemeColor() {
     warning: isDark ? '#FBBF24' : '#F59E0B',
     info: isDark ? '#60A5FA' : '#3B82F6',
     success: isDark ? '#34D399' : '#10B981',
+    purple: isDark ? '#A78BFA' : '#8B5CF6',
+    cyan: isDark ? '#22D3EE' : '#06B6D4',
     white: '#FFFFFF',
   };
 }

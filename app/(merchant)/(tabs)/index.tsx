@@ -440,7 +440,7 @@ export default function MerchantDashboardScreen() {
             scale={0.98}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/(merchant)/verification' as any);
+              router.push({ pathname: '/(merchant)/verification' });
             }}
             className="mb-6"
           >
@@ -502,7 +502,7 @@ export default function MerchantDashboardScreen() {
               <PressableScale
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/(merchant)/(tabs)/messages' as any);
+                  router.push({ pathname: '/(merchant)/(tabs)/messages' });
                 }}
                 scale={0.95}
               >
@@ -518,9 +518,9 @@ export default function MerchantDashboardScreen() {
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push({
-                    pathname: '/(merchant)/messages/[customerId]',
+                    pathname: '/(merchant)/messages/[customerId]' as const,
                     params: { customerId: conversation.customerId },
-                  } as any);
+                  });
                 }}
               >
                 <Card variant="outlined" className="mb-3">
@@ -585,7 +585,7 @@ export default function MerchantDashboardScreen() {
             scale={0.98}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/(merchant)/(tabs)/settings' as any);
+              router.push({ pathname: '/(merchant)/(tabs)/settings' });
             }}
             className="mb-6"
           >

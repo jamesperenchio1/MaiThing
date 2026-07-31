@@ -8,6 +8,7 @@ import * as Haptics from 'expo-haptics';
 // Lazy-loaded so Expo Go doesn't crash on missing native CalendarNext module
 let ExpoCalendar: typeof import('expo-calendar') | null = null;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   ExpoCalendar = require('expo-calendar');
 } catch {
   // not available in Expo Go

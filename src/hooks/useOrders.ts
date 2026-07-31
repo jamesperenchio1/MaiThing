@@ -73,6 +73,13 @@ export function useOrderByPickupCode(merchantId: string, code: string) {
   });
 }
 
+export function useLookupOrderByPickupCode() {
+  return useMutation({
+    mutationFn: ({ merchantId, code }: { merchantId: string; code: string }) =>
+      mockRepositories.orders.getOrderByPickupCode(merchantId, code),
+  });
+}
+
 export function useCancelOrder() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -85,7 +85,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 paddingHorizontal: 3,
               }}
             >
-              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700', lineHeight: 14 }}>
+              <Text style={{ color: colors.white, fontSize: 11, fontWeight: '700', lineHeight: 14 }}>
                 {String(badge)}
               </Text>
             </View>
@@ -143,7 +143,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             elevation: 8,
           }}
         >
-          <QrCode size={28} color="#fff" />
+          <QrCode size={28} color={colors.white} />
         </PressableScale>
       </View>
 

@@ -17,6 +17,7 @@ import {
 import * as Haptics from 'expo-haptics';
 let ImagePicker: typeof import('expo-image-picker') | null = null;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   ImagePicker = require('expo-image-picker');
 } catch {
   // not available in Expo Go

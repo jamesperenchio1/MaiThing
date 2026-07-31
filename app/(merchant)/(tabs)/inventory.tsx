@@ -461,7 +461,10 @@ export default function InventoryScreen() {
     if (isNaN(price) || price <= 0) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     selectedIds.forEach((id) => {
-      updateListing.mutate({ id, data: { salePrice: price } });
+      const listing = (listings ?? []).find((l) => l.id === id);
+      if (listing && price < listing.originalPrice) {
+        updateListing.mutate({ id, data: { salePrice: price } });
+      }
     });
     setShowAdjustPriceModal(false);
     exitSelectionMode();

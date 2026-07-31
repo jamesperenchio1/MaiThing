@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { LayoutDashboard, ClipboardList, Package, Settings, QrCode } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { LayoutDashboard, ClipboardList, Package, MessageSquare, QrCode } from 'lucide-react-native';
 
 import { BottomTabBar } from '@/src/components/navigation/BottomTabBar';
 import type { TabItem } from '@/src/components/navigation/BottomTabBar';
@@ -11,7 +12,7 @@ const tabs: TabItem[] = [
   { name: '/', label: 'Dashboard', icon: LayoutDashboard },
   { name: '/orders', label: 'Orders', icon: ClipboardList },
   { name: '/inventory', label: 'Inventory', icon: Package },
-  { name: '/settings', label: 'Settings', icon: Settings },
+  { name: '/messages', label: 'Messages', icon: MessageSquare },
 ];
 
 export default function MerchantTabsWebLayout() {
@@ -19,6 +20,7 @@ export default function MerchantTabsWebLayout() {
   const colors = useThemeColor();
 
   const handleQRPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(merchant)/scanner');
   };
 
@@ -29,7 +31,7 @@ export default function MerchantTabsWebLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="orders" />
           <Stack.Screen name="inventory" />
-          <Stack.Screen name="settings" />
+          <Stack.Screen name="messages" />
         </Stack>
       </View>
 
@@ -64,7 +66,7 @@ export default function MerchantTabsWebLayout() {
             elevation: 8,
           }}
         >
-          <QrCode size={28} color="#fff" />
+          <QrCode size={28} color={colors.white} />
         </PressableScale>
       </View>
     </View>

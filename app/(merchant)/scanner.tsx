@@ -6,6 +6,7 @@ let CameraView: React.ComponentType<{ facing?: string; barcodeScannerSettings?: 
 let useCameraPermissions: (() => [{ granted: boolean } | null, () => Promise<void>]) | null = null;
 type BarcodeScanningResult = { data: string };
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const cam = require('expo-camera');
   CameraView = cam.CameraView;
   useCameraPermissions = cam.useCameraPermissions;

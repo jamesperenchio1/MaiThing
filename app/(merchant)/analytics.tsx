@@ -404,7 +404,7 @@ export default function MerchantAnalyticsScreen() {
               <View className="mb-3 w-1/2 pl-2">
                 <Card variant="elevated" className="py-4">
                   <View className="mb-2 self-start rounded-xl bg-violet-500/10 p-2">
-                    <TrendingUp size={20} color="#8B5CF6" />
+                    <TrendingUp size={20} color={colors.purple} />
                   </View>
                   <Text variant="caption" className="mb-1 text-muted">
                     {t('merchant.analytics.avgOrderValue')}
@@ -415,7 +415,7 @@ export default function MerchantAnalyticsScreen() {
               <View className="w-full">
                 <Card variant="elevated" className="py-4">
                   <View className="mb-2 self-start rounded-xl bg-cyan-500/10 p-2">
-                    <Eye size={20} color="#06B6D4" />
+                    <Eye size={20} color={colors.cyan} />
                   </View>
                   <Text variant="caption" className="mb-1 text-muted">
                     {t('merchant.analytics.views')}
