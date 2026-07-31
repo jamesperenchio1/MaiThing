@@ -310,6 +310,10 @@ export default function MerchantOrdersScreen() {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
+        if (next.size === 0) {
+          setSelectionMode(false);
+          return new Set();
+        }
       } else {
         next.add(id);
       }
