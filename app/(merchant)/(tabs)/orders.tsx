@@ -1,14 +1,15 @@
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, RefreshControl, ScrollView } from 'react-native';
+import { View, Image, RefreshControl, ScrollView, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { ClipboardList, Check } from 'lucide-react-native';
+import { ClipboardList, Check, QrCode } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
+import { Input } from '@/src/components/ui/Input';
 import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -18,9 +19,11 @@ import { Skeleton } from '@/src/components/ui/Skeleton';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { FlashList } from '@shopify/flash-list';
 import { useOrders, useUpdateOrderStatus } from '@/src/hooks/useOrders';
+import { useMerchantByOwner } from '@/src/hooks/useMerchants';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
+import { mockRepositories } from '@/src/repositories/mock';
 import type { Order, OrderStatus } from '@/src/types';
 
 const statusVariantMap: Record<
@@ -168,10 +171,16 @@ function OrderCard({ order }: { order: Order }) {
 
 export default function MerchantOrdersScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
+  const [showWebScanner, setShowWebScanner] = useState(false);
+  const [pickupCode, setPickupCode] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
+
+  const { data: merchant } = useMerchantByOwner(user?.id ?? '');
 
   const {
     data: orders,
@@ -246,11 +255,65 @@ export default function MerchantOrdersScreen() {
     refetch();
   };
 
+  const handleScanPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      router.push('/(merchant)/scanner' as any);
+    } else {
+      setShowWebScanner((prev) => !prev);
+      setPickupCode('');
+      setCodeError(null);
+    }
+  };
+
+  const handleWebLookup = async () => {
+    const code = pickupCode.toUpperCase().trim();
+    if (!code || !merchant?.id) return;
+    const order = await mockRepositories.orders.getOrderByPickupCode(merchant.id, code);
+    if (order) {
+      router.push(`/(merchant)/order/${order.id}` as any);
+      setShowWebScanner(false);
+    } else {
+      setCodeError('Code not found');
+      setTimeout(() => setCodeError(null), 3000);
+    }
+  };
+
   const listHeader = (
     <View className="pb-2 pt-4">
-      <Text testID="orders-title" variant="h1" className="mb-4">
-        {t('merchant.orders.title')}
-      </Text>
+      <View className="mb-4 flex-row items-center justify-between">
+        <Text testID="orders-title" variant="h1">
+          {t('merchant.orders.title')}
+        </Text>
+        <PressableScale scale={0.9} onPress={handleScanPress}>
+          <QrCode size={22} color={colors.primary} />
+        </PressableScale>
+      </View>
+      {Platform.OS === 'web' && showWebScanner && (
+        <View className="mb-4">
+          <View className="flex-row gap-2">
+            <Input
+              value={pickupCode}
+              onChangeText={(text) => {
+                setPickupCode(text);
+                setCodeError(null);
+              }}
+              placeholder="Enter pickup code"
+              maxLength={6}
+              autoCapitalize="characters"
+              className="flex-1"
+            />
+            <Button size="sm" onPress={handleWebLookup}>
+              Look up
+            </Button>
+          </View>
+          {codeError !== null && (
+            <Text variant="caption" className="mt-1 text-destructive">
+              {codeError}
+            </Text>
+          )}
+        </View>
+      )}
       <SearchBar
         value={query}
         onChangeText={setQuery}
