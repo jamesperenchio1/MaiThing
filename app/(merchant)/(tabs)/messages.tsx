@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 import { View } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
 
@@ -62,12 +63,13 @@ export default function MerchantMessagesTabScreen() {
               key={conversation.customerId}
               testID={`conversation-tab-${conversation.customerId}`}
               scale={0.98}
-              onPress={() =>
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push({
                   pathname: '/(merchant)/messages/[customerId]',
                   params: { customerId: conversation.customerId },
-                } as any)
-              }
+                } as any);
+              }}
             >
               <Card variant="outlined" className="mb-3 flex-row items-center">
                 <Avatar
