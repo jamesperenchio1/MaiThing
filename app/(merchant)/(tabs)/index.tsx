@@ -377,8 +377,8 @@ export default function MerchantDashboardScreen() {
             </Text>
           </View>
 
-          {/* Content — mt-8 to avoid overlapping the pills row */}
-          <Text variant="caption" className="text-white/70 mb-1 mt-8">
+          {/* Content — mt-6 clears the absolute-positioned pills row */}
+          <Text variant="caption" className="text-white/70 mb-1 mt-6">
             {t('merchant.dashboard.greeting', { timeOfDay: getTimeOfDay(hour), name: firstName })}
           </Text>
           <Text variant="h2" className="text-white mb-4">
@@ -430,7 +430,7 @@ export default function MerchantDashboardScreen() {
                 scale={0.95}
                 style={{ width: '47%' }}
               >
-                <Card variant="elevated" className="items-center py-5">
+                <Card variant="elevated" className="items-center py-4">
                   <View className={`rounded-2xl p-3 mb-2 ${bg}`}>
                     <Icon size={22} color={color} />
                   </View>
@@ -523,7 +523,7 @@ export default function MerchantDashboardScreen() {
           <StatCard
             label={t('merchant.dashboard.avgOrderValue')}
             value={formatCurrency(analytics?.avgOrderValue ?? 0)}
-            icon={<DollarSign size={20} color={colors.info} />}
+            icon={<DollarSign size={20} color={colors.primary} />}
             iconBg="bg-blue-500/10"
             onPress={() => {
               const metric: MetricKey = 'avgOrderValue';
