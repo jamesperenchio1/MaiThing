@@ -36,7 +36,13 @@ import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency, formatPickupWindow, getInitials } from '@/src/lib/utils';
 import type { Listing, Order } from '@/src/types';
 
-type MetricKey = 'todayRevenue' | 'todayOrders' | 'totalItemsSaved' | 'totalRevenue';
+type MetricKey =
+  | 'todayRevenue'
+  | 'todayOrders'
+  | 'totalItemsSaved'
+  | 'totalRevenue'
+  | 'conversionRate'
+  | 'avgOrderValue';
 
 const ACTIONABLE_STATUSES = new Set<Order['status']>([
   'pending',
@@ -327,7 +333,7 @@ export default function MerchantDashboardScreen() {
                 key={label}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push(route as any);
+                  router.push(route as Parameters<typeof router.push>[0]);
                 }}
                 scale={0.95}
                 style={{ width: '47%' }}
@@ -414,24 +420,26 @@ export default function MerchantDashboardScreen() {
             value={`${Math.round(analytics?.conversionRate ?? 0)}%`}
             icon={<TrendingUp size={20} color={colors.success} />}
             iconBg="bg-green-500/10"
-            onPress={() =>
+            onPress={() => {
+              const metric: MetricKey = 'conversionRate';
               router.push({
                 pathname: '/(merchant)/analytics',
-                params: { metric: 'todayRevenue' as MetricKey },
-              } as any)
-            }
+                params: { metric },
+              });
+            }}
           />
           <StatCard
             label={t('merchant.dashboard.avgOrderValue')}
             value={formatCurrency(analytics?.avgOrderValue ?? 0)}
             icon={<DollarSign size={20} color={colors.info} />}
             iconBg="bg-blue-500/10"
-            onPress={() =>
+            onPress={() => {
+              const metric: MetricKey = 'avgOrderValue';
               router.push({
                 pathname: '/(merchant)/analytics',
-                params: { metric: 'todayOrders' as MetricKey },
-              } as any)
-            }
+                params: { metric },
+              });
+            }}
           />
         </View>
 
