@@ -96,7 +96,7 @@ function OrderCard({ order }: { order: Order }) {
 
   const handleOpenDetail = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(`/(merchant)/order/${order.id}` as any);
+    router.push({ pathname: '/(merchant)/order/[id]' as const, params: { id: order.id } });
   };
 
   return (
