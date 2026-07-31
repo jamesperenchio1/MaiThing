@@ -1,6 +1,12 @@
 import { Tabs, useRouter } from 'expo-router';
 import { View, Pressable, Platform } from 'react-native';
-import { LayoutDashboard, ShoppingBag, Package, Settings, QrCode } from 'lucide-react-native';
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
+  QrCode,
+  MessageSquare,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
@@ -8,6 +14,7 @@ import type { BottomTabBarProps } from 'expo-router/build/react-navigation/botto
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
+import { useConversations } from '@/src/hooks/useMessages';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { Text } from '@/src/components/ui/Text';
 
@@ -19,7 +26,10 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   const leftRoutes = state.routes.slice(0, 2); // Dashboard (0), Orders (1)
-  const rightRoutes = state.routes.slice(2); // Inventory (2), Settings (3)
+  // Right side: Inventory + Messages; Settings is hidden from tab bar but remains a valid route
+  const rightRoutes = state.routes.filter(
+    (r) => r.name === 'inventory' || r.name === 'messages'
+  );
 
   const renderTab = (route: (typeof state.routes)[number], routeIndex: number) => {
     const descriptor = descriptors[route.key];
@@ -111,7 +121,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         alignItems: 'center',
       }}
     >
-      {leftRoutes.map((route, i) => renderTab(route, i))}
+      {leftRoutes.map((route) => renderTab(route, state.routes.indexOf(route)))}
 
       {/* QR FAB — not a real tab, floating above the bar */}
       <View style={{ width: 70, alignItems: 'center', justifyContent: 'center' }}>
@@ -137,7 +147,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         </PressableScale>
       </View>
 
-      {rightRoutes.map((route, i) => renderTab(route, i + 2))}
+      {rightRoutes.map((route) => renderTab(route, state.routes.indexOf(route)))}
     </View>
   );
 }
@@ -147,6 +157,10 @@ export default function MerchantTabsLayout() {
   const user = useAuthStore((s) => s.user);
   const { data: orders } = useOrders(user?.id ?? '', 'merchant');
   const pendingCount = orders?.filter((o) => ACTIONABLE_STATUSES.has(o.status)).length ?? 0;
+
+  const { data: conversations } = useConversations(user?.id ?? '');
+  const unreadCount =
+    conversations?.filter((c) => !c.read && c.sentBy === 'customer').length ?? 0;
 
   return (
     <Tabs
@@ -185,11 +199,20 @@ export default function MerchantTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Messages',
+          tabBarButtonTestID: 'merchant-messages-tab',
+          tabBarIcon: ({ color, size }) => <MessageSquare size={size} color={color} />,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: { fontSize: 11, minWidth: 18, height: 18 },
+        }}
+      />
+      {/* Settings is no longer shown in the tab bar — accessible via the merchant identity card on the Dashboard */}
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarButtonTestID: 'merchant-settings-tab',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
     </Tabs>

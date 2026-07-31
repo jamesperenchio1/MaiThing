@@ -18,6 +18,8 @@ import {
   CalendarClock,
   Minus,
   X,
+  MessageSquare,
+  Settings,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -35,8 +37,9 @@ import { useMerchantByOwner, useSetStoreClosure } from '@/src/hooks/useMerchants
 import { useMerchantWallet } from '@/src/hooks/usePayouts';
 import { useListings } from '@/src/hooks/useListings';
 import { useOrders } from '@/src/hooks/useOrders';
+import { useConversations } from '@/src/hooks/useMessages';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatCurrency, formatPickupWindow, getInitials } from '@/src/lib/utils';
+import { formatCurrency, formatPickupWindow, getInitials, formatRelativeTime } from '@/src/lib/utils';
 import type { Listing, Order } from '@/src/types';
 
 type MetricKey =
@@ -202,6 +205,8 @@ export default function MerchantDashboardScreen() {
     refetch: refetchWallet,
   } = useMerchantWallet(merchantId);
 
+  const { data: conversations } = useConversations(user?.id ?? '');
+
   const setStoreClosure = useSetStoreClosure(merchantId, user?.id ?? '');
 
   const hour = new Date().getHours();
@@ -246,6 +251,12 @@ export default function MerchantDashboardScreen() {
     .filter((l) => l.status === 'active' && l.quantityRemaining <= (l.lowStockThreshold ?? 3))
     .sort((a, b) => a.quantityRemaining - b.quantityRemaining)
     .slice(0, 5);
+
+  // Unread conversations for dashboard widget (up to 2 most recent, unread from customer)
+  const unreadConversations = (conversations ?? [])
+    .filter((c) => !c.read && c.sentBy === 'customer')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 2);
 
   const handleRefresh = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -414,6 +425,65 @@ export default function MerchantDashboardScreen() {
           </View>
         </View>
 
+        {/* Messages preview widget — shown when there are unread conversations */}
+        {unreadConversations.length > 0 && (
+          <View className="mb-6">
+            <View className="mb-3 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <MessageSquare size={16} color={colors.primary} />
+                <Text variant="body-sm" className="ml-2 font-semibold text-muted">
+                  Unread Messages
+                </Text>
+              </View>
+              <PressableScale
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/(merchant)/(tabs)/messages' as any);
+                }}
+                scale={0.95}
+              >
+                <Text variant="caption" className="text-primary">
+                  {t('common.seeAll')}
+                </Text>
+              </PressableScale>
+            </View>
+            {unreadConversations.map((conversation) => (
+              <PressableScale
+                key={conversation.customerId}
+                scale={0.98}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({
+                    pathname: '/(merchant)/messages/[customerId]',
+                    params: { customerId: conversation.customerId },
+                  } as any);
+                }}
+              >
+                <Card variant="outlined" className="mb-3">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-1 mr-3">
+                      <Text variant="body-sm" className="font-semibold">
+                        {conversation.customerName}
+                      </Text>
+                      <Text variant="caption" className="text-muted mt-0.5" numberOfLines={1}>
+                        {conversation.content}
+                      </Text>
+                    </View>
+                    <View className="items-end">
+                      <Text variant="caption" className="text-muted mb-1">
+                        {formatRelativeTime(conversation.createdAt)}
+                      </Text>
+                      <Text variant="caption" className="text-primary font-semibold">
+                        Tap to reply
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              </PressableScale>
+            ))}
+          </View>
+        )}
+
         {/* Quick Actions Grid */}
         <View className="mb-6">
           <Text variant="body-sm" className="mb-3 font-semibold text-muted">
@@ -443,58 +513,71 @@ export default function MerchantDashboardScreen() {
           </View>
         </View>
 
-        {/* Merchant identity card */}
+        {/* Merchant identity card — tappable to access Settings */}
         {isLoading ? (
           <Skeleton width="100%" height={96} className="mb-6 rounded-3xl" />
         ) : merchant ? (
-          <Card variant="elevated" className="mb-6">
-            <View className="flex-row items-center">
-              {merchant.logoUrl ? (
-                <Image source={{ uri: merchant.logoUrl }} className="mr-4 h-14 w-14 rounded-2xl" />
-              ) : (
-                <View className="mr-4 h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                  <Text className="text-lg font-bold text-primary">
-                    {getInitials(merchant.name)}
+          <PressableScale
+            scale={0.98}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(merchant)/(tabs)/settings' as any);
+            }}
+            className="mb-6"
+          >
+            <Card variant="elevated">
+              <View className="flex-row items-center">
+                {merchant.logoUrl ? (
+                  <Image source={{ uri: merchant.logoUrl }} className="mr-4 h-14 w-14 rounded-2xl" />
+                ) : (
+                  <View className="mr-4 h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                    <Text className="text-lg font-bold text-primary">
+                      {getInitials(merchant.name)}
+                    </Text>
+                  </View>
+                )}
+                <View className="flex-1">
+                  <Text variant="h3" numberOfLines={1}>
+                    {merchant.name}
                   </Text>
-                </View>
-              )}
-              <View className="flex-1">
-                <Text variant="h3" numberOfLines={1}>
-                  {merchant.name}
-                </Text>
-                <View className="mt-1.5 flex-row flex-wrap items-center gap-1.5">
-                  {merchant.isVerified && (
-                    <Badge variant="success">
-                      <View className="flex-row items-center">
-                        <ShieldCheck size={12} color={colors.success} />
-                        <Text className="ml-1 text-xs font-semibold text-green-800">
-                          {t('merchant.dashboard.verified')}
-                        </Text>
-                      </View>
-                    </Badge>
-                  )}
-                  <Badge variant="default">
-                    <View className="flex-row items-center">
-                      <Star size={12} color={colors.primary} />
-                      <Text className="ml-1 text-xs font-semibold text-primary">
-                        {merchant.rating.toFixed(1)}
-                      </Text>
-                    </View>
-                  </Badge>
-                  {merchant.hygieneRating && (
+                  <View className="mt-1.5 flex-row flex-wrap items-center gap-1.5">
+                    {merchant.isVerified && (
+                      <Badge variant="success">
+                        <View className="flex-row items-center">
+                          <ShieldCheck size={12} color={colors.success} />
+                          <Text className="ml-1 text-xs font-semibold text-green-800">
+                            {t('merchant.dashboard.verified')}
+                          </Text>
+                        </View>
+                      </Badge>
+                    )}
                     <Badge variant="default">
                       <View className="flex-row items-center">
-                        <Sparkles size={12} color={colors.primary} />
+                        <Star size={12} color={colors.primary} />
                         <Text className="ml-1 text-xs font-semibold text-primary">
-                          {t('merchant.dashboard.hygieneRated', { rating: merchant.hygieneRating })}
+                          {merchant.rating.toFixed(1)}
                         </Text>
                       </View>
                     </Badge>
-                  )}
+                    {merchant.hygieneRating && (
+                      <Badge variant="default">
+                        <View className="flex-row items-center">
+                          <Sparkles size={12} color={colors.primary} />
+                          <Text className="ml-1 text-xs font-semibold text-primary">
+                            {t('merchant.dashboard.hygieneRated', { rating: merchant.hygieneRating })}
+                          </Text>
+                        </View>
+                      </Badge>
+                    )}
+                  </View>
+                  <Text variant="caption" className="mt-1.5 text-muted">
+                    Tap to manage settings
+                  </Text>
                 </View>
+                <Settings size={18} color={colors.muted} />
               </View>
-            </View>
-          </Card>
+            </Card>
+          </PressableScale>
         ) : null}
 
         {hasError && (
