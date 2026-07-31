@@ -14,6 +14,7 @@ import {
   FileText,
   ChevronRight,
   Clock,
+  Check,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -51,6 +52,13 @@ const statusVariantMap: Record<
   expired: 'danger',
   draft: 'info',
 };
+
+function shiftWindowToToday(isoString: string): string {
+  const original = new Date(isoString);
+  const today = new Date();
+  today.setHours(original.getHours(), original.getMinutes(), original.getSeconds(), 0);
+  return today.toISOString();
+}
 
 function InventoryCard({
   listing,
@@ -199,6 +207,8 @@ export default function InventoryScreen() {
   const [activeTab, setActiveTab] = useState<ListingStatus>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [duplicateListing, setDuplicateListing] = useState<Listing | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   const { data: merchant, isLoading: isLoadingMerchant } = useMerchantByOwner(user?.id ?? '');
   const merchantId = merchant?.id;
@@ -258,23 +268,64 @@ export default function InventoryScreen() {
 
   const handleDuplicate = (listing: Listing) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setDuplicateListing(listing);
+    setShowDuplicateModal(true);
+  };
+
+  const handleSameTimeToday = () => {
+    if (!duplicateListing) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const shiftedStart = shiftWindowToToday(duplicateListing.pickupWindowStart);
+    const shiftedEnd = shiftWindowToToday(duplicateListing.pickupWindowEnd);
+
+    setShowDuplicateModal(false);
+    setDuplicateListing(null);
+
     router.push({
       pathname: '/(merchant)/listings/new',
       params: {
-        duplicateId: listing.id,
-        title: listing.title,
-        description: listing.description,
-        type: listing.type,
-        originalPrice: String(listing.originalPrice),
-        salePrice: String(listing.salePrice),
-        category: listing.category,
-        quantity: String(listing.quantity),
-        boxSize: listing.type === 'mystery_box' ? listing.boxSize : undefined,
-        images: JSON.stringify(listing.images),
-        dietaryTags: JSON.stringify(listing.dietaryTags),
-        allergens: JSON.stringify(listing.allergens),
-        pickupWindowStart: listing.pickupWindowStart,
-        pickupWindowEnd: listing.pickupWindowEnd,
+        duplicateId: duplicateListing.id,
+        title: duplicateListing.title,
+        description: duplicateListing.description,
+        type: duplicateListing.type,
+        originalPrice: String(duplicateListing.originalPrice),
+        salePrice: String(duplicateListing.salePrice),
+        category: duplicateListing.category,
+        quantity: String(duplicateListing.quantity),
+        boxSize: duplicateListing.type === 'mystery_box' ? duplicateListing.boxSize : undefined,
+        images: JSON.stringify(duplicateListing.images),
+        dietaryTags: JSON.stringify(duplicateListing.dietaryTags),
+        allergens: JSON.stringify(duplicateListing.allergens),
+        pickupWindowStart: shiftedStart,
+        pickupWindowEnd: shiftedEnd,
+      },
+    } as any);
+  };
+
+  const handleChooseNewWindow = () => {
+    if (!duplicateListing) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    setShowDuplicateModal(false);
+    setDuplicateListing(null);
+
+    router.push({
+      pathname: '/(merchant)/listings/new',
+      params: {
+        duplicateId: duplicateListing.id,
+        title: duplicateListing.title,
+        description: duplicateListing.description,
+        type: duplicateListing.type,
+        originalPrice: String(duplicateListing.originalPrice),
+        salePrice: String(duplicateListing.salePrice),
+        category: duplicateListing.category,
+        quantity: String(duplicateListing.quantity),
+        boxSize: duplicateListing.type === 'mystery_box' ? duplicateListing.boxSize : undefined,
+        images: JSON.stringify(duplicateListing.images),
+        dietaryTags: JSON.stringify(duplicateListing.dietaryTags),
+        allergens: JSON.stringify(duplicateListing.allergens),
       },
     } as any);
   };
@@ -511,6 +562,79 @@ export default function InventoryScreen() {
                 description={t('merchant.createListing.title')}
               />
             )}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showDuplicateModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowDuplicateModal(false);
+          setDuplicateListing(null);
+        }}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="rounded-t-3xl bg-background px-5 pb-8 pt-5">
+            <Text variant="h3" className="mb-5">
+              When is pickup?
+            </Text>
+
+            {duplicateListing && (
+              <>
+                <PressableScale
+                  onPress={handleSameTimeToday}
+                  scale={0.98}
+                  className="mb-3"
+                >
+                  <View className="flex-row items-center border-l-4 border-primary rounded-lg bg-primary/5 p-4">
+                    <View className="flex-1">
+                      <Text variant="body-sm" className="font-semibold text-foreground">
+                        Same time today
+                      </Text>
+                      <Text variant="caption" className="mt-1 text-muted">
+                        {new Date(duplicateListing.pickupWindowStart).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        –{' '}
+                        {new Date(duplicateListing.pickupWindowEnd).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        today
+                      </Text>
+                    </View>
+                    <Check size={20} color={colors.primary} />
+                  </View>
+                </PressableScale>
+
+                <PressableScale onPress={handleChooseNewWindow} scale={0.98} className="mb-6">
+                  <View className="flex-row items-center rounded-lg border border-border p-4">
+                    <View className="flex-1">
+                      <Text variant="body-sm" className="font-semibold text-foreground">
+                        Choose new window
+                      </Text>
+                      <Text variant="caption" className="mt-1 text-muted">
+                        Set a different pickup time
+                      </Text>
+                    </View>
+                  </View>
+                </PressableScale>
+              </>
+            )}
+
+            <Button
+              variant="ghost"
+              className="w-full"
+              onPress={() => {
+                setShowDuplicateModal(false);
+                setDuplicateListing(null);
+              }}
+            >
+              {t('common.cancel')}
+            </Button>
           </View>
         </View>
       </Modal>
