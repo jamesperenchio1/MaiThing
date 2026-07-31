@@ -239,6 +239,9 @@ export default {
       rating: 'Rating',
       verified: 'Verified Partner',
       hygieneRated: 'Hygiene {{rating}}',
+      conversionRate: 'Conversion Rate',
+      avgOrderValue: 'Avg Order Value',
+      quickActions: 'Quick Actions',
     },
     orders: {
       title: 'Orders',

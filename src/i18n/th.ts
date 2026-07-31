@@ -237,6 +237,9 @@ export default {
       rating: 'คะแนน',
       verified: 'พาร์ทเนอร์ยืนยัน',
       hygieneRated: 'อนามัย {{rating}}',
+      conversionRate: 'อัตราการแปลง',
+      avgOrderValue: 'มูลค่าเฉลี่ยต่อออเดอร์',
+      quickActions: 'การกระทำด่วน',
     },
     orders: {
       title: 'ออเดอร์',

@@ -316,6 +316,35 @@ export default function MerchantDashboardScreen() {
           </View>
         </View>
 
+        {/* Quick Actions Grid */}
+        <View className="mb-6">
+          <Text variant="body-sm" className="mb-3 font-semibold text-muted">
+            {t('merchant.dashboard.quickActions')}
+          </Text>
+          <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+            {quickActions.map(({ icon: Icon, label, color, bg, route }) => (
+              <PressableScale
+                key={label}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push(route as any);
+                }}
+                scale={0.95}
+                style={{ width: '47%' }}
+              >
+                <Card variant="elevated" className="items-center py-5">
+                  <View className={`rounded-2xl p-3 mb-2 ${bg}`}>
+                    <Icon size={22} color={color} />
+                  </View>
+                  <Text variant="body-sm" className="font-medium text-center">
+                    {label}
+                  </Text>
+                </Card>
+              </PressableScale>
+            ))}
+          </View>
+        </View>
+
         {/* Merchant identity card */}
         {isLoading ? (
           <Skeleton width="100%" height={96} className="mb-6 rounded-3xl" />
@@ -381,10 +410,10 @@ export default function MerchantDashboardScreen() {
 
         <View testID="merchant-stats-row-1" className="mb-6 flex-row space-x-3">
           <StatCard
-            label={t('merchant.dashboard.todayRevenue')}
-            value={formatCurrency(analytics?.todayRevenue ?? 0)}
-            icon={<DollarSign size={20} color={colors.primary} />}
-            iconBg="bg-primary/10"
+            label={t('merchant.dashboard.conversionRate')}
+            value={`${Math.round(analytics?.conversionRate ?? 0)}%`}
+            icon={<TrendingUp size={20} color={colors.success} />}
+            iconBg="bg-green-500/10"
             onPress={() =>
               router.push({
                 pathname: '/(merchant)/analytics',
@@ -393,41 +422,14 @@ export default function MerchantDashboardScreen() {
             }
           />
           <StatCard
-            label={t('merchant.dashboard.todayOrders')}
-            value={String(analytics?.todayOrders ?? 0)}
-            icon={<TrendingUp size={20} color={colors.info} />}
+            label={t('merchant.dashboard.avgOrderValue')}
+            value={formatCurrency(analytics?.avgOrderValue ?? 0)}
+            icon={<DollarSign size={20} color={colors.info} />}
             iconBg="bg-blue-500/10"
             onPress={() =>
               router.push({
                 pathname: '/(merchant)/analytics',
                 params: { metric: 'todayOrders' as MetricKey },
-              } as any)
-            }
-          />
-        </View>
-
-        <View testID="merchant-stats-row-2" className="mb-6 flex-row space-x-3">
-          <StatCard
-            label={t('merchant.dashboard.itemsSaved')}
-            value={String(analytics?.totalItemsSaved ?? 0)}
-            icon={<Package size={20} color={colors.warning} />}
-            iconBg="bg-orange-500/10"
-            onPress={() =>
-              router.push({
-                pathname: '/(merchant)/analytics',
-                params: { metric: 'totalItemsSaved' as MetricKey },
-              } as any)
-            }
-          />
-          <StatCard
-            label={t('merchant.dashboard.totalRevenue')}
-            value={formatCurrency(analytics?.totalRevenue ?? 0)}
-            icon={<DollarSign size={20} color={colors.info} />}
-            iconBg="bg-violet-500/10"
-            onPress={() =>
-              router.push({
-                pathname: '/(merchant)/analytics',
-                params: { metric: 'totalRevenue' as MetricKey },
               } as any)
             }
           />
@@ -555,35 +557,6 @@ export default function MerchantDashboardScreen() {
             ))}
           </View>
         )}
-
-        {/* Quick Actions Grid */}
-        <View className="mb-6">
-          <Text variant="body-sm" className="mb-3 font-semibold text-muted">
-            Quick Actions
-          </Text>
-          <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-            {quickActions.map(({ icon: Icon, label, color, bg, route }) => (
-              <PressableScale
-                key={label}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push(route as any);
-                }}
-                scale={0.95}
-                style={{ width: '47%' }}
-              >
-                <Card variant="elevated" className="items-center py-5">
-                  <View className={`rounded-2xl p-3 mb-2 ${bg}`}>
-                    <Icon size={22} color={color} />
-                  </View>
-                  <Text variant="body-sm" className="font-medium text-center">
-                    {label}
-                  </Text>
-                </Card>
-              </PressableScale>
-            ))}
-          </View>
-        </View>
       </View>
     </Screen>
   );
