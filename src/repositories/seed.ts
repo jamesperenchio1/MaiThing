@@ -794,6 +794,7 @@ export const LISTING_TEMPLATES: ListingTemplate[] = [
     pickupWindowDurationHours: 2,
     autoExpiry: true,
     createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    expiresAt: new Date(new Date(Date.now() - 30 * 86400000).getTime() + 90 * 86400000).toISOString(),
   },
   {
     id: 'template-2',
@@ -812,6 +813,7 @@ export const LISTING_TEMPLATES: ListingTemplate[] = [
     pickupWindowDurationHours: 1.5,
     autoExpiry: true,
     createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+    expiresAt: new Date(new Date(Date.now() - 20 * 86400000).getTime() + 90 * 86400000).toISOString(),
   },
 ];
 

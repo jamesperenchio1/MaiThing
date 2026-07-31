@@ -578,10 +578,12 @@ class MockListingRepository implements ListingRepository {
     data: Omit<ListingTemplate, 'id' | 'createdAt'>
   ): Promise<ListingTemplate> {
     await sleep(300);
+    const now = new Date();
     const template: ListingTemplate = {
       ...data,
       id: `template-${Date.now()}`,
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString(),
     };
     LISTING_TEMPLATES.push(template);
     return template;

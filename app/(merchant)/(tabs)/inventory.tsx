@@ -17,6 +17,7 @@ import {
   Check,
   Pause,
   Tag,
+  AlertTriangle,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -817,37 +818,81 @@ export default function InventoryScreen() {
                   data={templates}
                   keyExtractor={(item) => item.id}
                   estimatedItemSize={80}
-                  renderItem={({ item }) => (
-                    <Card
-                      variant="outlined"
-                      className="mb-3 flex-row items-center justify-between p-3"
-                    >
-                      <View className="flex-1">
-                        <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
-                          {item.name || item.title}
-                        </Text>
-                        <Text variant="caption" className="text-muted">
-                          {formatCurrency(item.salePrice)} · {item.category}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <Button
-                          size="sm"
-                          onPress={() => handleUseTemplate(item.id)}
-                          className="mr-2"
-                        >
-                          {t('merchant.inventory.useTemplate')}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onPress={() => deleteTemplate.mutate(item.id)}
-                        >
-                          <Trash2 size={16} color={colors.danger} />
-                        </Button>
-                      </View>
-                    </Card>
-                  )}
+                  renderItem={({ item }) => {
+                    const now = Date.now();
+                    const expiresAt = item.expiresAt ? new Date(item.expiresAt) : null;
+                    const isExpired = expiresAt ? expiresAt.getTime() < now : false;
+                    const msUntilExpiry = expiresAt ? expiresAt.getTime() - now : null;
+                    const isExpiringSoon =
+                      !isExpired && msUntilExpiry !== null && msUntilExpiry < 7 * 86400000;
+
+                    return (
+                      <Card
+                        variant="outlined"
+                        className="mb-3 flex-row items-center justify-between p-3"
+                        style={isExpired ? { opacity: 0.55 } : undefined}
+                      >
+                        <View className="flex-1 mr-2">
+                          <View className="flex-row items-center">
+                            <Text
+                              variant="body-sm"
+                              className="font-semibold flex-1"
+                              numberOfLines={1}
+                            >
+                              {item.name || item.title}
+                            </Text>
+                            {item.isFlagged && (
+                              <AlertTriangle size={14} color={colors.warning} style={{ marginLeft: 4 }} />
+                            )}
+                          </View>
+                          <Text variant="caption" className="text-muted">
+                            {formatCurrency(item.salePrice)} · {item.category}
+                          </Text>
+                          {expiresAt && (
+                            <Text
+                              variant="caption"
+                              style={{
+                                color: isExpired
+                                  ? colors.danger
+                                  : isExpiringSoon
+                                    ? colors.warning
+                                    : colors.muted,
+                              }}
+                            >
+                              {isExpired
+                                ? 'Expired'
+                                : `Expires ${expiresAt.toLocaleDateString()}`}
+                            </Text>
+                          )}
+                        </View>
+                        <View className="flex-row items-center">
+                          {isExpired ? (
+                            <Badge variant="danger" className="mr-2">
+                              Expired
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onPress={() => handleUseTemplate(item.id)}
+                              className="mr-2"
+                            >
+                              {t('merchant.inventory.useTemplate')}
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onPress={() => {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              deleteTemplate.mutate(item.id);
+                            }}
+                          >
+                            <Trash2 size={16} color={colors.danger} />
+                          </Button>
+                        </View>
+                      </Card>
+                    );
+                  }}
                   ListEmptyComponent={
                     <EmptyState
                       icon={<FileText size={32} color={colors.muted} />}

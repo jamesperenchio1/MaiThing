@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
   FileText,
   ChevronDown,
+  AlertTriangle,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 let ImagePicker: typeof import('expo-image-picker') | null = null;
@@ -235,6 +236,25 @@ export default function CreateListingScreen() {
   const type = watch('type');
   const dietaryTags = watch('dietaryTags') ?? [];
   const allergens = watch('allergens') ?? [];
+  const currentOriginalPrice = watch('originalPrice');
+
+  // Source price for anti-inflation guard: compare against the template or duplicated listing
+  const sourceOriginalPrice = useMemo(() => {
+    if (params.templateId && templates) {
+      const tpl = templates.find((t) => t.id === params.templateId);
+      return tpl?.originalPrice ?? null;
+    }
+    if (params.duplicateId && params.originalPrice) {
+      const parsed = Number(params.originalPrice);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  }, [params.templateId, params.duplicateId, params.originalPrice, templates]);
+
+  // Flag if original price is >10% higher than the source listing/template price
+  const isPriceBumpFlagged =
+    sourceOriginalPrice !== null &&
+    currentOriginalPrice > sourceOriginalPrice * 1.1;
 
   const loadTemplate = (template: {
     name?: string;
@@ -403,6 +423,8 @@ export default function CreateListingScreen() {
           images: images.length > 0 ? images : [],
           pickupWindowDurationHours: durationHours,
           autoExpiry,
+          isFlagged: isPriceBumpFlagged || undefined,
+          flagReason: isPriceBumpFlagged ? 'Price increase exceeds 10% of source listing' : undefined,
         },
         {
           onSuccess: () => {
@@ -927,6 +949,21 @@ export default function CreateListingScreen() {
             </Button>
           </View>
         </View>
+
+        {isPriceBumpFlagged && (
+          <View className="mb-4 flex-row rounded-2xl border border-warning bg-warning/10 p-4">
+            <AlertTriangle size={18} color={colors.warning} style={{ marginTop: 1 }} />
+            <View className="ml-3 flex-1">
+              <Text variant="body-sm" className="font-semibold text-warning">
+                Price increase flagged
+              </Text>
+              <Text variant="caption" className="mt-0.5 text-warning">
+                Listings must offer genuine discounts. A significant price increase has been noted
+                and may be reviewed by our team.
+              </Text>
+            </View>
+          </View>
+        )}
 
         <View className="mb-4 flex-row space-x-3">
           <Button

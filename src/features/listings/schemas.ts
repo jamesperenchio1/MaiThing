@@ -10,6 +10,7 @@ export const createListingSchema = z
     originalPrice: z.number().min(1, 'Original price must be greater than 0'),
     salePrice: z.number().min(1, 'Sale price must be greater than 0'),
     quantity: z.number().min(1, 'Quantity must be at least 1'),
+    lowStockThreshold: z.coerce.number().int().min(1).max(100).optional().default(3),
     pickupWindowStart: z.date({ required_error: 'Start time is required' }),
     pickupWindowEnd: z.date({ required_error: 'End time is required' }),
     dietaryTags: z.array(z.string()).default([]),

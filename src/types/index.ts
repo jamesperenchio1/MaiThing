@@ -252,6 +252,9 @@ export interface ListingTemplate {
   pickupWindowDurationHours: number;
   autoExpiry: boolean;
   createdAt: string;
+  expiresAt?: string;
+  isFlagged?: boolean;
+  flagReason?: string;
 }
 
 export interface MerchantWallet {
