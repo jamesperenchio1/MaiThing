@@ -2,7 +2,17 @@ import { useState } from 'react';
 import { View, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
+let CameraView: React.ComponentType<{ facing?: string; barcodeScannerSettings?: { barcodeTypes: string[] }; onBarcodeScanned?: (result: { data: string }) => void; style?: object }> | null = null;
+let useCameraPermissions: (() => [{ granted: boolean } | null, () => Promise<void>]) | null = null;
+type BarcodeScanningResult = { data: string };
+try {
+  const cam = require('expo-camera');
+  CameraView = cam.CameraView;
+  useCameraPermissions = cam.useCameraPermissions;
+} catch {
+  // not available in Expo Go
+}
+import React from 'react';
 import { QrCode, Check, Search, XCircle, X } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -21,7 +31,7 @@ export default function ScannerScreen() {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions?.() ?? [null, async () => {}];
 
   const merchantId = user?.merchantId ?? user?.id ?? '';
 
@@ -100,6 +110,16 @@ export default function ScannerScreen() {
           <Button onPress={requestPermission} className="mt-4">
             Allow Camera
           </Button>
+        </View>
+      );
+    }
+
+    if (!CameraView) {
+      return (
+        <View className="mb-6 items-center">
+          <View className="h-72 w-full items-center justify-center rounded-3xl bg-muted/20">
+            <Text variant="body-sm" className="text-muted">Camera not available</Text>
+          </View>
         </View>
       );
     }

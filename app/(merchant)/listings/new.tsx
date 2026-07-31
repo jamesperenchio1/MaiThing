@@ -14,7 +14,12 @@ import {
   ChevronDown,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
+let ImagePicker: typeof import('expo-image-picker') | null = null;
+try {
+  ImagePicker = require('expo-image-picker');
+} catch {
+  // not available in Expo Go
+}
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -103,6 +108,7 @@ function buildListingPayload(
     dietaryTags: data.dietaryTags,
     allergens: data.allergens,
     status,
+    lowStockThreshold: data.lowStockThreshold,
   } as Omit<Listing, 'id' | 'createdAt'>;
 
   if (data.type === 'mystery_box') {
@@ -170,6 +176,7 @@ export default function CreateListingScreen() {
       originalPrice: Number(params.originalPrice) || 300,
       salePrice: Number(params.salePrice) || 99,
       quantity: Number(params.quantity) || 5,
+      lowStockThreshold: 3,
       pickupWindowStart: params.pickupWindowStart
         ? new Date(params.pickupWindowStart)
         : new Date(new Date().setHours(18, 0, 0, 0)),
@@ -207,6 +214,7 @@ export default function CreateListingScreen() {
         originalPrice: existingListing.originalPrice,
         salePrice: existingListing.salePrice,
         quantity: existingListing.quantity,
+        lowStockThreshold: existingListing.lowStockThreshold ?? 3,
         pickupWindowStart: new Date(existingListing.pickupWindowStart),
         pickupWindowEnd: new Date(existingListing.pickupWindowEnd),
         dietaryTags: existingListing.dietaryTags,
@@ -288,6 +296,8 @@ export default function CreateListingScreen() {
       ]);
       return;
     }
+
+    if (!ImagePicker) return;
 
     try {
       let permissionResult;
@@ -743,6 +753,31 @@ export default function CreateListingScreen() {
               onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
               error={error?.message}
             />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="lowStockThreshold"
+          render={({ field: { onChange, value }, fieldState: { error } }) => (
+            <View className="mb-4">
+              <Input
+                testID="low-stock-threshold-input"
+                label="Low stock alert"
+                placeholder="3"
+                keyboardType="number-pad"
+                value={value ? String(value) : ''}
+                onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
+                error={error?.message}
+                maxLength={3}
+                containerClassName="mb-1.5"
+              />
+              {!error && (
+                <Text variant="caption" className="ml-1 text-muted">
+                  Alert when fewer than this many remain
+                </Text>
+              )}
+            </View>
           )}
         />
 
