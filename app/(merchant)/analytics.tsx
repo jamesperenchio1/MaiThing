@@ -13,8 +13,6 @@ import {
   Star,
   Users,
   Leaf,
-  BarChart2,
-  ChevronRight,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -326,7 +324,7 @@ export default function MerchantAnalyticsScreen() {
       <ScrollView
         ref={scrollViewRef}
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerClassName="pb-8"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -536,7 +534,7 @@ export default function MerchantAnalyticsScreen() {
               <Card variant="elevated" className="p-4">
                 {/* Day column headers */}
                 <View className="mb-2 flex-row">
-                  <View style={{ width: 72 }} />
+                  <View className="w-[72px]" />
                   {DAY_LABELS.map((d, i) => (
                     <View key={i} className="flex-1 items-center">
                       <Text variant="caption" className="text-muted">
@@ -548,7 +546,7 @@ export default function MerchantAnalyticsScreen() {
                 {/* Heatmap rows */}
                 {SLOT_LABELS.map((slotLabel, slotIdx) => (
                   <View key={slotIdx} className="mb-2 flex-row items-center">
-                    <View style={{ width: 72 }}>
+                    <View className="w-[72px]">
                       <Text variant="caption" className="text-muted">
                         {slotLabel}
                       </Text>
