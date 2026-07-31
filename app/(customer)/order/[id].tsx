@@ -15,7 +15,12 @@ import {
   Calendar,
   type LucideIcon,
 } from 'lucide-react-native';
-import * as ExpoCalendar from 'expo-calendar';
+let ExpoCalendar: typeof import('expo-calendar') | null = null;
+try {
+  ExpoCalendar = require('expo-calendar');
+} catch {
+  // not available in Expo Go
+}
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -189,7 +194,7 @@ export default function OrderDetailScreen() {
   }, [order]);
 
   const handleAddToCalendar = async () => {
-    if (!order || Platform.OS === 'web') return;
+    if (!order || Platform.OS === 'web' || !ExpoCalendar) return;
     try {
       const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
       if (status !== 'granted') return;

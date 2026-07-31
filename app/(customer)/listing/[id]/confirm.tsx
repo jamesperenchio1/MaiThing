@@ -5,7 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Platform, ActivityIndicator, Modal } from 'react-native';
 import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import * as ExpoCalendar from 'expo-calendar';
+// Lazy-loaded so Expo Go doesn't crash on missing native CalendarNext module
+let ExpoCalendar: typeof import('expo-calendar') | null = null;
+try {
+  ExpoCalendar = require('expo-calendar');
+} catch {
+  // not available in Expo Go
+}
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -55,7 +61,7 @@ export default function ConfirmOrderScreen() {
   const [showUpsell, setShowUpsell] = useState(false);
 
   const handleAddToCalendar = async (o: Order) => {
-    if (Platform.OS === 'web') return;
+    if (Platform.OS === 'web' || !ExpoCalendar) return;
     try {
       const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
       if (status !== 'granted') return;
