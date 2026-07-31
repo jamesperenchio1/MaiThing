@@ -149,29 +149,20 @@ function InventoryCard({
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onDuplicate();
               }}
-              scale={0.95}
-              className="mr-3"
+              scale={0.9}
+              className="mr-3 p-1"
             >
-              <View className="flex-row items-center">
-                <Copy size={14} color={colors.muted} />
-                <Text variant="caption" className="ml-1 text-muted">
-                  {t('merchant.inventory.duplicate')}
-                </Text>
-              </View>
+              <Copy size={16} color={colors.muted} />
             </PressableScale>
             <PressableScale
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onDelete();
               }}
-              scale={0.95}
+              scale={0.9}
+              className="p-1"
             >
-              <View className="flex-row items-center">
-                <Trash2 size={14} color={colors.danger} />
-                <Text variant="caption" className="ml-1 text-danger">
-                  {t('merchant.inventory.delete')}
-                </Text>
-              </View>
+              <Trash2 size={16} color={colors.danger} />
             </PressableScale>
           </View>
           <PressableScale
@@ -409,7 +400,7 @@ export default function InventoryScreen() {
                   variant="body-sm"
                   className={`font-semibold ${isActive ? 'text-white' : 'text-foreground'}`}
                 >
-                  {t(`merchant.inventory.${tab === 'sold_out' ? 'soldOut' : tab}`)}
+                  {t(`merchant.inventory.${tab === 'sold_out' ? 'soldOut' : tab === 'draft' ? 'drafts' : tab}`)}
                 </Text>
               </View>
             </PressableScale>
