@@ -129,7 +129,7 @@ function InventoryCard({
           <View className="items-center justify-center px-3">
             {isSelected ? (
               <View className="w-6 h-6 rounded-full bg-primary items-center justify-center">
-                <Check size={14} color="white" />
+                <Check size={14} color={colors.white} />
               </View>
             ) : (
               <View className="w-6 h-6 rounded-full border-2 border-primary bg-transparent" />
@@ -611,8 +611,7 @@ export default function InventoryScreen() {
 
       {ribbonVisible && (
         <View
-          style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
-          className="bg-card border-t border-border px-4 pt-3 pb-8"
+          className="absolute bottom-0 left-0 right-0 bg-card border-t border-border px-4 pt-3 pb-8"
         >
           <View className="mb-3 items-center">
             <Text variant="body-sm" className="font-semibold text-foreground">
