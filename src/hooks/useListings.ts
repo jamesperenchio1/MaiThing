@@ -10,10 +10,11 @@ export interface ListingFilters {
   lng?: number;
   radius?: number;
   type?: string;
-  sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest';
+  sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
   dietaryTags?: string[];
   allergens?: string[];
   maxPrice?: number;
+  minMerchantRating?: number;
   status?: string;
 }
 
