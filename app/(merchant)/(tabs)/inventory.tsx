@@ -206,6 +206,7 @@ function InventoryCard({
                 </Text>
                 <PressableScale
                   onPress={() => {
+                    if (listing.quantityRemaining >= listing.quantity) return;
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     updateListing.mutate({
                       id: listing.id,
@@ -213,11 +214,11 @@ function InventoryCard({
                     });
                   }}
                   scale={0.85}
-                  disabled={updateListing.isPending}
+                  disabled={listing.quantityRemaining >= listing.quantity || updateListing.isPending}
                   hitSlop={4}
                   className="px-2 py-1"
                 >
-                  <Plus size={12} color={colors.foreground} />
+                  <Plus size={12} color={listing.quantityRemaining >= listing.quantity ? colors.muted : colors.foreground} />
                 </PressableScale>
               </View>
             )}

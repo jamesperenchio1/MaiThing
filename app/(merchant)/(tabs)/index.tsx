@@ -132,8 +132,7 @@ function OrderPickupRow({
               <Text className="font-mono text-primary">{order.pickupCode}</Text>
               {onScan && (
                 <PressableScale
-                  onPress={(e) => {
-                    e.stopPropagation?.();
+                  onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     onScan();
                   }}
