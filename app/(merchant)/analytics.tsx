@@ -164,17 +164,17 @@ function computeHourlyRevenue(orders: Order[]): { hour: number; revenue: number 
   return buckets;
 }
 
-/** Returns a 3×7 grid: [timeSlot][dayOfWeek] = orderCount.
- *  timeSlot: 0=morning(6-11), 1=afternoon(12-17), 2=evening(18-23)
+/** Returns a 6×7 grid: [timeSlot][dayOfWeek] = orderCount.
+ *  timeSlot: 0=dawn(0-3), 1=morning(4-7), 2=mid-morning(8-11), 3=afternoon(12-15), 4=late-afternoon(16-19), 5=evening(20-23)
  *  dayOfWeek: 0=Mon … 6=Sun */
 function computeHeatmap(orders: Order[]): number[][] {
-  const grid: number[][] = Array.from({ length: 3 }, () => Array(7).fill(0));
+  const grid: number[][] = Array.from({ length: 6 }, () => Array(7).fill(0));
   for (const order of orders) {
     const d = new Date(order.createdAt);
     const hour = d.getHours();
     const jsDay = d.getDay(); // 0=Sun
     const day = (jsDay + 6) % 7; // 0=Mon
-    const slot = hour < 12 ? 0 : hour < 18 ? 1 : 2;
+    const slot = Math.floor(hour / 4);
     grid[slot][day]++;
   }
   return grid;
@@ -281,6 +281,12 @@ export default function MerchantAnalyticsScreen() {
   const aovTrendData = analytics?.weeklyAOV ?? [];
   const aovTrendLabels = aovTrendData.map((_, i) => `W${i + 1}`);
 
+  const followerHistory = analytics?.followerHistory ?? [];
+  const followerChartData = followerHistory.map((h) => h.count);
+  const followerChartLabels = followerHistory.map((h) =>
+    new Date(h.date).toLocaleDateString('en', { month: 'short' })
+  );
+
   const topListingTitle = topListings[0]?.title ?? null;
   const wasteReductionPct =
     rangeMetrics.totalItemsSaved > 0
@@ -320,11 +326,7 @@ export default function MerchantAnalyticsScreen() {
   ];
 
   const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const SLOT_LABELS = [
-    t('merchant.analytics.morning'),
-    t('merchant.analytics.afternoon'),
-    t('merchant.analytics.evening'),
-  ];
+  const SLOT_LABELS = ['0–3', '4–7', '8–11', '12–15', '16–19', '20–23'];
 
   // ── Layout tracking helpers ───────────────────────────────────────────────────
 
@@ -566,6 +568,45 @@ export default function MerchantAnalyticsScreen() {
                     )}
                   </Text>
                 </View>
+              </View>
+            )}
+
+            {/* ── Follower growth chart ─────────────────────────── */}
+            {followerChartData.length > 1 && (
+              <View className="mb-6">
+                <Text variant="h3" className="mb-4">
+                  Follower Growth
+                </Text>
+                <Card variant="elevated" className="p-4">
+                  <BarChart
+                    data={followerChartData}
+                    labels={followerChartLabels}
+                    color={colors.primary}
+                    height={160}
+                  />
+                  <View className="mt-3 flex-row items-center justify-between">
+                    <View>
+                      <Text variant="caption" className="text-muted">
+                        Current followers
+                      </Text>
+                      <Text variant="body-sm" className="font-semibold">
+                        {followerChartData[followerChartData.length - 1].toLocaleString()}
+                      </Text>
+                    </View>
+                    <View className="items-end">
+                      <Text variant="caption" className="text-muted">
+                        Growth
+                      </Text>
+                      <Text variant="body-sm" className="font-semibold text-primary">
+                        +
+                        {(
+                          followerChartData[followerChartData.length - 1] - followerChartData[0]
+                        ).toLocaleString()}{' '}
+                        this period
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
               </View>
             )}
 
