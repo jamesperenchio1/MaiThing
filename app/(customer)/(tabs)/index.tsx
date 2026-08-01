@@ -110,6 +110,15 @@ export default function CustomerHomeScreen() {
     [listings]
   );
 
+  const goingFast = useMemo(
+    () =>
+      [...(listings ?? [])]
+        .filter((l) => l.status === 'active' && l.quantityRemaining > 0 && l.quantityRemaining <= 3)
+        .sort((a, b) => a.quantityRemaining - b.quantityRemaining)
+        .slice(0, 6),
+    [listings]
+  );
+
   const mysteryBoxes = useMemo(
     () => (listings ?? []).filter((l) => l.type === 'mystery_box').slice(0, 6),
     [listings]
@@ -288,6 +297,19 @@ export default function CustomerHomeScreen() {
         onSelect={setSelectedMealTime}
         locale={i18n.language as 'en' | 'th'}
       />
+
+      {goingFast.length > 0 && (
+        <CollectionSection
+          title="🔥 Going Fast"
+          listings={goingFast}
+          onSeeAll={() =>
+            router.push({
+              pathname: '/(customer)/(tabs)/discover',
+              params: { sortBy: 'going_fast' },
+            })
+          }
+        />
+      )}
 
       {favoriteListings.length > 0 && (
         <CollectionSection

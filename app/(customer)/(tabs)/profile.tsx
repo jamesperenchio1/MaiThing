@@ -32,6 +32,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useAuthStore } from '@/src/stores/auth';
+import { useCustomerImpact } from '@/src/hooks/useImpact';
 import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
@@ -86,6 +87,7 @@ export default function ProfileScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? '');
 
+  const { data: impact } = useCustomerImpact(user?.id);
   const { data: preferences } = useNotificationPreferences(user?.id ?? '');
   const updatePreferences = useUpdateNotificationPreferences();
   const [localPrefs, setLocalPrefs] = useState<NotificationPreferences | null>(null);
@@ -204,6 +206,35 @@ export default function ProfileScreen() {
         <Text testID="profile-title" variant="h1" className="mb-6">
           {t('common.profile')}
         </Text>
+
+        {impact && impact.mealsSaved > 0 && (
+          <Card variant="elevated" className="mb-4 flex-row items-center justify-between">
+            <View>
+              <Text variant="caption" className="text-muted">
+                Meals saved
+              </Text>
+              <Text variant="h2" className="text-primary">
+                {impact.mealsSaved}
+              </Text>
+            </View>
+            <View className="items-end">
+              <Text variant="caption" className="text-muted">
+                CO₂ saved
+              </Text>
+              <Text variant="h3" className="text-success">
+                {impact.co2SavedKg.toFixed(1)} kg
+              </Text>
+            </View>
+            <View className="items-end">
+              <Text variant="caption" className="text-muted">
+                Money saved
+              </Text>
+              <Text variant="h3" className="text-foreground">
+                ฿{impact.moneySaved.toLocaleString()}
+              </Text>
+            </View>
+          </Card>
+        )}
 
         <Card testID="profile-card" variant="elevated" className="mb-6">
           <View className="flex-row items-center">
