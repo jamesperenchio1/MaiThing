@@ -34,6 +34,7 @@ import {
   requestNotificationPermissions,
 } from '@/src/services/notifications';
 import { ErrorBoundary } from '@/src/components/layout/ErrorBoundary';
+import { registerPushToken } from '@/src/services/pushToken';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
@@ -87,7 +88,12 @@ export default function RootLayout() {
   useEffect(() => {
     useThemeStore.getState().syncSystem();
     setNotificationHandler();
-    requestNotificationPermissions().catch(() => {});
+    requestNotificationPermissions()
+      .then(() => {
+        const user = useAuthStore.getState().user;
+        if (user) registerPushToken(user.id).catch(() => {});
+      })
+      .catch(() => {});
     init();
 
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {

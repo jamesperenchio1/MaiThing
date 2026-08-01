@@ -1,4 +1,6 @@
 import { calculateDistance } from '@/src/lib/utils';
+import { syncFollowNotification, syncRestockAlert } from '@/src/services/pushToken';
+import { triggerPushEvent } from '@/src/lib/supabase';
 import type {
   AuthRepository,
   UserRepository,
@@ -251,6 +253,7 @@ class MockUserRepository implements UserRepository {
     if (!prefs.followedMerchantNotifications.includes(merchantId)) {
       prefs.followedMerchantNotifications = [...prefs.followedMerchantNotifications, merchantId];
     }
+    syncFollowNotification(userId, merchantId, true).catch(() => {});
   }
 
   async removeMerchantFollowNotification(userId: string, merchantId: string): Promise<void> {
@@ -259,6 +262,7 @@ class MockUserRepository implements UserRepository {
     prefs.followedMerchantNotifications = prefs.followedMerchantNotifications.filter(
       (id) => id !== merchantId
     );
+    syncFollowNotification(userId, merchantId, false).catch(() => {});
   }
 
   async addRestockAlert(userId: string, listingId: string): Promise<void> {
@@ -267,6 +271,7 @@ class MockUserRepository implements UserRepository {
     if (!TEST_CUSTOMER_PROFILE.restockAlerts.includes(listingId)) {
       TEST_CUSTOMER_PROFILE.restockAlerts = [...TEST_CUSTOMER_PROFILE.restockAlerts, listingId];
     }
+    syncRestockAlert(userId, listingId, true).catch(() => {});
   }
 
   async removeRestockAlert(userId: string, listingId: string): Promise<void> {
@@ -274,6 +279,7 @@ class MockUserRepository implements UserRepository {
     TEST_CUSTOMER_PROFILE.restockAlerts = (TEST_CUSTOMER_PROFILE.restockAlerts ?? []).filter(
       (id) => id !== listingId
     );
+    syncRestockAlert(userId, listingId, false).catch(() => {});
   }
 }
 
@@ -628,6 +634,20 @@ class MockListingRepository implements ListingRepository {
       createdAt: new Date().toISOString(),
     } as unknown as Listing;
     LISTINGS.push(listing);
+
+    // Fire new-listing push to merchant followers (fire-and-forget)
+    if (data.status === 'active') {
+      const merchant = MERCHANTS.find((m) => m.id === data.merchantId);
+      if (merchant) {
+        triggerPushEvent('new_listing', {
+          merchantId: data.merchantId,
+          merchantName: merchant.name,
+          listingId: listing.id,
+          listingTitle: listing.title,
+        }).catch(() => {});
+      }
+    }
+
     return listing;
   }
 
@@ -635,8 +655,21 @@ class MockListingRepository implements ListingRepository {
     await sleep(300);
     const index = LISTINGS.findIndex((l) => l.id === id);
     if (index === -1) throw new Error('Listing not found');
-    LISTINGS[index] = { ...LISTINGS[index], ...data } as Listing;
-    return LISTINGS[index];
+    const before = LISTINGS[index];
+    LISTINGS[index] = { ...before, ...data } as Listing;
+    const after = LISTINGS[index];
+
+    // Fire restock push when quantity goes from 0 to >0
+    const wasZero = before.quantityRemaining === 0;
+    const nowPositive = (after.quantityRemaining ?? 0) > 0;
+    if (wasZero && nowPositive) {
+      triggerPushEvent('restock', {
+        listingId: after.id,
+        listingTitle: after.title,
+      }).catch(() => {});
+    }
+
+    return after;
   }
 
   async deleteListing(id: string): Promise<void> {
