@@ -64,6 +64,36 @@ export function useToggleMerchantFollowNotification() {
   });
 }
 
+export function useRestockAlert(userId: string, listingId: string) {
+  const { data: profile } = useCustomerProfile(userId);
+  return profile?.restockAlerts?.includes(listingId) ?? false;
+}
+
+export function useToggleRestockAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      listingId,
+      isAlerting,
+    }: {
+      userId: string;
+      listingId: string;
+      isAlerting: boolean;
+    }) => {
+      if (isAlerting) {
+        await mockRepositories.users.removeRestockAlert(userId, listingId);
+      } else {
+        await mockRepositories.users.addRestockAlert(userId, listingId);
+      }
+      return { listingId, isAlerting: !isAlerting };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-profile'] });
+    },
+  });
+}
+
 export function useSavedListings(userId: string) {
   const { data: profile } = useCustomerProfile(userId);
   return profile?.savedListings ?? [];
