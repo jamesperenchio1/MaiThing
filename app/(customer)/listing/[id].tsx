@@ -11,7 +11,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck } from 'lucide-react-native';
+import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck, Bell, BellOff } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/src/components/ui/Button';
@@ -30,7 +30,7 @@ import { ReviewCard } from '@/src/components/composite/ReviewCard';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useReviews } from '@/src/hooks/useReviews';
-import { useSavedListings, useSaveListingToggle } from '@/src/hooks/useFavorites';
+import { useSavedListings, useSaveListingToggle, useRestockAlert, useToggleRestockAlert } from '@/src/hooks/useFavorites';
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -59,6 +59,8 @@ export default function ListingDetailScreen() {
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const savedListings = useSavedListings(userId);
   const { mutate: toggleSave } = useSaveListingToggle();
+  const isAlertingRestock = useRestockAlert(userId, id ?? '');
+  const { mutate: toggleRestockAlert, isPending: restockAlertPending } = useToggleRestockAlert();
 
   const handleImageScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
@@ -442,24 +444,43 @@ export default function ListingDetailScreen() {
               <Plus size={18} color={colors.foreground} />
             </PressableScale>
           </View>
-          <Button
-            testID="add-to-cart-button"
-            variant="secondary"
-            className="flex-1"
-            disabled={isSoldOut}
-            onPress={handleAddToCart}
-          >
-            {t('customer.listing.addToCart')}
-          </Button>
-          <Button
-            testID="buy-now-button"
-            className="flex-1"
-            disabled={isSoldOut}
-            loading={false}
-            onPress={handleBuyNow}
-          >
-            {isSoldOut ? t('customer.listing.soldOut') : t('customer.listing.buyNow')}
-          </Button>
+          {isSoldOut ? (
+            <Button
+              testID="restock-alert-button"
+              variant={isAlertingRestock ? 'outline' : 'secondary'}
+              className="flex-1"
+              loading={restockAlertPending}
+              leftIcon={isAlertingRestock ? <BellOff size={18} color={colors.primary} /> : <Bell size={18} color={colors.foreground} />}
+              onPress={() => {
+                if (!userId) return;
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                toggleRestockAlert({ userId, listingId: id ?? '', isAlerting: isAlertingRestock });
+              }}
+            >
+              {isAlertingRestock
+                ? t('customer.listing.notifyRestockActive')
+                : t('customer.listing.notifyRestock')}
+            </Button>
+          ) : (
+            <>
+              <Button
+                testID="add-to-cart-button"
+                variant="secondary"
+                className="flex-1"
+                onPress={handleAddToCart}
+              >
+                {t('customer.listing.addToCart')}
+              </Button>
+              <Button
+                testID="buy-now-button"
+                className="flex-1"
+                loading={false}
+                onPress={handleBuyNow}
+              >
+                {t('customer.listing.buyNow')}
+              </Button>
+            </>
+          )}
         </View>
       </View>
     </Screen>

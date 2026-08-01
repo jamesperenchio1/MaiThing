@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import {
   Package,
   Plus,
+  Minus,
   Copy,
   Pencil,
   Trash2,
@@ -97,6 +98,10 @@ function InventoryCard({
   const attachedCoupon = coupons?.find((c) => c.id === listing.couponId) ?? null;
 
   const isActive = listing.status === 'active';
+  const sellThrough =
+    listing.status !== 'draft' && listing.quantity > 0
+      ? Math.round(((listing.quantity - listing.quantityRemaining) / listing.quantity) * 100)
+      : null;
   const pickupStart = new Date(listing.pickupWindowStart).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -156,20 +161,68 @@ function InventoryCard({
             <Text variant="body-sm" className="flex-1 font-semibold" numberOfLines={1}>
               {listing.title}
             </Text>
-            <Badge variant={statusVariantMap[listing.status]} className="ml-2">
-              {t(`merchant.inventory.${statusLabelKey[listing.status]}`)}
-            </Badge>
+            <View className="ml-2 flex-row items-center gap-1.5">
+              {sellThrough !== null && (
+                <Badge variant={sellThrough >= 80 ? 'success' : sellThrough >= 50 ? 'warning' : 'muted'}>
+                  {t('merchant.inventory.sellThrough', { pct: sellThrough })}
+                </Badge>
+              )}
+              <Badge variant={statusVariantMap[listing.status]}>
+                {t(`merchant.inventory.${statusLabelKey[listing.status]}`)}
+              </Badge>
+            </View>
           </View>
-          <Text variant="body-sm" className="mb-1 text-muted">
-            {formatCurrency(listing.salePrice)} ·{' '}
-            {t('merchant.inventory.lowStock', { count: listing.quantityRemaining })}
-            {listing.quantityRemaining > 0 && listing.quantityRemaining <= (listing.lowStockThreshold ?? 3) && (
-              <Text variant="body-sm" className="font-semibold text-danger">
-                {' '}
-                · Low stock
-              </Text>
+          <View className="mb-1 flex-row items-center justify-between">
+            <Text variant="body-sm" className="text-muted">
+              {formatCurrency(listing.salePrice)} ·{' '}
+              {t('merchant.inventory.lowStock', { count: listing.quantityRemaining })}
+              {listing.quantityRemaining > 0 && listing.quantityRemaining <= (listing.lowStockThreshold ?? 3) && (
+                <Text variant="body-sm" className="font-semibold text-danger">
+                  {' '}
+                  · Low stock
+                </Text>
+              )}
+            </Text>
+            {isActive && (
+              <View className="flex-row items-center rounded-full bg-muted/10">
+                <PressableScale
+                  onPress={() => {
+                    if (listing.quantityRemaining <= 0) return;
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    updateListing.mutate({
+                      id: listing.id,
+                      data: { quantityRemaining: listing.quantityRemaining - 1 },
+                    });
+                  }}
+                  scale={0.85}
+                  disabled={listing.quantityRemaining <= 0 || updateListing.isPending}
+                  hitSlop={4}
+                  className="px-2 py-1"
+                >
+                  <Minus size={12} color={listing.quantityRemaining <= 0 ? colors.muted : colors.foreground} />
+                </PressableScale>
+                <Text variant="caption" className="w-5 text-center font-semibold">
+                  {listing.quantityRemaining}
+                </Text>
+                <PressableScale
+                  onPress={() => {
+                    if (listing.quantityRemaining >= listing.quantity) return;
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    updateListing.mutate({
+                      id: listing.id,
+                      data: { quantityRemaining: listing.quantityRemaining + 1 },
+                    });
+                  }}
+                  scale={0.85}
+                  disabled={listing.quantityRemaining >= listing.quantity || updateListing.isPending}
+                  hitSlop={4}
+                  className="px-2 py-1"
+                >
+                  <Plus size={12} color={listing.quantityRemaining >= listing.quantity ? colors.muted : colors.foreground} />
+                </PressableScale>
+              </View>
             )}
-          </Text>
+          </View>
           <View className="mb-2 flex-row items-center text-muted">
             <Clock size={12} color={colors.muted} />
             <Text variant="caption" className="ml-1 text-muted">
@@ -235,25 +288,62 @@ function InventoryCard({
                   <Tag size={16} color={listing.couponId ? colors.primary : colors.muted} />
                 </PressableScale>
               </View>
-              <PressableScale
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onToggleStatus();
-                }}
-                scale={0.95}
-                disabled={updateListing.isPending}
-              >
-                <View
-                  className={`rounded-full px-3 py-1 ${isActive ? 'bg-danger/10' : 'bg-primary/10'}`}
+              {listing.status === 'expired' ? (
+                <PressableScale
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    Alert.alert(
+                      t('merchant.inventory.relistToday'),
+                      t('merchant.inventory.relistConfirm'),
+                      [
+                        { text: t('common.cancel'), style: 'cancel' },
+                        {
+                          text: t('merchant.inventory.relistToday'),
+                          onPress: () => {
+                            updateListing.mutate({
+                              id: listing.id,
+                              data: {
+                                status: 'active',
+                                quantityRemaining: listing.quantity,
+                                pickupWindowStart: shiftWindowToToday(listing.pickupWindowStart),
+                                pickupWindowEnd: shiftWindowToToday(listing.pickupWindowEnd),
+                              },
+                            });
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  scale={0.95}
+                  disabled={updateListing.isPending}
                 >
-                  <Text
-                    variant="caption"
-                    className={`font-semibold ${isActive ? 'text-danger' : 'text-primary'}`}
+                  <View className="rounded-full bg-primary/10 px-3 py-1">
+                    <Text variant="caption" className="font-semibold text-primary">
+                      {t('merchant.inventory.relistToday')}
+                    </Text>
+                  </View>
+                </PressableScale>
+              ) : (
+                <PressableScale
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    onToggleStatus();
+                  }}
+                  scale={0.95}
+                  disabled={updateListing.isPending}
+                >
+                  <View
+                    className={`rounded-full px-3 py-1 ${isActive ? 'bg-danger/10' : 'bg-primary/10'}`}
                   >
-                    {isActive ? t('merchant.inventory.markSoldOut') : t('merchant.inventory.restock')}
-                  </Text>
-                </View>
-              </PressableScale>
+                    <Text
+                      variant="caption"
+                      className={`font-semibold ${isActive ? 'text-danger' : 'text-primary'}`}
+                    >
+                      {isActive ? t('merchant.inventory.markSoldOut') : t('merchant.inventory.restock')}
+                    </Text>
+                  </View>
+                </PressableScale>
+              )}
             </View>
           )}
         </View>

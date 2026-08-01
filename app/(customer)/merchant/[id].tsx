@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image } from 'react-native';
-import { MapPin, Phone, Navigation, AlertCircle, Calendar, Clock } from 'lucide-react-native';
+import { View, ScrollView, Image, Alert } from 'react-native';
+import { MapPin, Phone, Navigation, AlertCircle, Calendar, Clock, Bell, BellOff } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -20,6 +21,11 @@ import { useMerchant } from '@/src/hooks/useMerchants';
 import { useReviews } from '@/src/hooks/useReviews';
 import { useListings } from '@/src/hooks/useListings';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useAuthStore } from '@/src/stores/auth';
+import {
+  useMerchantFollowNotification,
+  useToggleMerchantFollowNotification,
+} from '@/src/hooks/useFavorites';
 import {
   formatDistance,
   calculateDistance,
@@ -34,9 +40,12 @@ export default function MerchantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, i18n } = useTranslation();
   const colors = useThemeColor();
+  const user = useAuthStore((s) => s.user);
   const { data: merchant, isLoading } = useMerchant(id);
   const { data: listings } = useListings({ merchantId: id });
   const { data: reviews } = useReviews(id);
+  const isFollowingNotifications = useMerchantFollowNotification(user?.id ?? '', id ?? '');
+  const toggleFollowNotification = useToggleMerchantFollowNotification();
   const isTemporarilyClosed =
     !!(merchant?.closedUntil && new Date(merchant.closedUntil) > new Date());
   const closedUntilFormatted = merchant?.closedUntil
@@ -103,7 +112,37 @@ export default function MerchantDetailScreen() {
                 </View>
               )}
             </View>
-            <FavoriteButton merchantId={merchant.id} />
+            <View className="flex-row items-center gap-2">
+              <PressableScale
+                onPress={() => {
+                  if (!user) return;
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  toggleFollowNotification.mutate(
+                    { userId: user.id, merchantId: merchant.id, isFollowing: isFollowingNotifications },
+                    {
+                      onSuccess: ({ isFollowing }) => {
+                        Alert.alert(
+                          '',
+                          isFollowing
+                            ? t('customer.merchant.followNotificationSet', { name: merchant.name })
+                            : t('customer.merchant.followNotificationRemoved', { name: merchant.name })
+                        );
+                      },
+                    }
+                  );
+                }}
+                scale={0.9}
+                className="rounded-full p-2"
+                style={{ backgroundColor: isFollowingNotifications ? `${colors.primary}15` : `${colors.muted}15` }}
+              >
+                {isFollowingNotifications ? (
+                  <Bell size={20} color={colors.primary} fill={colors.primary} />
+                ) : (
+                  <BellOff size={20} color={colors.muted} />
+                )}
+              </PressableScale>
+              <FavoriteButton merchantId={merchant.id} />
+            </View>
           </View>
 
           {isTemporarilyClosed && (

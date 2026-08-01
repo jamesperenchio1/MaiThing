@@ -135,6 +135,10 @@ export default {
       recentReviews: 'รีวิวล่าสุด',
       pickupLocation: 'สถานที่รับสินค้า',
       away: 'ห่าง',
+      notifyRestock: 'แจ้งเตือนเมื่อมีสินค้า',
+      notifyRestockActive: 'กำลังแจ้งเตือน',
+      restockAlertSet: 'เราจะแจ้งเตือนคุณเมื่อมีสินค้า!',
+      restockAlertRemoved: 'ยกเลิกการแจ้งเตือนแล้ว',
     },
     cart: {
       title: 'ตะกร้า',
@@ -142,6 +146,8 @@ export default {
       emptySubtitle: 'ค้นหาดีลเด็ดและช่วยอาหารอร่อยใกล้คุณ',
       browseDeals: 'สำรวจดีล',
       confirmOrder: 'ยืนยันคำสั่งซื้อ',
+      orderNote: 'เพิ่มหมายเหตุ (ถ้ามี)',
+      orderNotePlaceholder: 'เช่น ขอซอสแยก, ขอกล่องพิเศษ...',
     },
     merchant: {
       follow: 'ติดตาม',
@@ -160,6 +166,10 @@ export default {
       verified: 'พาร์ทเนอร์ที่ตรวจสอบแล้ว',
       guarantee: 'รับประกันการรับสินค้า',
       hygieneRated: 'ความสะอาด {{rating}}',
+      notifyNewListings: 'แจ้งเตือนรายการใหม่',
+      notifyNewListingsActive: 'กำลังแจ้งเตือน',
+      followNotificationSet: 'คุณจะได้รับแจ้งเตือนเมื่อ {{name}} โพสต์รายการใหม่',
+      followNotificationRemoved: 'ปิดการแจ้งเตือนสำหรับ {{name}} แล้ว',
     },
     map: {
       myLocation: 'ตำแหน่งของฉัน',
@@ -189,6 +199,24 @@ export default {
         picked_up: 'รับแล้ว',
         completed: 'เสร็จสิ้น',
         cancelled: 'ยกเลิก',
+      },
+      statusFilter: {
+        all: 'ทั้งหมด',
+        active: 'กำลังดำเนินการ',
+        completed: 'เสร็จสิ้น',
+        cancelled: 'ยกเลิกแล้ว',
+      },
+      reviewNudge: {
+        title: 'อาหารเป็นยังไงบ้าง?',
+        body: 'รีวิวสั้นๆ ให้กับ {{merchant}}',
+        action: 'รีวิว',
+        dismiss: 'ปิด',
+      },
+    },
+    notifications: {
+      pickupReminder: {
+        title: 'แจ้งเตือนรับสินค้า',
+        body: 'ช่วงรับสินค้าจาก {{merchant}} จะปิดใน 30 นาที',
       },
     },
     wallet: {
@@ -241,6 +269,7 @@ export default {
       conversionRate: 'อัตราการแปลง',
       avgOrderValue: 'มูลค่าเฉลี่ยต่อออเดอร์',
       quickActions: 'การกระทำด่วน',
+      scanOrder: 'สแกน',
     },
     orders: {
       title: 'ออเดอร์',
@@ -284,6 +313,11 @@ export default {
       templates: 'เทมเพลต',
       saveAsTemplate: 'บันทึกเป็นเทมเพลต',
       useTemplate: 'ใช้เทมเพลต',
+      relistToday: 'เปิดขายวันนี้',
+      relistConfirm: 'จะสร้างรายการใหม่พร้อมช่วงรับสินค้าวันนี้ ดำเนินการต่อ?',
+      sellThrough: 'ขายแล้ว {{pct}}%',
+      sold: 'ขายแล้ว {{count}}',
+      adjustStock: 'ปรับสต็อก',
     },
     createListing: {
       title: 'สร้างรายการ',
@@ -431,6 +465,8 @@ export default {
       notifications: 'การแจ้งเตือน',
       help: 'ช่วยเหลือ',
       switchToCustomer: 'สลับเป็นลูกค้า',
+      autoConfirmOrders: 'ยืนยันออเดอร์อัตโนมัติ',
+      autoConfirmOrdersDesc: 'ยืนยันออเดอร์ที่เข้ามาโดยอัตโนมัติ',
     },
     scanner: {
       title: 'สแกนรหัสรับสินค้า',

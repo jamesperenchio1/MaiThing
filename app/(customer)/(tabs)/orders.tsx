@@ -1,22 +1,23 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Pressable, RefreshControl } from 'react-native';
+import { View, Image, ScrollView, RefreshControl } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { ChevronRight, Package, History, SearchX } from 'lucide-react-native';
+import { Package, SearchX } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { Screen } from '@/src/components/layout/Screen';
 import { SearchBar } from '@/src/components/layout/SearchBar';
-import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { FlashList } from '@shopify/flash-list';
 import { useOrders } from '@/src/hooks/useOrders';
+import { ReviewNudgeBanner } from '@/src/components/composite/ReviewNudgeBanner';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
@@ -110,11 +111,16 @@ function OrderCard({ order }: { order: Order }) {
   );
 }
 
+type StatusFilter = 'all' | 'active' | 'completed' | 'cancelled';
+
+const ACTIVE_STATUSES = new Set<Order['status']>(['pending', 'confirmed', 'preparing', 'ready']);
+const STATUS_FILTERS: StatusFilter[] = ['all', 'active', 'completed', 'cancelled'];
+
 export default function OrdersScreen() {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
-  const [tab, setTab] = useState<'active' | 'history'>('active');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const {
     data: orders,
@@ -129,20 +135,26 @@ export default function OrdersScreen() {
     refetch();
   };
 
-  const activeStatuses: Order['status'][] = ['pending', 'confirmed', 'preparing', 'ready'];
-  const tabOrders =
-    tab === 'active'
-      ? orders?.filter((o) => activeStatuses.includes(o.status))
-      : orders?.filter((o) => !activeStatuses.includes(o.status));
-
-  const filteredOrders = search.trim()
-    ? tabOrders?.filter(
+  const filteredOrders = useMemo(() => {
+    let result = orders ?? [];
+    if (statusFilter === 'active') {
+      result = result.filter((o) => ACTIVE_STATUSES.has(o.status));
+    } else if (statusFilter === 'completed') {
+      result = result.filter((o) => o.status === 'completed' || o.status === 'picked_up');
+    } else if (statusFilter === 'cancelled') {
+      result = result.filter((o) => o.status === 'cancelled');
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
         (o) =>
-          o.merchantName.toLowerCase().includes(search.toLowerCase()) ||
-          o.pickupCode.toLowerCase().includes(search.toLowerCase()) ||
-          o.items.some((i) => i.title.toLowerCase().includes(search.toLowerCase()))
-      )
-    : tabOrders;
+          o.merchantName.toLowerCase().includes(q) ||
+          o.pickupCode.toLowerCase().includes(q) ||
+          o.items.some((i) => i.title.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [orders, statusFilter, search]);
 
   const listHeader = (
     <View className="pt-6 pb-2">
@@ -151,20 +163,14 @@ export default function OrdersScreen() {
           className="mr-4 h-12 w-12 items-center justify-center rounded-2xl"
           style={{ backgroundColor: `${colors.primary}15` }}
         >
-          {tab === 'history' ? (
-            <History size={24} color={colors.primary} />
-          ) : (
-            <Package size={24} color={colors.primary} />
-          )}
+          <Package size={24} color={colors.primary} />
         </View>
         <View className="flex-1">
           <Text testID="orders-title" variant="h1" className="mb-0.5">
-            {tab === 'history' ? 'Order History' : 'My Orders'}
+            My Orders
           </Text>
           <Text variant="body-sm" className="text-muted">
-            {tab === 'history'
-              ? 'View your past and cancelled orders'
-              : 'Track your active rescues and pickups'}
+            Track your rescues and pickups
           </Text>
         </View>
         {!isLoading && !isError && (
@@ -173,7 +179,7 @@ export default function OrdersScreen() {
             style={{ backgroundColor: `${colors.primary}15` }}
           >
             <Text variant="body-sm" className="font-semibold" style={{ color: colors.primary }}>
-              {filteredOrders?.length ?? 0}
+              {filteredOrders.length}
             </Text>
           </View>
         )}
@@ -184,26 +190,45 @@ export default function OrdersScreen() {
         value={search}
         onChangeText={setSearch}
         onSubmit={setSearch}
-        className="mb-4"
+        className="mb-3"
       />
 
-      <View testID="orders-tabs" className="mb-4 flex-row rounded-2xl bg-muted/10 p-1">
-        {(['active', 'history'] as const).map((tabKey) => (
-          <Pressable
-            key={tabKey}
-            testID={`${tabKey}-orders-tab`}
-            onPress={() => setTab(tabKey)}
-            className={`flex-1 items-center rounded-xl py-3 ${tab === tabKey ? 'bg-primary' : ''}`}
-          >
-            <Text
-              variant="body-sm"
-              className={`text-center font-semibold ${tab === tabKey ? 'text-white' : 'text-muted'}`}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 12, gap: 8 }}
+      >
+        {STATUS_FILTERS.map((filter) => {
+          const active = statusFilter === filter;
+          return (
+            <PressableScale
+              key={filter}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setStatusFilter(filter);
+              }}
+              scale={0.94}
             >
-              {tabKey === 'active' ? t('customer.orders.active') : t('customer.orders.history')}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+              <View
+                className="rounded-full px-4 py-2"
+                style={{
+                  backgroundColor: active ? colors.primary : `${colors.primary}15`,
+                }}
+              >
+                <Text
+                  variant="body-sm"
+                  className="font-semibold"
+                  style={{ color: active ? '#fff' : colors.primary }}
+                >
+                  {t(`customer.orders.statusFilter.${filter}`)}
+                </Text>
+              </View>
+            </PressableScale>
+          );
+        })}
+      </ScrollView>
+
+      {orders && orders.length > 0 && <ReviewNudgeBanner orders={orders} />}
     </View>
   );
 
@@ -229,7 +254,7 @@ export default function OrdersScreen() {
       ) : (
         <FlashList
           className="flex-1"
-          data={filteredOrders ?? []}
+          data={filteredOrders}
           renderItem={({ item }) => <OrderCard order={item} />}
           keyExtractor={(item) => item.id}
           estimatedItemSize={168}
@@ -243,13 +268,13 @@ export default function OrdersScreen() {
                   <Package size={32} color={colors.muted} />
                 )
               }
-              title={search.trim() ? 'No results found' : `No ${tab} orders`}
+              title={search.trim() ? 'No results found' : 'No orders'}
               description={
                 search.trim()
                   ? 'Try a different search term'
-                  : tab === 'active'
-                    ? 'You have no active orders right now.'
-                    : 'Your completed and cancelled orders will appear here.'
+                  : statusFilter === 'all'
+                    ? 'Your orders will appear here once you place one.'
+                    : `No ${t(`customer.orders.statusFilter.${statusFilter}`).toLowerCase()} orders yet.`
               }
             />
           }

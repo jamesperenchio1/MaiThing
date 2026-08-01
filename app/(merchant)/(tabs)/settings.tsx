@@ -275,6 +275,11 @@ export default function MerchantSettingsScreen() {
                     value={preferences.pickupReminders}
                     onValueChange={() => handleTogglePreference('pickupReminders')}
                   />
+                  <NotificationToggle
+                    label={t('merchant.settings.autoConfirmOrders')}
+                    value={preferences.autoConfirmOrders}
+                    onValueChange={() => handleTogglePreference('autoConfirmOrders')}
+                  />
                 </>
               )}
               {prefsLoading && !preferences && (

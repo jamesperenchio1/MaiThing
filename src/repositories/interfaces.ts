@@ -55,6 +55,10 @@ export interface UserRepository {
     userId: string,
     preferences: NotificationPreferences
   ): Promise<NotificationPreferences>;
+  addMerchantFollowNotification(userId: string, merchantId: string): Promise<void>;
+  removeMerchantFollowNotification(userId: string, merchantId: string): Promise<void>;
+  addRestockAlert(userId: string, listingId: string): Promise<void>;
+  removeRestockAlert(userId: string, listingId: string): Promise<void>;
 }
 
 export interface MerchantRepository {

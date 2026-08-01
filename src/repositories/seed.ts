@@ -57,7 +57,9 @@ export const TEST_CUSTOMER_PROFILE: CustomerProfile = {
     orderUpdates: true,
     merchantMessages: true,
     promotions: false,
+    followedMerchantNotifications: [],
   },
+  restockAlerts: [],
 };
 
 export const TEST_MERCHANT_USER: User = {
@@ -668,6 +670,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
   orderUpdates: true,
   merchantMessages: true,
   promotions: false,
+  followedMerchantNotifications: [],
 };
 
 export const MERCHANT_ANALYTICS: MerchantAnalytics = {
@@ -978,6 +981,7 @@ export const MERCHANT_NOTIFICATION_PREFS: MerchantNotificationPreferences = {
   payoutUpdates: true,
   customerReviews: true,
   pickupReminders: true,
+  autoConfirmOrders: false,
 };
 
 export const MERCHANT_ONBOARDING: MerchantOnboarding = {

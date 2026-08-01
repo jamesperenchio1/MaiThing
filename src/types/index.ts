@@ -30,6 +30,7 @@ export interface CustomerProfile extends User {
   savedListings: string[]; // listing IDs
   savedAddresses: Address[];
   notificationPreferences: NotificationPreferences;
+  restockAlerts: string[]; // listing IDs to notify on restock
 }
 
 export interface MerchantProfile extends User {
@@ -41,6 +42,7 @@ export interface NotificationPreferences {
   orderUpdates: boolean;
   merchantMessages: boolean;
   promotions: boolean;
+  followedMerchantNotifications: string[]; // merchant IDs to notify on new listing
 }
 
 export interface BusinessHours {
@@ -348,6 +350,7 @@ export interface MerchantNotificationPreferences {
   payoutUpdates: boolean;
   customerReviews: boolean;
   pickupReminders: boolean;
+  autoConfirmOrders: boolean;
 }
 
 export type OnboardingStep =

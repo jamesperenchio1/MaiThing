@@ -95,7 +95,15 @@ function StatCard({
   );
 }
 
-function OrderPickupRow({ order, onPress }: { order: Order; onPress?: () => void }) {
+function OrderPickupRow({
+  order,
+  onPress,
+  onScan,
+}: {
+  order: Order;
+  onPress?: () => void;
+  onScan?: () => void;
+}) {
   const { t } = useTranslation();
   const colors = useThemeColor();
 
@@ -120,7 +128,22 @@ function OrderPickupRow({ order, onPress }: { order: Order; onPress?: () => void
             <Badge variant={order.status === 'ready' ? 'success' : 'warning'}>
               {t(`customer.orders.status.${order.status}`)}
             </Badge>
-            <Text className="mt-1 font-mono text-primary">{order.pickupCode}</Text>
+            <View className="mt-1 flex-row items-center gap-2">
+              <Text className="font-mono text-primary">{order.pickupCode}</Text>
+              {onScan && (
+                <PressableScale
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onScan();
+                  }}
+                  scale={0.85}
+                  hitSlop={6}
+                  className="rounded-lg bg-primary/10 p-1.5"
+                >
+                  <QrCode size={16} color={colors.primary} />
+                </PressableScale>
+              )}
+            </View>
           </View>
         </View>
       </Card>
@@ -751,6 +774,12 @@ export default function MerchantDashboardScreen() {
                       key={order.id}
                       order={order}
                       onPress={() => router.push(`/(merchant)/order/${order.id}` as any)}
+                      onScan={() =>
+                        router.push({
+                          pathname: '/(merchant)/scanner',
+                          params: { preloadCode: order.pickupCode },
+                        } as any)
+                      }
                     />
                   ))}
                 </View>
@@ -768,6 +797,12 @@ export default function MerchantDashboardScreen() {
                       key={order.id}
                       order={order}
                       onPress={() => router.push(`/(merchant)/order/${order.id}` as any)}
+                      onScan={() =>
+                        router.push({
+                          pathname: '/(merchant)/scanner',
+                          params: { preloadCode: order.pickupCode },
+                        } as any)
+                      }
                     />
                   ))}
                 </View>
