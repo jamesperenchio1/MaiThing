@@ -710,8 +710,10 @@ class MockOrderRepository implements OrderRepository {
 
   async createOrder(data: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
     await sleep(500);
+    const autoConfirm = MERCHANT_NOTIFICATION_PREFS.autoConfirmOrders;
     const order: Order = {
       ...data,
+      status: autoConfirm && data.status === 'pending' ? 'confirmed' : data.status,
       id: `order-${Date.now()}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
