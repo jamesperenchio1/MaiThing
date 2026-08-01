@@ -15,6 +15,7 @@ import {
   FileText,
   Calendar,
   QrCode,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -284,6 +285,18 @@ export default function MerchantOrderDetailScreen() {
             {t(`customer.orders.status.${order.status}`)}
           </Badge>
         </Card>
+
+        {order.notes ? (
+          <Card variant="outlined" className="mb-4 border-warning/40 bg-warning/5">
+            <View className="mb-1 flex-row items-center">
+              <MessageSquare size={14} color={colors.warning} />
+              <Text variant="label" className="ml-1.5 text-warning">
+                {t('merchant.orders.notes')}
+              </Text>
+            </View>
+            <Text variant="body-sm">{order.notes}</Text>
+          </Card>
+        ) : null}
 
         <Card variant="outlined" className="mb-4 items-center p-6">
           <QrCode size={24} color={colors.muted} />

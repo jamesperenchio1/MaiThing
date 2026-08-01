@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Image, ActivityIndicator, TextInput } from 'react-native';
 import { Minus, Plus, Trash2, ShoppingCart, Clock, MapPin, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -42,6 +42,7 @@ export default function CartScreen() {
   const cartSubtotal = useCartStore((s) => s.subtotal());
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [note, setNote] = useState('');
 
   const grouped = items.reduce<Record<string, typeof items>>((acc, item) => {
     const merchantId = item.listing.merchantId;
@@ -87,10 +88,11 @@ export default function CartScreen() {
         subtotal: cartSubtotal,
         discount,
         total,
-        status: 'confirmed',
+        status: 'pending',
         pickupCode: generatePickupCode(),
         pickupWindowStart: firstListing?.pickupWindowStart ?? new Date().toISOString(),
         pickupWindowEnd: firstListing?.pickupWindowEnd ?? new Date().toISOString(),
+        notes: note.trim() || undefined,
       });
 
       await mockRepositories.wallet.spend(user.id, total, `Purchase at ${merchant.name}`);
@@ -313,6 +315,32 @@ export default function CartScreen() {
           </ScrollView>
 
           <View className="border-t border-border bg-background px-6 py-4">
+            <View className="mb-3">
+              <Text variant="label" className="mb-2 text-muted">
+                {t('customer.cart.orderNote')}
+              </Text>
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                placeholder={t('customer.cart.orderNotePlaceholder')}
+                placeholderTextColor={colors.muted}
+                multiline
+                maxLength={200}
+                style={{
+                  minHeight: 60,
+                  textAlignVertical: 'top',
+                  color: colors.foreground,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                }}
+              />
+            </View>
             <Button
               fullWidth
               loading={isSubmitting}

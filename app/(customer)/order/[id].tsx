@@ -354,6 +354,15 @@ export default function OrderDetailScreen() {
           </View>
         </Card>
 
+        {order.notes ? (
+          <Card variant="outlined" className="mb-4">
+            <Text variant="label" className="mb-1 text-muted">
+              {t('merchant.orders.notes')}
+            </Text>
+            <Text variant="body-sm">{order.notes}</Text>
+          </Card>
+        ) : null}
+
         <Card variant="outlined">
           <View className="flex-row items-start">
             <Clock size={20} color={colors.muted} className="mr-3 mt-0.5" />
