@@ -17,6 +17,7 @@ import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { FlashList } from '@shopify/flash-list';
 import { useOrders } from '@/src/hooks/useOrders';
+import { ReviewNudgeBanner } from '@/src/components/composite/ReviewNudgeBanner';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
@@ -226,6 +227,8 @@ export default function OrdersScreen() {
           );
         })}
       </ScrollView>
+
+      {orders && orders.length > 0 && <ReviewNudgeBanner orders={orders} />}
     </View>
   );
 
