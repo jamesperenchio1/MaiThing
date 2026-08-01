@@ -141,6 +141,10 @@ export default function ConfirmOrderScreen() {
       setOrder(newOrder);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      mockRepositories.messages
+        .sendWelcomeMessage(merchant.id, user.id, user.name, newOrder.id)
+        .then(() => queryClient.invalidateQueries({ queryKey: ['conversations'] }))
+        .catch(() => {});
       mockRepositories.listings.getListings().then((all) => {
         const nearby = all
           .filter(

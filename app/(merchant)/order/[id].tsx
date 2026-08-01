@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image, Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -103,6 +103,7 @@ function buildOrderSummary(order: Order) {
 
 export default function MerchantOrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const { data: order, isLoading } = useOrder(id);
@@ -443,6 +444,16 @@ export default function MerchantOrderDetailScreen() {
               leftIcon={<Check size={18} color={colors.white} />}
             >
               {t('merchant.orders.markPickedUp')}
+            </Button>
+          )}
+          {order.status !== 'cancelled' && (
+            <Button
+              variant="outline"
+              fullWidth
+              leftIcon={<MessageSquare size={18} color={colors.primary} />}
+              onPress={() => router.push(`/(merchant)/messages/${order.customerId}` as never)}
+            >
+              Chat with customer
             </Button>
           )}
           {['pending', 'confirmed', 'preparing', 'ready'].includes(order.status) && (

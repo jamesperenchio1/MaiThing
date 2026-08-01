@@ -29,6 +29,18 @@ export function useSendMessage(merchantId: string, customerId: string) {
   });
 }
 
+export function useSendMessageAsCustomer(merchantId: string, customerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (content: string) =>
+      mockRepositories.messages.sendMessage(merchantId, customerId, content, 'customer'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', merchantId, customerId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', merchantId] });
+    },
+  });
+}
+
 export function useMarkConversationAsRead(merchantId: string) {
   const queryClient = useQueryClient();
   return useMutation({
