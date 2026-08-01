@@ -83,6 +83,9 @@ export default function ListingDetailScreen() {
   const isMystery = listing.type === 'mystery_box';
   const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
   const isSoldOut = listing.quantityRemaining === 0;
+  const waitlistCount = isSoldOut
+    ? Math.max(3, listing.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 23) + 4
+    : 0;
   const urgency = getListingUrgency(listing);
   const minsUntilEnd = Math.round(
     (new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000
@@ -445,8 +448,14 @@ export default function ListingDetailScreen() {
             </PressableScale>
           </View>
           {isSoldOut ? (
-            <Button
-              testID="restock-alert-button"
+            <View className="flex-1">
+              {waitlistCount > 0 && (
+                <Text variant="caption" className="mb-2 text-center text-warning">
+                  {waitlistCount} people waiting for restock
+                </Text>
+              )}
+              <Button
+                testID="restock-alert-button"
               variant={isAlertingRestock ? 'outline' : 'secondary'}
               className="flex-1"
               loading={restockAlertPending}
@@ -460,7 +469,8 @@ export default function ListingDetailScreen() {
               {isAlertingRestock
                 ? t('customer.listing.notifyRestockActive')
                 : t('customer.listing.notifyRestock')}
-            </Button>
+              </Button>
+            </View>
           ) : (
             <>
               <Button

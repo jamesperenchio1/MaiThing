@@ -2,9 +2,11 @@ import React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Alert, Platform } from 'react-native';
+import { View, Image, Alert, Platform, Linking } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import {
   Clock,
+  Navigation,
   QrCode,
   Hash,
   CheckCircle,
@@ -195,6 +197,26 @@ export default function OrderDetailScreen() {
       prevStatusRef.current = order.status;
     }
   }, [order]);
+
+  const handleNavigate = () => {
+    if (!order?.merchantCoordinates) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const { latitude, longitude } = order!.merchantCoordinates!;
+    const label = encodeURIComponent(order!.merchantName);
+    let url: string;
+    if (Platform.OS === 'ios') {
+      url = `maps://maps.apple.com/?q=${label}&ll=${latitude},${longitude}&dirflg=d`;
+    } else if (Platform.OS === 'android') {
+      url = `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`;
+    } else {
+      url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+    }
+    Linking.openURL(url).catch(() => {
+      Linking.openURL(
+        `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
+      ).catch(() => {});
+    });
+  };
 
   const handleAddToCalendar = async () => {
     if (!order || Platform.OS === 'web' || !ExpoCalendar) return;
@@ -397,6 +419,19 @@ export default function OrderDetailScreen() {
                 </Text>
               )}
             </View>
+          )}
+
+        {order.merchantCoordinates &&
+          !['cancelled', 'picked_up', 'completed'].includes(order.status) && (
+            <Button
+              variant="outline"
+              fullWidth
+              className="mt-4"
+              leftIcon={<Navigation size={18} color={colors.primary} />}
+              onPress={handleNavigate}
+            >
+              Navigate to pickup
+            </Button>
           )}
 
         {['completed', 'picked_up'].includes(order.status) && (
