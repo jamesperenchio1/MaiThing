@@ -276,25 +276,62 @@ function InventoryCard({
                   <Tag size={16} color={listing.couponId ? colors.primary : colors.muted} />
                 </PressableScale>
               </View>
-              <PressableScale
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onToggleStatus();
-                }}
-                scale={0.95}
-                disabled={updateListing.isPending}
-              >
-                <View
-                  className={`rounded-full px-3 py-1 ${isActive ? 'bg-danger/10' : 'bg-primary/10'}`}
+              {listing.status === 'expired' ? (
+                <PressableScale
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    Alert.alert(
+                      t('merchant.inventory.relistToday'),
+                      t('merchant.inventory.relistConfirm'),
+                      [
+                        { text: t('common.cancel'), style: 'cancel' },
+                        {
+                          text: t('merchant.inventory.relistToday'),
+                          onPress: () => {
+                            updateListing.mutate({
+                              id: listing.id,
+                              data: {
+                                status: 'active',
+                                quantityRemaining: listing.quantity,
+                                pickupWindowStart: shiftWindowToToday(listing.pickupWindowStart),
+                                pickupWindowEnd: shiftWindowToToday(listing.pickupWindowEnd),
+                              },
+                            });
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  scale={0.95}
+                  disabled={updateListing.isPending}
                 >
-                  <Text
-                    variant="caption"
-                    className={`font-semibold ${isActive ? 'text-danger' : 'text-primary'}`}
+                  <View className="rounded-full bg-primary/10 px-3 py-1">
+                    <Text variant="caption" className="font-semibold text-primary">
+                      {t('merchant.inventory.relistToday')}
+                    </Text>
+                  </View>
+                </PressableScale>
+              ) : (
+                <PressableScale
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    onToggleStatus();
+                  }}
+                  scale={0.95}
+                  disabled={updateListing.isPending}
+                >
+                  <View
+                    className={`rounded-full px-3 py-1 ${isActive ? 'bg-danger/10' : 'bg-primary/10'}`}
                   >
-                    {isActive ? t('merchant.inventory.markSoldOut') : t('merchant.inventory.restock')}
-                  </Text>
-                </View>
-              </PressableScale>
+                    <Text
+                      variant="caption"
+                      className={`font-semibold ${isActive ? 'text-danger' : 'text-primary'}`}
+                    >
+                      {isActive ? t('merchant.inventory.markSoldOut') : t('merchant.inventory.restock')}
+                    </Text>
+                  </View>
+                </PressableScale>
+              )}
             </View>
           )}
         </View>
