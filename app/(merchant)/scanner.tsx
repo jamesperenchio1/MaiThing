@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 let CameraView: React.ComponentType<{ facing?: string; barcodeScannerSettings?: { barcodeTypes: string[] }; onBarcodeScanned?: (result: { data: string }) => void; style?: object }> | null = null;
@@ -33,12 +34,21 @@ export default function ScannerScreen() {
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
   const [permission, requestPermission] = useCameraPermissions?.() ?? [null, async () => {}];
+  const { preloadCode } = useLocalSearchParams<{ preloadCode?: string }>();
 
   const merchantId = user?.merchantId ?? user?.id ?? '';
 
-  const [manualCode, setManualCode] = useState('');
+  const [manualCode, setManualCode] = useState(preloadCode ?? '');
   const [lookupCode, setLookupCode] = useState('');
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (preloadCode) {
+      const code = preloadCode.trim().toUpperCase();
+      setManualCode(code);
+      setLookupCode(code);
+    }
+  }, [preloadCode]);
 
   const { data: found, isFetching, isFetched } = useOrderByPickupCode(merchantId, lookupCode);
 
