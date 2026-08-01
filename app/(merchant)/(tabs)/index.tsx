@@ -705,6 +705,62 @@ export default function MerchantDashboardScreen() {
           />
         </View>
 
+        {/* Revenue Goal Widget */}
+        {merchant?.revenueGoal && analytics && (
+          <Card variant="elevated" className="mb-6">
+            <View className="mb-2 flex-row items-center justify-between">
+              <Text variant="body-sm" className="font-semibold">
+                Monthly Revenue Goal
+              </Text>
+              <Text variant="caption" className="text-muted">
+                {formatCurrency(analytics.totalRevenue)} / {formatCurrency(merchant.revenueGoal)}
+              </Text>
+            </View>
+            <View className="h-3 rounded-full bg-muted/20 overflow-hidden">
+              <View
+                className="h-full rounded-full bg-primary"
+                style={{
+                  width: `${Math.min(100, Math.round((analytics.totalRevenue / merchant.revenueGoal) * 100))}%`,
+                }}
+              />
+            </View>
+            <Text variant="caption" className="mt-2 text-muted">
+              {Math.min(100, Math.round((analytics.totalRevenue / merchant.revenueGoal) * 100))}%
+              {analytics.totalRevenue >= merchant.revenueGoal
+                ? ' — Goal reached! 🎉'
+                : ` — ${formatCurrency(merchant.revenueGoal - analytics.totalRevenue)} to go`}
+            </Text>
+          </Card>
+        )}
+
+        {/* Follower Milestone Celebration */}
+        {merchant &&
+          merchant.followers > 0 &&
+          (() => {
+            const milestones = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
+            const lastMilestone = merchant.lastFollowerMilestone ?? 0;
+            const crossed = milestones.filter(
+              (m) => merchant.followers >= m && m > lastMilestone
+            );
+            const latestCrossed = crossed[crossed.length - 1];
+            if (!latestCrossed) return null;
+            return (
+              <Card variant="elevated" className="mb-6 border-2 border-primary/30 bg-primary/5">
+                <View className="flex-row items-center">
+                  <Text className="mr-3 text-3xl">🎉</Text>
+                  <View className="flex-1">
+                    <Text variant="body-sm" className="font-bold text-primary">
+                      {latestCrossed.toLocaleString()} followers milestone!
+                    </Text>
+                    <Text variant="caption" className="text-muted">
+                      You now have {merchant.followers.toLocaleString()} followers. Keep it up!
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            );
+          })()}
+
         {/* Next payout estimate */}
         <Card variant="elevated" className="mb-6">
           <PressableScale onPress={() => router.push('/(merchant)/payouts' as any)} scale={0.98}>
