@@ -377,6 +377,7 @@ export const MERCHANTS: Merchant[] = MERCHANT_SEEDS.map((m, idx) => ({
   refundDisputes: 0,
   joinedAt: new Date(Date.now() - (idx + 1) * 30 * 86400000).toISOString(),
   hygieneRating: Math.round((4.2 + (idx % 8) / 10) * 10) / 10,
+  ...(idx === 0 ? { revenueGoal: 5000, lastFollowerMilestone: 0 } : {}),
 }));
 
 function hoursFromNow(offsetHours: number, durationHours: number): { start: string; end: string } {
@@ -496,6 +497,9 @@ function generateMysteryBox(merchant: Merchant, index: number): MysteryBoxListin
     createdAt: new Date().toISOString(),
     boxSize: size,
     estimatedRetailValue: originalPrices[size],
+    viewCount: randomInt(60, 400),
+    clickCount: randomInt(15, 120),
+    searchAppearances: randomInt(25, 200),
   };
 }
 
@@ -523,6 +527,9 @@ function generateFixedItem(merchant: Merchant, index: number): FixedItemListing 
     allergens: pick([[], ['wheat'], ['dairy'], ['peanuts']]),
     status: 'active',
     createdAt: new Date().toISOString(),
+    viewCount: randomInt(40, 300),
+    clickCount: randomInt(10, 90),
+    searchAppearances: randomInt(20, 160),
   };
 }
 
@@ -587,6 +594,7 @@ export function generateOrders(count: number): Order[] {
         merchantId: merchant.id,
         merchantName: merchant.name,
         merchantLogoUrl: merchant.logoUrl,
+        merchantCoordinates: merchant.coordinates,
         items: [
           {
             listingId: listing.id,
@@ -692,19 +700,42 @@ export const MERCHANT_ANALYTICS: MerchantAnalytics = {
       title: 'After You Siam Surprise Bread Box',
       revenue: 12800,
       orders: 86,
+      views: 2140,
+      clicks: 643,
+      searchAppearances: 892,
+      conversionRate: 0.134,
     },
     {
       listingId: 'listing-merchant-1-100-fixed',
       title: 'Croissant Set @ After You Siam',
       revenue: 9200,
       orders: 64,
+      views: 1560,
+      clicks: 421,
+      searchAppearances: 634,
+      conversionRate: 0.152,
     },
     {
       listingId: 'listing-merchant-1-1-box',
       title: 'After You Siam Pastry Rescue Box',
       revenue: 7100,
       orders: 52,
+      views: 1120,
+      clicks: 289,
+      searchAppearances: 445,
+      conversionRate: 0.18,
     },
+  ],
+  weeklyAOV: [145, 162, 138, 171, 155, 168, 152],
+  followerHistory: [
+    { date: '2026-01-01', count: 12 },
+    { date: '2026-02-01', count: 28 },
+    { date: '2026-03-01', count: 51 },
+    { date: '2026-04-01', count: 89 },
+    { date: '2026-05-01', count: 134 },
+    { date: '2026-06-01', count: 198 },
+    { date: '2026-07-01', count: 267 },
+    { date: '2026-08-01', count: 312 },
   ],
   hourlyRevenue: [
     { hour: 8, revenue: 0 },

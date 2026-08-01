@@ -79,6 +79,8 @@ export interface Merchant {
   completedOrders?: number;
   refundDisputes?: number;
   foodSafetyCertUrl?: string;
+  revenueGoal?: number;
+  lastFollowerMilestone?: number;
 }
 
 export type ListingType = 'mystery_box' | 'fixed_item';
@@ -105,6 +107,12 @@ export interface ListingBase {
   distance?: number;
   lowStockThreshold?: number;
   couponId?: string;
+  viewCount?: number;
+  clickCount?: number;
+  searchAppearances?: number;
+  flashSalePrice?: number;
+  flashSaleEndsAt?: string;
+  autoDelistWhenSoldOut?: boolean;
 }
 
 export interface MysteryBoxListing extends ListingBase {
@@ -140,6 +148,7 @@ export interface Order {
   merchantId: string;
   merchantName: string;
   merchantLogoUrl?: string;
+  merchantCoordinates?: Coordinates;
   items: OrderItem[];
   subtotal: number;
   discount: number;
@@ -214,8 +223,19 @@ export interface MerchantAnalytics {
   views: number;
   conversionRate: number;
   avgOrderValue: number;
-  topListings: { listingId: string; title: string; revenue: number; orders: number }[];
+  topListings: {
+    listingId: string;
+    title: string;
+    revenue: number;
+    orders: number;
+    views: number;
+    clicks: number;
+    searchAppearances: number;
+    conversionRate: number;
+  }[];
   hourlyRevenue: { hour: number; revenue: number }[];
+  weeklyAOV: number[];
+  followerHistory: { date: string; count: number }[];
 }
 
 export interface CustomerImpact {
