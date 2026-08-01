@@ -20,6 +20,7 @@ import {
   LogOut,
   Store,
   ShoppingBag,
+  BookOpen,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -39,6 +40,7 @@ import {
 } from '@/src/hooks/useNotifications';
 import { useThemeStore } from '@/src/stores/theme';
 import { useLanguageStore } from '@/src/stores/language';
+import { useTutorialStore } from '@/src/stores/tutorial';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { mockRepositories } from '@/src/repositories/mock';
 import type { NotificationPreferences } from '@/src/types';
@@ -83,6 +85,7 @@ export default function ProfileScreen() {
   const { language, toggle: toggleLanguage } = useLanguageStore();
   const colors = useThemeColor();
   const { logout, switchRole } = useAuth();
+  const { resetTutorial, startTutorial } = useTutorialStore();
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? '');
@@ -336,6 +339,15 @@ export default function ProfileScreen() {
                 trackColor={{ false: colors.border, true: colors.primary }}
               />
             }
+          />
+          <MenuItem
+            testID="replay-tutorial-menu-item"
+            icon={<BookOpen size={20} color={colors.muted} />}
+            label="App Tour"
+            onPress={() => {
+              resetTutorial();
+              startTutorial();
+            }}
           />
           <MenuItem
             testID="dark-mode-menu-item"

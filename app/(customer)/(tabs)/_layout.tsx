@@ -1,11 +1,23 @@
+import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { Home, Search, MapPin, ShoppingBag, Wallet, User } from 'lucide-react-native';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { TutorialOverlay } from '@/src/components/tutorial/TutorialOverlay';
+import { useTutorialStore } from '@/src/stores/tutorial';
 
 export default function CustomerTabsLayout() {
   const colors = useThemeColor();
+  const { hasSeenTutorial, isActive, startTutorial } = useTutorialStore();
+
+  useEffect(() => {
+    if (!hasSeenTutorial && !isActive) {
+      const timer = setTimeout(startTutorial, 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   return (
+    <>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -70,5 +82,7 @@ export default function CustomerTabsLayout() {
         }}
       />
     </Tabs>
+    <TutorialOverlay />
+    </>
   );
 }
