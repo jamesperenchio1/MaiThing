@@ -98,6 +98,10 @@ function InventoryCard({
   const attachedCoupon = coupons?.find((c) => c.id === listing.couponId) ?? null;
 
   const isActive = listing.status === 'active';
+  const sellThrough =
+    listing.status !== 'draft' && listing.quantity > 0
+      ? Math.round(((listing.quantity - listing.quantityRemaining) / listing.quantity) * 100)
+      : null;
   const pickupStart = new Date(listing.pickupWindowStart).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -157,9 +161,16 @@ function InventoryCard({
             <Text variant="body-sm" className="flex-1 font-semibold" numberOfLines={1}>
               {listing.title}
             </Text>
-            <Badge variant={statusVariantMap[listing.status]} className="ml-2">
-              {t(`merchant.inventory.${statusLabelKey[listing.status]}`)}
-            </Badge>
+            <View className="ml-2 flex-row items-center gap-1.5">
+              {sellThrough !== null && (
+                <Badge variant={sellThrough >= 80 ? 'success' : sellThrough >= 50 ? 'warning' : 'muted'}>
+                  {t('merchant.inventory.sellThrough', { pct: sellThrough })}
+                </Badge>
+              )}
+              <Badge variant={statusVariantMap[listing.status]}>
+                {t(`merchant.inventory.${statusLabelKey[listing.status]}`)}
+              </Badge>
+            </View>
           </View>
           <View className="mb-1 flex-row items-center justify-between">
             <Text variant="body-sm" className="text-muted">
