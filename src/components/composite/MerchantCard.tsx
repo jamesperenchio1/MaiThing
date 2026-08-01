@@ -25,6 +25,9 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
   const router = useRouter();
   const colors = useThemeColor();
   const { t, i18n } = useTranslation();
+  const isNew = merchant.joinedAt
+    ? Date.now() - new Date(merchant.joinedAt).getTime() < 30 * 24 * 60 * 60 * 1000
+    : false;
   const openStatus = useMemo(
     () => getMerchantOpenStatus(merchant, i18n.language),
     [merchant, i18n.language]
@@ -50,8 +53,9 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
         <View className="relative">
           <Image source={{ uri: merchant.coverUrl }} className="h-32 w-full" resizeMode="cover" />
           <View className="absolute inset-0 bg-black/10" />
-          <View className="absolute left-2 top-2">
+          <View className="absolute left-2 top-2 flex-row gap-1.5">
             <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{statusLabel}</Badge>
+            {isNew && <Badge variant="info">NEW</Badge>}
           </View>
           <View className="absolute right-2 top-2">
             <FavoriteButton

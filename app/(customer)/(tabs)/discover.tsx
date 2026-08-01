@@ -39,6 +39,22 @@ const SORT_OPTIONS: { id: SortOption; label: string }[] = [
   { id: 'price_desc', label: 'Price: High to Low' },
   { id: 'discount', label: 'Biggest Discount' },
   { id: 'newest', label: 'Newest' },
+  { id: 'top_rated', label: 'Top Rated' },
+  { id: 'going_fast', label: 'Going Fast' },
+];
+
+const QUICK_SORT: { id: SortOption; label: string }[] = [
+  { id: 'distance', label: '📍 Nearest' },
+  { id: 'top_rated', label: '⭐ Top Rated' },
+  { id: 'going_fast', label: '🔥 Going Fast' },
+  { id: 'newest', label: '✨ New' },
+];
+
+const RATING_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: 'Any' },
+  { value: 3, label: '3★+' },
+  { value: 4, label: '4★+' },
+  { value: 4.5, label: '4.5★+' },
 ];
 
 function FilterChip({
@@ -79,6 +95,7 @@ export default function DiscoverScreen() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [minRating, setMinRating] = useState<number>(0);
   const [filterVisible, setFilterVisible] = useState(false);
   const { recent, addSearch, removeSearch, clearSearches } = useRecentSearches();
 
@@ -96,6 +113,7 @@ export default function DiscoverScreen() {
       dietaryTags: selectedTags.length ? selectedTags : undefined,
       allergens: excludedAllergens.length ? excludedAllergens : undefined,
       maxPrice: maxPrice ?? undefined,
+      minMerchantRating: minRating > 0 ? minRating : undefined,
       lat: 13.7462,
       lng: 100.5347,
       radius: 50000,
@@ -108,6 +126,7 @@ export default function DiscoverScreen() {
       selectedTags,
       excludedAllergens,
       maxPrice,
+      minRating,
     ]
   );
 
@@ -133,10 +152,10 @@ export default function DiscoverScreen() {
   const activeFilterCount =
     (selectedCategory ? 1 : 0) +
     (listingType !== 'all' ? 1 : 0) +
-    (sortBy !== 'distance' ? 1 : 0) +
     selectedTags.length +
     excludedAllergens.length +
-    (maxPrice ? 1 : 0);
+    (maxPrice ? 1 : 0) +
+    (minRating > 0 ? 1 : 0);
 
   const resetFilters = () => {
     setSelectedCategory(null);
@@ -145,6 +164,7 @@ export default function DiscoverScreen() {
     setSelectedTags([]);
     setExcludedAllergens([]);
     setMaxPrice(null);
+    setMinRating(0);
   };
 
   const toggleTag = (tag: string) => {
@@ -199,6 +219,39 @@ export default function DiscoverScreen() {
           </View>
         </PressableScale>
       </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="mb-4 -mx-0"
+        contentContainerStyle={{ paddingRight: 8 }}
+      >
+        {QUICK_SORT.map((opt) => (
+          <PressableScale
+            key={opt.id}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setSortBy(opt.id);
+            }}
+            scale={0.95}
+            className="mr-2"
+          >
+            <View
+              className={cn(
+                'rounded-full border px-4 py-2',
+                sortBy === opt.id ? 'border-primary bg-primary' : 'border-border bg-card'
+              )}
+            >
+              <Text
+                variant="body-sm"
+                className={sortBy === opt.id ? 'text-white font-semibold' : 'text-foreground'}
+              >
+                {opt.label}
+              </Text>
+            </View>
+          </PressableScale>
+        ))}
+      </ScrollView>
 
       {!searchQuery &&
         listings &&
@@ -452,6 +505,22 @@ export default function DiscoverScreen() {
                           label={allergen.name}
                           selected={excludedAllergens.includes(allergen.id)}
                           onPress={() => toggleAllergen(allergen.id)}
+                        />
+                      ))}
+                    </View>
+                  </View>
+
+                  <View className="mb-6">
+                    <Text variant="body-sm" className="mb-3 font-semibold">
+                      Min Rating
+                    </Text>
+                    <View className="flex-row flex-wrap">
+                      {RATING_OPTIONS.map((opt) => (
+                        <FilterChip
+                          key={opt.value}
+                          label={opt.label}
+                          selected={minRating === opt.value}
+                          onPress={() => setMinRating(opt.value)}
                         />
                       ))}
                     </View>
