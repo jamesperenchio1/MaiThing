@@ -259,9 +259,27 @@ export default function MerchantAnalyticsScreen() {
   const chartSeries = chartMode === 'daily' ? dailySeries : weekly8Series;
   const chartLabels = chartMode === 'daily' ? getDayLabels() : getWeek8Labels();
 
-  const topListings = useMemo(() => computeTopListings(rangeOrders), [rangeOrders]);
+  const topListings = useMemo(() => {
+    const analyticsTop = analytics?.topListings ?? [];
+    if (analyticsTop.length > 0) return analyticsTop;
+    return computeTopListings(rangeOrders);
+  }, [analytics, rangeOrders]);
   const hourlyRevenue = useMemo(() => computeHourlyRevenue(rangeOrders), [rangeOrders]);
   const heatmap = useMemo(() => computeHeatmap(completedOrders), [completedOrders]);
+
+  const repeatCustomerRate = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const order of completedOrders) {
+      counts.set(order.customerId, (counts.get(order.customerId) ?? 0) + 1);
+    }
+    const total = counts.size;
+    if (total === 0) return 0;
+    const repeat = [...counts.values()].filter((c) => c > 1).length;
+    return Math.round((repeat / total) * 100);
+  }, [completedOrders]);
+
+  const aovTrendData = analytics?.weeklyAOV ?? [];
+  const aovTrendLabels = aovTrendData.map((_, i) => `W${i + 1}`);
 
   const topListingTitle = topListings[0]?.title ?? null;
   const wasteReductionPct =
@@ -450,7 +468,7 @@ export default function MerchantAnalyticsScreen() {
                     <Text variant="caption" className="mb-1 text-muted">
                       {t('merchant.analytics.customerRetention')}
                     </Text>
-                    <Text variant="h3">32%</Text>
+                    <Text variant="h3">{repeatCustomerRate}%</Text>
                   </Card>
                 </View>
                 <View className="mb-3 w-1/2 pr-2">
@@ -525,6 +543,31 @@ export default function MerchantAnalyticsScreen() {
                 <View className="h-40 rounded-2xl bg-muted/10" />
               )}
             </View>
+
+            {/* ── AOV Trend Chart ──────────────────────────────── */}
+            {aovTrendData.length > 0 && (
+              <View className="mb-6">
+                <Text variant="h3" className="mb-4">
+                  AOV Trend (8 weeks)
+                </Text>
+                <BarChart
+                  data={aovTrendData}
+                  labels={aovTrendLabels}
+                  color={colors.info}
+                  height={160}
+                />
+                <View className="mt-2 flex-row items-center justify-between">
+                  <Text variant="caption" className="text-muted">
+                    Avg this period
+                  </Text>
+                  <Text variant="caption" className="font-semibold">
+                    {formatCurrency(
+                      Math.round(aovTrendData.reduce((a, b) => a + b, 0) / aovTrendData.length)
+                    )}
+                  </Text>
+                </View>
+              </View>
+            )}
 
             {/* ── Peak pickup heatmap ───────────────────────────── */}
             <View className="mb-6" onLayout={trackOffset('heatmap')}>
@@ -620,6 +663,28 @@ export default function MerchantAnalyticsScreen() {
                             style={{ width: `${Math.round(barPct * 100)}%` }}
                           />
                         </View>
+                        {'views' in listing && (
+                          <View className="mt-2 flex-row items-center gap-3">
+                            <Text variant="caption" className="text-muted">
+                              👁 {(listing as { views: number }).views.toLocaleString()} views
+                            </Text>
+                            {'clicks' in listing && (
+                              <Text variant="caption" className="text-muted">
+                                🖱 {(listing as { clicks: number }).clicks.toLocaleString()} clicks
+                              </Text>
+                            )}
+                            {'searchAppearances' in listing && (
+                              <Text variant="caption" className="text-muted">
+                                🔍 {(listing as { searchAppearances: number }).searchAppearances.toLocaleString()}
+                              </Text>
+                            )}
+                            {'conversionRate' in listing && (
+                              <Text variant="caption" className="text-muted">
+                                {(listing as { conversionRate: number }).conversionRate.toFixed(1)}% conv
+                              </Text>
+                            )}
+                          </View>
+                        )}
                       </View>
                     );
                   })}
