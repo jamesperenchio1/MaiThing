@@ -136,6 +136,10 @@ export default {
       recentReviews: 'Recent reviews',
       pickupLocation: 'Pickup location',
       away: 'away',
+      notifyRestock: 'Notify me when back',
+      notifyRestockActive: 'Notifying you',
+      restockAlertSet: "We'll notify you when this is back!",
+      restockAlertRemoved: 'Restock notification removed.',
     },
     cart: {
       title: 'Cart',
@@ -143,6 +147,8 @@ export default {
       emptySubtitle: 'Find great deals and rescue delicious food near you.',
       browseDeals: 'Browse deals',
       confirmOrder: 'Confirm order',
+      orderNote: 'Add a note (optional)',
+      orderNotePlaceholder: 'E.g. extra napkins, separate sauce...',
     },
     merchant: {
       follow: 'Follow',
@@ -162,6 +168,10 @@ export default {
       verified: 'Verified Partner',
       guarantee: 'Pickup Guarantee',
       hygieneRated: 'Hygiene {{rating}}',
+      notifyNewListings: 'Notify me of new listings',
+      notifyNewListingsActive: 'Notifying you',
+      followNotificationSet: "You'll be notified when {{name}} posts.",
+      followNotificationRemoved: 'Notifications turned off for {{name}}.',
     },
     map: {
       myLocation: 'My location',
@@ -191,6 +201,24 @@ export default {
         picked_up: 'Picked up',
         completed: 'Completed',
         cancelled: 'Cancelled',
+      },
+      statusFilter: {
+        all: 'All',
+        active: 'Active',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+      },
+      reviewNudge: {
+        title: 'How was your rescue?',
+        body: 'Leave a quick review for {{merchant}}',
+        action: 'Leave Review',
+        dismiss: 'Dismiss',
+      },
+    },
+    notifications: {
+      pickupReminder: {
+        title: 'Pickup reminder',
+        body: 'Your order from {{merchant}} pickup window closes in 30 minutes.',
       },
     },
     wallet: {
@@ -243,6 +271,7 @@ export default {
       conversionRate: 'Conversion Rate',
       avgOrderValue: 'Avg Order Value',
       quickActions: 'Quick Actions',
+      scanOrder: 'Scan',
     },
     orders: {
       title: 'Orders',
@@ -286,6 +315,11 @@ export default {
       templates: 'Templates',
       saveAsTemplate: 'Save as Template',
       useTemplate: 'Use Template',
+      relistToday: 'Relist Today',
+      relistConfirm: "This creates a new active listing with today's pickup window. Continue?",
+      sellThrough: '{{pct}}% sold',
+      sold: '{{count}} sold',
+      adjustStock: 'Adjust stock',
     },
     createListing: {
       title: 'Create Listing',
@@ -433,6 +467,8 @@ export default {
       notifications: 'Notification Preferences',
       help: 'Help & Support',
       switchToCustomer: 'Switch to Customer',
+      autoConfirmOrders: 'Auto-confirm orders',
+      autoConfirmOrdersDesc: 'Automatically confirm incoming orders without manual review.',
     },
     scanner: {
       title: 'Scan Pickup Code',

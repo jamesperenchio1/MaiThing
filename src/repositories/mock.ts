@@ -244,6 +244,37 @@ class MockUserRepository implements UserRepository {
     TEST_CUSTOMER_PROFILE.notificationPreferences = { ...preferences };
     return TEST_CUSTOMER_PROFILE.notificationPreferences;
   }
+
+  async addMerchantFollowNotification(userId: string, merchantId: string): Promise<void> {
+    await sleep(150);
+    const prefs = TEST_CUSTOMER_PROFILE.notificationPreferences;
+    if (!prefs.followedMerchantNotifications.includes(merchantId)) {
+      prefs.followedMerchantNotifications = [...prefs.followedMerchantNotifications, merchantId];
+    }
+  }
+
+  async removeMerchantFollowNotification(userId: string, merchantId: string): Promise<void> {
+    await sleep(150);
+    const prefs = TEST_CUSTOMER_PROFILE.notificationPreferences;
+    prefs.followedMerchantNotifications = prefs.followedMerchantNotifications.filter(
+      (id) => id !== merchantId
+    );
+  }
+
+  async addRestockAlert(userId: string, listingId: string): Promise<void> {
+    await sleep(150);
+    if (!TEST_CUSTOMER_PROFILE.restockAlerts) TEST_CUSTOMER_PROFILE.restockAlerts = [];
+    if (!TEST_CUSTOMER_PROFILE.restockAlerts.includes(listingId)) {
+      TEST_CUSTOMER_PROFILE.restockAlerts = [...TEST_CUSTOMER_PROFILE.restockAlerts, listingId];
+    }
+  }
+
+  async removeRestockAlert(userId: string, listingId: string): Promise<void> {
+    await sleep(150);
+    TEST_CUSTOMER_PROFILE.restockAlerts = (TEST_CUSTOMER_PROFILE.restockAlerts ?? []).filter(
+      (id) => id !== listingId
+    );
+  }
 }
 
 class MockMerchantRepository implements MerchantRepository {
