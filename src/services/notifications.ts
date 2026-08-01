@@ -86,6 +86,24 @@ export async function scheduleNotificationAtDate(
   });
 }
 
+export async function schedulePickupReminder(
+  merchantName: string,
+  pickupWindowEnd: string,
+  orderId: string
+) {
+  const endTime = new Date(pickupWindowEnd).getTime();
+  const reminderTime = new Date(endTime - 30 * 60 * 1000);
+  if (reminderTime <= new Date()) return;
+
+  await scheduleNotificationAtDate(
+    'Pickup reminder',
+    `Your order from ${merchantName} pickup window closes in 30 minutes.`,
+    reminderTime,
+    { orderId, type: 'pickup_reminder' },
+    `/(customer)/order/${orderId}`
+  );
+}
+
 export function setNotificationHandler() {
   if (Platform.OS === 'web') return;
   Notifications.setNotificationHandler({

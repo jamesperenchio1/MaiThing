@@ -25,7 +25,7 @@ import {
 } from '@/src/lib/utils';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 import { mockRepositories } from '@/src/repositories/mock';
-import { scheduleLocalNotification } from '@/src/services/notifications';
+import { scheduleLocalNotification, schedulePickupReminder } from '@/src/services/notifications';
 import type { OrderItem } from '@/src/types';
 
 export default function CartScreen() {
@@ -118,6 +118,8 @@ export default function CartScreen() {
         undefined,
         `/(merchant)/(tabs)/orders`
       ).catch(() => {});
+
+      schedulePickupReminder(merchant.name, order.pickupWindowEnd, order.id).catch(() => {});
 
       router.replace(`/(customer)/order/${order.id}` as any);
     } finally {
