@@ -532,10 +532,11 @@ class MockListingRepository implements ListingRepository {
     lng?: number;
     radius?: number;
     type?: string;
-    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest';
+    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
     dietaryTags?: string[];
     allergens?: string[];
     maxPrice?: number;
+    minMerchantRating?: number;
   }): Promise<Listing[]> {
     await sleep(300);
     let result = LISTINGS.filter((l) => l.status === 'active');
@@ -578,6 +579,13 @@ class MockListingRepository implements ListingRepository {
       result = result.filter((l) => l.salePrice <= params.maxPrice!);
     }
 
+    if (params?.minMerchantRating != null && params.minMerchantRating > 0) {
+      const merchantMap = new Map(MERCHANTS.map((m) => [m.id, m]));
+      result = result.filter(
+        (l) => (merchantMap.get(l.merchantId)?.rating ?? 0) >= params.minMerchantRating!
+      );
+    }
+
     const center =
       params?.lat != null && params?.lng != null
         ? { latitude: params.lat, longitude: params.lng }
@@ -610,6 +618,16 @@ class MockListingRepository implements ListingRepository {
         break;
       case 'newest':
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'top_rated': {
+        const merchantRatingMap = new Map(MERCHANTS.map((m) => [m.id, m.rating]));
+        result.sort(
+          (a, b) => (merchantRatingMap.get(b.merchantId) ?? 0) - (merchantRatingMap.get(a.merchantId) ?? 0)
+        );
+        break;
+      }
+      case 'going_fast':
+        result.sort((a, b) => a.quantityRemaining - b.quantityRemaining);
         break;
       default:
         if (center) {
@@ -744,10 +762,12 @@ class MockOrderRepository implements OrderRepository {
   async createOrder(data: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
     await sleep(500);
     const autoConfirm = MERCHANT_NOTIFICATION_PREFS.autoConfirmOrders;
+    const merchant = MERCHANTS.find((m) => m.id === data.merchantId);
     const order: Order = {
       ...data,
       status: autoConfirm && data.status === 'pending' ? 'confirmed' : data.status,
       id: `order-${Date.now()}`,
+      merchantCoordinates: data.merchantCoordinates ?? merchant?.coordinates,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -1075,6 +1095,36 @@ class MockMessageRepository implements MessageRepository {
     return message;
   }
 
+  async sendWelcomeMessage(
+    merchantId: string,
+    customerId: string,
+    customerName: string,
+    orderId: string
+  ): Promise<MerchantMessage> {
+    await sleep(100);
+    const existing = MERCHANT_MESSAGES.find(
+      (m) => m.merchantId === merchantId && m.customerId === customerId
+    );
+    const message: MerchantMessage = {
+      id: `msg-auto-${Date.now()}`,
+      merchantId,
+      customerId,
+      customerName,
+      customerAvatarUrl: existing?.customerAvatarUrl,
+      orderId,
+      content: `Hi! I just placed an order — looking forward to picking up 🙏`,
+      sentBy: 'customer',
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+    if (!existing) {
+      MERCHANT_MESSAGES.push(message);
+    } else {
+      MERCHANT_MESSAGES.push(message);
+    }
+    return message;
+  }
+
   async markConversationAsRead(merchantId: string, customerId: string): Promise<void> {
     await sleep(200);
     MERCHANT_MESSAGES.filter(
@@ -1170,9 +1220,24 @@ class MockAnalyticsRepository implements AnalyticsRepository {
         }
       }
     }
+    const seedTopListings = merchantId === TEST_MERCHANT_ID ? MERCHANT_ANALYTICS.topListings : [];
+    const seedTopMap = new Map(seedTopListings.map((l) => [l.listingId, l]));
     const topListings = Array.from(listingRevenue.values())
       .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
+      .slice(0, 5)
+      .map((l) => {
+        const seedEntry = seedTopMap.get(l.listingId);
+        const listing = LISTINGS.find((li) => li.id === l.listingId);
+        return {
+          ...l,
+          views: seedEntry?.views ?? listing?.viewCount ?? 100,
+          clicks: seedEntry?.clicks ?? listing?.clickCount ?? 30,
+          searchAppearances: seedEntry?.searchAppearances ?? listing?.searchAppearances ?? 50,
+          conversionRate:
+            seedEntry?.conversionRate ??
+            (listing?.viewCount ? l.orders / listing.viewCount : 0),
+        };
+      });
 
     const hourlyRevenue = Array.from({ length: 24 }).map((_, hour) => {
       const hourRevenue = completedOrders
@@ -1180,6 +1245,15 @@ class MockAnalyticsRepository implements AnalyticsRepository {
         .reduce((sum, o) => sum + o.total, 0);
       return { hour, revenue: hourRevenue };
     });
+
+    const seed = MERCHANT_ANALYTICS;
+    const weeklyAOV =
+      seed?.weeklyAOV ??
+      weeklyRevenue.map((rev, i) => {
+        const orders = weeklyOrders[i] ?? 0;
+        return orders > 0 ? Math.round(rev / orders) : 0;
+      });
+    const followerHistory = seed?.followerHistory ?? [];
 
     return {
       merchantId,
@@ -1196,7 +1270,17 @@ class MockAnalyticsRepository implements AnalyticsRepository {
       avgOrderValue,
       topListings,
       hourlyRevenue,
+      weeklyAOV,
+      followerHistory,
     };
+  }
+
+  async getFollowerHistory(merchantId: string): Promise<{ date: string; count: number }[]> {
+    await sleep(200);
+    if (merchantId === TEST_MERCHANT_ID) {
+      return MERCHANT_ANALYTICS.followerHistory ?? [];
+    }
+    return [];
   }
 
   async getCustomerImpact(userId: string): Promise<CustomerImpact> {

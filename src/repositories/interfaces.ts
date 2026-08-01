@@ -109,10 +109,11 @@ export interface ListingRepository {
     lng?: number;
     radius?: number;
     type?: string;
-    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest';
+    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
     dietaryTags?: string[];
     allergens?: string[];
     maxPrice?: number;
+    minMerchantRating?: number;
     status?: string;
   }): Promise<Listing[]>;
   getListing(id: string): Promise<Listing | null>;
@@ -154,6 +155,7 @@ export interface NotificationRepository {
 export interface AnalyticsRepository {
   getMerchantAnalytics(merchantId: string): Promise<MerchantAnalytics>;
   getCustomerImpact(userId: string): Promise<CustomerImpact>;
+  getFollowerHistory(merchantId: string): Promise<{ date: string; count: number }[]>;
 }
 
 export interface PayoutRepository {
@@ -186,6 +188,12 @@ export interface MessageRepository {
     customerId: string,
     content: string,
     sentBy: 'merchant' | 'customer'
+  ): Promise<MerchantMessage>;
+  sendWelcomeMessage(
+    merchantId: string,
+    customerId: string,
+    customerName: string,
+    orderId: string
   ): Promise<MerchantMessage>;
   markConversationAsRead(merchantId: string, customerId: string): Promise<void>;
 }
