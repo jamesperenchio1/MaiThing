@@ -157,6 +157,9 @@ export default function CreateListingScreen() {
   const [customTagInput, setCustomTagInput] = useState('');
   const [customAllergenInput, setCustomAllergenInput] = useState('');
   const [autoExpiry, setAutoExpiry] = useState(false);
+  const [flashSaleEnabled, setFlashSaleEnabled] = useState(false);
+  const [flashSalePrice, setFlashSalePrice] = useState('');
+  const [flashSaleHours, setFlashSaleHours] = useState('2');
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const isEditMode = !!params.id;
@@ -442,8 +445,16 @@ export default function CreateListingScreen() {
 
     const isEditing = isEditMode && !!params.id;
     const resolvedStatus = isEditing && existingListing ? existingListing.status : status;
+    const flashSalePriceNum = flashSaleEnabled ? Number(flashSalePrice) || 0 : undefined;
+    const flashSaleEndsAtStr =
+      flashSaleEnabled && Number(flashSaleHours) > 0
+        ? new Date(Date.now() + Number(flashSaleHours) * 3600000).toISOString()
+        : undefined;
     const payload: Omit<Listing, 'id' | 'createdAt'> = {
       ...buildListingPayload(data, images, merchantId, resolvedStatus),
+      ...(flashSaleEnabled && flashSalePriceNum && flashSaleEndsAtStr
+        ? { flashSalePrice: flashSalePriceNum, flashSaleEndsAt: flashSaleEndsAtStr }
+        : {}),
       quantityRemaining:
         isEditing && existingListing
           ? Math.min(
@@ -859,6 +870,47 @@ export default function CreateListingScreen() {
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor={Platform.OS === 'ios' ? undefined : colors.white}
           />
+        </View>
+
+        <View className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <View className="mb-3 flex-row items-center justify-between">
+            <View className="flex-1 pr-4">
+              <Text variant="body-sm" className="font-semibold">
+                ⚡ Flash Sale
+              </Text>
+              <Text variant="caption" className="text-muted">
+                Temporarily lower the price to boost last-minute sales
+              </Text>
+            </View>
+            <Switch
+              value={flashSaleEnabled}
+              onValueChange={setFlashSaleEnabled}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={Platform.OS === 'ios' ? undefined : colors.white}
+            />
+          </View>
+          {flashSaleEnabled && (
+            <View className="flex-row space-x-3">
+              <Input
+                containerClassName="flex-1"
+                label="Flash Price (฿)"
+                placeholder="59"
+                keyboardType="number-pad"
+                value={flashSalePrice}
+                onChangeText={setFlashSalePrice}
+                maxLength={6}
+              />
+              <Input
+                containerClassName="flex-1"
+                label="Duration (hours)"
+                placeholder="2"
+                keyboardType="number-pad"
+                value={flashSaleHours}
+                onChangeText={setFlashSaleHours}
+                maxLength={2}
+              />
+            </View>
+          )}
         </View>
 
         <View className="mb-6">

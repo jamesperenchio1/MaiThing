@@ -36,7 +36,12 @@ export function ListingCard({
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isMystery = listing.type === 'mystery_box';
-  const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
+  const isFlashSale =
+    !!listing.flashSalePrice &&
+    !!listing.flashSaleEndsAt &&
+    new Date(listing.flashSaleEndsAt) > new Date();
+  const effectivePrice = isFlashSale ? listing.flashSalePrice! : listing.salePrice;
+  const discount = Math.round((1 - effectivePrice / listing.originalPrice) * 100);
   const isSoldOut = listing.quantityRemaining === 0;
   const urgency = getListingUrgency(listing);
   const minsUntilEnd = Math.round(
@@ -99,13 +104,13 @@ export function ListingCard({
 
           <View className="mb-2 flex-row flex-wrap items-center">
             <Text className="text-lg font-bold text-primary">
-              {formatCurrency(listing.salePrice)}
+              {formatCurrency(effectivePrice)}
             </Text>
             <Text className="ml-2 text-sm text-muted line-through">
-              {formatCurrency(listing.originalPrice)}
+              {formatCurrency(isFlashSale ? listing.salePrice : listing.originalPrice)}
             </Text>
-            <Badge variant="success" className="ml-2">
-              -{discount}%
+            <Badge variant={isFlashSale ? 'danger' : 'success'} className="ml-2">
+              {isFlashSale ? '⚡ Flash' : `-${discount}%`}
             </Badge>
           </View>
 
