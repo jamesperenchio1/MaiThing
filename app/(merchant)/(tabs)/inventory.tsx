@@ -223,11 +223,18 @@ function InventoryCard({
               </View>
             )}
           </View>
-          <View className="mb-2 flex-row items-center text-muted">
-            <Clock size={12} color={colors.muted} />
-            <Text variant="caption" className="ml-1 text-muted">
-              {pickupStart} – {pickupEnd}
-            </Text>
+          <View className="mb-2 flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <Clock size={12} color={colors.muted} />
+              <Text variant="caption" className="ml-1 text-muted">
+                {pickupStart} – {pickupEnd}
+              </Text>
+            </View>
+            {listing.viewCount != null && listing.viewCount > 0 && (
+              <Text variant="caption" className="text-muted">
+                👁 {listing.viewCount.toLocaleString()}
+              </Text>
+            )}
           </View>
           {attachedCoupon && (
             <View className="mb-2 flex-row items-center">

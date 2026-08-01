@@ -687,7 +687,12 @@ class MockListingRepository implements ListingRepository {
       }).catch(() => {});
     }
 
-    return after;
+    // Auto-delist when sold out
+    if (after.autoDelistWhenSoldOut && after.quantityRemaining === 0 && after.status === 'active') {
+      LISTINGS[index] = { ...after, status: 'sold_out' };
+    }
+
+    return LISTINGS[index];
   }
 
   async deleteListing(id: string): Promise<void> {

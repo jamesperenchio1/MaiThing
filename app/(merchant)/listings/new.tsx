@@ -157,6 +157,7 @@ export default function CreateListingScreen() {
   const [customTagInput, setCustomTagInput] = useState('');
   const [customAllergenInput, setCustomAllergenInput] = useState('');
   const [autoExpiry, setAutoExpiry] = useState(false);
+  const [autoDelistWhenSoldOut, setAutoDelistWhenSoldOut] = useState(false);
   const [flashSaleEnabled, setFlashSaleEnabled] = useState(false);
   const [flashSalePrice, setFlashSalePrice] = useState('');
   const [flashSaleHours, setFlashSaleHours] = useState('2');
@@ -452,6 +453,7 @@ export default function CreateListingScreen() {
         : undefined;
     const payload: Omit<Listing, 'id' | 'createdAt'> = {
       ...buildListingPayload(data, images, merchantId, resolvedStatus),
+      autoDelistWhenSoldOut,
       ...(flashSaleEnabled && flashSalePriceNum && flashSaleEndsAtStr
         ? { flashSalePrice: flashSalePriceNum, flashSaleEndsAt: flashSaleEndsAtStr }
         : {}),
@@ -867,6 +869,23 @@ export default function CreateListingScreen() {
           <Switch
             value={autoExpiry}
             onValueChange={setAutoExpiry}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={Platform.OS === 'ios' ? undefined : colors.white}
+          />
+        </View>
+
+        <View className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card p-4">
+          <View className="flex-1 pr-4">
+            <Text variant="body-sm" className="font-semibold">
+              Auto-delist when sold out
+            </Text>
+            <Text variant="caption" className="text-muted">
+              Automatically remove listing when stock reaches zero
+            </Text>
+          </View>
+          <Switch
+            value={autoDelistWhenSoldOut}
+            onValueChange={setAutoDelistWhenSoldOut}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor={Platform.OS === 'ios' ? undefined : colors.white}
           />
