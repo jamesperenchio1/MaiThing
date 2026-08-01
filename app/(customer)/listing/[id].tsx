@@ -81,7 +81,12 @@ export default function ListingDetailScreen() {
   }
 
   const isMystery = listing.type === 'mystery_box';
-  const discount = Math.round((1 - listing.salePrice / listing.originalPrice) * 100);
+  const isFlashSale =
+    !!listing.flashSalePrice &&
+    !!listing.flashSaleEndsAt &&
+    new Date(listing.flashSaleEndsAt) > new Date();
+  const effectivePrice = isFlashSale ? listing.flashSalePrice! : listing.salePrice;
+  const discount = Math.round((1 - effectivePrice / listing.originalPrice) * 100);
   const isSoldOut = listing.quantityRemaining === 0;
   const waitlistCount = isSoldOut
     ? Math.max(3, listing.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 23) + 4
@@ -252,13 +257,13 @@ export default function ListingDetailScreen() {
             </View>
             <View className="items-end">
               <Text className="text-2xl font-bold text-primary">
-                {formatCurrency(listing.salePrice)}
+                {formatCurrency(effectivePrice)}
               </Text>
               <Text className="text-sm text-muted line-through">
-                {formatCurrency(listing.originalPrice)}
+                {formatCurrency(isFlashSale ? listing.salePrice : listing.originalPrice)}
               </Text>
-              <Badge variant="success" className="mt-1">
-                -{discount}%
+              <Badge variant={isFlashSale ? 'danger' : 'success'} className="mt-1">
+                {isFlashSale ? '⚡ Flash' : `-${discount}%`}
               </Badge>
             </View>
           </View>
@@ -277,6 +282,12 @@ export default function ListingDetailScreen() {
                 {t('customer.listing.mysteryBoxHint')}
               </Text>
             </Card>
+          )}
+
+          {isFlashSale && listing.flashSaleEndsAt && (
+            <View className="mb-4">
+              <CountdownTimer targetDate={listing.flashSaleEndsAt} label="⚡ Flash sale ends" />
+            </View>
           )}
 
           {showCountdown && (
@@ -419,7 +430,7 @@ export default function ListingDetailScreen() {
           <Text variant="body-sm" className="text-muted">
             {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })}
           </Text>
-          <Text className="text-xl font-bold">{formatCurrency(listing.salePrice * quantity)}</Text>
+          <Text className="text-xl font-bold">{formatCurrency(effectivePrice * quantity)}</Text>
         </View>
         <View className="flex-row items-center space-x-3">
           <View className="flex-row items-center">
