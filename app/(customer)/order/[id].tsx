@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image, Alert, Platform } from 'react-native';
 import {
@@ -13,6 +13,7 @@ import {
   Check,
   Star,
   Calendar,
+  MessageCircle,
   type LucideIcon,
 } from 'lucide-react-native';
 let ExpoCalendar: typeof import('expo-calendar') | null = null;
@@ -172,6 +173,7 @@ function ReviewSection({ order }: { order: Order }) {
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const { data: order, isLoading } = useOrder(id);
@@ -408,11 +410,25 @@ export default function OrderDetailScreen() {
           </Button>
         )}
 
+        {order.status !== 'cancelled' && (
+          <Button
+            variant="outline"
+            fullWidth
+            className="mt-4"
+            leftIcon={<MessageCircle size={18} color={colors.primary} />}
+            onPress={() =>
+              router.push(`/(customer)/messages/${order.merchantId}` as never)
+            }
+          >
+            Chat with merchant
+          </Button>
+        )}
+
         {['pending', 'confirmed', 'preparing'].includes(order.status) && (
           <Button
             variant="outline"
             fullWidth
-            className="mt-6"
+            className="mt-3"
             loading={cancelOrder.isPending}
             onPress={() => {
               const reasons = [
