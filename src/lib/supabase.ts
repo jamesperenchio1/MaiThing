@@ -1,13 +1,46 @@
-// Stub — real Supabase client wired up when backend is live.
-// All callers are fire-and-forget and degrade gracefully when this is a no-op.
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const supabase = null as unknown as {
-  from: (table: string) => any;
-  auth: any;
-};
+import { createClient } from '@supabase/supabase-js';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+const SecureStoreAdapter = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') return null;
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') return;
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch {
+      // key length / charset issues — degrade gracefully
+    }
+  },
+  removeItem: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web') return;
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch {
+      // ignore
+    }
+  },
+};
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: SecureStoreAdapter,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
+
 const FUNCTIONS_BASE = `${supabaseUrl}/functions/v1`;
 
 /** Fire-and-forget push notification event to the Edge Function. */

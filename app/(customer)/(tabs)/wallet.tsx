@@ -15,14 +15,14 @@ import {
   ArrowDownRight,
   ChevronRight,
   X,
-  Star,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
-import { Card } from '@/src/components/ui/Card';
 import { Screen } from '@/src/components/layout/Screen';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
@@ -52,34 +52,41 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
 
   return (
     <Pressable onPress={onPress} disabled={!transaction.orderId}>
-      <Card variant="outlined" className="mb-3 flex-row items-center justify-between">
-        <View className="flex-row items-center flex-1 pr-2">
-          <View
-            className={`mr-3 rounded-full p-2 ${isIncoming ? 'bg-primary/10' : 'bg-danger/10'}`}
-          >
-            {isIncoming ? (
-              <ArrowDownRight size={18} color={colors.primary} />
-            ) : (
-              <ArrowUpRight size={18} color={colors.danger} />
-            )}
-          </View>
-          <View className="flex-1">
-            <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
-              {transaction.description}
-            </Text>
-            <Text variant="caption" className="text-muted">
-              {new Date(transaction.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
+      <View className="flex-row items-center px-4 py-3.5">
+        <View
+          className={`mr-3.5 rounded-2xl p-2.5 ${isIncoming ? 'bg-primary/10' : 'bg-danger/10'}`}
+        >
+          {isIncoming ? (
+            <ArrowDownRight size={18} color={colors.primary} />
+          ) : (
+            <ArrowUpRight size={18} color={colors.danger} />
+          )}
+        </View>
+        <View className="flex-1 pr-2">
+          <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
+            {transaction.description}
+          </Text>
+          <Text variant="caption" className="mt-0.5 text-muted">
+            {new Date(transaction.createdAt).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </Text>
         </View>
         <View className="flex-row items-center">
-          <Text className={`font-semibold ${isIncoming ? 'text-primary' : 'text-danger'}`}>
+          <Text
+            className={`text-base font-bold ${isIncoming ? 'text-primary' : 'text-danger'}`}
+          >
             {isIncoming ? '+' : '-'}
             {formatCurrency(transaction.amount)}
           </Text>
-          {transaction.orderId && <ChevronRight size={18} color={colors.muted} className="ml-1" />}
+          {transaction.orderId && (
+            <ChevronRight size={16} color={colors.muted} style={{ marginLeft: 2 }} />
+          )}
         </View>
-      </Card>
+      </View>
+      <View className="ml-16 h-px bg-border/60" />
     </Pressable>
   );
 }
@@ -106,7 +113,10 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
 
   const handleCustomAmountChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '');
-    if (!digits) { setCustomAmount(''); return; }
+    if (!digits) {
+      setCustomAmount('');
+      return;
+    }
     setCustomAmount(digits.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
   };
 
@@ -135,12 +145,7 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
             <View className="rounded-t-3xl bg-background px-6 pb-10 pt-6">
               <View className="mb-6 flex-row items-center justify-between">
                 <Text variant="h3">Top up wallet</Text>
-                <PressableScale
-                  onPress={onClose}
-                  scale={0.9}
-                  accessibilityLabel="Close"
-                  hitSlop={8}
-                >
+                <PressableScale onPress={onClose} scale={0.9} accessibilityLabel="Close" hitSlop={8}>
                   <View className="rounded-full bg-muted/10 p-2">
                     <X size={20} color={colors.muted} />
                   </View>
@@ -208,48 +213,38 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
   );
 }
 
-function RewardsCard({ rewards }: { rewards?: WalletReward }) {
+function RewardStrip({ rewards }: { rewards?: WalletReward }) {
   const colors = useThemeColor();
   return (
-    <Card variant="outlined" className="mb-4 p-4">
-      <View className="mb-2 flex-row items-center">
-        <Star size={16} color={colors.primary} />
-        <Text variant="body-sm" className="ml-2 font-semibold text-primary">
-          Rewards
+    <View className="mx-4 mb-5 flex-row overflow-hidden rounded-2xl bg-card">
+      <View className="flex-1 items-center border-r border-border py-4">
+        <Sparkles size={16} color={colors.primary} />
+        <Text className="mt-1 text-lg font-bold text-foreground">
+          {(rewards?.points ?? 0).toLocaleString()}
+        </Text>
+        <Text variant="caption" className="text-muted">
+          Points
         </Text>
       </View>
-      <View className="flex-row justify-between mb-2">
-        <View>
-          <Text variant="caption" className="text-muted">
-            Points balance
-          </Text>
-          <Text className="font-bold text-foreground">
-            {(rewards?.points ?? 0).toLocaleString()} pts
-          </Text>
-        </View>
-        <View className="items-end">
-          <Text variant="caption" className="text-muted">
-            Bonus credit
-          </Text>
-          <Text className="font-bold text-primary">
-            +{formatCurrency(rewards?.bonusBalance ?? 0)}
-          </Text>
-        </View>
+      <View className="flex-1 items-center border-r border-border py-4">
+        <TrendingUp size={16} color={colors.primary} />
+        <Text className="mt-1 text-lg font-bold text-primary">
+          +{formatCurrency(rewards?.bonusBalance ?? 0)}
+        </Text>
+        <Text variant="caption" className="text-muted">
+          Bonus credit
+        </Text>
       </View>
-      <View className="flex-row justify-between">
-        <View>
-          <Text variant="caption" className="text-muted">
-            Lifetime points
-          </Text>
-          <Text variant="caption" className="font-semibold text-foreground">
-            {(rewards?.lifetimePoints ?? 0).toLocaleString()} pts
-          </Text>
-        </View>
+      <View className="flex-1 items-center py-4">
+        <WalletIcon size={16} color={colors.muted} />
+        <Text className="mt-1 text-lg font-bold text-foreground">
+          {(rewards?.lifetimePoints ?? 0).toLocaleString()}
+        </Text>
+        <Text variant="caption" className="text-muted">
+          Lifetime
+        </Text>
       </View>
-      <Text variant="caption" className="mt-2 text-muted">
-        Earn 1 point per ฿1 spent. Top up and get 5% bonus credit.
-      </Text>
-    </Card>
+    </View>
   );
 }
 
@@ -289,55 +284,96 @@ export default function WalletScreen() {
   };
 
   const listHeader = (
-    <View className="pt-4 pb-2 px-5">
-      <Text testID="wallet-title" variant="h1" className="mb-4">
+    <View className="pt-4 pb-2">
+      {/* Title */}
+      <Text testID="wallet-title" variant="h1" className="mb-5 px-4">
         {t('common.wallet')}
       </Text>
 
-      <Card testID="balance-card" className="mb-6 bg-primary p-6">
-        <View className="mb-4 flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <View className="mr-3 rounded-full bg-white/20 p-2">
-              <WalletIcon size={24} color="#fff" />
+      {/* Balance card — edge-to-edge feel with mx-4 + premium rounding */}
+      <View
+        testID="balance-card"
+        className="mx-4 mb-5 overflow-hidden rounded-3xl bg-primary"
+      >
+        {/* Decorative circles */}
+        <View
+          style={{
+            position: 'absolute',
+            top: -40,
+            right: -40,
+            width: 160,
+            height: 160,
+            borderRadius: 80,
+            backgroundColor: 'rgba(255,255,255,0.07)',
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: -20,
+            left: -20,
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            backgroundColor: 'rgba(255,255,255,0.05)',
+          }}
+        />
+
+        <View className="p-6">
+          <View className="mb-6 flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <View className="mr-2.5 rounded-xl bg-white/20 p-2">
+                <WalletIcon size={18} color="#fff" />
+              </View>
+              <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: '500' }}>
+                Maithing Wallet
+              </Text>
             </View>
-            <Text className="text-white/80">{t('customer.wallet.balance')}</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+              {wallet?.currency ?? 'THB'}
+            </Text>
           </View>
-          <Text variant="caption" className="text-white/60">
-            {wallet?.currency}
+
+          <Text style={{ color: '#fff', fontSize: 40, fontWeight: '700', marginBottom: 24, letterSpacing: -1 }}>
+            {isLoading
+              ? '—'
+              : wallet?.balance === 999999
+                ? t('customer.wallet.infinite')
+                : formatCurrency(wallet?.balance ?? 0)}
           </Text>
+
+          <Button
+            testID="top-up-button"
+            variant="secondary"
+            className="bg-white"
+            textClassName="text-primary font-semibold"
+            fullWidth
+            onPress={() => setTopUpVisible(true)}
+          >
+            {t('customer.wallet.topUp')}
+          </Button>
         </View>
-        <Text variant="h1" className="mb-4 text-white">
-          {isLoading
-            ? '...'
-            : wallet?.balance === 999999
-              ? t('customer.wallet.infinite')
-              : formatCurrency(wallet?.balance ?? 0)}
+      </View>
+
+      {/* Rewards strip */}
+      <RewardStrip rewards={rewards} />
+
+      {/* Section header */}
+      <View className="mb-1 flex-row items-center justify-between px-4">
+        <Text variant="h3">{t('customer.wallet.transactions')}</Text>
+        <Text variant="caption" className="text-muted">
+          {transactions?.length ?? 0} total
         </Text>
-        <Button
-          testID="top-up-button"
-          variant="secondary"
-          className="bg-white"
-          textClassName="text-primary"
-          fullWidth
-          onPress={() => setTopUpVisible(true)}
-        >
-          {t('customer.wallet.topUp')}
-        </Button>
-      </Card>
-
-      <RewardsCard rewards={rewards} />
-
-      <Text variant="h3" className="mb-4">
-        {t('customer.wallet.transactions')}
-      </Text>
+      </View>
     </View>
   );
 
   const listEmpty = transactionsLoading ? (
-    <>
-      <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
-      <Skeleton width="100%" height={68} className="mb-3 rounded-2xl" />
-    </>
+    <View className="px-4">
+      <Skeleton width="100%" height={64} className="mb-2 rounded-2xl" />
+      <Skeleton width="100%" height={64} className="mb-2 rounded-2xl" />
+      <Skeleton width="100%" height={64} className="rounded-2xl" />
+    </View>
   ) : (
     <EmptyState
       icon={<WalletIcon size={32} color={colors.muted} />}
@@ -352,13 +388,13 @@ export default function WalletScreen() {
       {isError ? (
         <View className="flex-1 pb-6">
           {listHeader}
-          <View className="px-5">
-          <ErrorState
-            title={t('common.error')}
-            message="We couldn't load your wallet."
-            onRetry={handleRefresh}
-            retryLabel={t('common.retry')}
-          />
+          <View className="px-4">
+            <ErrorState
+              title={t('common.error')}
+              message="We couldn't load your wallet."
+              onRetry={handleRefresh}
+              retryLabel={t('common.retry')}
+            />
           </View>
         </View>
       ) : (
@@ -367,24 +403,19 @@ export default function WalletScreen() {
           data={visibleTransactions}
           renderItem={({ item }) => <TransactionItem transaction={item} />}
           keyExtractor={(item) => item.id}
-          estimatedItemSize={68}
+          estimatedItemSize={64}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
           ListFooterComponent={
             hasMore ? (
-              <Button
-                variant="ghost"
-                fullWidth
-                onPress={() => setShowAll(true)}
-                className="mt-1 mb-2"
-              >
+              <Button variant="ghost" fullWidth onPress={() => setShowAll(true)} className="mt-1 mb-2">
                 Load more
               </Button>
             ) : null
           }
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
     </Screen>
