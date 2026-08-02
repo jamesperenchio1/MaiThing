@@ -110,7 +110,7 @@ export default {
       mapSubtitle: 'Discover rescue deals on the map',
       impact: {
         mealsSaved: 'Meals saved',
-        moneySaved: 'Money saved',
+        moneySaved: 'Saved',
         co2Saved: 'CO₂ saved',
       },
     },
