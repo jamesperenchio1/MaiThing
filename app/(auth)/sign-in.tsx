@@ -51,6 +51,7 @@ export default function SignInScreen() {
                 placeholder="you@example.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
                 leftIcon={<Mail size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}

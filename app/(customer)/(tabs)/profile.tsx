@@ -346,7 +346,7 @@ export default function ProfileScreen() {
             label="App Tour"
             onPress={() => {
               resetTutorial();
-              startTutorial();
+              setTimeout(() => startTutorial(), 150);
             }}
           />
           <MenuItem
