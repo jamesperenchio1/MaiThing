@@ -180,15 +180,17 @@ export default function DiscoverScreen() {
   };
 
   const listHeader = (
-    <View className="pt-4 pb-2 px-5">
-      <View className="mb-4 flex-row items-center justify-between">
+    <View className="pt-4 pb-2">
+      {/* Title + cart */}
+      <View className="mb-4 flex-row items-center justify-between px-4">
         <Text testID="discover-title" variant="h1">
           {t('common.discover')}
         </Text>
         <CartButton />
       </View>
 
-      <View className="mb-4 flex-row items-center space-x-3">
+      {/* Search + filter */}
+      <View className="mb-4 flex-row items-center gap-3 px-4">
         <View className="flex-1">
           <SearchBar
             testID="discover-search-bar"
@@ -220,11 +222,12 @@ export default function DiscoverScreen() {
         </PressableScale>
       </View>
 
+      {/* Quick sort chips — bleed to edges */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="mb-4 -mx-0"
-        contentContainerStyle={{ paddingRight: 8 }}
+        className="mb-4"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingRight: 24 }}
       >
         {QUICK_SORT.map((opt) => (
           <PressableScale
@@ -238,7 +241,7 @@ export default function DiscoverScreen() {
           >
             <View
               className={cn(
-                'rounded-full border px-4 py-2',
+                'rounded-full border px-5 py-2',
                 sortBy === opt.id ? 'border-primary bg-primary' : 'border-border bg-card'
               )}
             >
@@ -253,6 +256,7 @@ export default function DiscoverScreen() {
         ))}
       </ScrollView>
 
+      {/* Deal of the Day — full bleed */}
       {!searchQuery &&
         listings &&
         listings.length > 0 &&
@@ -264,35 +268,38 @@ export default function DiscoverScreen() {
           return (
             <PressableScale
               onPress={() => router.push(`/(customer)/listing/${featured.id}` as any)}
-              scale={0.98}
-              className="mb-4"
+              scale={0.99}
+              className="mb-5"
             >
-              <View className="h-36 rounded-3xl overflow-hidden">
+              <View className="h-44 overflow-hidden">
                 <Image
                   source={{ uri: featured.images[0] }}
                   className="absolute inset-0 h-full w-full"
                   resizeMode="cover"
                 />
-                <View className="absolute inset-0 bg-black/50" />
-                <View className="absolute bottom-0 left-0 right-0 bg-black/40 h-1/2" />
+                <View className="absolute inset-0 bg-black/40" />
+                <View
+                  className="absolute bottom-0 left-0 right-0"
+                  style={{ height: '60%', backgroundColor: 'rgba(0,0,0,0.35)' }}
+                />
                 <View className="absolute inset-0 p-4 justify-between">
-                  <View className="self-start bg-primary rounded-full px-2.5 py-1">
-                    <Text variant="caption" className="text-white font-bold">
+                  <View className="self-start bg-primary rounded-full px-3 py-1">
+                    <Text variant="caption" className="text-white font-bold tracking-wide">
                       Deal of the Day
                     </Text>
                   </View>
                   <View>
-                    <Text variant="body-sm" className="text-white font-semibold" numberOfLines={1}>
+                    <Text variant="h3" className="text-white mb-1" numberOfLines={1}>
                       {featured.title}
                     </Text>
-                    <View className="flex-row items-center mt-0.5">
-                      <Text className="text-white text-lg font-bold">
+                    <View className="flex-row items-center">
+                      <Text className="text-white text-xl font-bold">
                         {formatCurrency(featured.salePrice)}
                       </Text>
-                      <Text className="text-white/70 text-sm line-through ml-2">
+                      <Text className="text-white/60 text-sm line-through ml-2">
                         {formatCurrency(featured.originalPrice)}
                       </Text>
-                      <View className="ml-2 bg-white rounded-full px-2 py-0.5">
+                      <View className="ml-2 bg-white/90 rounded-full px-2.5 py-0.5">
                         <Text variant="caption" className="text-primary font-bold">
                           -{discount}%
                         </Text>
@@ -305,47 +312,63 @@ export default function DiscoverScreen() {
           );
         })()}
 
+      {/* Top Rated Shops — wide photo cards */}
       {topRatedMerchants.length > 0 && !searchQuery && (
-        <View className="mb-4">
-          <View className="mb-2 flex-row items-center justify-between">
-            <Text variant="body-sm" className="font-semibold">
-              Top Rated Shops
-            </Text>
+        <View className="mb-5">
+          <View className="mb-3 flex-row items-center justify-between px-4">
+            <Text variant="h3">Top Rated Shops</Text>
             <PressableScale
               onPress={() => router.push('/(customer)/(tabs)/map' as any)}
               scale={0.95}
             >
-              <Text variant="caption" className="text-primary">
+              <Text variant="caption" className="text-primary font-medium">
                 See on map
               </Text>
             </PressableScale>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingRight: 24 }}
+          >
             {topRatedMerchants.map((merchant) => (
               <PressableScale
                 key={merchant.id}
                 onPress={() => router.push(`/(customer)/merchant/${merchant.id}` as any)}
-                scale={0.96}
+                scale={0.97}
                 className="mr-3"
               >
-                <View className="items-center w-20">
-                  <View className="w-14 h-14 rounded-2xl overflow-hidden bg-muted mb-1.5">
-                    <Image
-                      source={{ uri: merchant.logoUrl }}
-                      className="w-full h-full"
-                      resizeMode="cover"
-                    />
-                  </View>
-                  <Text variant="caption" className="text-center font-medium" numberOfLines={2}>
-                    {merchant.name}
-                  </Text>
-                  <View className="flex-row items-center mt-0.5">
-                    <Text variant="caption" className="text-warning">
-                      ★
+                <View
+                  style={{ width: 140, height: 100 }}
+                  className="rounded-2xl overflow-hidden"
+                >
+                  <Image
+                    source={{ uri: merchant.coverUrl ?? merchant.logoUrl }}
+                    style={{ width: 140, height: 100 }}
+                    resizeMode="cover"
+                  />
+                  {/* gradient overlay */}
+                  <View className="absolute inset-0 bg-black/30" />
+                  <View
+                    className="absolute bottom-0 left-0 right-0"
+                    style={{ height: '65%', backgroundColor: 'rgba(0,0,0,0.35)' }}
+                  />
+                  <View className="absolute bottom-0 left-0 right-0 p-2.5">
+                    <Text
+                      variant="caption"
+                      className="text-white font-semibold"
+                      numberOfLines={1}
+                    >
+                      {merchant.name}
                     </Text>
-                    <Text variant="caption" className="ml-0.5">
-                      {merchant.rating.toFixed(1)}
-                    </Text>
+                    <View className="flex-row items-center mt-0.5">
+                      <Text style={{ color: '#FBBF24', fontSize: 10 }}>★</Text>
+                      <Text
+                        style={{ color: 'rgba(255,255,255,0.9)', fontSize: 11, marginLeft: 2 }}
+                      >
+                        {merchant.rating.toFixed(1)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </PressableScale>
@@ -354,8 +377,9 @@ export default function DiscoverScreen() {
         </View>
       )}
 
+      {/* Recent searches */}
       {!searchQuery && recent.length > 0 && (
-        <View className="mb-4">
+        <View className="mb-4 px-4">
           <View className="mb-2 flex-row items-center justify-between">
             <View className="flex-row items-center">
               <Clock size={14} color={colors.muted} className="mr-1.5" />
@@ -391,21 +415,25 @@ export default function DiscoverScreen() {
         </View>
       )}
 
-      <View className="mb-4 flex-row items-center">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1">
-          {categories?.map((category) => (
-            <CategoryChip
-              key={category.id}
-              category={category}
-              isActive={selectedCategory === category.id}
-              onPress={() =>
-                setSelectedCategory((prev) => (prev === category.id ? null : category.id))
-              }
-              locale={i18n.language as 'en' | 'th'}
-            />
-          ))}
-        </ScrollView>
-      </View>
+      {/* Category chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="mb-4"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingRight: 24 }}
+      >
+        {categories?.map((category) => (
+          <CategoryChip
+            key={category.id}
+            category={category}
+            isActive={selectedCategory === category.id}
+            onPress={() =>
+              setSelectedCategory((prev) => (prev === category.id ? null : category.id))
+            }
+            locale={i18n.language as 'en' | 'th'}
+          />
+        ))}
+      </ScrollView>
     </View>
   );
 
@@ -584,7 +612,7 @@ export default function DiscoverScreen() {
           ListEmptyComponent={listEmpty}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 24 }}
         />
       )}
     </Screen>
