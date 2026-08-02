@@ -54,6 +54,8 @@ export function Input({
         <TextInput
           className={cn('flex-1 text-base text-foreground', inputClassName)}
           placeholderTextColor="#9CA3AF"
+          value={value}
+          defaultValue={defaultValue}
           onFocus={(e) => {
             setIsFocused(true);
             props.onFocus?.(e);

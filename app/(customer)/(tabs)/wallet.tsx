@@ -107,8 +107,7 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
   const handleCustomAmountChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '');
     if (!digits) { setCustomAmount(''); return; }
-    const num = parseInt(digits, 10);
-    setCustomAmount(num.toLocaleString('en-US'));
+    setCustomAmount(digits.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
   };
 
   const handleTopUp = async () => {
