@@ -17,6 +17,7 @@ import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
 import { useTutorialStore, TUTORIAL_TOTAL_STEPS } from '@/src/stores/tutorial';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useLanguageStore } from '@/src/stores/language';
 
 const TAB_COUNT = 6;
 const TAB_BAR_HEIGHT = 64;
@@ -150,6 +151,7 @@ export function TutorialOverlay() {
   const steps = useSteps();
   const router = useRouter();
   const colors = useThemeColor();
+  const { language, toggle: toggleLanguage } = useLanguageStore();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
@@ -189,10 +191,10 @@ export function TutorialOverlay() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    if (step?.navigateTo) {
-      router.replace(step.navigateTo as any);
-    }
     nextStep();
+    if (step?.navigateTo) {
+      setTimeout(() => router.push(step.navigateTo as any), 80);
+    }
   }, [step, nextStep, router]);
 
   if (!isActive || !step) return null;
@@ -272,6 +274,19 @@ export function TutorialOverlay() {
       return (
         <View style={styles.centeredCardWrapper} pointerEvents="box-none">
         <View style={[styles.centeredCard, { backgroundColor: colors.card }]}>
+          {/* Language toggle top-right of card */}
+          <Pressable
+            onPress={toggleLanguage}
+            style={styles.langToggle}
+            hitSlop={8}
+          >
+            <View style={[styles.langPill, { backgroundColor: colors.primary + '18' }]}>
+              <Text variant="caption" style={{ color: colors.primary, fontWeight: '700' }}>
+                {language === 'en' ? 'TH' : 'EN'}
+              </Text>
+            </View>
+          </Pressable>
+
           <View style={styles.tooltipContent}>
             <Text style={styles.emoji}>{step.emoji}</Text>
             <Text variant="h3" className="text-center mb-2">
@@ -411,20 +426,25 @@ export function TutorialOverlay() {
         {renderSpotlight()}
         {renderTooltip()}
 
-        {/* Skip button always visible at top-right (except center cards which have inline skip) */}
+        {/* Skip button + language toggle always visible at top-right (except center cards which have inline skip) */}
         {hotspot && (
-          <Pressable
-            style={[styles.skipBtn, { top: insets.top + 12 }]}
-            onPress={skipTutorial}
-            hitSlop={12}
-          >
-            <View style={[styles.skipPill, { backgroundColor: colors.card }]}>
-              <X size={14} color={colors.muted} />
-              <Text variant="caption" className="text-muted ml-1">
-                Skip tour
-              </Text>
-            </View>
-          </Pressable>
+          <View style={[styles.topRight, { top: insets.top + 12 }]}>
+            <Pressable onPress={toggleLanguage} hitSlop={8} style={{ marginRight: 8 }}>
+              <View style={[styles.skipPill, { backgroundColor: colors.card }]}>
+                <Text variant="caption" style={{ color: colors.primary, fontWeight: '700' }}>
+                  {language === 'en' ? 'TH' : 'EN'}
+                </Text>
+              </View>
+            </Pressable>
+            <Pressable onPress={skipTutorial} hitSlop={12}>
+              <View style={[styles.skipPill, { backgroundColor: colors.card }]}>
+                <X size={14} color={colors.muted} />
+                <Text variant="caption" className="text-muted ml-1">
+                  Skip
+                </Text>
+              </View>
+            </Pressable>
+          </View>
         )}
 
         {/* Step counter at top-left */}
@@ -485,8 +505,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emoji: {
-    fontSize: 36,
-    marginBottom: 10,
+    fontSize: 44,
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  langToggle: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 10,
+  },
+  langPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   desc: {
     lineHeight: 20,
@@ -537,6 +569,12 @@ const styles = StyleSheet.create({
   skipBtn: {
     position: 'absolute',
     right: 16,
+  },
+  topRight: {
+    position: 'absolute',
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   skipPill: {
     flexDirection: 'row',

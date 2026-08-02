@@ -44,10 +44,10 @@ const SORT_OPTIONS: { id: SortOption; label: string }[] = [
 ];
 
 const QUICK_SORT: { id: SortOption; label: string }[] = [
-  { id: 'distance', label: '📍 Nearest' },
-  { id: 'top_rated', label: '⭐ Top Rated' },
-  { id: 'going_fast', label: '🔥 Going Fast' },
-  { id: 'newest', label: '✨ New' },
+  { id: 'distance', label: 'Nearest' },
+  { id: 'top_rated', label: 'Top Rated' },
+  { id: 'going_fast', label: 'Going Fast' },
+  { id: 'newest', label: 'New' },
 ];
 
 const RATING_OPTIONS: { value: number; label: string }[] = [
@@ -180,7 +180,7 @@ export default function DiscoverScreen() {
   };
 
   const listHeader = (
-    <View className="pt-4 pb-2">
+    <View className="pt-4 pb-2 px-5">
       <View className="mb-4 flex-row items-center justify-between">
         <Text testID="discover-title" variant="h1">
           {t('common.discover')}
@@ -278,7 +278,7 @@ export default function DiscoverScreen() {
                 <View className="absolute inset-0 p-4 justify-between">
                   <View className="self-start bg-primary rounded-full px-2.5 py-1">
                     <Text variant="caption" className="text-white font-bold">
-                      🔥 Deal of the Day
+                      Deal of the Day
                     </Text>
                   </View>
                   <View>
@@ -558,7 +558,7 @@ export default function DiscoverScreen() {
       </Modal>
 
       {isError || isLoading ? (
-        <View className="flex-1 px-6 pb-6">
+        <View className="flex-1 pb-6">
           {listHeader}
           {isError ? (
             <ErrorState
@@ -584,7 +584,7 @@ export default function DiscoverScreen() {
           ListEmptyComponent={listEmpty}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
         />
       )}
     </Screen>

@@ -1,6 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { mockRepositories } from '@/src/repositories/mock';
 import type { Listing, ListingTemplate } from '@/src/types';
+import type { QueryClient } from '@tanstack/react-query';
+
+function findListingInCache(queryClient: QueryClient, id: string): Listing | undefined {
+  const queries = queryClient.getQueriesData<Listing[]>({ queryKey: ['listings'] });
+  for (const [, data] of queries) {
+    const found = data?.find((l) => l.id === id);
+    if (found) return found;
+  }
+  return undefined;
+}
 
 export interface ListingFilters {
   merchantId?: string;
@@ -26,10 +36,13 @@ export function useListings(params?: ListingFilters) {
 }
 
 export function useListing(id: string) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ['listing', id],
     queryFn: () => mockRepositories.listings.getListing(id),
     enabled: !!id,
+    initialData: () => findListingInCache(queryClient, id),
+    initialDataUpdatedAt: 0,
   });
 }
 

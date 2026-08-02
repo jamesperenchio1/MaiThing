@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, RefreshControl, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Bell, MapPin } from 'lucide-react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInRight, ZoomIn } from 'react-native-reanimated';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -127,7 +127,7 @@ export default function CustomerHomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const currentSlide = useRef(0);
   const [activeSlide, setActiveSlide] = useState(0);
-  const slideWidth = Dimensions.get('window').width - 48;
+  const slideWidth = Dimensions.get('window').width;
 
   const promoListings = useMemo(
     () =>
@@ -161,14 +161,14 @@ export default function CustomerHomeScreen() {
 
   const listHeader = (
     <View className="pt-4 pb-6">
-      <View className="mb-4 flex-row items-center justify-between">
-        <View>
+      <View className="px-5 mb-4 flex-row items-center justify-between">
+        <Animated.View entering={FadeInDown.duration(400).springify()}>
           <Text variant="body-sm" className="text-muted">
             {t('customer.home.greeting', { timeOfDay })}
           </Text>
           <Text variant="h3">{user?.name ?? 'Guest'}</Text>
-        </View>
-        <View className="flex-row items-center space-x-1">
+        </Animated.View>
+        <Animated.View entering={FadeInRight.duration(400).delay(100).springify()} className="flex-row items-center space-x-1">
           <CartButton />
           <Button
             variant="ghost"
@@ -177,16 +177,17 @@ export default function CustomerHomeScreen() {
           >
             <Bell size={24} color={colors.foreground} />
           </Button>
-        </View>
+        </Animated.View>
       </View>
 
       {impact && (
-        <Animated.View entering={FadeInUp.duration(500)}>
+        <Animated.View entering={ZoomIn.duration(400).delay(80).springify()} className="px-5">
           <ImpactWidget impact={impact} />
         </Animated.View>
       )}
 
-      <Animated.View entering={FadeInUp.duration(500).delay(100)} className="mb-6">
+      {/* Full-width promo banner — bleeds edge to edge */}
+      <Animated.View entering={FadeInDown.duration(500).delay(150)} className="mb-6">
         <ScrollView
           ref={scrollRef}
           horizontal
@@ -207,10 +208,7 @@ export default function CustomerHomeScreen() {
                 onPress={() => router.push(`/(customer)/listing/${listing.id}` as any)}
                 scale={0.98}
               >
-                <View
-                  style={{ width: slideWidth, height: 200 }}
-                  className="rounded-3xl overflow-hidden"
-                >
+                <View style={{ width: slideWidth, height: 220 }}>
                   <Image
                     source={{ uri: listing.images[0] }}
                     className="absolute inset-0 w-full h-full"
@@ -218,12 +216,12 @@ export default function CustomerHomeScreen() {
                   />
                   <View className="absolute inset-0 bg-black/10" />
                   <View className="absolute bottom-0 left-0 right-0 h-1/2 bg-black/60" />
-                  <View className="absolute top-3 left-4">
+                  <View className="absolute top-3 left-5">
                     <Text variant="caption" className="text-white/80">
                       {merchantName}
                     </Text>
                   </View>
-                  <View className="absolute bottom-0 left-0 right-0 p-4">
+                  <View className="absolute bottom-0 left-0 right-0 p-5">
                     <Text
                       variant="body-sm"
                       className="text-white font-semibold mb-1"
@@ -264,13 +262,13 @@ export default function CustomerHomeScreen() {
 
       <SearchBar
         placeholder={t('common.search')}
-        className="mb-6"
+        className="mb-6 mx-5"
         onSubmit={(query) =>
           router.push({ pathname: '/(customer)/(tabs)/discover', params: { query } })
         }
       />
 
-      <View className="mb-2">
+      <View className="mb-2 px-4">
         <SectionHeader title={t('customer.home.categories')} />
         <ScrollView
           horizontal
@@ -291,7 +289,9 @@ export default function CustomerHomeScreen() {
         </ScrollView>
       </View>
 
+      <View className="px-4">
       <SectionHeader title={t('customer.home.cravingNow')} className="mb-2" />
+      </View>
       <MealTimeShortcuts
         selected={selectedMealTime}
         onSelect={setSelectedMealTime}
@@ -300,7 +300,7 @@ export default function CustomerHomeScreen() {
 
       {goingFast.length > 0 && (
         <CollectionSection
-          title="🔥 Going Fast"
+          title="Going Fast"
           listings={goingFast}
           onSeeAll={() =>
             router.push({
@@ -349,11 +349,13 @@ export default function CustomerHomeScreen() {
       )}
 
       <View testID="home-featured-section" className="mb-6">
+        <View className="px-4">
         <SectionHeader
           title={t('customer.home.featured')}
           action={t('common.seeAll')}
           onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
         />
+        </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4">
           {merchantsLoading
             ? Array.from({ length: 3 }).map((_, i) => (
@@ -391,11 +393,13 @@ export default function CustomerHomeScreen() {
         </View>
       )}
 
+      <View className="px-5">
       <SectionHeader
         title={t('customer.home.nearYou')}
         action={t('common.seeAll')}
         onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
       />
+      </View>
     </View>
   );
 
@@ -413,11 +417,13 @@ export default function CustomerHomeScreen() {
         className="flex-1"
         data={nearbyListings}
         renderItem={({ item, index }) => (
-          <ListingCard
-            listing={item}
-            variant="horizontal"
-            testID={index === 0 ? 'first-nearby-listing' : undefined}
-          />
+          <View className="px-5">
+            <ListingCard
+              listing={item}
+              variant="horizontal"
+              testID={index === 0 ? 'first-nearby-listing' : undefined}
+            />
+          </View>
         )}
         keyExtractor={(item) => item.id}
         estimatedItemSize={120}
@@ -425,7 +431,7 @@ export default function CustomerHomeScreen() {
         ListEmptyComponent={listEmpty}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
     </Screen>
   );

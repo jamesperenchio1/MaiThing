@@ -77,11 +77,6 @@ export function ListingCard({
               {isMystery ? 'Mystery Box' : 'Fixed'}
             </Badge>
           </View>
-          {urgency && (
-            <View className="absolute bottom-2 left-2">
-              <UrgencyBadge urgency={urgency} />
-            </View>
-          )}
           {isSoldOut && (
             <View className="absolute inset-0 items-center justify-center bg-black/50">
               <Text className="font-semibold text-white">Sold Out</Text>
@@ -97,6 +92,11 @@ export function ListingCard({
           </View>
         </View>
         <View className={cn('p-3', variant === 'horizontal' && 'flex-1')}>
+          {urgency && (
+            <View className="mb-1.5">
+              <UrgencyBadge urgency={urgency} />
+            </View>
+          )}
           <Text variant="body-sm" className="mb-1 font-semibold" numberOfLines={2}>
             {listing.title}
           </Text>

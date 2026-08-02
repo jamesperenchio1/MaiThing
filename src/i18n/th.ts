@@ -110,7 +110,7 @@ export default {
       mapSubtitle: 'ค้นหาดีลบนแผนที่',
       impact: {
         mealsSaved: 'มื้ออาหารที่ช่วยไว้',
-        moneySaved: 'เงินที่ประหยัดได้',
+        moneySaved: 'ประหยัดแล้ว',
         co2Saved: 'CO₂ ที่ลดได้',
       },
     },

@@ -96,12 +96,20 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
   const [isCustom, setIsCustom] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
 
-  const customAmountValue = parseFloat(customAmount);
+  const rawCustomAmount = customAmount.replace(/,/g, '');
+  const customAmountValue = parseFloat(rawCustomAmount);
   const effectiveAmount = isCustom
     ? Number.isFinite(customAmountValue) && customAmountValue > 0
       ? customAmountValue
       : null
     : selected;
+
+  const handleCustomAmountChange = (text: string) => {
+    const digits = text.replace(/[^0-9]/g, '');
+    if (!digits) { setCustomAmount(''); return; }
+    const num = parseInt(digits, 10);
+    setCustomAmount(num.toLocaleString('en-US'));
+  };
 
   const handleTopUp = async () => {
     if (!effectiveAmount || !user) return;
@@ -178,9 +186,9 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
                 <Input
                   containerClassName="mb-6"
                   placeholder="Enter amount"
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
                   value={customAmount}
-                  onChangeText={setCustomAmount}
+                  onChangeText={handleCustomAmountChange}
                   autoFocus
                 />
               )}
@@ -282,7 +290,7 @@ export default function WalletScreen() {
   };
 
   const listHeader = (
-    <View className="pt-4 pb-2">
+    <View className="pt-4 pb-2 px-5">
       <Text testID="wallet-title" variant="h1" className="mb-4">
         {t('common.wallet')}
       </Text>
@@ -343,14 +351,16 @@ export default function WalletScreen() {
     <Screen testID="wallet-screen" scrollable={false} className="bg-background">
       <TopUpModal visible={topUpVisible} onClose={() => setTopUpVisible(false)} />
       {isError ? (
-        <View className="flex-1 px-6 pb-6">
+        <View className="flex-1 pb-6">
           {listHeader}
+          <View className="px-5">
           <ErrorState
             title={t('common.error')}
             message="We couldn't load your wallet."
             onRetry={handleRefresh}
             retryLabel={t('common.retry')}
           />
+          </View>
         </View>
       ) : (
         <FlashList
@@ -375,7 +385,7 @@ export default function WalletScreen() {
           }
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
         />
       )}
     </Screen>
