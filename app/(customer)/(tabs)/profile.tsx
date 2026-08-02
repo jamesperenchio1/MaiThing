@@ -42,7 +42,7 @@ import { useThemeStore } from '@/src/stores/theme';
 import { useLanguageStore } from '@/src/stores/language';
 import { useTutorialStore } from '@/src/stores/tutorial';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 import type { NotificationPreferences } from '@/src/types';
 
 interface MenuItemProps {
@@ -155,7 +155,7 @@ export default function ProfileScreen() {
       setEditModalVisible(false);
       return;
     }
-    await mockRepositories.users.updateCustomerProfile(user.id, { name: trimmed });
+    await repositories.users.updateCustomerProfile(user.id, { name: trimmed });
     useAuthStore.getState().setUser({ ...user, name: trimmed });
     setEditModalVisible(false);
   };

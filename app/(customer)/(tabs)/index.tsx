@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, RefreshControl, Dimensions } from 'react-native';
+import { View, ScrollView, Image, RefreshControl, Dimensions, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Bell, MapPin } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight, ZoomIn } from 'react-native-reanimated';
@@ -127,7 +127,10 @@ export default function CustomerHomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const currentSlide = useRef(0);
   const [activeSlide, setActiveSlide] = useState(0);
-  const slideWidth = Dimensions.get('window').width;
+  const [slideWidth, setSlideWidth] = useState(Dimensions.get('window').width);
+  const onCarouselLayout = useCallback((e: { nativeEvent: { layout: { width: number } } }) => {
+    setSlideWidth(e.nativeEvent.layout.width);
+  }, []);
 
   const promoListings = useMemo(
     () =>
@@ -193,6 +196,7 @@ export default function CustomerHomeScreen() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
+          onLayout={onCarouselLayout}
           onMomentumScrollEnd={(e) => {
             const index = Math.round(e.nativeEvent.contentOffset.x / slideWidth);
             currentSlide.current = index;
@@ -211,7 +215,7 @@ export default function CustomerHomeScreen() {
                 <View style={{ width: slideWidth, height: 220 }}>
                   <Image
                     source={{ uri: listing.images[0] }}
-                    className="absolute inset-0 w-full h-full"
+                    style={StyleSheet.absoluteFill}
                     resizeMode="cover"
                   />
                   <View className="absolute inset-0 bg-black/10" />
@@ -249,7 +253,7 @@ export default function CustomerHomeScreen() {
           })}
         </ScrollView>
         {promoListings.length > 1 && (
-          <View className="flex-row justify-center mt-3 space-x-1.5">
+          <View className="flex-row justify-center mt-3 gap-1.5">
             {promoListings.map((_, i) => (
               <View
                 key={i}

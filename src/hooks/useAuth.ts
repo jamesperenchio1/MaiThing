@@ -2,10 +2,12 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 import { TEST_CUSTOMER, TEST_MERCHANT_USER } from '@/src/repositories/seed';
 import { useAuthStore } from '@/src/stores/auth';
 import type { UserRole } from '@/src/types';
+
+const IS_SUPABASE = process.env.EXPO_PUBLIC_REPOSITORY_MODE === 'supabase';
 
 export function useAuth() {
   const router = useRouter();
@@ -14,7 +16,7 @@ export function useAuth() {
 
   const signInMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
-      mockRepositories.auth.signIn(email, password),
+      repositories.auth.signIn(email, password),
     onSuccess: (user) => {
       setUser(user);
       const selectedRole = useAuthStore.getState().selectedRole;
@@ -26,7 +28,7 @@ export function useAuth() {
 
   const signUpMutation = useMutation({
     mutationFn: ({ email, password, name }: { email: string; password: string; name: string }) =>
-      mockRepositories.auth.signUp(email, password, name),
+      repositories.auth.signUp(email, password, name),
     onSuccess: (user) => {
       setUser(user);
       const selectedRole = useAuthStore.getState().selectedRole;
@@ -43,7 +45,7 @@ export function useAuth() {
       name: string;
       businessName: string;
       phone: string;
-    }) => mockRepositories.auth.registerMerchant(data),
+    }) => repositories.auth.registerMerchant(data),
     onSuccess: (user) => {
       setUser(user);
       setRole('merchant');
@@ -52,13 +54,32 @@ export function useAuth() {
   });
 
   const continueAsTest = useCallback(
-    (role: UserRole) => {
-      const user = role === 'customer' ? TEST_CUSTOMER : TEST_MERCHANT_USER;
-      const userWithRoles = { ...user, roles: ['customer', 'merchant'] as UserRole[] };
-      console.log('[continueAsTest] setting user with roles:', userWithRoles.roles);
-      setUser(userWithRoles);
-      setRole(role);
-      router.replace((role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any);
+    async (role: UserRole) => {
+      if (IS_SUPABASE) {
+        const email =
+          role === 'merchant' ? 'merchant@maithing.test' : 'customer@maithing.test';
+        try {
+          const user = await repositories.auth.signIn(email, 'password');
+          setUser({ ...user, roles: ['customer', 'merchant'] as UserRole[] });
+          setRole(role);
+          router.replace(
+            (role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any
+          );
+        } catch (e) {
+          // Fall back to mock user if Supabase auth fails (no network, etc.)
+          const fallback = role === 'customer' ? TEST_CUSTOMER : TEST_MERCHANT_USER;
+          setUser({ ...fallback, roles: ['customer', 'merchant'] as UserRole[] });
+          setRole(role);
+          router.replace(
+            (role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any
+          );
+        }
+      } else {
+        const user = role === 'customer' ? TEST_CUSTOMER : TEST_MERCHANT_USER;
+        setUser({ ...user, roles: ['customer', 'merchant'] as UserRole[] });
+        setRole(role);
+        router.replace((role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any);
+      }
     },
     [setUser, setRole, router]
   );
@@ -69,13 +90,11 @@ export function useAuth() {
       if (!currentUser) return;
 
       if (!currentUser.roles.includes(role)) {
-        // If current user doesn't have the target role, fall back to test account flow
         const targetUser = role === 'merchant' ? TEST_MERCHANT_USER : TEST_CUSTOMER;
         setUser({ ...targetUser, roles: ['customer', 'merchant'] });
       }
 
       setRole(role);
-      // Navigate to a non-index tab to avoid URL collisions between customer and merchant groups
       const targetRoute =
         role === 'merchant' ? '/(merchant)/(tabs)/orders' : '/(customer)/(tabs)/discover';
       router.replace(targetRoute as any);
@@ -84,7 +103,7 @@ export function useAuth() {
   );
 
   const logout = useCallback(async () => {
-    await mockRepositories.auth.signOut();
+    await repositories.auth.signOut();
     useAuthStore.getState().logout();
     router.replace('/(auth)/welcome' as any);
   }, [router]);

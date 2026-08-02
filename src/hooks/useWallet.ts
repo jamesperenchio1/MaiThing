@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 
 export function useWallet(userId: string) {
   return useQuery({
     queryKey: ['wallet', userId],
-    queryFn: () => mockRepositories.wallet.getWallet(userId),
+    queryFn: () => repositories.wallet.getWallet(userId),
     enabled: !!userId,
   });
 }
@@ -12,7 +12,7 @@ export function useWallet(userId: string) {
 export function useWalletTransactions(userId: string) {
   return useQuery({
     queryKey: ['wallet-transactions', userId],
-    queryFn: () => mockRepositories.wallet.getTransactions(userId),
+    queryFn: () => repositories.wallet.getTransactions(userId),
     enabled: !!userId,
   });
 }
@@ -20,7 +20,7 @@ export function useWalletTransactions(userId: string) {
 export function useWalletRewards(userId: string) {
   return useQuery({
     queryKey: ['wallet-rewards', userId],
-    queryFn: () => mockRepositories.wallet.getRewards(userId),
+    queryFn: () => repositories.wallet.getRewards(userId),
     enabled: !!userId,
   });
 }

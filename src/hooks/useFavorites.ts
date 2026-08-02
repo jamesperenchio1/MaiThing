@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 
 export function useCustomerProfile(userId: string) {
   return useQuery({
     queryKey: ['customer-profile', userId],
-    queryFn: () => mockRepositories.users.getCustomerProfile(userId),
+    queryFn: () => repositories.users.getCustomerProfile(userId),
     enabled: !!userId,
   });
 }
@@ -22,9 +22,9 @@ export function useToggleFavorite() {
       isFavorite: boolean;
     }) => {
       if (isFavorite) {
-        await mockRepositories.users.removeFavorite(userId, merchantId);
+        await repositories.users.removeFavorite(userId, merchantId);
       } else {
-        await mockRepositories.users.addFavorite(userId, merchantId);
+        await repositories.users.addFavorite(userId, merchantId);
       }
       return { merchantId, isFavorite: !isFavorite };
     },
@@ -52,9 +52,9 @@ export function useToggleMerchantFollowNotification() {
       isFollowing: boolean;
     }) => {
       if (isFollowing) {
-        await mockRepositories.users.removeMerchantFollowNotification(userId, merchantId);
+        await repositories.users.removeMerchantFollowNotification(userId, merchantId);
       } else {
-        await mockRepositories.users.addMerchantFollowNotification(userId, merchantId);
+        await repositories.users.addMerchantFollowNotification(userId, merchantId);
       }
       return { merchantId, isFollowing: !isFollowing };
     },
@@ -82,9 +82,9 @@ export function useToggleRestockAlert() {
       isAlerting: boolean;
     }) => {
       if (isAlerting) {
-        await mockRepositories.users.removeRestockAlert(userId, listingId);
+        await repositories.users.removeRestockAlert(userId, listingId);
       } else {
-        await mockRepositories.users.addRestockAlert(userId, listingId);
+        await repositories.users.addRestockAlert(userId, listingId);
       }
       return { listingId, isAlerting: !isAlerting };
     },
@@ -112,9 +112,9 @@ export function useSaveListingToggle() {
       isSaved: boolean;
     }) => {
       if (isSaved) {
-        await mockRepositories.users.removeSavedListing(userId, listingId);
+        await repositories.users.removeSavedListing(userId, listingId);
       } else {
-        await mockRepositories.users.addSavedListing(userId, listingId);
+        await repositories.users.addSavedListing(userId, listingId);
       }
       return { listingId, isSaved: !isSaved };
     },

@@ -14,7 +14,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { forgotPasswordSchema, type ForgotPasswordForm } from '@/src/features/auth/schemas';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function ForgotPasswordScreen() {
 
   const onSubmit = async (data: ForgotPasswordForm) => {
     setLoading(true);
-    await mockRepositories.auth.resetPassword(data.email);
+    await repositories.auth.resetPassword(data.email);
     setLoading(false);
     setSent(true);
   };

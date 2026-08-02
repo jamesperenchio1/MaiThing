@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 
 export function useAnalytics(merchantId: string) {
   return useQuery({
     queryKey: ['analytics', merchantId],
-    queryFn: () => mockRepositories.analytics.getMerchantAnalytics(merchantId),
+    queryFn: () => repositories.analytics.getMerchantAnalytics(merchantId),
     enabled: !!merchantId,
   });
 }

@@ -159,12 +159,6 @@ export default function OrdersScreen() {
   const listHeader = (
     <View className="pt-6 pb-2">
       <View className="mb-5 flex-row items-center">
-        <View
-          className="mr-4 h-12 w-12 items-center justify-center rounded-2xl"
-          style={{ backgroundColor: `${colors.primary}15` }}
-        >
-          <Package size={24} color={colors.primary} />
-        </View>
         <View className="flex-1">
           <Text testID="orders-title" variant="h1" className="mb-0.5">
             My Orders

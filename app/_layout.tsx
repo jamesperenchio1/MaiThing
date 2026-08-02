@@ -28,7 +28,7 @@ import { initializeI18n } from '@/src/i18n';
 import { useThemeStore } from '@/src/stores/theme';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 import {
   setNotificationHandler,
   requestNotificationPermissions,
@@ -61,22 +61,22 @@ export default function RootLayout() {
 
   const init = useCallback(async () => {
     try {
-      const currentUser = await mockRepositories.users.getCurrentUser();
+      const currentUser = await repositories.users.getCurrentUser();
       setUser(currentUser);
 
       if (currentUser) {
         await Promise.allSettled([
           queryClient.prefetchQuery({
             queryKey: ['wallet', currentUser.id],
-            queryFn: () => mockRepositories.wallet.getWallet(currentUser.id),
+            queryFn: () => repositories.wallet.getWallet(currentUser.id),
           }),
           queryClient.prefetchQuery({
             queryKey: ['orders', currentUser.id, 'customer'],
-            queryFn: () => mockRepositories.orders.getOrders(currentUser.id, 'customer'),
+            queryFn: () => repositories.orders.getOrders(currentUser.id, 'customer'),
           }),
           queryClient.prefetchQuery({
             queryKey: ['customer-profile', currentUser.id],
-            queryFn: () => mockRepositories.users.getCustomerProfile(currentUser.id),
+            queryFn: () => repositories.users.getCustomerProfile(currentUser.id),
           }),
         ]);
       }

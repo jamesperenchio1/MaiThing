@@ -33,7 +33,7 @@ import { useWallet, useWalletTransactions, useWalletRewards } from '@/src/hooks/
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 import type { WalletReward, WalletTransaction } from '@/src/types';
 
 function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
@@ -124,8 +124,8 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
     if (!effectiveAmount || !user) return;
     setLoading(true);
     try {
-      await mockRepositories.wallet.topUp(user.id, effectiveAmount);
-      await mockRepositories.wallet.addTopUpBonus(user.id, effectiveAmount);
+      await repositories.wallet.topUp(user.id, effectiveAmount);
+      await repositories.wallet.addTopUpBonus(user.id, effectiveAmount);
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       queryClient.invalidateQueries({ queryKey: ['wallet-rewards', user.id] });
       onClose();
@@ -334,7 +334,7 @@ export default function WalletScreen() {
             </Text>
           </View>
 
-          <Text style={{ color: '#fff', fontSize: 40, fontWeight: '700', marginBottom: 24, letterSpacing: -1 }}>
+          <Text style={{ color: '#fff', fontSize: 40, fontWeight: '700', marginBottom: 24 }}>
             {isLoading
               ? '—'
               : wallet?.balance === 999999

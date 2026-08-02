@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 
 export function useCustomerImpact(userId?: string) {
   return useQuery({
     queryKey: ['impact', userId],
-    queryFn: () => mockRepositories.analytics.getCustomerImpact(userId ?? ''),
+    queryFn: () => repositories.analytics.getCustomerImpact(userId ?? ''),
     enabled: !!userId,
   });
 }

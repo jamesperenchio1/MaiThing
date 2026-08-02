@@ -32,7 +32,7 @@ import { Input } from '@/src/components/ui/Input';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 import { TEST_MERCHANT_USER } from '@/src/repositories/seed';
 import { formatCurrency } from '@/src/lib/utils';
 
@@ -110,7 +110,7 @@ export default function MerchantOnboardingScreen() {
 
     setIsRegistering(true);
     try {
-      const registeredUser = await mockRepositories.auth.registerMerchant({
+      const registeredUser = await repositories.auth.registerMerchant({
         email: email || `${Date.now()}@partner.test`,
         password: password || 'password',
         name: ownerName || businessName || 'Partner',

@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { mockRepositories } from '@/src/repositories/mock';
-import { WALLET_TRANSACTIONS } from '@/src/repositories/seed';
+import { repositories } from '@/src/repositories';
 import { scheduleLocalNotification } from '@/src/services/notifications';
 import { useCartStore } from '@/src/stores/cart';
-import type { CustomerProfile, Order, WalletTransaction } from '@/src/types';
+import type { CustomerProfile, Order } from '@/src/types';
 
 function getStatusNotification(order: Order, status: Order['status']) {
   const label = order.merchantName;
@@ -52,7 +51,7 @@ function getStatusNotification(order: Order, status: Order['status']) {
 export function useOrders(userId: string, role: 'customer' | 'merchant') {
   return useQuery({
     queryKey: ['orders', userId, role],
-    queryFn: () => mockRepositories.orders.getOrders(userId, role),
+    queryFn: () => repositories.orders.getOrders(userId, role),
     enabled: !!userId,
   });
 }
@@ -60,7 +59,7 @@ export function useOrders(userId: string, role: 'customer' | 'merchant') {
 export function useOrder(id: string) {
   return useQuery({
     queryKey: ['order', id],
-    queryFn: () => mockRepositories.orders.getOrder(id),
+    queryFn: () => repositories.orders.getOrder(id),
     enabled: !!id,
   });
 }
@@ -68,7 +67,7 @@ export function useOrder(id: string) {
 export function useOrderByPickupCode(merchantId: string, code: string) {
   return useQuery({
     queryKey: ['order', 'pickup-code', merchantId, code],
-    queryFn: () => mockRepositories.orders.getOrderByPickupCode(merchantId, code),
+    queryFn: () => repositories.orders.getOrderByPickupCode(merchantId, code),
     enabled: !!merchantId && code.length >= 4,
   });
 }
@@ -76,7 +75,7 @@ export function useOrderByPickupCode(merchantId: string, code: string) {
 export function useLookupOrderByPickupCode() {
   return useMutation({
     mutationFn: ({ merchantId, code }: { merchantId: string; code: string }) =>
-      mockRepositories.orders.getOrderByPickupCode(merchantId, code),
+      repositories.orders.getOrderByPickupCode(merchantId, code),
   });
 }
 
@@ -84,23 +83,12 @@ export function useCancelOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      const order = await mockRepositories.orders.cancelOrder(id, reason);
-      const userId = order.customerId;
-      const description = `Refund for order ${order.pickupCode}`;
-
-      await mockRepositories.wallet.refund(userId, order.total, description);
-
-      const transaction: WalletTransaction = {
-        id: `txn-${Date.now()}`,
-        userId,
-        type: 'refund',
-        amount: order.total,
-        description,
-        orderId: order.id,
-        createdAt: new Date().toISOString(),
-      };
-      WALLET_TRANSACTIONS.unshift(transaction);
-
+      const order = await repositories.orders.cancelOrder(id, reason);
+      await repositories.wallet.refund(
+        order.customerId,
+        order.total,
+        `Refund for order ${order.pickupCode}`
+      );
       return order;
     },
     onSuccess: (order, variables) => {
@@ -134,8 +122,8 @@ export function useRefundOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      const order = await mockRepositories.orders.refundOrder(id, reason);
-      await mockRepositories.wallet.refund(order.customerId, order.total, `Refund: ${reason}`);
+      const order = await repositories.orders.refundOrder(id, reason);
+      await repositories.wallet.refund(order.customerId, order.total, `Refund: ${reason}`);
       return order;
     },
     onSuccess: (_, variables) => {
@@ -149,7 +137,7 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Order['status'] }) => {
-      const order = await mockRepositories.orders.updateOrderStatus(id, status);
+      const order = await repositories.orders.updateOrderStatus(id, status);
       return order;
     },
     onSuccess: (order, variables) => {
@@ -184,7 +172,7 @@ export function useReorder() {
   return useMutation({
     mutationFn: async (order: Order) => {
       const listings = await Promise.all(
-        order.items.map((item) => mockRepositories.listings.getListing(item.listingId))
+        order.items.map((item) => repositories.listings.getListing(item.listingId))
       );
       return { order, listings: listings.filter((l): l is NonNullable<typeof l> => l != null) };
     },

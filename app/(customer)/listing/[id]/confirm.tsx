@@ -34,7 +34,7 @@ import {
   formatPickupWindow,
 } from '@/src/lib/utils';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 import {
   scheduleLocalNotification,
   scheduleNotificationAtDate,
@@ -115,7 +115,7 @@ export default function ConfirmOrderScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsSubmitting(true);
     try {
-      const newOrder = await mockRepositories.orders.createOrder({
+      const newOrder = await repositories.orders.createOrder({
         customerId: user.id,
         merchantId: merchant.id,
         merchantName: merchant.name,
@@ -141,11 +141,11 @@ export default function ConfirmOrderScreen() {
       setOrder(newOrder);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      mockRepositories.messages
+      repositories.messages
         .sendWelcomeMessage(merchant.id, user.id, user.name, newOrder.id)
         .then(() => queryClient.invalidateQueries({ queryKey: ['conversations'] }))
         .catch(() => {});
-      mockRepositories.listings.getListings().then((all) => {
+      repositories.listings.getListings().then((all) => {
         const nearby = all
           .filter(
             (l) =>
@@ -157,7 +157,7 @@ export default function ConfirmOrderScreen() {
         setUpsellListings(nearby);
         setShowUpsell(true);
       });
-      mockRepositories.wallet.addPurchasePoints(user.id, newOrder.total).then(() => {
+      repositories.wallet.addPurchasePoints(user.id, newOrder.total).then(() => {
         queryClient.invalidateQueries({ queryKey: ['wallet-rewards', user.id] });
       });
       scheduleLocalNotification(

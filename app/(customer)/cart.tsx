@@ -24,7 +24,7 @@ import {
   generatePickupCode,
 } from '@/src/lib/utils';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
-import { mockRepositories } from '@/src/repositories/mock';
+import { repositories } from '@/src/repositories';
 import { scheduleLocalNotification, schedulePickupReminder } from '@/src/services/notifications';
 import type { OrderItem } from '@/src/types';
 
@@ -79,7 +79,7 @@ export default function CartScreen() {
         imageUrl: item.listing.images[0],
       }));
 
-      const order = await mockRepositories.orders.createOrder({
+      const order = await repositories.orders.createOrder({
         customerId: user.id,
         merchantId: merchant.id,
         merchantName: merchant.name,
@@ -95,7 +95,7 @@ export default function CartScreen() {
         notes: note.trim() || undefined,
       });
 
-      await mockRepositories.wallet.spend(user.id, total, `Purchase at ${merchant.name}`);
+      await repositories.wallet.spend(user.id, total, `Purchase at ${merchant.name}`);
 
       clearCart();
       queryClient.invalidateQueries({ queryKey: ['orders'] });
