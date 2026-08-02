@@ -533,15 +533,67 @@ function generateFixedItem(merchant: Merchant, index: number): FixedItemListing 
   };
 }
 
-export const LISTINGS: Listing[] = MERCHANTS.flatMap((merchant) => {
-  const listings: Listing[] = [];
-  const count = randomInt(2, 4);
-  for (let i = 0; i < count; i++) {
-    listings.push(generateMysteryBox(merchant, i));
-    listings.push(generateFixedItem(merchant, i + 100));
-  }
-  return listings;
-});
+export const LISTINGS: Listing[] = [
+  ...MERCHANTS.flatMap((merchant) => {
+    const listings: Listing[] = [];
+    const count = randomInt(2, 4);
+    for (let i = 0; i < count; i++) {
+      listings.push(generateMysteryBox(merchant, i));
+      listings.push(generateFixedItem(merchant, i + 100));
+    }
+    return listings;
+  }),
+  // Sold-out listing for testing waitlist / restock alert
+  {
+    id: 'listing-demo-soldout',
+    merchantId: 'merchant-1',
+    type: 'fixed_item',
+    title: 'Sold Out Demo — Tap Notify Me',
+    description: 'This listing is sold out. Customers can join the waitlist and get notified when it restocks.',
+    images: ['https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'],
+    category: 'restaurant',
+    originalPrice: 300,
+    salePrice: 99,
+    quantity: 5,
+    quantityRemaining: 0,
+    pickupWindowStart: hoursFromNow(1, 1).start,
+    pickupWindowEnd: hoursFromNow(1, 1).end,
+    dietaryTags: ['vegetarian'],
+    allergens: [],
+    status: 'sold_out',
+    createdAt: new Date().toISOString(),
+    viewCount: 280,
+    clickCount: 95,
+    searchAppearances: 140,
+  } as Listing,
+  // Flash-sale listing for testing countdown timer
+  {
+    id: 'listing-demo-flashsale',
+    merchantId: 'merchant-2',
+    type: 'mystery_box',
+    title: '⚡ Flash Sale Demo — 3-Hour Countdown',
+    description: 'This listing has an active flash sale with a countdown timer. Act fast!',
+    images: ['https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400'],
+    category: 'restaurant',
+    originalPrice: 500,
+    salePrice: 200,
+    flashSalePrice: 120,
+    flashSaleEndsAt: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+    quantity: 8,
+    quantityRemaining: 3,
+    pickupWindowStart: hoursFromNow(1, 2).start,
+    pickupWindowEnd: hoursFromNow(1, 2).end,
+    dietaryTags: ['halal'],
+    allergens: [],
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    boxSize: 'medium',
+    estimatedRetailValue: 500,
+    viewCount: 420,
+    clickCount: 180,
+    searchAppearances: 220,
+  } as Listing,
+];
 
 export const CUSTOMER_WALLET: Wallet = {
   userId: TEST_CUSTOMER.id,

@@ -33,8 +33,10 @@ export const useTutorialStore = create<TutorialState>()(
       resetTutorial: () => set({ hasSeenTutorial: false, isActive: false, currentStep: 0 }),
     }),
     {
-      name: 'maithing-tutorial',
+      name: 'maithing-tutorial-v2',
       storage: createJSONStorage(() => AsyncStorage),
+      // Only persist hasSeenTutorial — never resume a mid-flight tutorial on restart
+      partialize: (state) => ({ hasSeenTutorial: state.hasSeenTutorial }),
     }
   )
 );

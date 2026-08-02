@@ -79,8 +79,7 @@ function useSteps(): StepConfig[] {
       title: 'Your Food Feed',
       description:
         'Browse deals from cafés, bakeries & restaurants near you. Scroll down to discover more listings!',
-      hotspot: contentHotspot,
-      tooltipSide: 'bottom',
+      tooltipSide: 'center',
       requireTap: false,
     },
     {
@@ -271,6 +270,7 @@ export function TutorialOverlay() {
   const renderTooltip = () => {
     if (step.tooltipSide === 'center') {
       return (
+        <View style={styles.centeredCardWrapper} pointerEvents="box-none">
         <View style={[styles.centeredCard, { backgroundColor: colors.card }]}>
           <View style={styles.tooltipContent}>
             <Text style={styles.emoji}>{step.emoji}</Text>
@@ -334,6 +334,7 @@ export function TutorialOverlay() {
               )}
             </View>
           </View>
+        </View>
         </View>
       );
     }
@@ -401,7 +402,7 @@ export function TutorialOverlay() {
 
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent>
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]} pointerEvents="box-none">
         {/* Full dark overlay when no hotspot (center steps) */}
         {!hotspot && (
           <View style={[StyleSheet.absoluteFill, styles.dimRect]} pointerEvents="none" />
@@ -451,11 +452,18 @@ const styles = StyleSheet.create({
   tapZone: {
     position: 'absolute',
   },
-  centeredCard: {
+  centeredCardWrapper: {
     position: 'absolute',
-    left: 24,
-    right: 24,
-    top: '28%',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  centeredCard: {
+    width: '100%',
     borderRadius: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },

@@ -28,7 +28,7 @@ export function formatWalkTime(meters: number) {
   return `${minutes} min`;
 }
 
-export function formatRelativeTime(date: string | Date, locale = 'en') {
+export function formatRelativeTime(date: string | Date, _locale = 'en') {
   const now = new Date();
   const target = new Date(date);
   const diffMs = target.getTime() - now.getTime();
@@ -36,11 +36,16 @@ export function formatRelativeTime(date: string | Date, locale = 'en') {
   const diffHours = Math.round(diffMs / 3600000);
   const diffDays = Math.round(diffMs / 86400000);
 
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-
-  if (Math.abs(diffMins) < 60) return rtf.format(diffMins, 'minute');
-  if (Math.abs(diffHours) < 24) return rtf.format(diffHours, 'hour');
-  return rtf.format(diffDays, 'day');
+  // Intl.RelativeTimeFormat is not available in all RN/Hermes environments — use plain strings.
+  const abs = Math.abs.bind(Math);
+  if (abs(diffMins) < 60) {
+    if (diffMins === 0) return 'just now';
+    return diffMins > 0 ? `in ${diffMins}m` : `${abs(diffMins)}m ago`;
+  }
+  if (abs(diffHours) < 24) {
+    return diffHours > 0 ? `in ${diffHours}h` : `${abs(diffHours)}h ago`;
+  }
+  return diffDays > 0 ? `in ${diffDays}d` : `${abs(diffDays)}d ago`;
 }
 
 export function generatePickupCode() {
