@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Image, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -35,6 +36,7 @@ export function ListingCard({
 }: ListingCardProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const navigating = useRef(false);
   const isMystery = listing.type === 'mystery_box';
   const isFlashSale =
     !!listing.flashSalePrice &&
@@ -53,6 +55,9 @@ export function ListingCard({
     <PressableScale
       testID={testID}
       onPress={() => {
+        if (navigating.current) return;
+        navigating.current = true;
+        setTimeout(() => { navigating.current = false; }, 1000);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/(customer)/listing/${listing.id}`);
       }}

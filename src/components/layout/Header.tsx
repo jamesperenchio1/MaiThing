@@ -28,7 +28,7 @@ export function Header({ title, showBack = true, right, className, onBack, testI
         'flex-row items-center justify-between border-b border-border px-4 pb-3 pt-2',
         className
       )}
-      style={{ paddingTop: insets.top + 8 }}
+      style={{ paddingTop: 8 }}
     >
       <View className="w-12">
         {showBack && (

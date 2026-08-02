@@ -422,8 +422,7 @@ export default function ConfirmOrderScreen() {
 
           <Card variant="outlined" className="mb-4">
             <Text variant="body-sm" className="text-muted">
-              Payment will be deducted from your wallet balance. You can cancel anytime before
-              pickup.
+              Payment will be deducted from your wallet balance.
             </Text>
           </Card>
         </View>

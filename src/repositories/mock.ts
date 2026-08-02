@@ -74,7 +74,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class MockAuthRepository implements AuthRepository {
   async signIn(email: string, password: string): Promise<User> {
-    await sleep(400);
+    await sleep(50);
     if (email === TEST_CUSTOMER.email && password === 'password') {
       return TEST_CUSTOMER;
     }
@@ -87,7 +87,7 @@ class MockAuthRepository implements AuthRepository {
   }
 
   async signUp(email: string, password: string, name: string): Promise<User> {
-    await sleep(400);
+    await sleep(50);
     const user: User = {
       id: `user-${Date.now()}`,
       email,
@@ -107,7 +107,7 @@ class MockAuthRepository implements AuthRepository {
     businessName: string;
     phone: string;
   }): Promise<User> {
-    await sleep(600);
+    await sleep(50);
     const userId = `user-${Date.now()}`;
     const merchantId = `merchant-${Date.now()}`;
     const user: User = {
@@ -162,31 +162,31 @@ class MockAuthRepository implements AuthRepository {
   }
 
   async signOut(): Promise<void> {
-    await sleep(200);
+    await sleep(20);
   }
 
   async resetPassword(email: string): Promise<void> {
-    await sleep(300);
+    await sleep(30);
   }
 
   async verifyOtp(code: string): Promise<boolean> {
-    await sleep(300);
+    await sleep(30);
     return code === '123456';
   }
 
   async resendVerification(email: string): Promise<void> {
-    await sleep(300);
+    await sleep(30);
   }
 }
 
 class MockUserRepository implements UserRepository {
   async getCurrentUser(): Promise<User | null> {
-    await sleep(300);
+    await sleep(30);
     return null;
   }
 
   async updateProfile(userId: string, data: Partial<User>): Promise<User> {
-    await sleep(300);
+    await sleep(30);
     const user = ALL_USERS.find((u) => u.id === userId);
     if (!user) throw new Error('User not found');
     Object.assign(user, data);
@@ -197,32 +197,32 @@ class MockUserRepository implements UserRepository {
     userId: string,
     data: Partial<CustomerProfile>
   ): Promise<CustomerProfile> {
-    await sleep(300);
+    await sleep(30);
     Object.assign(TEST_CUSTOMER_PROFILE, data);
     return TEST_CUSTOMER_PROFILE;
   }
 
   async getCustomerProfile(userId: string): Promise<CustomerProfile> {
-    await sleep(300);
+    await sleep(30);
     return TEST_CUSTOMER_PROFILE;
   }
 
   async addFavorite(userId: string, merchantId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     if (!TEST_CUSTOMER_PROFILE.favorites.includes(merchantId)) {
       TEST_CUSTOMER_PROFILE.favorites.push(merchantId);
     }
   }
 
   async removeFavorite(userId: string, merchantId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     TEST_CUSTOMER_PROFILE.favorites = TEST_CUSTOMER_PROFILE.favorites.filter(
       (id) => id !== merchantId
     );
   }
 
   async addSavedListing(userId: string, listingId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     if (!TEST_CUSTOMER_PROFILE.savedListings) {
       TEST_CUSTOMER_PROFILE.savedListings = [];
     }
@@ -232,7 +232,7 @@ class MockUserRepository implements UserRepository {
   }
 
   async removeSavedListing(userId: string, listingId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     TEST_CUSTOMER_PROFILE.savedListings = (TEST_CUSTOMER_PROFILE.savedListings ?? []).filter(
       (id) => id !== listingId
     );
@@ -242,13 +242,13 @@ class MockUserRepository implements UserRepository {
     userId: string,
     preferences: NotificationPreferences
   ): Promise<NotificationPreferences> {
-    await sleep(200);
+    await sleep(20);
     TEST_CUSTOMER_PROFILE.notificationPreferences = { ...preferences };
     return TEST_CUSTOMER_PROFILE.notificationPreferences;
   }
 
   async addMerchantFollowNotification(userId: string, merchantId: string): Promise<void> {
-    await sleep(150);
+    await sleep(15);
     const prefs = TEST_CUSTOMER_PROFILE.notificationPreferences;
     if (!prefs.followedMerchantNotifications.includes(merchantId)) {
       prefs.followedMerchantNotifications = [...prefs.followedMerchantNotifications, merchantId];
@@ -257,7 +257,7 @@ class MockUserRepository implements UserRepository {
   }
 
   async removeMerchantFollowNotification(userId: string, merchantId: string): Promise<void> {
-    await sleep(150);
+    await sleep(15);
     const prefs = TEST_CUSTOMER_PROFILE.notificationPreferences;
     prefs.followedMerchantNotifications = prefs.followedMerchantNotifications.filter(
       (id) => id !== merchantId
@@ -266,7 +266,7 @@ class MockUserRepository implements UserRepository {
   }
 
   async addRestockAlert(userId: string, listingId: string): Promise<void> {
-    await sleep(150);
+    await sleep(15);
     if (!TEST_CUSTOMER_PROFILE.restockAlerts) TEST_CUSTOMER_PROFILE.restockAlerts = [];
     if (!TEST_CUSTOMER_PROFILE.restockAlerts.includes(listingId)) {
       TEST_CUSTOMER_PROFILE.restockAlerts = [...TEST_CUSTOMER_PROFILE.restockAlerts, listingId];
@@ -275,7 +275,7 @@ class MockUserRepository implements UserRepository {
   }
 
   async removeRestockAlert(userId: string, listingId: string): Promise<void> {
-    await sleep(150);
+    await sleep(15);
     TEST_CUSTOMER_PROFILE.restockAlerts = (TEST_CUSTOMER_PROFILE.restockAlerts ?? []).filter(
       (id) => id !== listingId
     );
@@ -291,7 +291,7 @@ class MockMerchantRepository implements MerchantRepository {
     category?: string;
     query?: string;
   }): Promise<Merchant[]> {
-    await sleep(300);
+    await sleep(30);
     let result = [...MERCHANTS];
 
     if (params?.query) {
@@ -324,22 +324,22 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async getMerchant(id: string): Promise<Merchant | null> {
-    await sleep(200);
+    await sleep(20);
     return MERCHANTS.find((m) => m.id === id) ?? null;
   }
 
   async getMerchantByOwnerId(ownerId: string): Promise<Merchant | null> {
-    await sleep(200);
+    await sleep(20);
     return MERCHANTS.find((m) => m.ownerId === ownerId) ?? null;
   }
 
   async getCategories(): Promise<{ id: string; name: string; nameTh: string; icon: string }[]> {
-    await sleep(200);
+    await sleep(20);
     return CATEGORIES;
   }
 
   async updateMerchant(id: string, data: Partial<Merchant>): Promise<Merchant> {
-    await sleep(300);
+    await sleep(30);
     const index = MERCHANTS.findIndex((m) => m.id === id);
     if (index === -1) throw new Error('Merchant not found');
     MERCHANTS[index] = { ...MERCHANTS[index], ...data } as Merchant;
@@ -347,7 +347,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async updateBusinessHours(id: string, hours: BusinessHours[]): Promise<Merchant> {
-    await sleep(300);
+    await sleep(30);
     const index = MERCHANTS.findIndex((m) => m.id === id);
     if (index === -1) throw new Error('Merchant not found');
     MERCHANTS[index].businessHours = [...hours];
@@ -355,7 +355,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async updatePickupInstructions(id: string, instructions: string): Promise<Merchant> {
-    await sleep(300);
+    await sleep(30);
     const index = MERCHANTS.findIndex((m) => m.id === id);
     if (index === -1) throw new Error('Merchant not found');
     MERCHANTS[index].pickupInstructions = instructions;
@@ -363,7 +363,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async setStoreClosure(merchantId: string, closedUntil: string | null): Promise<Merchant> {
-    await sleep(300);
+    await sleep(30);
     const index = MERCHANTS.findIndex((m) => m.id === merchantId);
     if (index === -1) throw new Error('Merchant not found');
     if (closedUntil === null) {
@@ -377,14 +377,14 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async getReviews(merchantId: string): Promise<Review[]> {
-    await sleep(200);
+    await sleep(20);
     return REVIEWS.filter((r) => r.merchantId === merchantId).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
   async replyToReview(reviewId: string, reply: string): Promise<Review> {
-    await sleep(300);
+    await sleep(30);
     const review = REVIEWS.find((r) => r.id === reviewId);
     if (!review) throw new Error('Review not found');
     review.merchantReply = reply;
@@ -395,7 +395,7 @@ class MockMerchantRepository implements MerchantRepository {
   async submitReview(
     data: Omit<Review, 'id' | 'createdAt' | 'merchantReply' | 'merchantRepliedAt'>
   ): Promise<Review> {
-    await sleep(300);
+    await sleep(30);
     const review: Review = {
       ...data,
       id: `review_${Date.now()}`,
@@ -406,7 +406,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async getStaff(merchantId: string): Promise<StaffMember[]> {
-    await sleep(200);
+    await sleep(20);
     return STAFF_MEMBERS.filter((s) => s.merchantId === merchantId).sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
@@ -416,7 +416,7 @@ class MockMerchantRepository implements MerchantRepository {
     merchantId: string,
     data: Omit<StaffMember, 'id' | 'merchantId' | 'createdAt'>
   ): Promise<StaffMember> {
-    await sleep(300);
+    await sleep(30);
     const staff: StaffMember = {
       ...data,
       id: `staff-${Date.now()}`,
@@ -428,7 +428,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async removeStaff(merchantId: string, staffId: string): Promise<void> {
-    await sleep(300);
+    await sleep(30);
     const index = STAFF_MEMBERS.findIndex((s) => s.merchantId === merchantId && s.id === staffId);
     if (index !== -1) STAFF_MEMBERS.splice(index, 1);
   }
@@ -436,7 +436,7 @@ class MockMerchantRepository implements MerchantRepository {
   async getMerchantNotificationPreferences(
     merchantId: string
   ): Promise<MerchantNotificationPreferences> {
-    await sleep(200);
+    await sleep(20);
     return { ...MERCHANT_NOTIFICATION_PREFS };
   }
 
@@ -444,13 +444,13 @@ class MockMerchantRepository implements MerchantRepository {
     merchantId: string,
     preferences: MerchantNotificationPreferences
   ): Promise<MerchantNotificationPreferences> {
-    await sleep(200);
+    await sleep(20);
     Object.assign(MERCHANT_NOTIFICATION_PREFS, preferences);
     return { ...MERCHANT_NOTIFICATION_PREFS };
   }
 
   async getOnboarding(merchantId: string): Promise<MerchantOnboarding> {
-    await sleep(200);
+    await sleep(20);
     return { ...MERCHANT_ONBOARDING, merchantId };
   }
 
@@ -458,7 +458,7 @@ class MockMerchantRepository implements MerchantRepository {
     merchantId: string,
     step: keyof MerchantOnboarding
   ): Promise<MerchantOnboarding> {
-    await sleep(200);
+    await sleep(20);
     if (step === 'currentStep') {
       MERCHANT_ONBOARDING.currentStep = 'complete';
     } else if (step === 'completedSteps') {
@@ -468,19 +468,19 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async followMerchant(userId: string, merchantId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     const merchant = MERCHANTS.find((m) => m.id === merchantId);
     if (merchant) merchant.followers += 1;
   }
 
   async unfollowMerchant(userId: string, merchantId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     const merchant = MERCHANTS.find((m) => m.id === merchantId);
     if (merchant) merchant.followers = Math.max(0, merchant.followers - 1);
   }
 
   async verifyMerchant(merchantId: string, override?: boolean): Promise<Merchant> {
-    await sleep(600);
+    await sleep(50);
     const index = MERCHANTS.findIndex((m) => m.id === merchantId);
     if (index === -1) throw new Error('Merchant not found');
     MERCHANTS[index].verificationStatus = 'verified';
@@ -489,7 +489,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async uploadFoodSafetyCert(merchantId: string, certUrl: string): Promise<Merchant> {
-    await sleep(400);
+    await sleep(50);
     const index = MERCHANTS.findIndex((m) => m.id === merchantId);
     if (index === -1) throw new Error('Merchant not found');
     MERCHANTS[index].foodSafetyCertUrl = certUrl;
@@ -497,7 +497,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async sendBroadcast(merchantId: string, content: string): Promise<BroadcastMessage> {
-    await sleep(400);
+    await sleep(50);
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const recentBroadcast = BROADCAST_MESSAGES.find(
       (b) => b.merchantId === merchantId && new Date(b.sentAt) > oneDayAgo
@@ -518,7 +518,7 @@ class MockMerchantRepository implements MerchantRepository {
   }
 
   async getRecentBroadcasts(merchantId: string): Promise<BroadcastMessage[]> {
-    await sleep(200);
+    await sleep(20);
     return BROADCAST_MESSAGES.filter((b) => b.merchantId === merchantId).slice(0, 5);
   }
 }
@@ -538,7 +538,7 @@ class MockListingRepository implements ListingRepository {
     maxPrice?: number;
     minMerchantRating?: number;
   }): Promise<Listing[]> {
-    await sleep(300);
+    await sleep(30);
     let result = LISTINGS.filter((l) => l.status === 'active');
 
     if (params?.merchantId) {
@@ -640,12 +640,12 @@ class MockListingRepository implements ListingRepository {
   }
 
   async getListing(id: string): Promise<Listing | null> {
-    await sleep(200);
+    await sleep(20);
     return LISTINGS.find((l) => l.id === id) ?? null;
   }
 
   async createListing(data: Omit<Listing, 'id' | 'createdAt'>): Promise<Listing> {
-    await sleep(500);
+    await sleep(50);
     const listing = {
       ...data,
       id: `listing-${Date.now()}`,
@@ -670,7 +670,7 @@ class MockListingRepository implements ListingRepository {
   }
 
   async updateListing(id: string, data: Partial<Listing>): Promise<Listing> {
-    await sleep(300);
+    await sleep(30);
     const index = LISTINGS.findIndex((l) => l.id === id);
     if (index === -1) throw new Error('Listing not found');
     const before = LISTINGS[index];
@@ -696,13 +696,13 @@ class MockListingRepository implements ListingRepository {
   }
 
   async deleteListing(id: string): Promise<void> {
-    await sleep(300);
+    await sleep(30);
     const index = LISTINGS.findIndex((l) => l.id === id);
     if (index !== -1) LISTINGS.splice(index, 1);
   }
 
   async getListingTemplates(merchantId: string): Promise<ListingTemplate[]> {
-    await sleep(200);
+    await sleep(20);
     return LISTING_TEMPLATES.filter((t) => t.merchantId === merchantId).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
@@ -711,7 +711,7 @@ class MockListingRepository implements ListingRepository {
   async createListingTemplate(
     data: Omit<ListingTemplate, 'id' | 'createdAt'>
   ): Promise<ListingTemplate> {
-    await sleep(300);
+    await sleep(30);
     const now = new Date();
     const template: ListingTemplate = {
       ...data,
@@ -724,7 +724,7 @@ class MockListingRepository implements ListingRepository {
   }
 
   async deleteListingTemplate(id: string): Promise<void> {
-    await sleep(300);
+    await sleep(30);
     const index = LISTING_TEMPLATES.findIndex((t) => t.id === id);
     if (index !== -1) LISTING_TEMPLATES.splice(index, 1);
   }
@@ -732,7 +732,7 @@ class MockListingRepository implements ListingRepository {
 
 class MockOrderRepository implements OrderRepository {
   async getOrders(userId: string, role: 'customer' | 'merchant'): Promise<Order[]> {
-    await sleep(300);
+    await sleep(30);
     if (role === 'customer') {
       return ORDERS.filter((o) => o.customerId === userId).sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -746,12 +746,12 @@ class MockOrderRepository implements OrderRepository {
   }
 
   async getOrder(id: string): Promise<Order | null> {
-    await sleep(200);
+    await sleep(20);
     return ORDERS.find((o) => o.id === id) ?? null;
   }
 
   async getOrderByPickupCode(merchantId: string, code: string): Promise<Order | null> {
-    await sleep(200);
+    await sleep(20);
     const normalized = code.trim().toUpperCase();
     return (
       ORDERS.find(
@@ -765,7 +765,7 @@ class MockOrderRepository implements OrderRepository {
   }
 
   async createOrder(data: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
-    await sleep(500);
+    await sleep(50);
     const autoConfirm = MERCHANT_NOTIFICATION_PREFS.autoConfirmOrders;
     const merchant = MERCHANTS.find((m) => m.id === data.merchantId);
     const order: Order = {
@@ -791,7 +791,7 @@ class MockOrderRepository implements OrderRepository {
   }
 
   async updateOrderStatus(id: string, status: Order['status']): Promise<Order> {
-    await sleep(300);
+    await sleep(30);
     const index = ORDERS.findIndex((o) => o.id === id);
     if (index === -1) throw new Error('Order not found');
     ORDERS[index].status = status;
@@ -821,7 +821,7 @@ class MockOrderRepository implements OrderRepository {
   }
 
   async cancelOrder(id: string, reason: string): Promise<Order> {
-    await sleep(300);
+    await sleep(30);
     const order = ORDERS.find((o) => o.id === id);
     if (!order) throw new Error('Order not found');
 
@@ -841,7 +841,7 @@ class MockOrderRepository implements OrderRepository {
   }
 
   async refundOrder(id: string, reason: string): Promise<Order> {
-    await sleep(300);
+    await sleep(30);
     const order = ORDERS.find((o) => o.id === id);
     if (!order) throw new Error('Order not found');
 
@@ -865,31 +865,31 @@ const walletRewards = new Map<string, WalletReward>();
 
 class MockWalletRepository implements WalletRepository {
   async getWallet(userId: string): Promise<Wallet> {
-    await sleep(200);
+    await sleep(20);
     return CUSTOMER_WALLET;
   }
 
   async getTransactions(userId: string): Promise<WalletTransaction[]> {
-    await sleep(200);
+    await sleep(20);
     return WALLET_TRANSACTIONS.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
   async topUp(userId: string, amount: number): Promise<Wallet> {
-    await sleep(300);
+    await sleep(30);
     CUSTOMER_WALLET.balance += amount;
     return CUSTOMER_WALLET;
   }
 
   async spend(userId: string, amount: number, description: string): Promise<Wallet> {
-    await sleep(300);
+    await sleep(30);
     CUSTOMER_WALLET.balance = Math.max(0, CUSTOMER_WALLET.balance - amount);
     return CUSTOMER_WALLET;
   }
 
   async refund(userId: string, amount: number, description: string): Promise<Wallet> {
-    await sleep(300);
+    await sleep(30);
     CUSTOMER_WALLET.balance += amount;
     return CUSTOMER_WALLET;
   }
@@ -907,12 +907,12 @@ class MockWalletRepository implements WalletRepository {
   }
 
   async getRewards(userId: string): Promise<WalletReward> {
-    await sleep(200);
+    await sleep(20);
     return { ...this.getOrInitReward(userId) };
   }
 
   async addTopUpBonus(userId: string, topUpAmount: number): Promise<WalletReward> {
-    await sleep(200);
+    await sleep(20);
     const reward = this.getOrInitReward(userId);
     const bonus = Math.floor(topUpAmount * 0.05);
     reward.bonusBalance += bonus;
@@ -929,7 +929,7 @@ class MockWalletRepository implements WalletRepository {
   }
 
   async addPurchasePoints(userId: string, amountSpent: number): Promise<WalletReward> {
-    await sleep(200);
+    await sleep(20);
     const reward = this.getOrInitReward(userId);
     const points = Math.floor(amountSpent);
     reward.points += points;
@@ -949,19 +949,19 @@ class MockWalletRepository implements WalletRepository {
 
 class MockPayoutRepository implements PayoutRepository {
   async getMerchantWallet(merchantId: string): Promise<MerchantWallet> {
-    await sleep(200);
+    await sleep(20);
     return { ...MERCHANT_WALLET, merchantId };
   }
 
   async getPayoutTransactions(merchantId: string): Promise<PayoutTransaction[]> {
-    await sleep(200);
+    await sleep(20);
     return PAYOUT_TRANSACTIONS.filter((p) => p.merchantId === merchantId).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
   async getBankAccounts(merchantId: string): Promise<BankAccount[]> {
-    await sleep(200);
+    await sleep(20);
     return BANK_ACCOUNTS.filter((b) => b.merchantId === merchantId).sort((a) =>
       a.isDefault ? -1 : 1
     );
@@ -971,7 +971,7 @@ class MockPayoutRepository implements PayoutRepository {
     merchantId: string,
     data: Omit<BankAccount, 'id' | 'merchantId'>
   ): Promise<BankAccount> {
-    await sleep(300);
+    await sleep(30);
     const account: BankAccount = {
       ...data,
       id: `bank-${Date.now()}`,
@@ -987,14 +987,14 @@ class MockPayoutRepository implements PayoutRepository {
   }
 
   async setDefaultBankAccount(merchantId: string, accountId: string): Promise<void> {
-    await sleep(300);
+    await sleep(30);
     BANK_ACCOUNTS.filter((b) => b.merchantId === merchantId).forEach((b) => {
       b.isDefault = b.id === accountId;
     });
   }
 
   async requestPayout(merchantId: string, amount: number): Promise<PayoutTransaction> {
-    await sleep(400);
+    await sleep(50);
     const account = BANK_ACCOUNTS.find((b) => b.merchantId === merchantId && b.isDefault);
     const payout: PayoutTransaction = {
       id: `payout-${Date.now()}`,
@@ -1015,7 +1015,7 @@ class MockPayoutRepository implements PayoutRepository {
 
 class MockCouponRepository implements CouponRepository {
   async getCoupons(merchantId: string): Promise<Coupon[]> {
-    await sleep(200);
+    await sleep(20);
     return COUPONS.filter((c) => c.merchantId === merchantId).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
@@ -1025,7 +1025,7 @@ class MockCouponRepository implements CouponRepository {
     merchantId: string,
     data: Omit<Coupon, 'id' | 'merchantId' | 'usesCount' | 'createdAt'>
   ): Promise<Coupon> {
-    await sleep(300);
+    await sleep(30);
     const coupon: Coupon = {
       ...data,
       id: `coupon-${Date.now()}`,
@@ -1038,7 +1038,7 @@ class MockCouponRepository implements CouponRepository {
   }
 
   async updateCoupon(id: string, data: Partial<Coupon>): Promise<Coupon> {
-    await sleep(300);
+    await sleep(30);
     const index = COUPONS.findIndex((c) => c.id === id);
     if (index === -1) throw new Error('Coupon not found');
     COUPONS[index] = { ...COUPONS[index], ...data };
@@ -1046,7 +1046,7 @@ class MockCouponRepository implements CouponRepository {
   }
 
   async deleteCoupon(id: string): Promise<void> {
-    await sleep(300);
+    await sleep(30);
     const index = COUPONS.findIndex((c) => c.id === id);
     if (index !== -1) COUPONS.splice(index, 1);
   }
@@ -1054,7 +1054,7 @@ class MockCouponRepository implements CouponRepository {
 
 class MockMessageRepository implements MessageRepository {
   async getConversations(merchantId: string): Promise<MerchantMessage[]> {
-    await sleep(200);
+    await sleep(20);
     const messages = MERCHANT_MESSAGES.filter((m) => m.merchantId === merchantId);
     const latestByCustomer = new Map<string, MerchantMessage>();
     for (const message of messages) {
@@ -1069,7 +1069,7 @@ class MockMessageRepository implements MessageRepository {
   }
 
   async getMessages(merchantId: string, customerId: string): Promise<MerchantMessage[]> {
-    await sleep(200);
+    await sleep(20);
     return MERCHANT_MESSAGES.filter(
       (m) => m.merchantId === merchantId && m.customerId === customerId
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -1081,7 +1081,7 @@ class MockMessageRepository implements MessageRepository {
     content: string,
     sentBy: 'merchant' | 'customer'
   ): Promise<MerchantMessage> {
-    await sleep(300);
+    await sleep(30);
     const conversation = MERCHANT_MESSAGES.find(
       (m) => m.merchantId === merchantId && m.customerId === customerId
     );
@@ -1131,7 +1131,7 @@ class MockMessageRepository implements MessageRepository {
   }
 
   async markConversationAsRead(merchantId: string, customerId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     MERCHANT_MESSAGES.filter(
       (m) => m.merchantId === merchantId && m.customerId === customerId && m.sentBy === 'customer'
     ).forEach((m) => (m.read = true));
@@ -1140,27 +1140,27 @@ class MockMessageRepository implements MessageRepository {
 
 class MockNotificationRepository implements NotificationRepository {
   async getNotifications(userId: string): Promise<Notification[]> {
-    await sleep(200);
+    await sleep(20);
     return NOTIFICATIONS.filter((n) => n.userId === userId).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
   async markAsRead(userId: string, notificationId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     const n = NOTIFICATIONS.find((n) => n.id === notificationId && n.userId === userId);
     if (n) n.read = true;
   }
 
   async markAllAsRead(userId: string): Promise<void> {
-    await sleep(200);
+    await sleep(20);
     NOTIFICATIONS.filter((n) => n.userId === userId).forEach((n) => (n.read = true));
   }
 }
 
 class MockAnalyticsRepository implements AnalyticsRepository {
   async getMerchantAnalytics(merchantIdOrUserId: string): Promise<MerchantAnalytics> {
-    await sleep(300);
+    await sleep(30);
     const merchant =
       MERCHANTS.find((m) => m.id === merchantIdOrUserId) ??
       MERCHANTS.find((m) => m.ownerId === merchantIdOrUserId);
@@ -1281,7 +1281,7 @@ class MockAnalyticsRepository implements AnalyticsRepository {
   }
 
   async getFollowerHistory(merchantId: string): Promise<{ date: string; count: number }[]> {
-    await sleep(200);
+    await sleep(20);
     if (merchantId === TEST_MERCHANT_ID) {
       return MERCHANT_ANALYTICS.followerHistory ?? [];
     }
@@ -1289,7 +1289,7 @@ class MockAnalyticsRepository implements AnalyticsRepository {
   }
 
   async getCustomerImpact(userId: string): Promise<CustomerImpact> {
-    await sleep(300);
+    await sleep(30);
     const userOrders = ORDERS.filter(
       (o) => o.customerId === userId && ['completed', 'picked_up'].includes(o.status)
     );
