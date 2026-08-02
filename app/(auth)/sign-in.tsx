@@ -11,6 +11,7 @@ import { Input } from '@/src/components/ui/Input';
 import { Text } from '@/src/components/ui/Text';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
+import { SocialAuthButtons } from '@/src/components/auth/SocialAuthButtons';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { signInSchema, type SignInForm } from '@/src/features/auth/schemas';
@@ -19,7 +20,7 @@ export default function SignInScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const colors = useThemeColor();
-  const { signIn, signInLoading, signInError } = useAuth();
+  const { signIn, signInLoading, signInError, continueAsTest } = useAuth();
 
   const { control, handleSubmit } = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
@@ -31,16 +32,26 @@ export default function SignInScreen() {
   };
 
   return (
-    <Screen scrollable={false} keyboardAvoiding>
+    <Screen scrollable keyboardAvoiding>
       <Header title={t('auth.signIn')} />
-      <View className="flex-1 justify-center px-6">
+      <View className="px-6 pb-10">
         <Animated.View entering={FadeInUp.duration(500)}>
-          <Text variant="h1" className="mb-2">
+          <Text variant="h1" className="mb-2 mt-4">
             {t('auth.welcome')}
           </Text>
-          <Text variant="body" className="mb-8 text-muted">
+          <Text variant="body" className="mb-6 text-muted">
             {t('auth.subtitle')}
           </Text>
+
+          <SocialAuthButtons onPress={() => continueAsTest('customer')} />
+
+          <View className="my-6 flex-row items-center gap-3">
+            <View className="h-px flex-1 bg-border" />
+            <Text variant="caption" className="text-muted">
+              or continue with email
+            </Text>
+            <View className="h-px flex-1 bg-border" />
+          </View>
 
           <Controller
             control={control}
@@ -52,6 +63,8 @@ export default function SignInScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                textContentType="emailAddress"
+                autoComplete="email"
                 leftIcon={<Mail size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}
@@ -68,6 +81,8 @@ export default function SignInScreen() {
                 label={t('auth.password')}
                 placeholder="••••••••"
                 secureTextEntry
+                textContentType="password"
+                autoComplete="current-password"
                 leftIcon={<Lock size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}

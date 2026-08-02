@@ -11,6 +11,7 @@ import { Input } from '@/src/components/ui/Input';
 import { Text } from '@/src/components/ui/Text';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
+import { SocialAuthButtons } from '@/src/components/auth/SocialAuthButtons';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { signUpSchema, type SignUpForm } from '@/src/features/auth/schemas';
@@ -19,7 +20,7 @@ export default function SignUpScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const colors = useThemeColor();
-  const { signUp, signUpLoading, signUpError } = useAuth();
+  const { signUp, signUpLoading, signUpError, continueAsTest } = useAuth();
 
   const { control, handleSubmit } = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
@@ -35,12 +36,22 @@ export default function SignUpScreen() {
       <Header title={t('auth.signUp')} />
       <View className="px-6 pb-10">
         <Animated.View entering={FadeInUp.duration(500)}>
-          <Text variant="h1" className="mb-2">
+          <Text variant="h1" className="mb-2 mt-4">
             {t('auth.welcome')}
           </Text>
-          <Text variant="body" className="mb-8 text-muted">
+          <Text variant="body" className="mb-6 text-muted">
             {t('auth.subtitle')}
           </Text>
+
+          <SocialAuthButtons onPress={() => continueAsTest('customer')} />
+
+          <View className="my-6 flex-row items-center gap-3">
+            <View className="h-px flex-1 bg-border" />
+            <Text variant="caption" className="text-muted">
+              or continue with email
+            </Text>
+            <View className="h-px flex-1 bg-border" />
+          </View>
 
           <Controller
             control={control}
@@ -49,6 +60,8 @@ export default function SignUpScreen() {
               <Input
                 label={t('auth.name')}
                 placeholder="Ariya Wong"
+                textContentType="name"
+                autoComplete="name"
                 leftIcon={<User size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}
@@ -66,6 +79,8 @@ export default function SignUpScreen() {
                 placeholder="you@example.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                textContentType="emailAddress"
+                autoComplete="email"
                 leftIcon={<Mail size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}
@@ -82,6 +97,8 @@ export default function SignUpScreen() {
                 label={t('auth.phone')}
                 placeholder="081-234-5678"
                 keyboardType="phone-pad"
+                textContentType="telephoneNumber"
+                autoComplete="tel"
                 leftIcon={<Phone size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}
@@ -98,6 +115,8 @@ export default function SignUpScreen() {
                 label={t('auth.password')}
                 placeholder="••••••••"
                 secureTextEntry
+                textContentType="newPassword"
+                autoComplete="new-password"
                 leftIcon={<Lock size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}
@@ -114,6 +133,8 @@ export default function SignUpScreen() {
                 label={t('auth.confirmPassword')}
                 placeholder="••••••••"
                 secureTextEntry
+                textContentType="newPassword"
+                autoComplete="new-password"
                 leftIcon={<Lock size={20} color={colors.muted} />}
                 value={value}
                 onChangeText={onChange}
