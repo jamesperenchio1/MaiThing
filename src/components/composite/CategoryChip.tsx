@@ -7,7 +7,7 @@ import {
   Bed,
   IceCream,
   Leaf,
-  Flame,
+  Store,
 } from 'lucide-react-native';
 import { cn } from '@/src/lib/utils';
 import { Text } from '@/src/components/ui/Text';
@@ -22,7 +22,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; color?: strin
   bed: Bed,
   'ice-cream': IceCream,
   leaf: Leaf,
-  flame: Flame,
+  flame: Store,
 };
 
 interface CategoryChipProps {

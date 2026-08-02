@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -7,11 +7,13 @@ import {
   Image,
   Platform,
   Share,
+  Linking,
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck, Bell, BellOff } from 'lucide-react-native';
+import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck, Bell, BellOff, ExternalLink, Store } from 'lucide-react-native';
+import MapView, { Marker } from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/src/components/ui/Button';
@@ -240,10 +242,16 @@ export default function ListingDetailScreen() {
               <PressableScale
                 onPress={() => router.push(`/(customer)/merchant/${merchant?.id}` as any)}
                 scale={0.98}
+                className="self-start"
               >
-                <Text variant="body" className="text-primary">
-                  {merchant?.name}
-                </Text>
+                <View className="flex-row items-center">
+                  <View className="mr-1.5">
+                    <Store size={14} color={colors.primary} />
+                  </View>
+                  <Text variant="body" className="text-primary">
+                    {merchant?.name}
+                  </Text>
+                </View>
               </PressableScale>
               {merchant && (
                 <View className="mt-1">
@@ -363,17 +371,19 @@ export default function ListingDetailScreen() {
 
           <View className="mb-6 rounded-2xl bg-muted/10 p-4">
             <View className="mb-3 flex-row items-center">
-              <MapPin size={20} color={colors.primary} className="mr-3" />
+              <View className="mr-2">
+                <MapPin size={20} color={colors.primary} />
+              </View>
               <Text variant="body-sm" className="font-semibold">
                 {t('customer.listing.pickupLocation')}
               </Text>
             </View>
             {merchant && (
               <>
-                <Text variant="body-sm" className="mb-1 text-foreground">
+                <Text variant="body-sm" className="mb-0.5 font-medium text-foreground">
                   {merchant.name}
                 </Text>
-                <Text variant="body-sm" className="mb-1 text-muted">
+                <Text variant="body-sm" className="mb-0.5 text-muted">
                   {merchant.address.street}, {merchant.address.district},{' '}
                   {merchant.address.province} {merchant.address.postalCode}
                 </Text>
@@ -381,18 +391,66 @@ export default function ListingDetailScreen() {
                   {formatDistance(calculateDistance(DEFAULT_USER_LOCATION, merchant.coordinates))}{' '}
                   {t('customer.listing.away')}
                 </Text>
-                {Platform.OS === 'web' && (
-                  <View className="mb-3 overflow-hidden rounded-xl" style={{ height: 160 }}>
+
+                {/* Embedded map */}
+                <View className="mb-3 overflow-hidden rounded-2xl" style={{ height: 160 }}>
+                  {Platform.OS === 'web' ? (
                     <iframe
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${merchant.coordinates.longitude - 0.01},${merchant.coordinates.latitude - 0.01},${merchant.coordinates.longitude + 0.01},${merchant.coordinates.latitude + 0.01}&layer=mapnik&marker=${merchant.coordinates.latitude},${merchant.coordinates.longitude}`}
-                      className="h-full w-full border-0"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${merchant.coordinates.longitude - 0.008},${merchant.coordinates.latitude - 0.008},${merchant.coordinates.longitude + 0.008},${merchant.coordinates.latitude + 0.008}&layer=mapnik&marker=${merchant.coordinates.latitude},${merchant.coordinates.longitude}`}
+                      style={{ width: '100%', height: '100%', border: 'none', borderRadius: 16 }}
                       title={`${merchant.name} location`}
                       loading="lazy"
                     />
-                  </View>
-                )}
+                  ) : (
+                    <MapView
+                      style={{ flex: 1 }}
+                      initialRegion={{
+                        latitude: merchant.coordinates.latitude,
+                        longitude: merchant.coordinates.longitude,
+                        latitudeDelta: 0.005,
+                        longitudeDelta: 0.005,
+                      }}
+                      scrollEnabled={false}
+                      zoomEnabled={false}
+                      rotateEnabled={false}
+                      pitchEnabled={false}
+                    >
+                      <Marker
+                        coordinate={{
+                          latitude: merchant.coordinates.latitude,
+                          longitude: merchant.coordinates.longitude,
+                        }}
+                        title={merchant.name}
+                      />
+                    </MapView>
+                  )}
+                </View>
+
+                {/* Open in Maps button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                  className="mb-3"
+                  leftIcon={<ExternalLink size={16} color={colors.primary} />}
+                  onPress={() => {
+                    const { latitude, longitude } = merchant.coordinates;
+                    const label = encodeURIComponent(merchant.name);
+                    const url = Platform.select({
+                      ios: `maps://0,0?q=${label}@${latitude},${longitude}`,
+                      android: `geo:0,0?q=${latitude},${longitude}(${label})`,
+                      default: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`,
+                    });
+                    Linking.openURL(url ?? '');
+                  }}
+                >
+                  Open in Maps
+                </Button>
+
                 <View className="flex-row items-start">
-                  <AlertCircle size={18} color={colors.muted} className="mr-3 mt-0.5" />
+                  <View className="mr-2 mt-0.5">
+                    <AlertCircle size={16} color={colors.muted} />
+                  </View>
                   <Text variant="body-sm" className="flex-1 text-muted">
                     {merchant.pickupInstructions}
                   </Text>
