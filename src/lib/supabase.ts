@@ -1,9 +1,10 @@
 // Stub — real Supabase client wired up when backend is live.
 // All callers are fire-and-forget and degrade gracefully when this is a no-op.
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const supabase = null as unknown as {
-  from: (table: string) => unknown;
-  auth: unknown;
+  from: (table: string) => any;
+  auth: any;
 };
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
