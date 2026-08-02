@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { Home, Search, MapPin, ShoppingBag, Wallet, User } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { TutorialOverlay } from '@/src/components/tutorial/TutorialOverlay';
 import { useTutorialStore } from '@/src/stores/tutorial';
 
 export default function CustomerTabsLayout() {
   const colors = useThemeColor();
+  const insets = useSafeAreaInsets();
   const { hasSeenTutorial, isActive, startTutorial } = useTutorialStore();
 
   useEffect(() => {
@@ -24,9 +26,9 @@ export default function CustomerTabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 8,
+          height: 72 + insets.bottom,
+          paddingTop: 10,
+          paddingBottom: insets.bottom + 6,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           backgroundColor: colors.background,

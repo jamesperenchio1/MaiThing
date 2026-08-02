@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { repositories } from '@/src/repositories';
 import type { Listing, ListingTemplate } from '@/src/types';
 import type { QueryClient } from '@tanstack/react-query';
@@ -23,6 +23,7 @@ export interface ListingFilters {
   sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
   dietaryTags?: string[];
   allergens?: string[];
+  minPrice?: number;
   maxPrice?: number;
   minMerchantRating?: number;
   status?: string;
@@ -32,6 +33,7 @@ export function useListings(params?: ListingFilters) {
   return useQuery({
     queryKey: ['listings', params],
     queryFn: () => repositories.listings.getListings(params),
+    placeholderData: keepPreviousData,
   });
 }
 

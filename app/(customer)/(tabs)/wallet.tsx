@@ -334,7 +334,12 @@ export default function WalletScreen() {
             </Text>
           </View>
 
-          <Text style={{ color: '#fff', fontSize: 40, fontWeight: '700', marginBottom: 24 }}>
+          <Text
+            adjustsFontSizeToFit
+            numberOfLines={1}
+            minimumFontScale={0.6}
+            style={{ color: '#fff', fontSize: 40, fontWeight: '700', marginBottom: 24 }}
+          >
             {isLoading
               ? '—'
               : wallet?.balance === 999999

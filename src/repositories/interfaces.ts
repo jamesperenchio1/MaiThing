@@ -112,6 +112,7 @@ export interface ListingRepository {
     sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
     dietaryTags?: string[];
     allergens?: string[];
+    minPrice?: number;
     maxPrice?: number;
     minMerchantRating?: number;
     status?: string;

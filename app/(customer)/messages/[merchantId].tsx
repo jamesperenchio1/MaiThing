@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, TextInput, FlatList } from 'react-native';
-import { Send } from 'lucide-react-native';
+import { ArrowUp, Store } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/src/components/ui/Text';
@@ -12,6 +12,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { useAuthStore } from '@/src/stores/auth';
 import { useMessages, useSendMessageAsCustomer } from '@/src/hooks/useMessages';
+import { useMerchant } from '@/src/hooks/useMerchants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatRelativeTime } from '@/src/lib/utils';
 import type { MerchantMessage } from '@/src/types';
@@ -44,6 +45,7 @@ function MessageBubble({
 
 export default function CustomerMessageThreadScreen() {
   const { merchantId } = useLocalSearchParams<{ merchantId: string }>();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const customerId = user?.id ?? '';
   const colors = useThemeColor();
@@ -52,8 +54,9 @@ export default function CustomerMessageThreadScreen() {
 
   const { data: messages, isLoading, isError, refetch } = useMessages(merchantId, customerId);
   const sendMessage = useSendMessageAsCustomer(merchantId, customerId);
+  const { data: merchant } = useMerchant(merchantId);
 
-  const merchantName = messages?.[0]?.merchantId ? 'Merchant' : 'Merchant';
+  const merchantName = merchant?.name ?? '...';
   const orderId = messages?.[0]?.orderId;
 
   const handleSend = useCallback(() => {
@@ -74,7 +77,19 @@ export default function CustomerMessageThreadScreen() {
 
   return (
     <Screen scrollable={false} className="bg-background" keyboardAvoiding>
-      <Header title={merchantName} />
+      <Header
+        title={merchantName}
+        right={
+          <Button
+            variant="ghost"
+            size="icon"
+            onPress={() => router.push(`/(customer)/merchant/${merchantId}` as any)}
+            accessibilityLabel="View merchant profile"
+          >
+            <Store size={20} color={colors.primary} />
+          </Button>
+        }
+      />
 
       <View className="flex-1 px-4">
         {orderId && (
@@ -133,7 +148,7 @@ export default function CustomerMessageThreadScreen() {
             onPress={handleSend}
             disabled={!input.trim() || sendMessage.isPending}
           >
-            <Send size={20} color={colors.white} />
+            <ArrowUp size={20} color="#fff" />
           </Button>
         </View>
       </View>
