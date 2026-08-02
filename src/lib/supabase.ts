@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+// Stub — real Supabase client wired up when backend is live.
+// All callers are fire-and-forget and degrade gracefully when this is a no-op.
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+export const supabase = null as unknown as {
+  from: (table: string) => unknown;
+  auth: unknown;
+};
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const FUNCTIONS_BASE = `${supabaseUrl}/functions/v1`;
 
 /** Fire-and-forget push notification event to the Edge Function. */
@@ -18,6 +20,7 @@ export async function triggerPushEvent(
     userId?: string;
   }
 ): Promise<void> {
+  if (!supabaseUrl) return;
   try {
     await fetch(`${FUNCTIONS_BASE}/send-push-notifications`, {
       method: 'POST',
