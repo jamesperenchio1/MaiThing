@@ -287,7 +287,7 @@ export function TutorialOverlay() {
             </View>
           </Pressable>
 
-          <View style={styles.tooltipContent}>
+          <View style={styles.centeredContent}>
             <Text style={styles.emoji}>{step.emoji}</Text>
             <Text variant="h3" className="text-center mb-2">
               {step.title}
@@ -501,13 +501,20 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   tooltipContent: {
-    padding: 20,
+    padding: 16,
+    alignItems: 'center',
+  },
+  centeredContent: {
+    paddingTop: 32,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     alignItems: 'center',
   },
   emoji: {
     fontSize: 44,
-    marginBottom: 12,
-    marginTop: 4,
+    lineHeight: 60,
+    marginBottom: 8,
+    marginTop: 0,
   },
   langToggle: {
     position: 'absolute',
