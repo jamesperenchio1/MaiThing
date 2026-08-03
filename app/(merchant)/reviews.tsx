@@ -52,7 +52,7 @@ function ReviewCard({
   onReply: (reviewId: string) => void;
   isPending: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const isReplying = replyingId === review.id;
 
@@ -66,7 +66,7 @@ function ReviewCard({
           <View className="mt-1 flex-row items-center">
             <StarRating rating={review.rating} />
             <Text variant="caption" className="ml-2 text-muted">
-              {formatRelativeTime(review.createdAt)}
+              {formatRelativeTime(review.createdAt, i18n.language)}
             </Text>
           </View>
         </View>

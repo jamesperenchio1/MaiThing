@@ -209,7 +209,7 @@ export default function MerchantDetailScreen() {
           <View className="mb-6 flex-row flex-wrap">
             {merchant.categories.map((cat) => (
               <Badge key={cat} variant="muted" className="mr-2 mb-2">
-                {formatCategory(cat)}
+                {formatCategory(cat, i18n.language)}
               </Badge>
             ))}
           </View>

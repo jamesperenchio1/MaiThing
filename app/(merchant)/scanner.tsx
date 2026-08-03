@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
-import { View, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import {
+  View,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  useWindowDimensions,
+} from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-let CameraView: React.ComponentType<{ facing?: string; barcodeScannerSettings?: { barcodeTypes: string[] }; onBarcodeScanned?: (result: { data: string }) => void; style?: object }> | null = null;
-let useCameraPermissions: (() => [{ granted: boolean } | null, () => Promise<void>]) | null = null;
-type BarcodeScanningResult = { data: string };
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const cam = require('expo-camera');
-  CameraView = cam.CameraView;
-  useCameraPermissions = cam.useCameraPermissions;
-} catch {
-  // not available in Expo Go
-}
-import React from 'react';
+import { CameraView, useCameraPermissions, PermissionStatus } from 'expo-camera';
 import { QrCode, Check, Search, XCircle, X } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -26,6 +22,7 @@ import { useUpdateOrderStatus, useOrderByPickupCode } from '@/src/hooks/useOrder
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
+import { getFontScale } from '@/src/lib/responsive';
 
 const isWeb = Platform.OS === 'web';
 
@@ -33,8 +30,10 @@ export default function ScannerScreen() {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
-  const [permission, requestPermission] = useCameraPermissions?.() ?? [null, async () => {}];
+  const { width, fontScale } = useWindowDimensions();
+  const [permission, requestPermission] = useCameraPermissions();
   const { preloadCode } = useLocalSearchParams<{ preloadCode?: string }>();
+  const fontScaleFactor = getFontScale(width, fontScale);
 
   const merchantId = user?.merchantId ?? user?.id ?? '';
 
@@ -56,13 +55,21 @@ export default function ScannerScreen() {
 
   const notFound = lookupCode.length >= 4 && !isFetching && isFetched && !found;
 
-  const handleBarcodeScanned = (result: BarcodeScanningResult) => {
+  const handleBarcodeScanned = (result: { data: string }) => {
     const code = result.data.trim().toUpperCase();
     if (code.length < 4 || code === lookupCode) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLookupCode(code);
     setManualCode(code);
     setDone(false);
+  };
+
+  const handleRequestPermission = async () => {
+    try {
+      await requestPermission();
+    } catch {
+      Alert.alert(t('common.error'), t('merchant.scanner.cameraError'));
+    }
   };
 
   const handleManualSearch = () => {
@@ -110,6 +117,9 @@ export default function ScannerScreen() {
     }
 
     if (!permission?.granted) {
+      const permanentlyDenied =
+        permission?.status === PermissionStatus.DENIED && !permission.canAskAgain;
+
       return (
         <View className="mb-6 items-center">
           <View className="h-56 w-56 items-center justify-center rounded-3xl border-2 border-dashed border-border bg-muted/10">
@@ -118,19 +128,14 @@ export default function ScannerScreen() {
               {t('merchant.scanner.noCamera')}
             </Text>
           </View>
-          <Button onPress={requestPermission} className="mt-4">
-            Allow Camera
+          <Button onPress={handleRequestPermission} className="mt-4">
+            {t('merchant.scanner.allowCamera')}
           </Button>
-        </View>
-      );
-    }
-
-    if (!CameraView) {
-      return (
-        <View className="mb-6 items-center">
-          <View className="h-72 w-full items-center justify-center rounded-3xl bg-muted/20">
-            <Text variant="body-sm" className="text-muted">Camera not available</Text>
-          </View>
+          {permanentlyDenied && (
+            <Text variant="caption" className="mt-2 px-8 text-center text-muted">
+              {t('common.error')}: {t('merchant.scanner.cameraError')}
+            </Text>
+          )}
         </View>
       );
     }
@@ -142,6 +147,9 @@ export default function ScannerScreen() {
             style={{ flex: 1 }}
             facing="back"
             onBarcodeScanned={found ? undefined : handleBarcodeScanned}
+            onMountError={(e) => {
+              console.error('Camera mount error:', e.message);
+            }}
             barcodeScannerSettings={{
               barcodeTypes: [
                 'qr',
@@ -198,12 +206,12 @@ export default function ScannerScreen() {
                   if (lookupCode) setLookupCode('');
                   if (done) setDone(false);
                 }}
-                placeholder="e.g. AB1234"
+                placeholder={t('merchant.scanner.placeholder')}
                 placeholderTextColor={colors.muted}
                 autoCapitalize="characters"
                 style={{
                   color: colors.foreground,
-                  fontSize: 18,
+                  fontSize: Math.round(18 * fontScaleFactor),
                   fontWeight: '600',
                   letterSpacing: 2,
                 }}
@@ -220,7 +228,7 @@ export default function ScannerScreen() {
             <View className="mb-4 flex-row items-center rounded-2xl bg-danger/10 px-4 py-3">
               <XCircle size={16} color={colors.danger} />
               <Text variant="body-sm" className="ml-2 text-danger">
-                No active order found with that code.
+                {t('merchant.scanner.notFound')}
               </Text>
             </View>
           )}
@@ -229,7 +237,7 @@ export default function ScannerScreen() {
             <View className="mb-4 flex-row items-center rounded-2xl bg-primary/10 px-4 py-3">
               <Check size={16} color={colors.primary} />
               <Text variant="body-sm" className="ml-2 font-semibold text-primary">
-                Order marked as picked up!
+                {t('merchant.scanner.pickedUp')}
               </Text>
             </View>
           )}
@@ -246,7 +254,7 @@ export default function ScannerScreen() {
                 <Badge variant="success">{t('merchant.scanner.orderFound')}</Badge>
               </View>
               <Text variant="body-sm" className="mb-1 text-muted">
-                Items ordered:
+                {t('merchant.scanner.itemsOrdered')}:
               </Text>
               {found.items.map((item) => (
                 <Text key={item.listingId} variant="body-sm" className="mb-0.5">
@@ -258,7 +266,7 @@ export default function ScannerScreen() {
                   {formatCurrency(found.total)}
                 </Text>
                 <Text variant="caption" className="text-muted">
-                  Pickup by{' '}
+                  {t('merchant.scanner.pickupBy')}{' '}
                   {new Date(found.pickupWindowEnd).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -281,7 +289,7 @@ export default function ScannerScreen() {
                 onPress={handleClear}
                 leftIcon={<X size={18} color={colors.muted} />}
               >
-                Scan another
+                {t('merchant.scanner.scanAnother')}
               </Button>
             </Card>
           )}

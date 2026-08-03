@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { ArrowRight, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -42,113 +44,108 @@ interface StepConfig {
   navigateTo?: string;
 }
 
-function useSteps(): StepConfig[] {
+function useSteps(t: TFunction): StepConfig[] {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const tabBarTop = height - TAB_BAR_HEIGHT - insets.bottom;
-  const tabWidth = width / TAB_COUNT;
-  const contentTop = insets.top;
+  return useMemo(() => {
+    const tabBarTop = height - TAB_BAR_HEIGHT - insets.bottom;
+    const tabWidth = width / TAB_COUNT;
+    const contentTop = insets.top;
 
-  const tabHotspot = (index: number): Hotspot => ({
-    x: tabWidth * index + SPOTLIGHT_PADDING,
-    y: tabBarTop + SPOTLIGHT_PADDING,
-    width: tabWidth - SPOTLIGHT_PADDING * 2,
-    height: TAB_BAR_HEIGHT + insets.bottom - SPOTLIGHT_PADDING * 2,
-    borderRadius: 16,
-  });
+    const tabHotspot = (index: number): Hotspot => ({
+      x: tabWidth * index + SPOTLIGHT_PADDING,
+      y: tabBarTop + SPOTLIGHT_PADDING,
+      width: tabWidth - SPOTLIGHT_PADDING * 2,
+      height: TAB_BAR_HEIGHT + insets.bottom - SPOTLIGHT_PADDING * 2,
+      borderRadius: 16,
+    });
 
-  const contentHotspot: Hotspot = {
-    x: 16,
-    y: contentTop + 8,
-    width: width - 32,
-    height: tabBarTop - contentTop - 16,
-    borderRadius: 24,
-  };
+    const contentHotspot: Hotspot = {
+      x: 16,
+      y: contentTop + 8,
+      width: width - 32,
+      height: tabBarTop - contentTop - 16,
+      borderRadius: 24,
+    };
 
-  return [
-    {
-      emoji: '👋',
-      title: 'Welcome to Maithing!',
-      description:
-        "Rescue delicious surplus food at up to 70% off. Let's take a quick tour so you know your way around.",
-      tooltipSide: 'center',
-      requireTap: false,
-    },
-    {
-      emoji: '🍱',
-      title: 'Your Food Feed',
-      description:
-        'Browse deals from cafés, bakeries & restaurants near you. Scroll down to discover more listings!',
-      tooltipSide: 'center',
-      requireTap: false,
-    },
-    {
-      emoji: '🔍',
-      title: 'Discover All Listings',
-      description:
-        'Search for specific food, sort by rating or distance, and filter by category. Tap to explore!',
-      hotspot: tabHotspot(1),
-      tooltipSide: 'top',
-      requireTap: true,
-      tapHint: 'Tap Discover to continue',
-      navigateTo: '/(customer)/(tabs)/discover',
-    },
-    {
-      emoji: '🗺️',
-      title: 'Find Merchants on a Map',
-      description:
-        'See all open food rescue spots pinned on an interactive map. Great when you are out and about!',
-      hotspot: tabHotspot(2),
-      tooltipSide: 'top',
-      requireTap: true,
-      tapHint: 'Tap Map to continue',
-      navigateTo: '/(customer)/(tabs)/map',
-    },
-    {
-      emoji: '📦',
-      title: 'Track Your Orders',
-      description:
-        'Every order shows a pickup timeline and a QR code. Show it at the shop to collect your food.',
-      hotspot: tabHotspot(3),
-      tooltipSide: 'top',
-      requireTap: true,
-      tapHint: 'Tap Orders to continue',
-      navigateTo: '/(customer)/(tabs)/orders',
-    },
-    {
-      emoji: '👤',
-      title: 'Your Profile & Impact',
-      description:
-        'Track how many meals you have rescued and how much CO₂ you have saved. Change language or theme here too.',
-      hotspot: tabHotspot(5),
-      tooltipSide: 'top',
-      requireTap: true,
-      tapHint: 'Tap Profile to continue',
-      navigateTo: '/(customer)/(tabs)/profile',
-    },
-    {
-      emoji: '🛒',
-      title: 'How to Place an Order',
-      description:
-        'Tap any listing → Add to Cart → Check out → Show your QR code at pickup. It takes less than a minute!',
-      tooltipSide: 'center',
-      requireTap: false,
-    },
-    {
-      emoji: '🌱',
-      title: "You're All Set!",
-      description:
-        'Start rescuing food today. You can always replay this tour from your Profile settings.',
-      tooltipSide: 'center',
-      requireTap: false,
-    },
-  ];
+    return [
+      {
+        emoji: '👋',
+        title: t('tutorial.welcome.title'),
+        description: t('tutorial.welcome.description'),
+        tooltipSide: 'center',
+        requireTap: false,
+      },
+      {
+        emoji: '🍱',
+        title: t('tutorial.feed.title'),
+        description: t('tutorial.feed.description'),
+        tooltipSide: 'center',
+        requireTap: false,
+      },
+      {
+        emoji: '🔍',
+        title: t('tutorial.discover.title'),
+        description: t('tutorial.discover.description'),
+        hotspot: tabHotspot(1),
+        tooltipSide: 'top',
+        requireTap: true,
+        tapHint: t('tutorial.tapHint.discover'),
+        navigateTo: '/(customer)/(tabs)/discover',
+      },
+      {
+        emoji: '🗺️',
+        title: t('tutorial.map.title'),
+        description: t('tutorial.map.description'),
+        hotspot: tabHotspot(2),
+        tooltipSide: 'top',
+        requireTap: true,
+        tapHint: t('tutorial.tapHint.map'),
+        navigateTo: '/(customer)/(tabs)/map',
+      },
+      {
+        emoji: '📦',
+        title: t('tutorial.orders.title'),
+        description: t('tutorial.orders.description'),
+        hotspot: tabHotspot(3),
+        tooltipSide: 'top',
+        requireTap: true,
+        tapHint: t('tutorial.tapHint.orders'),
+        navigateTo: '/(customer)/(tabs)/orders',
+      },
+      {
+        emoji: '👤',
+        title: t('tutorial.profile.title'),
+        description: t('tutorial.profile.description'),
+        hotspot: tabHotspot(5),
+        tooltipSide: 'top',
+        requireTap: true,
+        tapHint: t('tutorial.tapHint.profile'),
+        navigateTo: '/(customer)/(tabs)/profile',
+      },
+      {
+        emoji: '🛒',
+        title: t('tutorial.howToOrder.title'),
+        description: t('tutorial.howToOrder.description'),
+        tooltipSide: 'center',
+        requireTap: false,
+      },
+      {
+        emoji: '🌱',
+        title: t('tutorial.finish.title'),
+        description: t('tutorial.finish.description'),
+        tooltipSide: 'center',
+        requireTap: false,
+      },
+    ];
+  }, [t, width, height, insets.top, insets.bottom]);
 }
 
 export function TutorialOverlay() {
+  const { t } = useTranslation();
   const { isActive, currentStep, nextStep, skipTutorial } = useTutorialStore();
-  const steps = useSteps();
+  const steps = useSteps(t);
   const router = useRouter();
   const colors = useThemeColor();
   const { language, toggle: toggleLanguage } = useLanguageStore();
@@ -317,7 +314,7 @@ export function TutorialOverlay() {
               {currentStep === 0 ? (
                 <>
                   <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
-                    Let's go!
+                    {t('tutorial.letsGo')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -325,17 +322,17 @@ export function TutorialOverlay() {
                     textClassName="text-muted"
                     style={{ marginLeft: 8 }}
                   >
-                    Skip
+                    {t('tutorial.skip')}
                   </Button>
                 </>
               ) : currentStep === TUTORIAL_TOTAL_STEPS - 1 ? (
                 <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
-                  Start Rescuing Food!
+                  {t('tutorial.startRescuing')}
                 </Button>
               ) : (
                 <>
                   <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
-                    Next
+                    {t('tutorial.next')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -343,7 +340,7 @@ export function TutorialOverlay() {
                     textClassName="text-muted"
                     style={{ marginLeft: 8 }}
                   >
-                    Skip
+                    {t('tutorial.skip')}
                   </Button>
                 </>
               )}
@@ -387,14 +384,14 @@ export function TutorialOverlay() {
           {step.requireTap ? (
             <View style={styles.tapHintRow}>
               <Text variant="caption" style={{ color: colors.primary, fontWeight: '600' }}>
-                {step.tapHint ?? 'Tap the highlighted area'}
+                {step.tapHint ?? t('tutorial.tapHint.fallback')}
               </Text>
               <ArrowRight size={14} color={colors.primary} />
             </View>
           ) : (
             <View style={styles.buttonRow}>
               <Button variant="primary" size="sm" onPress={handleAdvance} style={{ flex: 1 }}>
-                Next
+                {t('tutorial.next')}
               </Button>
               <Button
                 variant="ghost"
@@ -403,7 +400,7 @@ export function TutorialOverlay() {
                 textClassName="text-muted"
                 style={{ marginLeft: 8 }}
               >
-                Skip
+                {t('tutorial.skip')}
               </Button>
             </View>
           )}
@@ -440,7 +437,7 @@ export function TutorialOverlay() {
               <View style={[styles.skipPill, { backgroundColor: colors.card }]}>
                 <X size={14} color={colors.muted} />
                 <Text variant="caption" className="text-muted ml-1">
-                  Skip
+                  {t('tutorial.skip')}
                 </Text>
               </View>
             </Pressable>
@@ -451,7 +448,10 @@ export function TutorialOverlay() {
         {hotspot && (
           <View style={[styles.stepCounter, { top: insets.top + 12 }]}>
             <Text variant="caption" style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '600' }}>
-              {currentStep} / {TUTORIAL_TOTAL_STEPS - 1}
+              {t('tutorial.stepCounter', {
+                current: currentStep,
+                total: TUTORIAL_TOTAL_STEPS - 1,
+              })}
             </Text>
           </View>
         )}

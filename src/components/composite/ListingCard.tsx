@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Image, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -28,7 +28,7 @@ interface ListingCardProps {
   testID?: string;
 }
 
-export function ListingCard({
+export const ListingCard = React.memo(function ListingCard({
   listing,
   variant = 'vertical',
   className,
@@ -37,19 +37,49 @@ export function ListingCard({
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const navigating = useRef(false);
+
   const isMystery = listing.type === 'mystery_box';
-  const isFlashSale =
-    !!listing.flashSalePrice &&
-    !!listing.flashSaleEndsAt &&
-    new Date(listing.flashSaleEndsAt) > new Date();
-  const effectivePrice = isFlashSale ? listing.flashSalePrice! : listing.salePrice;
-  const discount = Math.round((1 - effectivePrice / listing.originalPrice) * 100);
-  const isSoldOut = listing.quantityRemaining === 0;
-  const urgency = getListingUrgency(listing);
-  const minsUntilEnd = Math.round(
-    (new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000
-  );
-  const showCountdown = !isSoldOut && minsUntilEnd <= 240 && minsUntilEnd > 0;
+
+  const {
+    isFlashSale,
+    effectivePrice,
+    discount,
+    isSoldOut,
+    urgency,
+    showCountdown,
+    pickupTimeLabel,
+  } = useMemo(() => {
+    const flashActive =
+      !!listing.flashSalePrice &&
+      !!listing.flashSaleEndsAt &&
+      new Date(listing.flashSaleEndsAt) > new Date();
+    const price = flashActive ? listing.flashSalePrice! : listing.salePrice;
+    const disc = Math.round((1 - price / listing.originalPrice) * 100);
+    const soldOut = listing.quantityRemaining === 0;
+    const urg = getListingUrgency(listing, i18n.language);
+    const minsUntilEnd = Math.round(
+      (new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000
+    );
+    const pickupWindowLabel = formatPickupWindow(
+      listing.pickupWindowStart,
+      listing.pickupWindowEnd,
+      i18n.language
+    );
+    return {
+      isFlashSale: flashActive,
+      effectivePrice: price,
+      discount: disc,
+      isSoldOut: soldOut,
+      urgency: urg,
+      showCountdown: !soldOut && minsUntilEnd <= 240 && minsUntilEnd > 0,
+      pickupTimeLabel: pickupWindowLabel.split(' · ')[1] ?? '',
+    };
+  }, [listing, i18n.language]);
+
+  const distanceLabel = useMemo(() => {
+    if (listing.distance == null) return '';
+    return ` · ${formatDistance(listing.distance)} (${formatWalkTime(listing.distance, i18n.language)})`;
+  }, [listing.distance]);
 
   return (
     <PressableScale
@@ -57,7 +87,9 @@ export function ListingCard({
       onPress={() => {
         if (navigating.current) return;
         navigating.current = true;
-        setTimeout(() => { navigating.current = false; }, 1000);
+        setTimeout(() => {
+          navigating.current = false;
+        }, 1000);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/(customer)/listing/${listing.id}`);
       }}
@@ -74,12 +106,12 @@ export function ListingCard({
           <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
           <View className="absolute left-2 top-2">
             <Badge variant={isMystery ? 'warning' : 'info'}>
-              {isMystery ? 'Mystery Box' : 'Fixed'}
+              {isMystery ? t('customer.listing.mysteryBox') : t('customer.listing.fixed')}
             </Badge>
           </View>
           {isSoldOut && (
             <View className="absolute inset-0 items-center justify-center bg-black/50">
-              <Text className="font-semibold text-white">Sold Out</Text>
+              <Text className="font-semibold text-white">{t('customer.listing.soldOut')}</Text>
             </View>
           )}
           <View className="absolute right-2 top-2">
@@ -103,7 +135,9 @@ export function ListingCard({
 
           {isMystery && (
             <Text variant="caption" className="mb-1.5 text-muted">
-              Worth {formatCurrency(listing.estimatedRetailValue)}+ of surprises
+              {t('customer.listing.worthOfSurprises', {
+                value: formatCurrency(listing.estimatedRetailValue ?? listing.originalPrice),
+              })}
             </Text>
           )}
 
@@ -115,13 +149,16 @@ export function ListingCard({
               {formatCurrency(isFlashSale ? listing.salePrice : listing.originalPrice)}
             </Text>
             <Badge variant={isFlashSale ? 'danger' : 'success'} className="ml-2">
-              {isFlashSale ? '⚡ Flash' : `-${discount}%`}
+              {isFlashSale ? t('customer.listing.flash') : t('customer.listing.discount', { discount })}
             </Badge>
           </View>
 
           {showCountdown && (
             <View className="mb-2">
-              <CountdownTimer targetDate={listing.pickupWindowEnd} label="Pickup ends" />
+              <CountdownTimer
+                targetDate={listing.pickupWindowEnd}
+                label={t('customer.listing.pickupEnds')}
+              />
             </View>
           )}
 
@@ -130,19 +167,11 @@ export function ListingCard({
           <Text variant="caption" className="mt-2 text-muted">
             {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })}
             {' · '}
-            {
-              formatPickupWindow(
-                listing.pickupWindowStart,
-                listing.pickupWindowEnd,
-                i18n.language
-              ).split(' · ')[1]
-            }
-            {listing.distance != null
-              ? ` · ${formatDistance(listing.distance)} (${formatWalkTime(listing.distance)})`
-              : ''}
+            {pickupTimeLabel}
+            {distanceLabel}
           </Text>
         </View>
       </Card>
     </PressableScale>
   );
-}
+});

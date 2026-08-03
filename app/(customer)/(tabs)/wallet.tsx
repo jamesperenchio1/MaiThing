@@ -7,6 +7,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
@@ -33,6 +34,7 @@ import { useWallet, useWalletTransactions, useWalletRewards } from '@/src/hooks/
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
+import { getFontScale } from '@/src/lib/responsive';
 import { repositories } from '@/src/repositories';
 import type { WalletReward, WalletTransaction } from '@/src/types';
 
@@ -144,7 +146,7 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
           <TouchableWithoutFeedback>
             <View className="rounded-t-3xl bg-background px-6 pb-10 pt-6">
               <View className="mb-6 flex-row items-center justify-between">
-                <Text variant="h3">Top up wallet</Text>
+                <Text variant="h3">{t('customer.wallet.topUpTitle')}</Text>
                 <PressableScale onPress={onClose} scale={0.9} accessibilityLabel="Close" hitSlop={8}>
                   <View className="rounded-full bg-muted/10 p-2">
                     <X size={20} color={colors.muted} />
@@ -152,7 +154,7 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
                 </PressableScale>
               </View>
               <Text variant="body-sm" className="mb-4 text-muted">
-                Select an amount to add to your wallet
+                {t('customer.wallet.topUpHint')}
               </Text>
               <View className="mb-3 flex-row flex-wrap gap-3">
                 {TOP_UP_AMOUNTS.map((amount) => (
@@ -182,14 +184,14 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
                   scale={0.96}
                 >
                   <Text className={`font-semibold ${isCustom ? 'text-primary' : 'text-foreground'}`}>
-                    Other
+                    {t('customer.wallet.other')}
                   </Text>
                 </PressableScale>
               </View>
               {isCustom && (
                 <Input
                   containerClassName="mb-6"
-                  placeholder="Enter amount"
+                  placeholder={t('customer.wallet.enterAmount')}
                   keyboardType="number-pad"
                   value={customAmount}
                   onChangeText={handleCustomAmountChange}
@@ -203,7 +205,9 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
                 loading={loading}
                 onPress={handleTopUp}
               >
-                {effectiveAmount ? `Add ${formatCurrency(effectiveAmount)}` : 'Select an amount'}
+                {effectiveAmount
+                  ? t('customer.wallet.addAmount', { amount: formatCurrency(effectiveAmount) })
+                  : t('customer.wallet.selectAmount')}
               </Button>
             </View>
           </TouchableWithoutFeedback>
@@ -214,6 +218,7 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
 }
 
 function RewardStrip({ rewards }: { rewards?: WalletReward }) {
+  const { t } = useTranslation();
   const colors = useThemeColor();
   return (
     <View className="mx-4 mb-5 flex-row overflow-hidden rounded-2xl bg-card">
@@ -223,7 +228,7 @@ function RewardStrip({ rewards }: { rewards?: WalletReward }) {
           {(rewards?.points ?? 0).toLocaleString()}
         </Text>
         <Text variant="caption" className="text-muted">
-          Points
+          {t('customer.wallet.points')}
         </Text>
       </View>
       <View className="flex-1 items-center border-r border-border py-4">
@@ -232,7 +237,7 @@ function RewardStrip({ rewards }: { rewards?: WalletReward }) {
           +{formatCurrency(rewards?.bonusBalance ?? 0)}
         </Text>
         <Text variant="caption" className="text-muted">
-          Bonus credit
+          {t('customer.wallet.bonusCredit')}
         </Text>
       </View>
       <View className="flex-1 items-center py-4">
@@ -241,7 +246,7 @@ function RewardStrip({ rewards }: { rewards?: WalletReward }) {
           {(rewards?.lifetimePoints ?? 0).toLocaleString()}
         </Text>
         <Text variant="caption" className="text-muted">
-          Lifetime
+          {t('customer.wallet.lifetime')}
         </Text>
       </View>
     </View>
@@ -252,6 +257,8 @@ export default function WalletScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
+  const { width, fontScale } = useWindowDimensions();
+  const fontScaleFactor = getFontScale(width, fontScale);
   const {
     data: wallet,
     isLoading,
@@ -325,11 +332,19 @@ export default function WalletScreen() {
               <View className="mr-2.5 rounded-xl bg-white/20 p-2">
                 <WalletIcon size={18} color="#fff" />
               </View>
-              <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: '500' }}>
-                Maithing Wallet
+              <Text
+                style={{
+                  color: 'rgba(255,255,255,0.75)',
+                  fontSize: Math.round(14 * fontScaleFactor),
+                  fontWeight: '500',
+                }}
+              >
+                {t('customer.wallet.cardTitle')}
               </Text>
             </View>
-            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+            <Text
+              style={{ color: 'rgba(255,255,255,0.5)', fontSize: Math.round(12 * fontScaleFactor) }}
+            >
               {wallet?.currency ?? 'THB'}
             </Text>
           </View>
@@ -338,7 +353,12 @@ export default function WalletScreen() {
             adjustsFontSizeToFit
             numberOfLines={1}
             minimumFontScale={0.6}
-            style={{ color: '#fff', fontSize: 40, fontWeight: '700', marginBottom: 24 }}
+            style={{
+              color: '#fff',
+              fontSize: Math.round(40 * fontScaleFactor),
+              fontWeight: '700',
+              marginBottom: 24,
+            }}
           >
             {isLoading
               ? '—'
@@ -367,7 +387,7 @@ export default function WalletScreen() {
       <View className="mb-1 flex-row items-center justify-between px-4">
         <Text variant="h3">{t('customer.wallet.transactions')}</Text>
         <Text variant="caption" className="text-muted">
-          {transactions?.length ?? 0} total
+          {t('customer.wallet.total', { count: transactions?.length ?? 0 })}
         </Text>
       </View>
     </View>
@@ -382,8 +402,8 @@ export default function WalletScreen() {
   ) : (
     <EmptyState
       icon={<WalletIcon size={32} color={colors.muted} />}
-      title="No transactions yet"
-      description="Your transactions will appear here."
+      title={t('customer.wallet.noTransactionsTitle')}
+      description={t('customer.wallet.noTransactionsSubtitle')}
     />
   );
 
@@ -396,7 +416,7 @@ export default function WalletScreen() {
           <View className="px-4">
             <ErrorState
               title={t('common.error')}
-              message="We couldn't load your wallet."
+              message={t('customer.wallet.transactionError')}
               onRetry={handleRefresh}
               retryLabel={t('common.retry')}
             />
@@ -414,7 +434,7 @@ export default function WalletScreen() {
           ListFooterComponent={
             hasMore ? (
               <Button variant="ghost" fullWidth onPress={() => setShowAll(true)} className="mt-1 mb-2">
-                Load more
+                {t('common.loadMore')}
               </Button>
             ) : null
           }

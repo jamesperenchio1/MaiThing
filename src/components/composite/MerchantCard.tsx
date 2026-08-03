@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Image, View } from 'react-native';
 import { MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -21,13 +21,23 @@ interface MerchantCardProps {
   testID?: string;
 }
 
-export function MerchantCard({ merchant, className, testID }: MerchantCardProps) {
+export const MerchantCard = React.memo(function MerchantCard({
+  merchant,
+  className,
+  testID,
+}: MerchantCardProps) {
   const router = useRouter();
   const colors = useThemeColor();
   const { t, i18n } = useTranslation();
-  const isNew = merchant.joinedAt
-    ? Date.now() - new Date(merchant.joinedAt).getTime() < 30 * 24 * 60 * 60 * 1000
-    : false;
+
+  const isNew = useMemo(
+    () =>
+      merchant.joinedAt
+        ? Date.now() - new Date(merchant.joinedAt).getTime() < 30 * 24 * 60 * 60 * 1000
+        : false,
+    [merchant.joinedAt]
+  );
+
   const openStatus = useMemo(
     () => getMerchantOpenStatus(merchant, i18n.language),
     [merchant, i18n.language]
@@ -38,6 +48,17 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
     : openStatus.openTime
       ? t('customer.merchant.opensAt', { time: openStatus.openTime })
       : t('customer.merchant.closed');
+
+  const locationLabel = useMemo(() => {
+    const parts: string[] = [merchant.address.district];
+    if (merchant.distance != null) {
+      parts.push(`${formatDistance(merchant.distance)} ${t('customer.merchant.away')}`);
+    }
+    parts.push(
+      t('customer.merchant.followers', { count: merchant.followers })
+    );
+    return parts.join(' · ');
+  }, [merchant.address.district, merchant.distance, merchant.followers, t]);
 
   return (
     <PressableScale
@@ -55,7 +76,7 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
           <View className="absolute inset-0 bg-black/10" />
           <View className="absolute left-2 top-2 flex-row gap-1.5">
             <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{statusLabel}</Badge>
-            {isNew && <Badge variant="info">NEW</Badge>}
+            {isNew && <Badge variant="info">{t('customer.merchant.new')}</Badge>}
           </View>
           <View className="absolute right-2 top-2">
             <FavoriteButton
@@ -84,21 +105,21 @@ export function MerchantCard({ merchant, className, testID }: MerchantCardProps)
           <View className="mb-2 flex-row flex-wrap items-center">
             {merchant.isVerified && <TrustBadge type="verified" />}
             {merchant.hygieneRating && merchant.hygieneRating >= 4.5 && (
-              <TrustBadge type="hygiene" label={`Hygiene ${merchant.hygieneRating}`} />
+              <TrustBadge
+                type="hygiene"
+                label={t('customer.merchant.hygieneRated', { rating: merchant.hygieneRating })}
+              />
             )}
           </View>
 
           <View className="flex-row items-center">
             <MapPin size={14} color={colors.muted} />
             <Text variant="caption" className="ml-1.5 flex-1 text-muted" numberOfLines={1}>
-              {merchant.address.district}
-              {merchant.distance != null ? ` · ${formatDistance(merchant.distance)} away` : ''}
-              {' · '}
-              {formatCompactNumber(merchant.followers)} followers
+              {locationLabel}
             </Text>
           </View>
         </View>
       </Card>
     </PressableScale>
   );
-}
+});

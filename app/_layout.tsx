@@ -39,7 +39,7 @@ import { registerPushToken } from '@/src/services/pushToken';
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
 
-initializeI18n('en');
+initializeI18n();
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

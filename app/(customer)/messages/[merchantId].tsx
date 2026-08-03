@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { View, TextInput, FlatList } from 'react-native';
 import { ArrowUp, Store } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +25,7 @@ function MessageBubble({
   message: MerchantMessage;
   isCustomer: boolean;
 }) {
+  const { i18n } = useTranslation();
   return (
     <View className={`mb-3 max-w-[80%] ${isCustomer ? 'self-end' : 'self-start'}`}>
       <View
@@ -37,7 +39,7 @@ function MessageBubble({
         variant="caption"
         className={`mt-1 text-muted ${isCustomer ? 'text-right' : 'text-left'}`}
       >
-        {formatRelativeTime(message.createdAt)}
+        {formatRelativeTime(message.createdAt, i18n.language)}
       </Text>
     </View>
   );

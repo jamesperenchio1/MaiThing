@@ -3,6 +3,15 @@
  * Activated by setting EXPO_PUBLIC_REPOSITORY_MODE=supabase.
  * Maps between the Supabase schema (locations, listings, orders, etc.)
  * and the app's domain types (Merchant, Listing, Order, etc.).
+ *
+ * Expected tables (create these in your Supabase project):
+ *   profiles, locations, merchant_orgs, listings, orders, reviews,
+ *   wallets, wallet_transactions, wallet_rewards, notifications,
+ *   user_impact, merchant_wallets, payout_transactions, merchant_bank_accounts,
+ *   coupons, merchant_messages, merchant_staff, merchant_business_hours,
+ *   merchant_notification_preferences, merchant_onboarding, merchant_broadcasts,
+ *   merchant_follows, merchant_follower_history, user_favorites, user_saved_listings,
+ *   saved_addresses, restock_alerts, followed_merchant_notifications, listing_templates
  */
 import { supabase } from '@/src/lib/supabase';
 import type {
@@ -35,6 +44,8 @@ import type {
   MerchantNotificationPreferences,
   MerchantOnboarding,
   MerchantWallet,
+  MysteryBoxListing,
+  OnboardingStep,
   Notification,
   NotificationPreferences,
   Order,
@@ -68,6 +79,20 @@ function coordsFromIndex(index: number) {
     latitude: BANGKOK_CENTER.latitude + (index % 5) * 0.01,
     longitude: BANGKOK_CENTER.longitude + Math.floor(index / 5) * 0.01,
   };
+}
+
+function startOfDay(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+function startOfWeek(date = new Date()) {
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
 }
 
 // ─── type mappers ────────────────────────────────────────────────────────────
@@ -109,13 +134,19 @@ function mapLocation(row: Record<string, unknown>, index = 0): Merchant {
     categories: Array.isArray(row.cuisine_types) ? (row.cuisine_types as string[]) : [],
     rating: typeof row.avg_rating === 'number' ? row.avg_rating : 4.5,
     reviewCount: typeof row.total_reviews === 'number' ? row.total_reviews : 0,
-    businessHours: [],
-    isOpen: true,
+    businessHours: (row.business_hours as BusinessHours[]) ?? [],
+    isOpen: row.closed_until == null || new Date(row.closed_until as string) < new Date(),
+    closedUntil: (row.closed_until as string) ?? undefined,
     pickupInstructions: (row.pickup_instructions as string) ?? undefined,
     followers: typeof row.follower_count === 'number' ? row.follower_count : 0,
     createdAt: (row.created_at as string) ?? new Date().toISOString(),
+    joinedAt: (row.created_at as string) ?? undefined,
     isVerified: row.is_verified === true,
-    verificationStatus: row.is_verified ? 'verified' : 'unverified',
+    verificationStatus: (row.verification_status as Merchant['verificationStatus']) ?? 'unverified',
+    completedOrders: typeof row.completed_orders === 'number' ? row.completed_orders : 0,
+    refundDisputes: typeof row.refund_disputes === 'number' ? row.refund_disputes : 0,
+    foodSafetyCertUrl: (row.food_safety_cert_url as string) ?? undefined,
+    hygieneRating: typeof row.hygiene_rating === 'number' ? row.hygiene_rating : undefined,
   };
 }
 
@@ -152,7 +183,12 @@ function mapListing(row: Record<string, unknown>): Listing {
     createdAt: (row.created_at as string) ?? new Date().toISOString(),
   };
   if (type === 'mystery_box') {
-    return { ...base, type: 'mystery_box', boxSize: 'medium', estimatedRetailValue: base.originalPrice };
+    return {
+      ...base,
+      type: 'mystery_box',
+      boxSize: (row.box_size as MysteryBoxListing['boxSize']) ?? 'medium',
+      estimatedRetailValue: base.originalPrice,
+    };
   }
   return { ...base, type: 'fixed_item' };
 }
@@ -238,6 +274,111 @@ function mapOrder(row: Record<string, unknown>): Order {
   };
 }
 
+function mapCoupon(row: Record<string, unknown>): Coupon {
+  const now = new Date().toISOString();
+  let status: Coupon['status'] = (row.status as Coupon['status']) ?? 'active';
+  if (status === 'active' && (row.valid_until as string) < now) status = 'expired';
+  return {
+    id: row.id as string,
+    merchantId: row.merchant_id as string,
+    code: (row.code as string) ?? '',
+    description: (row.description as string) ?? '',
+    discountType: (row.discount_type as Coupon['discountType']) ?? 'percentage',
+    discountValue: typeof row.discount_value === 'number' ? row.discount_value : 0,
+    minOrderAmount: typeof row.min_order_amount === 'number' ? row.min_order_amount : undefined,
+    maxUses: typeof row.max_uses === 'number' ? row.max_uses : undefined,
+    usesCount: typeof row.uses_count === 'number' ? row.uses_count : 0,
+    status,
+    validFrom: (row.valid_from as string) ?? now,
+    validUntil: (row.valid_until as string) ?? now,
+    createdAt: (row.created_at as string) ?? now,
+  };
+}
+
+function mapPayout(row: Record<string, unknown>): PayoutTransaction {
+  return {
+    id: row.id as string,
+    merchantId: row.merchant_id as string,
+    amount: typeof row.amount_thb === 'number' ? row.amount_thb : 0,
+    status: (row.status as PayoutTransaction['status']) ?? 'pending',
+    method: 'bank_transfer',
+    bankAccountId: (row.bank_account_id as string) ?? '',
+    bankAccountName: (row.bank_account_name as string) ?? undefined,
+    createdAt: (row.created_at as string) ?? new Date().toISOString(),
+    completedAt: (row.completed_at as string) ?? undefined,
+  };
+}
+
+function mapBankAccount(row: Record<string, unknown>): BankAccount {
+  return {
+    id: row.id as string,
+    merchantId: row.merchant_id as string,
+    bankName: (row.bank_name as string) ?? '',
+    accountName: (row.account_name as string) ?? '',
+    accountNumber: (row.account_number as string) ?? '',
+    branch: (row.branch as string) ?? undefined,
+    isDefault: row.is_default === true,
+  };
+}
+
+function mapStaff(row: Record<string, unknown>): StaffMember {
+  return {
+    id: row.id as string,
+    merchantId: row.merchant_id as string,
+    userId: (row.user_id as string) ?? undefined,
+    name: (row.name as string) ?? '',
+    email: (row.email as string) ?? '',
+    phone: (row.phone as string) ?? undefined,
+    role: (row.role as StaffMember['role']) ?? 'staff',
+    avatarUrl: (row.avatar_url as string) ?? undefined,
+    createdAt: (row.created_at as string) ?? new Date().toISOString(),
+  };
+}
+
+function mapMessage(row: Record<string, unknown>): MerchantMessage {
+  const profile = (row.profiles as Record<string, unknown> | null) ?? {};
+  return {
+    id: row.id as string,
+    merchantId: row.merchant_id as string,
+    customerId: row.customer_id as string,
+    customerName: (profile.display_name as string) ?? 'Customer',
+    customerAvatarUrl: (profile.avatar_url as string) ?? undefined,
+    orderId: (row.order_id as string) ?? undefined,
+    content: (row.content as string) ?? '',
+    sentBy: (row.sent_by as MerchantMessage['sentBy']) ?? 'merchant',
+    read: row.read === true,
+    createdAt: (row.created_at as string) ?? new Date().toISOString(),
+  };
+}
+
+function mapTemplate(row: Record<string, unknown>): ListingTemplate {
+  return {
+    id: row.id as string,
+    merchantId: row.merchant_id as string,
+    name: (row.name as string) ?? '',
+    type: (row.type as ListingTemplate['type']) ?? 'fixed_item',
+    title: (row.title as string) ?? '',
+    description: (row.description as string) ?? '',
+    category: (row.category as string) ?? 'other',
+    originalPrice: typeof row.original_price === 'number' ? row.original_price : 0,
+    salePrice: typeof row.sale_price === 'number' ? row.sale_price : 0,
+    quantity: typeof row.quantity === 'number' ? row.quantity : 1,
+    boxSize: (row.box_size as ListingTemplate['boxSize']) ?? undefined,
+    estimatedRetailValue: typeof row.estimated_retail_value === 'number'
+      ? row.estimated_retail_value
+      : undefined,
+    dietaryTags: Array.isArray(row.dietary_tags) ? (row.dietary_tags as string[]) : [],
+    allergens: Array.isArray(row.allergens) ? (row.allergens as string[]) : [],
+    images: Array.isArray(row.images) ? (row.images as string[]) : [],
+    pickupWindowDurationHours: typeof row.pickup_window_duration_hours === 'number'
+      ? row.pickup_window_duration_hours
+      : 2,
+    autoExpiry: row.auto_expiry === true,
+    createdAt: (row.created_at as string) ?? new Date().toISOString(),
+    expiresAt: (row.expires_at as string) ?? undefined,
+  };
+}
+
 // ─── auth ────────────────────────────────────────────────────────────────────
 
 const authRepo: AuthRepository = {
@@ -309,6 +450,14 @@ const authRepo: AuthRepository = {
 
 // ─── users ───────────────────────────────────────────────────────────────────
 
+const defaultNotificationPreferences: NotificationPreferences = {
+  newDeals: true,
+  orderUpdates: true,
+  merchantMessages: true,
+  promotions: false,
+  followedMerchantNotifications: [],
+};
+
 const usersRepo: UserRepository = {
   async getCurrentUser() {
     const { data } = await supabase.auth.getUser();
@@ -341,38 +490,137 @@ const usersRepo: UserRepository = {
       .single();
     if (error) throw error;
     const base = mapProfile(profile as Record<string, unknown>);
+
+    const [{ data: favorites }, { data: saved }, { data: addresses }, { data: restock }] =
+      await Promise.all([
+        supabase.from('user_favorites').select('merchant_id').eq('user_id', userId),
+        supabase.from('user_saved_listings').select('listing_id').eq('user_id', userId),
+        supabase.from('saved_addresses').select('*').eq('user_id', userId),
+        supabase.from('restock_alerts').select('listing_id').eq('user_id', userId),
+      ]);
+
+    const stored = (profile.notification_preferences as Partial<NotificationPreferences> | null) ?? {};
+    const prefs: NotificationPreferences = {
+      newDeals: stored.newDeals ?? defaultNotificationPreferences.newDeals,
+      orderUpdates: stored.orderUpdates ?? defaultNotificationPreferences.orderUpdates,
+      merchantMessages: stored.merchantMessages ?? defaultNotificationPreferences.merchantMessages,
+      promotions: stored.promotions ?? defaultNotificationPreferences.promotions,
+      followedMerchantNotifications:
+        (profile.followed_merchant_notifications as string[]) ??
+        defaultNotificationPreferences.followedMerchantNotifications,
+    };
+
     return {
       ...base,
       roles: ['customer', 'merchant'] as UserRole[],
-      favorites: [],
-      savedListings: [],
-      savedAddresses: [],
-      restockAlerts: [],
-      notificationPreferences: {
-        newDeals: true,
-        orderUpdates: true,
-        merchantMessages: true,
-        promotions: false,
-        followedMerchantNotifications: [],
-      },
+      favorites: (favorites ?? []).map((r) => r.merchant_id as string),
+      savedListings: (saved ?? []).map((r) => r.listing_id as string),
+      savedAddresses: (addresses ?? []).map((a) => ({
+        street: (a.address_line1 as string) ?? '',
+        subDistrict: (a.subdistrict as string) ?? '',
+        district: (a.district as string) ?? '',
+        province: (a.province as string) ?? 'Bangkok',
+        postalCode: (a.postal_code as string) ?? '',
+        country: 'Thailand',
+      })),
+      restockAlerts: (restock ?? []).map((r) => r.listing_id as string),
+      notificationPreferences: prefs,
     } satisfies CustomerProfile;
   },
 
   async updateCustomerProfile(userId, data) {
+    const update: Record<string, unknown> = {};
+    if (data.name != null) update.display_name = data.name;
+    if (data.avatarUrl != null) update.avatar_url = data.avatarUrl;
+    if (data.phone != null) update.phone = data.phone;
+    if (data.notificationPreferences != null) {
+      update.notification_preferences = data.notificationPreferences;
+      update.followed_merchant_notifications =
+        data.notificationPreferences.followedMerchantNotifications;
+    }
+    if (Object.keys(update).length > 0) {
+      const { error } = await supabase.from('profiles').update(update).eq('id', userId);
+      if (error) throw error;
+    }
     return usersRepo.getCustomerProfile(userId);
   },
 
-  async addFavorite() {},
-  async removeFavorite() {},
-  async addSavedListing() {},
-  async removeSavedListing() {},
+  async addFavorite(userId, merchantId) {
+    await supabase.from('user_favorites').upsert({ user_id: userId, merchant_id: merchantId });
+  },
+  async removeFavorite(userId, merchantId) {
+    await supabase
+      .from('user_favorites')
+      .delete()
+      .eq('user_id', userId)
+      .eq('merchant_id', merchantId);
+  },
+  async addSavedListing(userId, listingId) {
+    await supabase.from('user_saved_listings').upsert({ user_id: userId, listing_id: listingId });
+  },
+  async removeSavedListing(userId, listingId) {
+    await supabase
+      .from('user_saved_listings')
+      .delete()
+      .eq('user_id', userId)
+      .eq('listing_id', listingId);
+  },
   async updateNotificationPreferences(_userId, preferences) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        notification_preferences: preferences,
+        followed_merchant_notifications: preferences.followedMerchantNotifications,
+      })
+      .eq('id', _userId);
+    if (error) throw error;
     return preferences;
   },
-  async addMerchantFollowNotification() {},
-  async removeMerchantFollowNotification() {},
-  async addRestockAlert() {},
-  async removeRestockAlert() {},
+  async addMerchantFollowNotification(userId, merchantId) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('followed_merchant_notifications')
+      .eq('id', userId)
+      .single();
+    const existing = Array.isArray(data?.followed_merchant_notifications)
+      ? (data.followed_merchant_notifications as string[])
+      : [];
+    if (existing.includes(merchantId)) return;
+    await supabase
+      .from('profiles')
+      .update({ followed_merchant_notifications: [...existing, merchantId] })
+      .eq('id', userId);
+    await supabase.from('followed_merchant_notifications').upsert({ user_id: userId, merchant_id: merchantId });
+  },
+  async removeMerchantFollowNotification(userId, merchantId) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('followed_merchant_notifications')
+      .eq('id', userId)
+      .single();
+    const existing = Array.isArray(data?.followed_merchant_notifications)
+      ? (data.followed_merchant_notifications as string[])
+      : [];
+    await supabase
+      .from('profiles')
+      .update({ followed_merchant_notifications: existing.filter((id) => id !== merchantId) })
+      .eq('id', userId);
+    await supabase
+      .from('followed_merchant_notifications')
+      .delete()
+      .eq('user_id', userId)
+      .eq('merchant_id', merchantId);
+  },
+  async addRestockAlert(userId, listingId) {
+    await supabase.from('restock_alerts').upsert({ user_id: userId, listing_id: listingId });
+  },
+  async removeRestockAlert(userId, listingId) {
+    await supabase
+      .from('restock_alerts')
+      .delete()
+      .eq('user_id', userId)
+      .eq('listing_id', listingId);
+  },
 };
 
 // ─── merchants ───────────────────────────────────────────────────────────────
@@ -400,7 +648,7 @@ const merchantsRepo: MerchantRepository = {
   async getMerchant(id) {
     const { data, error } = await supabase
       .from('locations')
-      .select('*, merchant_orgs(*)')
+      .select('*, merchant_orgs(*), merchant_business_hours(*)')
       .eq('id', id)
       .single();
     if (error) return null;
@@ -418,7 +666,7 @@ const merchantsRepo: MerchantRepository = {
 
     const { data, error } = await supabase
       .from('locations')
-      .select('*, merchant_orgs(*)')
+      .select('*, merchant_orgs(*), merchant_business_hours(*)')
       .eq('merchant_org_id', org.id)
       .limit(1)
       .maybeSingle();
@@ -437,13 +685,25 @@ const merchantsRepo: MerchantRepository = {
     ];
   },
 
-  async followMerchant() {},
-  async unfollowMerchant() {},
+  async followMerchant(userId, merchantId) {
+    await supabase.from('merchant_follows').upsert({ user_id: userId, merchant_id: merchantId });
+    await supabase.rpc('increment_follower_count', { merchant_id: merchantId });
+  },
+  async unfollowMerchant(userId, merchantId) {
+    await supabase
+      .from('merchant_follows')
+      .delete()
+      .eq('user_id', userId)
+      .eq('merchant_id', merchantId);
+    await supabase.rpc('decrement_follower_count', { merchant_id: merchantId });
+  },
 
   async updateMerchant(id, data) {
     const updateData: Record<string, unknown> = {};
     if (data.name) updateData.name = data.name;
     if (data.description) updateData.description = data.description;
+    if (data.phone) updateData.phone = data.phone;
+    if (data.categories) updateData.cuisine_types = data.categories;
     const { data: row, error } = await supabase
       .from('locations')
       .update(updateData)
@@ -455,8 +715,18 @@ const merchantsRepo: MerchantRepository = {
   },
 
   async updateBusinessHours(id, hours) {
-    const merchant = await merchantsRepo.getMerchant(id);
-    return notNull(merchant, 'merchant');
+    await supabase.from('merchant_business_hours').delete().eq('merchant_id', id);
+    if (hours.length > 0) {
+      await supabase.from('merchant_business_hours').insert(
+        hours.map((h) => ({
+          merchant_id: id,
+          day: h.day,
+          open: h.open,
+          close: h.close,
+        }))
+      );
+    }
+    return notNull(await merchantsRepo.getMerchant(id), 'merchant');
   },
 
   async updatePickupInstructions(id, instructions) {
@@ -537,36 +807,164 @@ const merchantsRepo: MerchantRepository = {
     };
   },
 
-  async getStaff(): Promise<StaffMember[]> { return []; },
-  async addStaff(_merchantId, data) {
-    return { ...data, id: `staff-${Date.now()}`, merchantId: _merchantId, createdAt: new Date().toISOString() };
+  async getStaff(merchantId): Promise<StaffMember[]> {
+    const { data, error } = await supabase
+      .from('merchant_staff')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return (data ?? []).map((r) => mapStaff(r as Record<string, unknown>));
   },
-  async removeStaff() {},
-  async setStoreClosure(id) {
-    const m = await merchantsRepo.getMerchant(id);
-    return notNull(m, 'merchant');
+  async addStaff(merchantId, data) {
+    const { data: row, error } = await supabase
+      .from('merchant_staff')
+      .insert({
+        merchant_id: merchantId,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        user_id: data.userId,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapStaff(row as Record<string, unknown>);
   },
-  async getMerchantNotificationPreferences(): Promise<MerchantNotificationPreferences> {
-    return { newOrders: true, lowStock: true, payoutUpdates: true, customerReviews: true, pickupReminders: true, autoConfirmOrders: false };
+  async removeStaff(merchantId, staffId) {
+    await supabase
+      .from('merchant_staff')
+      .delete()
+      .eq('merchant_id', merchantId)
+      .eq('id', staffId);
   },
-  async updateMerchantNotificationPreferences(_id, preferences) { return preferences; },
+  async setStoreClosure(merchantId, closedUntil) {
+    const { data, error } = await supabase
+      .from('locations')
+      .update({ closed_until: closedUntil })
+      .eq('id', merchantId)
+      .select('*, merchant_orgs(*)')
+      .single();
+    if (error) throw error;
+    return mapLocation(data as Record<string, unknown>);
+  },
+  async getMerchantNotificationPreferences(merchantId): Promise<MerchantNotificationPreferences> {
+    const { data } = await supabase
+      .from('merchant_notification_preferences')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .maybeSingle();
+    return {
+      newOrders: (data?.new_orders as boolean) ?? true,
+      lowStock: (data?.low_stock as boolean) ?? true,
+      payoutUpdates: (data?.payout_updates as boolean) ?? true,
+      customerReviews: (data?.customer_reviews as boolean) ?? true,
+      pickupReminders: (data?.pickup_reminders as boolean) ?? true,
+      autoConfirmOrders: (data?.auto_confirm_orders as boolean) ?? false,
+    };
+  },
+  async updateMerchantNotificationPreferences(merchantId, preferences) {
+    const { error } = await supabase.from('merchant_notification_preferences').upsert({
+      merchant_id: merchantId,
+      new_orders: preferences.newOrders,
+      low_stock: preferences.lowStock,
+      payout_updates: preferences.payoutUpdates,
+      customer_reviews: preferences.customerReviews,
+      pickup_reminders: preferences.pickupReminders,
+      auto_confirm_orders: preferences.autoConfirmOrders,
+    });
+    if (error) throw error;
+    return preferences;
+  },
   async getOnboarding(merchantId): Promise<MerchantOnboarding> {
-    return { merchantId, completedSteps: [], currentStep: 'welcome' };
+    const { data } = await supabase
+      .from('merchant_onboarding')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .maybeSingle();
+    return {
+      merchantId,
+      completedSteps: (data?.completed_steps as MerchantOnboarding['completedSteps']) ?? [],
+      currentStep: (data?.current_step as MerchantOnboarding['currentStep']) ?? 'welcome',
+    };
   },
-  async updateOnboarding(merchantId) {
-    return { merchantId, completedSteps: [], currentStep: 'complete' };
+  async updateOnboarding(merchantId, step) {
+    const onboardingStep = step as OnboardingStep;
+    const current = await merchantsRepo.getOnboarding(merchantId);
+    const completed = new Set([...current.completedSteps, onboardingStep]);
+    let nextStep: OnboardingStep = onboardingStep;
+    const order: OnboardingStep[] = [
+      'welcome',
+      'business_info',
+      'verification',
+      'bank_account',
+      'first_listing',
+      'complete',
+    ];
+    const idx = order.indexOf(onboardingStep);
+    if (idx >= 0 && idx < order.length - 1) nextStep = order[idx + 1];
+
+    await supabase.from('merchant_onboarding').upsert({
+      merchant_id: merchantId,
+      completed_steps: Array.from(completed),
+      current_step: nextStep,
+    });
+    return { merchantId, completedSteps: Array.from(completed) as OnboardingStep[], currentStep: nextStep };
   },
   async sendBroadcast(merchantId, content): Promise<BroadcastMessage> {
-    return { id: `bc-${Date.now()}`, merchantId, content, sentAt: new Date().toISOString(), recipientCount: 0 };
+    const { data, error } = await supabase
+      .from('merchant_broadcasts')
+      .insert({ merchant_id: merchantId, content })
+      .select()
+      .single();
+    if (error) throw error;
+    return {
+      id: data.id as string,
+      merchantId,
+      content,
+      sentAt: (data.created_at as string) ?? new Date().toISOString(),
+      recipientCount: typeof data.recipient_count === 'number' ? data.recipient_count : 0,
+    };
   },
-  async getRecentBroadcasts(): Promise<BroadcastMessage[]> { return []; },
-  async verifyMerchant(merchantId) {
-    const m = await merchantsRepo.getMerchant(merchantId);
-    return notNull(m, 'merchant');
+  async getRecentBroadcasts(merchantId): Promise<BroadcastMessage[]> {
+    const { data, error } = await supabase
+      .from('merchant_broadcasts')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) return [];
+    return (data ?? []).map((r) => ({
+      id: r.id as string,
+      merchantId,
+      content: (r.content as string) ?? '',
+      sentAt: (r.created_at as string) ?? new Date().toISOString(),
+      recipientCount: typeof r.recipient_count === 'number' ? r.recipient_count : 0,
+    }));
   },
-  async uploadFoodSafetyCert(merchantId) {
-    const m = await merchantsRepo.getMerchant(merchantId);
-    return notNull(m, 'merchant');
+  async verifyMerchant(merchantId, override = false) {
+    const { data, error } = await supabase
+      .from('locations')
+      .update({
+        is_verified: override ? true : false,
+        verification_status: override ? 'verified' : 'pending',
+      })
+      .eq('id', merchantId)
+      .select('*, merchant_orgs(*)')
+      .single();
+    if (error) throw error;
+    return mapLocation(data as Record<string, unknown>);
+  },
+  async uploadFoodSafetyCert(merchantId, certUrl) {
+    const { data, error } = await supabase
+      .from('locations')
+      .update({ food_safety_cert_url: certUrl })
+      .eq('id', merchantId)
+      .select('*, merchant_orgs(*)')
+      .single();
+    if (error) throw error;
+    return mapLocation(data as Record<string, unknown>);
   },
 };
 
@@ -657,11 +1055,44 @@ const listingsRepo: ListingRepository = {
     if (error) throw error;
   },
 
-  async getListingTemplates(): Promise<ListingTemplate[]> { return []; },
-  async createListingTemplate(data): Promise<ListingTemplate> {
-    return { ...data, id: `tpl-${Date.now()}`, createdAt: new Date().toISOString() };
+  async getListingTemplates(merchantId): Promise<ListingTemplate[]> {
+    const { data, error } = await supabase
+      .from('listing_templates')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return (data ?? []).map((r) => mapTemplate(r as Record<string, unknown>));
   },
-  async deleteListingTemplate() {},
+  async createListingTemplate(data): Promise<ListingTemplate> {
+    const { data: row, error } = await supabase
+      .from('listing_templates')
+      .insert({
+        merchant_id: data.merchantId,
+        name: data.name,
+        type: data.type,
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        original_price: data.originalPrice,
+        sale_price: data.salePrice,
+        quantity: data.quantity,
+        box_size: data.boxSize,
+        estimated_retail_value: data.estimatedRetailValue,
+        dietary_tags: data.dietaryTags,
+        allergens: data.allergens,
+        images: data.images,
+        pickup_window_duration_hours: data.pickupWindowDurationHours,
+        auto_expiry: data.autoExpiry,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapTemplate(row as Record<string, unknown>);
+  },
+  async deleteListingTemplate(id) {
+    await supabase.from('listing_templates').delete().eq('id', id);
+  },
 };
 
 // ─── orders ──────────────────────────────────────────────────────────────────
@@ -672,8 +1103,6 @@ const ordersRepo: OrderRepository = {
     let locationId = userId;
 
     if (role === 'merchant') {
-      // userId is actually the location (merchant) id for the merchant role
-      // But we might be passed a user id — try to look up their location
       const { data: loc } = await supabase
         .from('locations')
         .select('id, merchant_org_id')
@@ -809,10 +1238,7 @@ const walletRepo: WalletRepository = {
   async topUp(userId, amount): Promise<Wallet> {
     const current = await walletRepo.getWallet(userId);
     const newBalance = current.balance + amount;
-    await supabase
-      .from('wallets')
-      .update({ balance_thb: newBalance })
-      .eq('user_id', userId);
+    await supabase.from('wallets').update({ balance_thb: newBalance }).eq('user_id', userId);
     await supabase.from('wallet_transactions').insert({
       user_id: userId,
       type: 'top_up',
@@ -825,10 +1251,7 @@ const walletRepo: WalletRepository = {
   async spend(userId, amount, description): Promise<Wallet> {
     const current = await walletRepo.getWallet(userId);
     const newBalance = current.balance - amount;
-    await supabase
-      .from('wallets')
-      .update({ balance_thb: newBalance })
-      .eq('user_id', userId);
+    await supabase.from('wallets').update({ balance_thb: newBalance }).eq('user_id', userId);
     await supabase.from('wallet_transactions').insert({
       user_id: userId,
       type: 'purchase',
@@ -841,10 +1264,7 @@ const walletRepo: WalletRepository = {
   async refund(userId, amount, description): Promise<Wallet> {
     const current = await walletRepo.getWallet(userId);
     const newBalance = current.balance + amount;
-    await supabase
-      .from('wallets')
-      .update({ balance_thb: newBalance })
-      .eq('user_id', userId);
+    await supabase.from('wallets').update({ balance_thb: newBalance }).eq('user_id', userId);
     await supabase.from('wallet_transactions').insert({
       user_id: userId,
       type: 'refund',
@@ -870,10 +1290,39 @@ const walletRepo: WalletRepository = {
   },
 
   async addTopUpBonus(userId, topUpAmount): Promise<WalletReward> {
+    const bonus = Math.floor(topUpAmount * 0.05);
+    if (bonus <= 0) return walletRepo.getRewards(userId);
+    const current = await walletRepo.getRewards(userId);
+    const { error } = await supabase.from('wallet_rewards').upsert({
+      user_id: userId,
+      bonus_balance_thb: current.bonusBalance + bonus,
+    });
+    if (error) throw error;
+    await supabase.from('wallet_transactions').insert({
+      user_id: userId,
+      type: 'top_up_bonus',
+      amount_thb: bonus,
+      description: `Top-up bonus ฿${bonus}`,
+    });
     return walletRepo.getRewards(userId);
   },
 
-  async addPurchasePoints(userId): Promise<WalletReward> {
+  async addPurchasePoints(userId, amountSpent): Promise<WalletReward> {
+    const points = Math.floor(amountSpent);
+    if (points <= 0) return walletRepo.getRewards(userId);
+    const current = await walletRepo.getRewards(userId);
+    const { error } = await supabase.from('wallet_rewards').upsert({
+      user_id: userId,
+      points: current.points + points,
+      lifetime_points: current.lifetimePoints + points,
+    });
+    if (error) throw error;
+    await supabase.from('wallet_transactions').insert({
+      user_id: userId,
+      type: 'points_earned',
+      amount_thb: 0,
+      description: `Earned ${points} points`,
+    });
     return walletRepo.getRewards(userId);
   },
 };
@@ -914,30 +1363,91 @@ const analyticsRepo: AnalyticsRepository = {
   async getMerchantAnalytics(merchantId): Promise<MerchantAnalytics> {
     const { data: orders } = await supabase
       .from('orders')
-      .select('amount_thb, created_at, status')
+      .select('amount_thb, created_at, status, listing_id, listings(name)')
       .eq('location_id', merchantId);
 
-    const completed = (orders ?? []).filter((o) =>
-      ['collected', 'paid', 'completed'].includes(o.status as string)
-    );
-    const totalRevenue = completed.reduce((s, o) => s + (o.amount_thb as number ?? 0), 0);
+    const completedStatuses = ['collected', 'paid', 'completed'];
+    const completed = (orders ?? []).filter((o) => completedStatuses.includes(o.status as string));
+    const totalRevenue = completed.reduce((s, o) => s + ((o.amount_thb as number) ?? 0), 0);
     const totalOrders = completed.length;
+
+    const todayStart = startOfDay();
+    const todayCompleted = completed.filter((o) => (o.created_at as string) >= todayStart);
+    const todayRevenue = todayCompleted.reduce(
+      (s, o) => s + ((o.amount_thb as number) ?? 0),
+      0
+    );
+
+    const weekStart = startOfWeek();
+    const weekDays = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      return d.toISOString().slice(0, 10);
+    });
+    const weeklyRevenue = weekDays.map((day) =>
+      completed
+        .filter((o) => (o.created_at as string).slice(0, 10) === day)
+        .reduce((s, o) => s + ((o.amount_thb as number) ?? 0), 0)
+    );
+    const weeklyOrders = weekDays.map(
+      (day) => completed.filter((o) => (o.created_at as string).slice(0, 10) === day).length
+    );
+    const weeklyItemsSaved = weeklyOrders;
+
+    const hourlyRevenue = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      revenue: completed
+        .filter((o) => new Date(o.created_at as string).getHours() === hour)
+        .reduce((s, o) => s + ((o.amount_thb as number) ?? 0), 0),
+    }));
+
+    const listingRevenue: Record<
+      string,
+      { title: string; revenue: number; orders: number }
+    > = {};
+    completed.forEach((o) => {
+      const id = (o.listing_id as string) ?? 'unknown';
+      const listingsArray = (o.listings as { name?: string }[] | null) ?? [];
+      const listing = listingsArray[0] ?? {};
+      if (!listingRevenue[id]) {
+        listingRevenue[id] = {
+          title: listing.name ?? 'Unknown',
+          revenue: 0,
+          orders: 0,
+        };
+      }
+      listingRevenue[id].revenue += (o.amount_thb as number) ?? 0;
+      listingRevenue[id].orders += 1;
+    });
+    const topListings = Object.entries(listingRevenue)
+      .map(([listingId, v]) => ({
+        listingId,
+        title: v.title,
+        revenue: v.revenue,
+        orders: v.orders,
+        views: 0,
+        clicks: 0,
+        searchAppearances: 0,
+        conversionRate: 0,
+      }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
 
     return {
       merchantId,
       totalRevenue,
       totalOrders,
       totalItemsSaved: totalOrders,
-      todayRevenue: 0,
-      todayOrders: 0,
-      weeklyRevenue: [0, 0, 0, 0, 0, 0, 0],
-      weeklyOrders: [0, 0, 0, 0, 0, 0, 0],
-      weeklyItemsSaved: [0, 0, 0, 0, 0, 0, 0],
+      todayRevenue,
+      todayOrders: todayCompleted.length,
+      weeklyRevenue,
+      weeklyOrders,
+      weeklyItemsSaved,
       views: 0,
       conversionRate: totalOrders > 0 ? 0.15 : 0,
       avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
-      topListings: [],
-      hourlyRevenue: [],
+      topListings,
+      hourlyRevenue,
       weeklyAOV: [0, 0, 0, 0],
       followerHistory: [],
     };
@@ -958,83 +1468,225 @@ const analyticsRepo: AnalyticsRepository = {
     };
   },
 
-  async getFollowerHistory(): Promise<{ date: string; count: number }[]> { return []; },
+  async getFollowerHistory(merchantId): Promise<{ date: string; count: number }[]> {
+    const { data, error } = await supabase
+      .from('merchant_follower_history')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .order('date', { ascending: true })
+      .limit(90);
+    if (error) return [];
+    return (data ?? []).map((r) => ({
+      date: (r.date as string) ?? new Date().toISOString(),
+      count: typeof r.count === 'number' ? r.count : 0,
+    }));
+  },
 };
 
 // ─── payouts ─────────────────────────────────────────────────────────────────
 
 const payoutsRepo: PayoutRepository = {
   async getMerchantWallet(merchantId): Promise<MerchantWallet> {
+    const { data: wallet, error } = await supabase
+      .from('merchant_wallets')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .maybeSingle();
+    if (error || !wallet) {
+      return {
+        merchantId,
+        balance: 0,
+        currency: 'THB',
+        totalEarnings: 0,
+        pendingPayout: 0,
+        commissionRate: 0.15,
+      };
+    }
     return {
       merchantId,
-      balance: 0,
-      currency: 'THB',
-      totalEarnings: 0,
-      pendingPayout: 0,
-      commissionRate: 0.15,
+      balance: typeof wallet.balance_thb === 'number' ? wallet.balance_thb : 0,
+      currency: (wallet.currency as string) ?? 'THB',
+      totalEarnings: typeof wallet.total_earnings === 'number' ? wallet.total_earnings : 0,
+      pendingPayout: typeof wallet.pending_payout === 'number' ? wallet.pending_payout : 0,
+      commissionRate: typeof wallet.commission_rate === 'number' ? wallet.commission_rate : 0.15,
+      lastPayoutDate: (wallet.last_payout_date as string) ?? undefined,
+      nextPayoutDate: (wallet.next_payout_date as string) ?? undefined,
     };
   },
-  async getPayoutTransactions(): Promise<PayoutTransaction[]> { return []; },
-  async getBankAccounts(): Promise<BankAccount[]> { return []; },
+  async getPayoutTransactions(merchantId): Promise<PayoutTransaction[]> {
+    const { data, error } = await supabase
+      .from('payout_transactions')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return (data ?? []).map((r) => mapPayout(r as Record<string, unknown>));
+  },
+  async getBankAccounts(merchantId): Promise<BankAccount[]> {
+    const { data, error } = await supabase
+      .from('merchant_bank_accounts')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .order('is_default', { ascending: false });
+    if (error) return [];
+    return (data ?? []).map((r) => mapBankAccount(r as Record<string, unknown>));
+  },
   async addBankAccount(merchantId, data): Promise<BankAccount> {
-    return { ...data, id: `bank-${Date.now()}`, merchantId };
+    const { data: row, error } = await supabase
+      .from('merchant_bank_accounts')
+      .insert({
+        merchant_id: merchantId,
+        bank_name: data.bankName,
+        account_name: data.accountName,
+        account_number: data.accountNumber,
+        branch: data.branch,
+        is_default: data.isDefault,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapBankAccount(row as Record<string, unknown>);
   },
-  async setDefaultBankAccount() {},
+  async setDefaultBankAccount(merchantId, accountId) {
+    await supabase
+      .from('merchant_bank_accounts')
+      .update({ is_default: false })
+      .eq('merchant_id', merchantId);
+    await supabase
+      .from('merchant_bank_accounts')
+      .update({ is_default: true })
+      .eq('id', accountId)
+      .eq('merchant_id', merchantId);
+  },
   async requestPayout(merchantId, amount): Promise<PayoutTransaction> {
-    return {
-      id: `payout-${Date.now()}`,
-      merchantId,
-      amount,
-      status: 'pending',
-      method: 'bank_transfer',
-      bankAccountId: '',
-      createdAt: new Date().toISOString(),
-    };
+    const accounts = await payoutsRepo.getBankAccounts(merchantId);
+    const defaultAccount = accounts.find((a) => a.isDefault) ?? accounts[0];
+    const { data: row, error } = await supabase
+      .from('payout_transactions')
+      .insert({
+        merchant_id: merchantId,
+        amount_thb: amount,
+        status: 'pending',
+        method: 'bank_transfer',
+        bank_account_id: defaultAccount?.id ?? '',
+        bank_account_name: defaultAccount
+          ? `${defaultAccount.bankName} - ${defaultAccount.accountName}`
+          : undefined,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapPayout(row as Record<string, unknown>);
   },
 };
 
 // ─── coupons ─────────────────────────────────────────────────────────────────
 
 const couponsRepo: CouponRepository = {
-  async getCoupons(): Promise<Coupon[]> { return []; },
-  async createCoupon(merchantId, data): Promise<Coupon> {
-    return { ...data, id: `cpn-${Date.now()}`, merchantId, usesCount: 0, createdAt: new Date().toISOString() };
+  async getCoupons(merchantId): Promise<Coupon[]> {
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return (data ?? []).map((r) => mapCoupon(r as Record<string, unknown>));
   },
-  async updateCoupon(_id, data): Promise<Coupon> { return stub('updateCoupon'); },
-  async deleteCoupon() {},
+  async createCoupon(merchantId, data): Promise<Coupon> {
+    const { data: row, error } = await supabase
+      .from('coupons')
+      .insert({
+        merchant_id: merchantId,
+        code: data.code,
+        description: data.description,
+        discount_type: data.discountType,
+        discount_value: data.discountValue,
+        min_order_amount: data.minOrderAmount,
+        max_uses: data.maxUses,
+        valid_from: data.validFrom,
+        valid_until: data.validUntil,
+        status: data.status,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapCoupon(row as Record<string, unknown>);
+  },
+  async updateCoupon(id, data): Promise<Coupon> {
+    const update: Record<string, unknown> = {};
+    if (data.code) update.code = data.code;
+    if (data.description) update.description = data.description;
+    if (data.discountType) update.discount_type = data.discountType;
+    if (data.discountValue !== undefined) update.discount_value = data.discountValue;
+    if (data.minOrderAmount !== undefined) update.min_order_amount = data.minOrderAmount;
+    if (data.maxUses !== undefined) update.max_uses = data.maxUses;
+    if (data.validFrom) update.valid_from = data.validFrom;
+    if (data.validUntil) update.valid_until = data.validUntil;
+    if (data.status) update.status = data.status;
+    const { data: row, error } = await supabase
+      .from('coupons')
+      .update(update)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return mapCoupon(row as Record<string, unknown>);
+  },
+  async deleteCoupon(id) {
+    await supabase.from('coupons').delete().eq('id', id);
+  },
 };
 
 // ─── messages ────────────────────────────────────────────────────────────────
 
 const messagesRepo: MessageRepository = {
-  async getConversations(): Promise<MerchantMessage[]> { return []; },
-  async getMessages(): Promise<MerchantMessage[]> { return []; },
+  async getConversations(merchantId): Promise<MerchantMessage[]> {
+    const { data, error } = await supabase
+      .from('merchant_messages')
+      .select('*, profiles(display_name, avatar_url)')
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+
+    const latestByCustomer = new Map<string, Record<string, unknown>>();
+    (data ?? []).forEach((r) => {
+      const customerId = r.customer_id as string;
+      if (!latestByCustomer.has(customerId)) latestByCustomer.set(customerId, r);
+    });
+
+    return Array.from(latestByCustomer.values()).map((r) => mapMessage(r as Record<string, unknown>));
+  },
+  async getMessages(merchantId, customerId): Promise<MerchantMessage[]> {
+    const { data, error } = await supabase
+      .from('merchant_messages')
+      .select('*, profiles(display_name, avatar_url)')
+      .eq('merchant_id', merchantId)
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: true });
+    if (error) return [];
+    return (data ?? []).map((r) => mapMessage(r as Record<string, unknown>));
+  },
   async sendMessage(merchantId, customerId, content, sentBy): Promise<MerchantMessage> {
-    return {
-      id: `msg-${Date.now()}`,
-      merchantId,
-      customerId,
-      customerName: 'Customer',
-      content,
-      sentBy,
-      read: false,
-      createdAt: new Date().toISOString(),
-    };
+    const { data: row, error } = await supabase
+      .from('merchant_messages')
+      .insert({ merchant_id: merchantId, customer_id: customerId, content, sent_by: sentBy })
+      .select('*, profiles(display_name, avatar_url)')
+      .single();
+    if (error) throw error;
+    return mapMessage(row as Record<string, unknown>);
   },
   async sendWelcomeMessage(merchantId, customerId, customerName, orderId): Promise<MerchantMessage> {
-    return {
-      id: `msg-${Date.now()}`,
-      merchantId,
-      customerId,
-      customerName,
-      orderId,
-      content: `Welcome, ${customerName}! Your order is confirmed.`,
-      sentBy: 'merchant',
-      read: false,
-      createdAt: new Date().toISOString(),
-    };
+    const content = `Welcome, ${customerName}! Your order is confirmed.`;
+    return messagesRepo.sendMessage(merchantId, customerId, content, 'merchant');
   },
-  async markConversationAsRead() {},
+  async markConversationAsRead(merchantId, customerId) {
+    await supabase
+      .from('merchant_messages')
+      .update({ read: true })
+      .eq('merchant_id', merchantId)
+      .eq('customer_id', customerId)
+      .neq('sent_by', 'merchant');
+  },
 };
 
 // ─── export ──────────────────────────────────────────────────────────────────

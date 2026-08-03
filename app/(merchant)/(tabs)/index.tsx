@@ -182,7 +182,7 @@ function LowStockCard({ listing, onPress }: { listing: Listing; onPress?: () => 
 
 export default function MerchantDashboardScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
 
@@ -558,7 +558,7 @@ export default function MerchantDashboardScreen() {
                     </View>
                     <View className="items-end">
                       <Text variant="caption" className="text-muted mb-1">
-                        {formatRelativeTime(conversation.createdAt)}
+                        {formatRelativeTime(conversation.createdAt, i18n.language)}
                       </Text>
                       <Text variant="caption" className="text-primary font-semibold">
                         Tap to reply

@@ -95,15 +95,22 @@ export default function CartScreen() {
         notes: note.trim() || undefined,
       });
 
-      await repositories.wallet.spend(user.id, total, `Purchase at ${merchant.name}`);
+      await repositories.wallet.spend(
+        user.id,
+        total,
+        t('customer.cart.purchaseNote', { merchant: merchant.name })
+      );
 
       clearCart();
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
 
       scheduleLocalNotification(
-        'Order confirmed',
-        `Your order from ${merchant.name} has been confirmed. Pickup code: ${order.pickupCode}`,
+        t('customer.notifications.orderConfirmed.title'),
+        t('customer.notifications.orderConfirmed.body', {
+          merchant: merchant.name,
+          code: order.pickupCode,
+        }),
         { orderId: order.id, type: 'order_confirmed' },
         undefined,
         'order_update',
@@ -111,8 +118,11 @@ export default function CartScreen() {
       ).catch(() => {});
 
       scheduleLocalNotification(
-        'New order received',
-        `You have a new order from ${user.name} for ${formatCurrency(order.total)}`,
+        t('merchant.notifications.newOrder.title'),
+        t('merchant.notifications.newOrder.body', {
+          customer: user.name,
+          total: formatCurrency(order.total),
+        }),
         { orderId: order.id, type: 'new_order' },
         undefined,
         undefined,
@@ -174,10 +184,12 @@ export default function CartScreen() {
                         {merchant.address.street}, {merchant.address.district}
                       </Text>
                       <Text variant="caption" className="text-muted">
-                        {formatDistance(
-                          calculateDistance(DEFAULT_USER_LOCATION, merchant.coordinates)
-                        )}{' '}
-                        away · {merchant.address.district}
+                        {t('customer.merchant.distance', {
+                          distance: formatDistance(
+                            calculateDistance(DEFAULT_USER_LOCATION, merchant.coordinates)
+                          ),
+                        })}{' '}
+                        · {merchant.address.district}
                       </Text>
                     </View>
                   </View>
@@ -213,7 +225,7 @@ export default function CartScreen() {
                             {item.listing.title}
                           </Text>
                           <Text variant="caption" className="text-muted">
-                            {formatCurrency(item.listing.salePrice)} each
+                            {formatCurrency(item.listing.salePrice)} {t('customer.cart.each')}
                           </Text>
                           <Text className="mt-1 font-semibold text-primary">
                             {formatCurrency(item.listing.salePrice * item.quantity)}
@@ -226,7 +238,7 @@ export default function CartScreen() {
                               className="rounded-xl bg-muted/10 p-2"
                               scale={0.9}
                               disabled={item.quantity <= 1}
-                              accessibilityLabel="Decrease quantity"
+                              accessibilityLabel={t('customer.cart.decreaseQuantity')}
                               hitSlop={8}
                             >
                               <Minus size={16} color={colors.foreground} />
@@ -244,7 +256,7 @@ export default function CartScreen() {
                               className="rounded-xl bg-muted/10 p-2"
                               scale={0.9}
                               disabled={item.quantity >= item.listing.quantityRemaining}
-                              accessibilityLabel="Increase quantity"
+                              accessibilityLabel={t('customer.cart.increaseQuantity')}
                               hitSlop={8}
                             >
                               <Plus size={16} color={colors.foreground} />
@@ -254,7 +266,7 @@ export default function CartScreen() {
                             onPress={() => removeItem(item.listing.id)}
                             className="rounded-xl bg-danger/10 p-2"
                             scale={0.9}
-                            accessibilityLabel="Remove item"
+                            accessibilityLabel={t('customer.cart.removeItem')}
                             hitSlop={8}
                           >
                             <Trash2 size={16} color={colors.danger} />
@@ -289,28 +301,27 @@ export default function CartScreen() {
               <Card variant="outlined" className="mb-4">
                 <View className="mb-3 flex-row items-center justify-between">
                   <Text variant="body-sm" className="text-muted">
-                    Subtotal
+                    {t('customer.cart.subtotal')}
                   </Text>
                   <Text variant="body-sm">{formatCurrency(cartSubtotal)}</Text>
                 </View>
                 <View className="mb-3 flex-row items-center justify-between">
                   <Text variant="body-sm" className="text-muted">
-                    You save
+                    {t('customer.cart.youSave')}
                   </Text>
                   <Text variant="body-sm" className="text-success">
                     -{formatCurrency(discount)}
                   </Text>
                 </View>
                 <View className="border-t border-border pt-3 flex-row items-center justify-between">
-                  <Text className="font-semibold">Total</Text>
+                  <Text className="font-semibold">{t('customer.cart.total')}</Text>
                   <Text className="text-xl font-bold text-primary">{formatCurrency(total)}</Text>
                 </View>
               </Card>
 
               <Card variant="outlined">
                 <Text variant="body-sm" className="text-muted">
-                  Payment will be deducted from your wallet balance. You can cancel anytime before
-                  pickup.
+                  {t('customer.cart.paymentNote')}
                 </Text>
               </Card>
             </View>

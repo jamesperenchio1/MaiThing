@@ -42,6 +42,14 @@
       "expo-calendar",
       "expo-image",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Maithing to access your camera to scan customer pickup QR codes.",
+          "microphonePermission": "Allow Maithing to access your microphone.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "react-native-maps",
         {
           "androidGoogleMapsApiKey": "AIzaSyDUMMY_API_KEY_REPLACE_BEFORE_PRODUCTION"

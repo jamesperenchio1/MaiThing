@@ -19,6 +19,7 @@ import { formatRelativeTime } from '@/src/lib/utils';
 import type { MerchantMessage } from '@/src/types';
 
 function MessageBubble({ message, isMerchant }: { message: MerchantMessage; isMerchant: boolean }) {
+  const { i18n } = useTranslation();
   return (
     <View className={`mb-3 max-w-[80%] ${isMerchant ? 'self-end' : 'self-start'}`}>
       <View
@@ -32,7 +33,7 @@ function MessageBubble({ message, isMerchant }: { message: MerchantMessage; isMe
         variant="caption"
         className={`mt-1 text-muted ${isMerchant ? 'text-right' : 'text-left'}`}
       >
-        {formatRelativeTime(message.createdAt)}
+        {formatRelativeTime(message.createdAt, i18n.language)}
       </Text>
     </View>
   );

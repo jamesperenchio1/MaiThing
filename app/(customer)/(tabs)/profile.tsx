@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import {
   User,
@@ -43,6 +44,7 @@ import { useLanguageStore } from '@/src/stores/language';
 import { useTutorialStore } from '@/src/stores/tutorial';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { repositories } from '@/src/repositories';
+import { getFontScale } from '@/src/lib/responsive';
 import type { NotificationPreferences } from '@/src/types';
 
 interface MenuItemProps {
@@ -59,7 +61,6 @@ function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
     <TouchableOpacity
       testID={testID}
       onPress={() => {
-        console.log('[MenuItem] pressed:', label);
         onPress?.();
       }}
       className="flex-row items-center justify-between py-3 active:opacity-70"
@@ -75,7 +76,8 @@ function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
 }
 
 export default function ProfileScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { width, fontScale } = useWindowDimensions();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const selectedRole = useAuthStore((s) => s.selectedRole);
@@ -106,41 +108,29 @@ export default function ProfileScreen() {
     updatePreferences.mutate({ userId: user.id, preferences: next });
   };
 
-  console.log(
-    '[Profile] user:',
-    user?.id,
-    'roles:',
-    user?.roles,
-    'selectedRole:',
-    selectedRole,
-    'hasMerchantRole:',
-    hasMerchantRole
-  );
-
   const handleSwitchRole = () => {
     const nextRole = selectedRole === 'customer' ? 'merchant' : 'customer';
-    console.log('[Profile] switching to', nextRole);
     switchRole(nextRole);
   };
 
   const handleLogout = () => {
-    Alert.alert('Log out?', 'You will be signed out of your account.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: logout },
+    Alert.alert(t('common.logoutConfirmTitle'), t('common.logoutConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.logout'), style: 'destructive', onPress: logout },
     ]);
   };
 
   const handleLanguagePress = () => {
-    Alert.alert(t('common.language'), 'Choose your language / เลือกภาษา', [
+    Alert.alert(t('common.language'), t('common.chooseLanguage'), [
       {
-        text: 'English',
+        text: t('common.english'),
         onPress: () => useLanguageStore.getState().setLanguage('en'),
       },
       {
-        text: 'ภาษาไทย',
+        text: t('common.thai'),
         onPress: () => useLanguageStore.getState().setLanguage('th'),
       },
-      { text: 'Cancel', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   };
 
@@ -172,18 +162,21 @@ export default function ProfileScreen() {
             <TouchableWithoutFeedback>
               <View className="mx-6 w-full max-w-sm rounded-3xl bg-card p-6">
                 <Text variant="h3" className="mb-4">
-                  Edit Profile
+                  {t('customer.profile.editProfile')}
                 </Text>
                 <Text variant="label" className="mb-2 ml-1">
-                  Name
+                  {t('customer.profile.name')}
                 </Text>
                 <View className="mb-6 rounded-2xl border border-border bg-background px-4 py-3">
                   <TextInput
                     value={editName}
                     onChangeText={setEditName}
-                    placeholder="Your name"
+                    placeholder={t('customer.profile.yourName')}
                     placeholderTextColor={colors.muted}
-                    style={{ color: colors.foreground, fontSize: 16 }}
+                    style={{
+                      color: colors.foreground,
+                      fontSize: Math.round(16 * getFontScale(width, fontScale)),
+                    }}
                     autoFocus
                   />
                 </View>
@@ -193,10 +186,10 @@ export default function ProfileScreen() {
                     className="flex-1"
                     onPress={() => setEditModalVisible(false)}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                   <Button className="flex-1" onPress={handleSaveProfile}>
-                    Save
+                    {t('common.save')}
                   </Button>
                 </View>
               </View>
@@ -214,7 +207,7 @@ export default function ProfileScreen() {
           <Card variant="elevated" className="mb-4 flex-row items-center justify-between">
             <View>
               <Text variant="caption" className="text-muted">
-                Meals saved
+                {t('customer.profile.mealsSaved')}
               </Text>
               <Text variant="h2" className="text-primary">
                 {impact.mealsSaved}
@@ -222,7 +215,7 @@ export default function ProfileScreen() {
             </View>
             <View className="items-end">
               <Text variant="caption" className="text-muted">
-                CO₂ saved
+                {t('customer.profile.co2Saved')}
               </Text>
               <Text variant="h3" className="text-success">
                 {impact.co2SavedKg.toFixed(1)} kg
@@ -230,7 +223,7 @@ export default function ProfileScreen() {
             </View>
             <View className="items-end">
               <Text variant="caption" className="text-muted">
-                Money saved
+                {t('customer.profile.moneySaved')}
               </Text>
               <Text variant="h3" className="text-foreground">
                 ฿{impact.moneySaved.toLocaleString()}
@@ -241,14 +234,16 @@ export default function ProfileScreen() {
 
         <Card testID="profile-card" variant="elevated" className="mb-6">
           <View className="flex-row items-center">
-            <Avatar uri={user?.avatarUrl} name={user?.name ?? 'Guest'} size="lg" />
+            <Avatar uri={user?.avatarUrl} name={user?.name ?? t('customer.profile.guest')} size="lg" />
             <View className="ml-4 flex-1">
-              <Text variant="h3">{user?.name ?? 'Guest'}</Text>
+              <Text variant="h3">{user?.name ?? t('customer.profile.guest')}</Text>
               <Text variant="body-sm" className="text-muted">
                 {user?.email}
               </Text>
               <Text variant="caption" className="text-primary">
-                {selectedRole === 'customer' ? 'Buyer' : 'Merchant'}
+                {selectedRole === 'customer'
+                  ? t('customer.profile.buyer')
+                  : t('customer.profile.merchant')}
               </Text>
             </View>
           </View>
@@ -258,7 +253,7 @@ export default function ProfileScreen() {
           <MenuItem
             testID="edit-profile-menu-item"
             icon={<User size={20} color={colors.muted} />}
-            label="Edit Profile"
+            label={t('customer.profile.editProfile')}
             onPress={handleEditProfile}
           />
           <MenuItem
@@ -276,7 +271,7 @@ export default function ProfileScreen() {
           <MenuItem
             testID="orders-menu-item"
             icon={<ShoppingBag size={20} color={colors.muted} />}
-            label="My Orders"
+            label={t('customer.profile.myOrders')}
             onPress={() => router.navigate('/(customer)/(tabs)/orders' as any)}
           />
         </Card>
@@ -291,7 +286,7 @@ export default function ProfileScreen() {
           <MenuItem
             testID="new-deals-pref-item"
             icon={<Bell size={20} color={colors.muted} />}
-            label="New deals"
+            label={t('customer.profile.newDeals')}
             onPress={() => togglePreference('newDeals')}
             right={
               <Switch
@@ -304,7 +299,7 @@ export default function ProfileScreen() {
           <MenuItem
             testID="order-updates-pref-item"
             icon={<Bell size={20} color={colors.muted} />}
-            label="Order updates"
+            label={t('customer.profile.orderUpdates')}
             onPress={() => togglePreference('orderUpdates')}
             right={
               <Switch
@@ -317,7 +312,7 @@ export default function ProfileScreen() {
           <MenuItem
             testID="merchant-messages-pref-item"
             icon={<Bell size={20} color={colors.muted} />}
-            label="Merchant messages"
+            label={t('customer.profile.merchantMessages')}
             onPress={() => togglePreference('merchantMessages')}
             right={
               <Switch
@@ -330,7 +325,7 @@ export default function ProfileScreen() {
           <MenuItem
             testID="promotions-pref-item"
             icon={<Bell size={20} color={colors.muted} />}
-            label="Promotions"
+            label={t('customer.profile.promotions')}
             onPress={() => togglePreference('promotions')}
             right={
               <Switch
@@ -343,7 +338,7 @@ export default function ProfileScreen() {
           <MenuItem
             testID="replay-tutorial-menu-item"
             icon={<BookOpen size={20} color={colors.muted} />}
-            label="App Tour"
+            label={t('customer.profile.appTour')}
             onPress={() => {
               resetTutorial();
               setTimeout(() => startTutorial(), 150);
@@ -368,7 +363,7 @@ export default function ProfileScreen() {
             label={t('common.language')}
             right={
               <Text variant="body-sm" className="text-primary">
-                {language === 'en' ? 'English' : 'ภาษาไทย'}
+                {language === 'en' ? t('common.english') : t('common.thai')}
               </Text>
             }
             onPress={handleLanguagePress}
@@ -382,12 +377,11 @@ export default function ProfileScreen() {
             fullWidth
             className="mb-6"
             onPress={() => {
-              console.log('[SwitchRole] pressed');
               handleSwitchRole();
             }}
             leftIcon={<Store size={20} color={colors.primary} />}
           >
-            Switch to Merchant mode
+            {t('customer.profile.switchToMerchant')}
           </Button>
         )}
 

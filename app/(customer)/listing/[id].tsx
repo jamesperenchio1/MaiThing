@@ -93,7 +93,7 @@ export default function ListingDetailScreen() {
   const waitlistCount = isSoldOut
     ? Math.max(3, listing.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 23) + 4
     : 0;
-  const urgency = getListingUrgency(listing);
+  const urgency = getListingUrgency(listing, i18n.language);
   const minsUntilEnd = Math.round(
     (new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000
   );

@@ -9,7 +9,7 @@ Maithing is a surplus-food marketplace for Thailand — a Too Good To Go / Yindi
 - **Customer** — browse listings, discover merchants, place orders, manage wallet, view profile.
 - **Merchant** — onboarding, dashboard, inventory, create/edit listings with templates and image upload, orders & QR scanner, payouts & bank accounts, team & staff, promotions/coupons, customer messaging, reviews, analytics, and settings.
 
-The app is currently backed entirely by **mock repositories** with realistic Thai demo data. There is no live backend or Supabase client in UI code; data access is abstracted behind repository interfaces so the backend can be swapped one repository at a time.
+The app ships with **mock repositories** by default (`EXPO_PUBLIC_REPOSITORY_MODE` unset or not `supabase`) so developers can run it without a live backend. A full **Supabase repository implementation** exists in `src/repositories/supabase.ts` and is wired up for every repository interface (auth, users, merchants, listings, orders, wallet, payouts, coupons, messages, notifications, analytics). Flip to the live backend by setting `EXPO_PUBLIC_REPOSITORY_MODE=supabase` plus your Supabase URL/anon key. UI code never imports backend clients directly; it always goes through the repository switcher in `src/repositories/index.ts`.
 
 ## Technology Stack
 
@@ -135,7 +135,8 @@ OTP verification in mock auth accepts `123456`.
 - **Fonts**: `Inter` and `NotoSansThai` are loaded in `app/_layout.tsx`.
 - **Components**: prefer the custom UI primitives in `src/components/ui/` (`Text`, `Button`, `Input`, `Card`, `Badge`, etc.) over raw React Native components.
 - **Screen wrapper**: use `Screen` from `src/components/layout/Screen.tsx` for safe-area-aware scrollable screens.
-- **Text component**: use `Text` from `src/components/ui/Text.tsx` with typed variants (`h1`–`h4`, `body`, `body-sm`, `caption`, `label`).
+- **Text component**: use `Text` from `src/components/ui/Text.tsx` with typed variants (`h1`–`h4`, `body`, `body-sm`, `caption`, `label`). The `Text` primitive scales automatically with screen width and respects the system font-scale setting.
+- **Responsive sizing**: use helpers in `src/lib/responsive.ts` (`useResponsiveScale`, `useScaledSize`, `getFontScale`) for fixed layout values (heights, tab bars, icon sizes) that should adapt across phones and tablets. Avoid hardcoded `fontSize` in raw `style` objects.
 - **Icons**: use `lucide-react-native`.
 - **Navigation**: file-system based. Route groups `(auth)`, `(customer)`, `(merchant)` hide their segment from the URL. Tab layouts are in `(tabs)/_layout.tsx`.
 - **Haptics**: wrapped in press handlers (`Haptics.impactAsync`). No-ops on web.
@@ -162,7 +163,7 @@ OTP verification in mock auth accepts `123456`.
 - Repository interfaces are defined in `src/repositories/interfaces.ts`.
 - Mock implementation is in `src/repositories/mock.ts` and seeded data in `src/repositories/seed.ts`.
 - UI code should **never** import backend clients directly; always go through repository interfaces/hooks.
-- To add a real backend, implement the same repository interfaces and swap the import in the hooks (currently `mockRepositories`).
+- To add a real backend, implement the same repository interfaces in `src/repositories/supabase.ts` (or a new file) and set `EXPO_PUBLIC_REPOSITORY_MODE=supabase`. See the top of `supabase.ts` for the expected table list.
 
 ## Maps
 
@@ -217,6 +218,7 @@ Run them with the Maestro CLI on a device or emulator.
 - Native haptics are no-ops on web.
 - Some screens still use `ScrollView` instead of `FlashList` for large lists.
 - `LogBox.ignoreAllLogs(true)` is enabled in `app/_layout.tsx` — suppresses all React Native warnings in development.
+- The Supabase repository expects a specific set of tables (listed at the top of `src/repositories/supabase.ts`). They are not created automatically; set them up in your Supabase project before using `EXPO_PUBLIC_REPOSITORY_MODE=supabase`.
 
 ## Deployment
 
@@ -231,7 +233,7 @@ Run them with the Maestro CLI on a device or emulator.
 As of the latest check:
 
 - `pnpm typecheck` passes (`tsc --noEmit`).
-- `pnpm lint` passes with 2 warnings on generated `.expo/types/router.d.ts` files (unused `eslint-disable` directives). These are auto-generated and can be ignored or excluded from lint.
+- `pnpm lint` passes with warnings only on generated `.expo/types/router.d.ts` files and an unused style in `TutorialOverlay.tsx`. These are auto-generated or pre-existing and can be ignored.
 - Web export previously produced 56 static routes successfully.
 
 ## Useful Files to Read First

@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router';
-import { View, Pressable, Platform } from 'react-native';
+import { View, Pressable, Platform, useWindowDimensions } from 'react-native';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -17,6 +18,7 @@ import { useAuthStore } from '@/src/stores/auth';
 import { useConversations } from '@/src/hooks/useMessages';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { Text } from '@/src/components/ui/Text';
+import { getScale, getFontScale } from '@/src/lib/responsive';
 
 const ACTIONABLE_STATUSES = new Set(['pending', 'confirmed', 'preparing', 'ready']);
 
@@ -24,12 +26,21 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const colors = useThemeColor();
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
+  const { width, fontScale } = useWindowDimensions();
+  const scale = getScale(width);
+  const fontScaleFactor = getFontScale(width, fontScale);
 
   const leftRoutes = state.routes.slice(0, 2); // Dashboard (0), Orders (1)
   // Right side: Inventory + Messages; Settings is hidden from tab bar but remains a valid route
   const rightRoutes = state.routes.filter(
     (r) => r.name === 'inventory' || r.name === 'messages'
   );
+
+  const tabBarHeight = Math.round(70 * scale) + insets.bottom;
+  const iconSize = Math.round(24 * scale);
+  const fabSize = Math.round(60 * scale);
+  const badgeSize = Math.round(18 * scale);
 
   const renderTab = (route: (typeof state.routes)[number], routeIndex: number) => {
     const descriptor = descriptors[route.key];
@@ -69,7 +80,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         android_ripple={{ color: colors.primary + '20', borderless: false }}
       >
         <View style={{ position: 'relative' }}>
-          {options.tabBarIcon?.({ focused: isFocused, color, size: 24 })}
+          {options.tabBarIcon?.({ focused: isFocused, color, size: iconSize })}
           {badge !== undefined && badge !== null && (
             <View
               style={{
@@ -77,25 +88,29 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 top: -4,
                 right: -8,
                 backgroundColor: colors.danger,
-                borderRadius: 9,
-                minWidth: 18,
-                height: 18,
+                borderRadius: badgeSize / 2,
+                minWidth: badgeSize,
+                height: badgeSize,
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingHorizontal: 3,
               }}
             >
-              <Text style={{ color: colors.white, fontSize: 11, fontWeight: '700', lineHeight: 14 }}>
+              <Text
+                variant="caption"
+                style={{
+                  color: colors.white,
+                  fontSize: Math.round(11 * fontScaleFactor),
+                  fontWeight: '700',
+                  lineHeight: Math.round(14 * fontScaleFactor),
+                }}
+              >
                 {String(badge)}
               </Text>
             </View>
           )}
         </View>
-        <Text
-          variant="caption"
-          style={{ color, marginTop: 2 }}
-          numberOfLines={1}
-        >
+        <Text variant="caption" style={{ color, marginTop: 2 }} numberOfLines={1}>
           {String(options.title ?? route.name)}
         </Text>
       </Pressable>
@@ -113,7 +128,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View
       style={{
         flexDirection: 'row',
-        height: 70 + insets.bottom,
+        height: tabBarHeight,
         paddingBottom: insets.bottom,
         borderTopWidth: 1,
         borderTopColor: colors.border,
@@ -124,18 +139,18 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       {leftRoutes.map((route) => renderTab(route, state.routes.indexOf(route)))}
 
       {/* QR FAB — not a real tab, floating above the bar */}
-      <View style={{ width: 70, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: fabSize + 10, alignItems: 'center', justifyContent: 'center' }}>
         <PressableScale
           onPress={handleQRPress}
           scale={0.92}
           style={{
-            width: 60,
-            height: 60,
-            borderRadius: 30,
+            width: fabSize,
+            height: fabSize,
+            borderRadius: fabSize / 2,
             backgroundColor: colors.primary,
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: -20,
+            marginTop: -Math.round(20 * scale),
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
@@ -143,7 +158,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             elevation: 8,
           }}
         >
-          <QrCode size={28} color={colors.white} />
+          <QrCode size={Math.round(28 * scale)} color={colors.white} />
         </PressableScale>
       </View>
 
@@ -154,6 +169,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 export default function MerchantTabsLayout() {
   const colors = useThemeColor();
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const { data: orders } = useOrders(user?.id ?? '', 'merchant');
   const pendingCount = orders?.filter((o) => ACTIONABLE_STATUSES.has(o.status)).length ?? 0;
@@ -175,7 +191,7 @@ export default function MerchantTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: t('common.dashboard'),
           tabBarButtonTestID: 'merchant-dashboard-tab',
           tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
         }}
@@ -183,7 +199,7 @@ export default function MerchantTabsLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: 'Orders',
+          title: t('common.orders'),
           tabBarButtonTestID: 'merchant-orders-tab',
           tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} />,
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
@@ -193,7 +209,7 @@ export default function MerchantTabsLayout() {
       <Tabs.Screen
         name="inventory"
         options={{
-          title: 'Inventory',
+          title: t('common.inventory'),
           tabBarButtonTestID: 'merchant-inventory-tab',
           tabBarIcon: ({ color, size }) => <Package size={size} color={color} />,
         }}
@@ -201,7 +217,7 @@ export default function MerchantTabsLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'Messages',
+          title: t('common.messages'),
           tabBarButtonTestID: 'merchant-messages-tab',
           tabBarIcon: ({ color, size }) => <MessageSquare size={size} color={color} />,
           tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
@@ -212,7 +228,7 @@ export default function MerchantTabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('common.settings'),
         }}
       />
     </Tabs>

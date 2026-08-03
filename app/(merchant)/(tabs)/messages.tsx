@@ -27,7 +27,7 @@ function UnreadBadge({ count }: { count: number }) {
 
 export default function MerchantMessagesTabScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
   const { data, isLoading, isError, refetch } = useConversations(user?.id ?? '');
@@ -83,7 +83,7 @@ export default function MerchantMessagesTabScreen() {
                       {conversation.customerName}
                     </Text>
                     <Text variant="caption" className="text-muted">
-                      {formatRelativeTime(conversation.createdAt)}
+                      {formatRelativeTime(conversation.createdAt, i18n.language)}
                     </Text>
                   </View>
                   <View className="mt-1 flex-row items-center justify-between">

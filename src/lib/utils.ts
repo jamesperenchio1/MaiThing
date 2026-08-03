@@ -23,12 +23,13 @@ export function formatDistance(meters: number, locale = 'en') {
   return `${(meters / 1000).toFixed(1)}km`;
 }
 
-export function formatWalkTime(meters: number) {
+export function formatWalkTime(meters: number, locale = 'en') {
   const minutes = Math.max(1, Math.round(meters / 80));
-  return `${minutes} min`;
+  const unit = locale === 'th' ? 'นาที' : 'min';
+  return `${minutes} ${unit}`;
 }
 
-export function formatRelativeTime(date: string | Date, _locale = 'en') {
+export function formatRelativeTime(date: string | Date, locale = 'en') {
   const now = new Date();
   const target = new Date(date);
   const diffMs = target.getTime() - now.getTime();
@@ -36,15 +37,19 @@ export function formatRelativeTime(date: string | Date, _locale = 'en') {
   const diffHours = Math.round(diffMs / 3600000);
   const diffDays = Math.round(diffMs / 86400000);
 
-  // Intl.RelativeTimeFormat is not available in all RN/Hermes environments — use plain strings.
+  const isThai = locale === 'th';
   const abs = Math.abs.bind(Math);
+
   if (abs(diffMins) < 60) {
-    if (diffMins === 0) return 'just now';
+    if (diffMins === 0) return isThai ? 'เมื่อครู่' : 'just now';
+    if (isThai) return diffMins > 0 ? `อีก ${diffMins} นาที` : `${abs(diffMins)} นาทีที่แล้ว`;
     return diffMins > 0 ? `in ${diffMins}m` : `${abs(diffMins)}m ago`;
   }
   if (abs(diffHours) < 24) {
+    if (isThai) return diffHours > 0 ? `อีก ${diffHours} ชั่วโมง` : `${abs(diffHours)} ชั่วโมงที่แล้ว`;
     return diffHours > 0 ? `in ${diffHours}h` : `${abs(diffHours)}h ago`;
   }
+  if (isThai) return diffDays > 0 ? `อีก ${diffDays} วัน` : `${abs(diffDays)} วันที่แล้ว`;
   return diffDays > 0 ? `in ${diffDays}d` : `${abs(diffDays)}d ago`;
 }
 
@@ -52,19 +57,21 @@ export function generatePickupCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  bakery: 'Bakery',
-  cafe: 'Café',
-  restaurant: 'Restaurant',
-  grocery: 'Grocery',
-  hotel: 'Hotel',
-  dessert: 'Dessert',
-  healthy: 'Healthy',
-  street_food: 'Street Food',
+const CATEGORY_LABELS: Record<string, { en: string; th: string }> = {
+  bakery: { en: 'Bakery', th: 'เบเกอรี่' },
+  cafe: { en: 'Café', th: 'คาเฟ่' },
+  restaurant: { en: 'Restaurant', th: 'ร้านอาหาร' },
+  grocery: { en: 'Grocery', th: 'ร้านขายของชำ' },
+  hotel: { en: 'Hotel', th: 'โรงแรม' },
+  dessert: { en: 'Dessert', th: 'ของหวาน' },
+  healthy: { en: 'Healthy', th: 'อาหารเพื่อสุขภาพ' },
+  street_food: { en: 'Street Food', th: 'อาหารริมทาง' },
 };
 
-export function formatCategory(id: string): string {
-  return CATEGORY_LABELS[id] ?? id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+export function formatCategory(id: string, locale = 'en'): string {
+  const label = CATEGORY_LABELS[id];
+  if (label) return label[locale as 'en' | 'th'] ?? label.en;
+  return id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function getInitials(name: string) {
@@ -164,33 +171,56 @@ export interface ListingUrgency {
   color: 'success' | 'warning' | 'danger';
 }
 
-export function getListingUrgency(listing: {
-  quantityRemaining: number;
-  pickupWindowEnd: string;
-}): ListingUrgency | null {
+export function getListingUrgency(
+  listing: {
+    quantityRemaining: number;
+    pickupWindowEnd: string;
+  },
+  locale = 'en'
+): ListingUrgency | null {
   const remaining = listing.quantityRemaining;
   const minsUntilEnd = Math.max(
     0,
     Math.round((new Date(listing.pickupWindowEnd).getTime() - Date.now()) / 60000)
   );
 
+  const isThai = locale === 'th';
+
   if (remaining === 0) return null;
   if (remaining <= 2 || minsUntilEnd <= 30) {
     return {
       level: 'critical',
-      label: remaining <= 2 ? `Only ${remaining} left` : 'Ends in 30 min',
+      label:
+        remaining <= 2
+          ? isThai
+            ? `เหลือ ${remaining}`
+            : `Only ${remaining} left`
+          : isThai
+            ? 'หมดใน 30 นาที'
+            : 'Ends in 30 min',
       color: 'danger',
     };
   }
   if (remaining <= 5 || minsUntilEnd <= 90) {
     return {
       level: 'high',
-      label: remaining <= 5 ? `Only ${remaining} left` : 'Ends soon',
+      label:
+        remaining <= 5
+          ? isThai
+            ? `เหลือ ${remaining}`
+            : `Only ${remaining} left`
+          : isThai
+            ? 'กำลังจะหมด'
+            : 'Ends soon',
       color: 'warning',
     };
   }
   if (minsUntilEnd <= 240) {
-    return { level: 'medium', label: 'Selling fast', color: 'warning' };
+    return {
+      level: 'medium',
+      label: isThai ? 'ขายดี' : 'Selling fast',
+      color: 'warning',
+    };
   }
   return null;
 }

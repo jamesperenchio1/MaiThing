@@ -36,7 +36,7 @@ function StatRow({ label, value }: { label: string; value: string }) {
 }
 
 function PayoutItem({ item }: { item: PayoutTransaction }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const statusColor =
     item.status === 'completed'
@@ -62,7 +62,7 @@ function PayoutItem({ item }: { item: PayoutTransaction }) {
           {item.status}
         </Text>
         <Text variant="caption" className="text-muted">
-          {formatRelativeTime(item.createdAt)}
+          {formatRelativeTime(item.createdAt, i18n.language)}
         </Text>
       </View>
     </View>
@@ -71,7 +71,7 @@ function PayoutItem({ item }: { item: PayoutTransaction }) {
 
 export default function PayoutsScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
   const { data: merchant } = useMerchantByOwner(user?.id ?? '');
@@ -182,7 +182,7 @@ export default function PayoutsScreen() {
               label={t('merchant.payouts.nextPayout')}
               value={
                 wallet?.nextPayoutDate
-                  ? `${formatRelativeTime(wallet.nextPayoutDate)} (${new Date(
+                  ? `${formatRelativeTime(wallet.nextPayoutDate, i18n.language)} (${new Date(
                       wallet.nextPayoutDate
                     ).toLocaleDateString()})`
                   : t('merchant.payouts.estimated')
@@ -192,7 +192,7 @@ export default function PayoutsScreen() {
               label={t('merchant.payouts.lastPayout')}
               value={
                 wallet?.lastPayoutDate
-                  ? `${formatRelativeTime(wallet.lastPayoutDate)} (${new Date(
+                  ? `${formatRelativeTime(wallet.lastPayoutDate, i18n.language)} (${new Date(
                       wallet.lastPayoutDate
                     ).toLocaleDateString()})`
                   : '—'
