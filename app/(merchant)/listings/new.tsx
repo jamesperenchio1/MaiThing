@@ -13,6 +13,7 @@ import {
   FileText,
   ChevronDown,
   AlertTriangle,
+  Zap,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 let ImagePicker: typeof import('expo-image-picker') | null = null;
@@ -894,9 +895,12 @@ export default function CreateListingScreen() {
         <View className="mb-6 rounded-2xl border border-border bg-card p-4">
           <View className="mb-3 flex-row items-center justify-between">
             <View className="flex-1 pr-4">
-              <Text variant="body-sm" className="font-semibold">
-                ⚡ Flash Sale
-              </Text>
+              <View className="flex-row items-center">
+                <Zap size={16} color={colors.primary} fill={colors.primary} />
+                <Text variant="body-sm" className="ml-2 font-semibold">
+                  Flash Sale
+                </Text>
+              </View>
               <Text variant="caption" className="text-muted">
                 Temporarily lower the price to boost last-minute sales
               </Text>

@@ -12,7 +12,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { SlidersHorizontal, X, Clock } from 'lucide-react-native';
+import { SlidersHorizontal, X, Clock, Star } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -53,9 +53,9 @@ const QUICK_SORT: { id: SortOption; label: string }[] = [
 
 const RATING_OPTIONS: { value: number; label: string }[] = [
   { value: 0, label: 'Any' },
-  { value: 3, label: '3★+' },
-  { value: 4, label: '4★+' },
-  { value: 4.5, label: '4.5★+' },
+  { value: 3, label: '3+' },
+  { value: 4, label: '4+' },
+  { value: 4.5, label: '4.5+' },
 ];
 
 const PRICE_MIN = 0;
@@ -512,7 +512,7 @@ export default function DiscoverScreen() {
                       {merchant.name}
                     </Text>
                     <View className="flex-row items-center mt-0.5">
-                      <Text style={{ color: '#FBBF24', fontSize: 10 }}>★</Text>
+                      <Star size={10} color="#FBBF24" fill="#FBBF24" />
                       <Text
                         style={{ color: 'rgba(255,255,255,0.9)', fontSize: 11, marginLeft: 2 }}
                       >

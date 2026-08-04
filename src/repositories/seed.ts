@@ -571,7 +571,7 @@ export const LISTINGS: Listing[] = [
     id: 'listing-demo-flashsale',
     merchantId: 'merchant-2',
     type: 'mystery_box',
-    title: '⚡ Flash Sale Demo — 3-Hour Countdown',
+    title: 'Flash Sale Demo — 3-Hour Countdown',
     description: 'This listing has an active flash sale with a countdown timer. Act fast!',
     images: ['https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400'],
     category: 'restaurant',

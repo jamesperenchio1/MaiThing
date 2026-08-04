@@ -136,7 +136,7 @@ export default {
       soldOut: 'Sold Out',
       fixed: 'Fixed',
       worthOfSurprises: 'Worth {{value}}+ of surprises',
-      flash: '⚡ Flash',
+      flash: 'Flash',
       discount: '-{{discount}}%',
       pickupEnds: 'Pickup ends',
       addToCart: 'Add to Cart',

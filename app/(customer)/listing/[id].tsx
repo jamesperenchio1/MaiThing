@@ -12,7 +12,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck, Bell, BellOff, ExternalLink, Store } from 'lucide-react-native';
+import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck, Bell, BellOff, ExternalLink, Store, Zap } from 'lucide-react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 
@@ -271,7 +271,14 @@ export default function ListingDetailScreen() {
                 {formatCurrency(isFlashSale ? listing.salePrice : listing.originalPrice)}
               </Text>
               <Badge variant={isFlashSale ? 'danger' : 'success'} className="mt-1">
-                {isFlashSale ? '⚡ Flash' : `-${discount}%`}
+                {isFlashSale ? (
+                  <View className="flex-row items-center">
+                    <Zap size={12} color={colors.white} fill={colors.white} />
+                    <Text className="ml-1 text-xs font-semibold text-white">Flash</Text>
+                  </View>
+                ) : (
+                  `-${discount}%`
+                )}
               </Badge>
             </View>
           </View>
@@ -294,7 +301,7 @@ export default function ListingDetailScreen() {
 
           {isFlashSale && listing.flashSaleEndsAt && (
             <View className="mb-4">
-              <CountdownTimer targetDate={listing.flashSaleEndsAt} label="⚡ Flash sale ends" />
+              <CountdownTimer targetDate={listing.flashSaleEndsAt} label="Flash sale ends" />
             </View>
           )}
 

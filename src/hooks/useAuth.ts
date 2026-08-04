@@ -89,14 +89,17 @@ export function useAuth() {
       const currentUser = useAuthStore.getState().user;
       if (!currentUser) return;
 
-      if (!currentUser.roles.includes(role)) {
+      // In mock mode the test customer does not own a merchant, so always swap
+      // to the dedicated test merchant/customer user when switching roles. In
+      // Supabase mode we only swap when the current user lacks the target role.
+      if (!IS_SUPABASE || !currentUser.roles.includes(role)) {
         const targetUser = role === 'merchant' ? TEST_MERCHANT_USER : TEST_CUSTOMER;
         setUser({ ...targetUser, roles: ['customer', 'merchant'] });
       }
 
       setRole(role);
       const targetRoute =
-        role === 'merchant' ? '/(merchant)/(tabs)/orders' : '/(customer)/(tabs)/discover';
+        role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)';
       router.replace(targetRoute as any);
     },
     [setUser, setRole, router]

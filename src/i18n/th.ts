@@ -136,7 +136,7 @@ export default {
       soldOut: 'หมดแล้ว',
       fixed: 'แน่นอน',
       worthOfSurprises: 'มูลค่า {{value}}+',
-      flash: '⚡ แฟลชเซลล์',
+      flash: 'แฟลชเซลล์',
       discount: '-{{discount}}%',
       pickupEnds: 'รับภายใน',
       addToCart: 'เพิ่มลงตะกร้า',

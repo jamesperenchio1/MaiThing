@@ -22,6 +22,10 @@ appId: com.jamyangperenchio.maithing
 
 - assertVisible:
     id: "welcome-screen"
+- scrollUntilVisible:
+    element:
+      id: "test-customer-button"
+    direction: DOWN
 - extendedWaitUntil:
     visible:
       id: "test-customer-button"
@@ -30,6 +34,13 @@ appId: com.jamyangperenchio.maithing
 - tapOn:
     id: "test-customer-button"
 - waitForAnimationToEnd
+# Dismiss the first-time customer tutorial overlay if it appears
+- runFlow:
+    when:
+      visible: "Welcome to Maithing!"
+    commands:
+      - tapOn: "Skip"
+      - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "customer-home-screen"
@@ -68,6 +79,13 @@ appId: com.jamyangperenchio.maithing
 - tapOn:
     id: "confirm-order-button"
 - waitForAnimationToEnd
+# Dismiss the post-purchase upsell modal if it appears
+- runFlow:
+    when:
+      visible: "No thanks"
+    commands:
+      - tapOn: "No thanks"
+      - waitForAnimationToEnd
 
 # Verify order confirmed success screen
 - extendedWaitUntil:

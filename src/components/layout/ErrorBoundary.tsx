@@ -1,5 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
+import { AlertTriangle } from 'lucide-react-native';
+
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -45,7 +47,7 @@ function ErrorFallback({ error, onRetry }: { error?: Error; onRetry: () => void 
   return (
     <View className="flex-1 items-center justify-center bg-background px-8">
       <View className="mb-6 rounded-full bg-danger/10 p-4">
-        <Text className="text-2xl">😵</Text>
+        <AlertTriangle size={40} color={colors.danger} />
       </View>
       <Text variant="h2" className="mb-2 text-center">
         Something went wrong

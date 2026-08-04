@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -12,7 +12,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { ArrowRight, X } from 'lucide-react-native';
+import {
+  ArrowRight,
+  X,
+  Hand,
+  Utensils,
+  Search,
+  Map,
+  Package,
+  User,
+  ShoppingCart,
+  Leaf,
+  type LucideIcon,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/src/components/ui/Text';
@@ -34,7 +46,7 @@ interface Hotspot {
 }
 
 interface StepConfig {
-  emoji: string;
+  icon: LucideIcon;
   title: string;
   description: string;
   hotspot?: Hotspot;
@@ -71,21 +83,21 @@ function useSteps(t: TFunction): StepConfig[] {
 
     return [
       {
-        emoji: '👋',
+        icon: Hand,
         title: t('tutorial.welcome.title'),
         description: t('tutorial.welcome.description'),
         tooltipSide: 'center',
         requireTap: false,
       },
       {
-        emoji: '🍱',
+        icon: Utensils,
         title: t('tutorial.feed.title'),
         description: t('tutorial.feed.description'),
         tooltipSide: 'center',
         requireTap: false,
       },
       {
-        emoji: '🔍',
+        icon: Search,
         title: t('tutorial.discover.title'),
         description: t('tutorial.discover.description'),
         hotspot: tabHotspot(1),
@@ -95,7 +107,7 @@ function useSteps(t: TFunction): StepConfig[] {
         navigateTo: '/(customer)/(tabs)/discover',
       },
       {
-        emoji: '🗺️',
+        icon: Map,
         title: t('tutorial.map.title'),
         description: t('tutorial.map.description'),
         hotspot: tabHotspot(2),
@@ -105,7 +117,7 @@ function useSteps(t: TFunction): StepConfig[] {
         navigateTo: '/(customer)/(tabs)/map',
       },
       {
-        emoji: '📦',
+        icon: Package,
         title: t('tutorial.orders.title'),
         description: t('tutorial.orders.description'),
         hotspot: tabHotspot(3),
@@ -115,7 +127,7 @@ function useSteps(t: TFunction): StepConfig[] {
         navigateTo: '/(customer)/(tabs)/orders',
       },
       {
-        emoji: '👤',
+        icon: User,
         title: t('tutorial.profile.title'),
         description: t('tutorial.profile.description'),
         hotspot: tabHotspot(5),
@@ -125,14 +137,14 @@ function useSteps(t: TFunction): StepConfig[] {
         navigateTo: '/(customer)/(tabs)/profile',
       },
       {
-        emoji: '🛒',
+        icon: ShoppingCart,
         title: t('tutorial.howToOrder.title'),
         description: t('tutorial.howToOrder.description'),
         tooltipSide: 'center',
         requireTap: false,
       },
       {
-        emoji: '🌱',
+        icon: Leaf,
         title: t('tutorial.finish.title'),
         description: t('tutorial.finish.description'),
         tooltipSide: 'center',
@@ -285,7 +297,7 @@ export function TutorialOverlay() {
           </Pressable>
 
           <View style={styles.centeredContent}>
-            <Text style={styles.emoji}>{step.emoji}</Text>
+            {React.createElement(step.icon, { size: 44, color: colors.primary, style: styles.icon })}
             <Text variant="h3" className="text-center mb-2">
               {step.title}
             </Text>
@@ -373,7 +385,7 @@ export function TutorialOverlay() {
           <View style={[styles.arrowUp, { left: arrowLeft, borderBottomColor: colors.card }]} />
         )}
         <View style={styles.tooltipContent}>
-          <Text style={styles.emoji}>{step.emoji}</Text>
+          {React.createElement(step.icon, { size: 36, color: colors.primary, style: styles.icon })}
           <Text variant="body-sm" className="font-bold mb-1">
             {step.title}
           </Text>
@@ -510,11 +522,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     alignItems: 'center',
   },
-  emoji: {
-    fontSize: 44,
-    lineHeight: 60,
+  icon: {
     marginBottom: 8,
-    marginTop: 0,
   },
   langToggle: {
     position: 'absolute',
@@ -572,10 +581,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 10,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-  },
-  skipBtn: {
-    position: 'absolute',
-    right: 16,
   },
   topRight: {
     position: 'absolute',

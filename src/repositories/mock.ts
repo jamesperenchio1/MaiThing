@@ -1040,7 +1040,7 @@ class MockMessageRepository implements MessageRepository {
       customerName,
       customerAvatarUrl: existing?.customerAvatarUrl,
       orderId,
-      content: `Hi! I just placed an order — looking forward to picking up 🙏`,
+      content: `Hi! I just placed an order — looking forward to picking up. Thank you!`,
       sentBy: 'customer',
       read: false,
       createdAt: new Date().toISOString(),

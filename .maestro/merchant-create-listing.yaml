@@ -30,7 +30,7 @@ appId: com.jamyangperenchio.maithing
 - assertVisible:
     text: "Photos"
 - assertVisible:
-    text: "Title"
+    text: "Listing Details"
 - assertVisible:
     text: "Description"
 

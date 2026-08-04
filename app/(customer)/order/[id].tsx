@@ -114,9 +114,12 @@ function ReviewSection({ order }: { order: Order }) {
   if (alreadyReviewed || submitted) {
     return (
       <Card variant="outlined" className="mb-6 items-center">
-        <Text variant="body-sm" className="text-center text-muted">
-          {submitted ? 'Thank you for your review! ⭐' : 'You reviewed this order'}
-        </Text>
+        <View className="flex-row items-center justify-center">
+          <Star size={16} color="#F59E0B" fill="#F59E0B" />
+          <Text variant="body-sm" className="ml-2 text-center text-muted">
+            {submitted ? 'Thank you for your review!' : 'You reviewed this order'}
+          </Text>
+        </View>
       </Card>
     );
   }
@@ -414,9 +417,12 @@ export default function OrderDetailScreen() {
                 Add to Calendar
               </Button>
               {calendarAdded && (
-                <Text variant="caption" className="mt-2 text-center text-success">
-                  Added to calendar ✓
-                </Text>
+                <View className="mt-2 flex-row items-center justify-center">
+                  <Check size={14} color={colors.success} />
+                  <Text variant="caption" className="ml-1 text-success">
+                    Added to calendar
+                  </Text>
+                </View>
               )}
             </View>
           )}

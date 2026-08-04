@@ -37,4 +37,4 @@ appId: com.jamyangperenchio.maithing
     duration: 500
 - waitForAnimationToEnd
 - assertVisible:
-    id: "home-hero-title"
+    text: "Good .*"

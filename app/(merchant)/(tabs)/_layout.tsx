@@ -6,6 +6,7 @@ import {
   Package,
   QrCode,
   MessageSquare,
+  Settings,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,9 +33,9 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const fontScaleFactor = getFontScale(width, fontScale);
 
   const leftRoutes = state.routes.slice(0, 2); // Dashboard (0), Orders (1)
-  // Right side: Inventory + Messages; Settings is hidden from tab bar but remains a valid route
+  // Right side: Inventory, Messages, and Settings
   const rightRoutes = state.routes.filter(
-    (r) => r.name === 'inventory' || r.name === 'messages'
+    (r) => r.name === 'inventory' || r.name === 'messages' || r.name === 'settings'
   );
 
   const tabBarHeight = Math.round(70 * scale) + insets.bottom;
@@ -224,11 +225,12 @@ export default function MerchantTabsLayout() {
           tabBarBadgeStyle: { fontSize: 11, minWidth: 18, height: 18 },
         }}
       />
-      {/* Settings is no longer shown in the tab bar — accessible via the merchant identity card on the Dashboard */}
       <Tabs.Screen
         name="settings"
         options={{
           title: t('common.settings'),
+          tabBarButtonTestID: 'merchant-settings-tab',
+          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
     </Tabs>

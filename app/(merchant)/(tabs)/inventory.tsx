@@ -19,6 +19,7 @@ import {
   Pause,
   Tag,
   AlertTriangle,
+  Eye,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -196,12 +197,12 @@ function InventoryCard({
                   }}
                   scale={0.85}
                   disabled={listing.quantityRemaining <= 0 || updateListing.isPending}
-                  hitSlop={4}
-                  className="px-2 py-1"
+                  hitSlop={8}
+                  className="px-3 py-2"
                 >
                   <Minus size={12} color={listing.quantityRemaining <= 0 ? colors.muted : colors.foreground} />
                 </PressableScale>
-                <Text variant="caption" className="w-5 text-center font-semibold">
+                <Text variant="caption" className="min-w-[24px] text-center font-semibold">
                   {listing.quantityRemaining}
                 </Text>
                 <PressableScale
@@ -215,8 +216,8 @@ function InventoryCard({
                   }}
                   scale={0.85}
                   disabled={listing.quantityRemaining >= listing.quantity || updateListing.isPending}
-                  hitSlop={4}
-                  className="px-2 py-1"
+                  hitSlop={8}
+                  className="px-3 py-2"
                 >
                   <Plus size={12} color={listing.quantityRemaining >= listing.quantity ? colors.muted : colors.foreground} />
                 </PressableScale>
@@ -231,9 +232,12 @@ function InventoryCard({
               </Text>
             </View>
             {listing.viewCount != null && listing.viewCount > 0 && (
-              <Text variant="caption" className="text-muted">
-                👁 {listing.viewCount.toLocaleString()}
-              </Text>
+              <View className="flex-row items-center">
+                <Eye size={12} color={colors.muted} />
+                <Text variant="caption" className="ml-1 text-muted">
+                  {listing.viewCount.toLocaleString()}
+                </Text>
+              </View>
             )}
           </View>
           {attachedCoupon && (
@@ -255,7 +259,8 @@ function InventoryCard({
                     onEdit();
                   }}
                   scale={0.95}
-                  className="mr-3"
+                  hitSlop={8}
+                  className="mr-3 p-1.5"
                 >
                   <View className="flex-row items-center">
                     <Pencil size={14} color={colors.muted} />
@@ -270,7 +275,8 @@ function InventoryCard({
                     onDuplicate();
                   }}
                   scale={0.9}
-                  className="mr-3 p-1"
+                  hitSlop={8}
+                  className="mr-3 p-1.5"
                 >
                   <Copy size={16} color={colors.muted} />
                 </PressableScale>
@@ -280,7 +286,8 @@ function InventoryCard({
                     onDelete();
                   }}
                   scale={0.9}
-                  className="p-1 mr-3"
+                  hitSlop={8}
+                  className="mr-3 p-1.5"
                 >
                   <Trash2 size={16} color={colors.danger} />
                 </PressableScale>
@@ -290,7 +297,8 @@ function InventoryCard({
                     setShowPromoModal(true);
                   }}
                   scale={0.9}
-                  className="p-1"
+                  hitSlop={8}
+                  className="p-1.5"
                 >
                   <Tag size={16} color={listing.couponId ? colors.primary : colors.muted} />
                 </PressableScale>

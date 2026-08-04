@@ -22,6 +22,8 @@ import {
   MessageSquare,
   Settings,
   Megaphone,
+  Trophy,
+  CheckCircle2,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -73,15 +75,17 @@ function StatCard({
   icon,
   iconBg = 'bg-primary/10',
   onPress,
+  testID,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   iconBg?: string;
   onPress?: () => void;
+  testID?: string;
 }) {
   return (
-    <PressableScale onPress={onPress} className="flex-1" scale={0.98} disabled={!onPress}>
+    <PressableScale testID={testID} onPress={onPress} className="flex-1" scale={0.98} disabled={!onPress}>
       <Card variant="elevated" className="min-h-[120px] justify-between">
         <View className={`mb-2 rounded-xl p-2 self-start ${iconBg}`}>{icon}</View>
         <View>
@@ -137,10 +141,10 @@ function OrderPickupRow({
                     onScan();
                   }}
                   scale={0.85}
-                  hitSlop={6}
-                  className="rounded-lg bg-primary/10 p-1.5"
+                  hitSlop={8}
+                  className="rounded-lg bg-primary/10 p-2"
                 >
-                  <QrCode size={16} color={colors.primary} />
+                  <QrCode size={18} color={colors.primary} />
                 </PressableScale>
               )}
             </View>
@@ -342,6 +346,7 @@ export default function MerchantDashboardScreen() {
       color: colors.primary,
       bg: 'bg-primary/10',
       route: '/(merchant)/listings/new',
+      testID: 'create-listing-button',
     },
     {
       icon: QrCode,
@@ -349,6 +354,7 @@ export default function MerchantDashboardScreen() {
       color: colors.foreground,
       bg: 'bg-muted/10',
       route: '/(merchant)/scanner',
+      testID: 'scan-pickup-button',
     },
     {
       icon: Package,
@@ -356,6 +362,7 @@ export default function MerchantDashboardScreen() {
       color: colors.foreground,
       bg: 'bg-muted/10',
       route: '/(merchant)/(tabs)/inventory',
+      testID: 'manage-inventory-button',
     },
     {
       icon: TrendingUp,
@@ -363,6 +370,7 @@ export default function MerchantDashboardScreen() {
       color: colors.foreground,
       bg: 'bg-muted/10',
       route: '/(merchant)/analytics',
+      testID: 'view-analytics-button',
     },
     {
       icon: Megaphone,
@@ -370,6 +378,7 @@ export default function MerchantDashboardScreen() {
       color: colors.foreground,
       bg: 'bg-muted/10',
       route: '/(merchant)/broadcast',
+      testID: 'broadcast-button',
     },
   ];
 
@@ -421,7 +430,7 @@ export default function MerchantDashboardScreen() {
           </View>
 
           {/* Content — mt-6 clears the absolute-positioned pills row */}
-          <Text variant="caption" className="text-white/70 mb-1 mt-6">
+          <Text testID="merchant-dashboard-title" variant="caption" className="text-white/70 mb-1 mt-6">
             {t('merchant.dashboard.greeting', { timeOfDay: getTimeOfDay(hour), name: firstName })}
           </Text>
           <Text variant="h2" className="text-white mb-4">
@@ -577,9 +586,10 @@ export default function MerchantDashboardScreen() {
             {t('merchant.dashboard.quickActions')}
           </Text>
           <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-            {quickActions.map(({ icon: Icon, label, color, bg, route }) => (
+            {quickActions.map(({ icon: Icon, label, color, bg, route, testID }) => (
               <PressableScale
                 key={label}
+                testID={testID}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push(route as Parameters<typeof router.push>[0]);
@@ -605,6 +615,7 @@ export default function MerchantDashboardScreen() {
           <Skeleton width="100%" height={96} className="mb-6 rounded-3xl" />
         ) : merchant ? (
           <PressableScale
+            testID="merchant-identity-card"
             scale={0.98}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -661,7 +672,9 @@ export default function MerchantDashboardScreen() {
                     Tap to manage settings
                   </Text>
                 </View>
-                <Settings size={18} color={colors.muted} />
+                <View testID="merchant-settings-icon">
+                  <Settings size={18} color={colors.muted} />
+                </View>
               </View>
             </Card>
           </PressableScale>
@@ -678,6 +691,7 @@ export default function MerchantDashboardScreen() {
 
         <View testID="merchant-stats-row-1" className="mb-6 flex-row space-x-3">
           <StatCard
+            testID="merchant-conversion-rate-card"
             label={t('merchant.dashboard.conversionRate')}
             value={`${Math.round(analytics?.conversionRate ?? 0)}%`}
             icon={<TrendingUp size={20} color={colors.success} />}
@@ -691,6 +705,7 @@ export default function MerchantDashboardScreen() {
             }}
           />
           <StatCard
+            testID="merchant-avg-order-value-card"
             label={t('merchant.dashboard.avgOrderValue')}
             value={formatCurrency(analytics?.avgOrderValue ?? 0)}
             icon={<DollarSign size={20} color={colors.primary} />}
@@ -727,7 +742,7 @@ export default function MerchantDashboardScreen() {
             <Text variant="caption" className="mt-2 text-muted">
               {Math.min(100, Math.round((analytics.totalRevenue / merchant.revenueGoal) * 100))}%
               {analytics.totalRevenue >= merchant.revenueGoal
-                ? ' — Goal reached! 🎉'
+                ? ' — Goal reached!'
                 : ` — ${formatCurrency(merchant.revenueGoal - analytics.totalRevenue)} to go`}
             </Text>
           </Card>
@@ -747,7 +762,9 @@ export default function MerchantDashboardScreen() {
             return (
               <Card variant="elevated" className="mb-6 border-2 border-primary/30 bg-primary/5">
                 <View className="flex-row items-center">
-                  <Text className="mr-3 text-3xl">🎉</Text>
+                  <View className="mr-3 rounded-full bg-primary/10 p-2">
+                    <Trophy size={24} color={colors.primary} />
+                  </View>
                   <View className="flex-1">
                     <Text variant="body-sm" className="font-bold text-primary">
                       {latestCrossed.toLocaleString()} followers milestone!

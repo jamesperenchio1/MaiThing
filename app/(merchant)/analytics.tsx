@@ -13,6 +13,8 @@ import {
   Star,
   Users,
   Leaf,
+  MousePointerClick,
+  Search,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -338,6 +340,7 @@ export default function MerchantAnalyticsScreen() {
 
   return (
     <View
+      testID="merchant-analytics-screen"
       className="flex-1 bg-background"
       style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
     >
@@ -706,23 +709,35 @@ export default function MerchantAnalyticsScreen() {
                         </View>
                         {'views' in listing && (
                           <View className="mt-2 flex-row items-center gap-3">
-                            <Text variant="caption" className="text-muted">
-                              👁 {(listing as { views: number }).views.toLocaleString()} views
-                            </Text>
-                            {'clicks' in listing && (
-                              <Text variant="caption" className="text-muted">
-                                🖱 {(listing as { clicks: number }).clicks.toLocaleString()} clicks
+                            <View className="flex-row items-center">
+                              <Eye size={12} color={colors.muted} />
+                              <Text variant="caption" className="ml-1 text-muted">
+                                {(listing as { views: number }).views.toLocaleString()} views
                               </Text>
+                            </View>
+                            {'clicks' in listing && (
+                              <View className="flex-row items-center">
+                                <MousePointerClick size={12} color={colors.muted} />
+                                <Text variant="caption" className="ml-1 text-muted">
+                                  {(listing as { clicks: number }).clicks.toLocaleString()} clicks
+                                </Text>
+                              </View>
                             )}
                             {'searchAppearances' in listing && (
-                              <Text variant="caption" className="text-muted">
-                                🔍 {(listing as { searchAppearances: number }).searchAppearances.toLocaleString()}
-                              </Text>
+                              <View className="flex-row items-center">
+                                <Search size={12} color={colors.muted} />
+                                <Text variant="caption" className="ml-1 text-muted">
+                                  {(listing as { searchAppearances: number }).searchAppearances.toLocaleString()}
+                                </Text>
+                              </View>
                             )}
                             {'conversionRate' in listing && (
-                              <Text variant="caption" className="text-muted">
-                                {(listing as { conversionRate: number }).conversionRate.toFixed(1)}% conv
-                              </Text>
+                              <View className="flex-row items-center">
+                                <Percent size={12} color={colors.muted} />
+                                <Text variant="caption" className="ml-1 text-muted">
+                                  {(listing as { conversionRate: number }).conversionRate.toFixed(1)}% conv
+                                </Text>
+                              </View>
                             )}
                           </View>
                         )}

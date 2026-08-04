@@ -92,7 +92,7 @@ function WebFavoriteButton({ merchantId }: { merchantId: string }) {
         cursor: 'pointer',
       }}
     >
-      {isFavorite ? '♥ Saved' : '♡ Save'}
+      {isFavorite ? 'Saved' : 'Save'}
     </button>
   );
 }

@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Platform, ActivityIndicator, Modal } from 'react-native';
-import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar } from 'lucide-react-native';
+import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar, Globe, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 // Lazy-loaded so Expo Go doesn't crash on missing native CalendarNext module
 let ExpoCalendar: typeof import('expo-calendar') | null = null;
@@ -205,9 +205,12 @@ export default function ConfirmOrderScreen() {
         >
           <View className="flex-1 justify-end bg-black/50">
             <View className="rounded-t-3xl bg-background px-5 pb-8 pt-5">
-              <Text variant="h3" className="mb-4 text-center">
-                Rescue more food nearby 🌍
-              </Text>
+              <View className="mb-4 flex-row items-center justify-center">
+                <Globe size={24} color={colors.primary} />
+                <Text variant="h3" className="ml-2">
+                  Rescue more food nearby
+                </Text>
+              </View>
               {upsellListings.map((item) => {
                 const discountPct = Math.round(
                   ((item.originalPrice - item.salePrice) / item.originalPrice) * 100
@@ -296,9 +299,12 @@ export default function ConfirmOrderScreen() {
                 Add to Calendar
               </Button>
               {calendarAdded && (
-                <Text variant="caption" className="mt-2 text-center text-success">
-                  Added to calendar ✓
-                </Text>
+                <View className="mt-2 flex-row items-center justify-center">
+                  <Check size={14} color={colors.success} />
+                  <Text variant="caption" className="ml-1 text-success">
+                    Added to calendar
+                  </Text>
+                </View>
               )}
             </View>
           )}

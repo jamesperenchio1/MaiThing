@@ -2,8 +2,15 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const rawSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const rawSupabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Provide a non-empty placeholder so @supabase/supabase-js does not throw during
+// module initialization when the app is running in mock mode (the default).
+// The dummy client is never used for real requests because repositories switch to
+// the mock implementation unless EXPO_PUBLIC_REPOSITORY_MODE === 'supabase'.
+const supabaseUrl = rawSupabaseUrl || 'http://localhost';
+const supabaseAnonKey = rawSupabaseAnonKey || 'dummy-anon-key';
 
 const SecureStoreAdapter = {
   getItem: async (key: string): Promise<string | null> => {

@@ -164,12 +164,12 @@ export default function CustomerHomeScreen() {
 
   const listHeader = (
     <View className="pt-4 pb-6">
-      <View className="px-5 mb-4 flex-row items-center justify-between">
+      <View testID="home-hero-title" className="px-5 mb-4 flex-row items-center justify-between">
         <Animated.View entering={FadeInDown.duration(400).springify()}>
           <Text variant="body-sm" className="text-muted">
             {t('customer.home.greeting', { timeOfDay })}
           </Text>
-          <Text variant="h3">{user?.name ?? 'Guest'}</Text>
+          <Text testID="home-hero-subtitle" variant="h3">{user?.name ?? 'Guest'}</Text>
         </Animated.View>
         <Animated.View entering={FadeInRight.duration(400).delay(100).springify()} className="flex-row items-center space-x-1">
           <CartButton />

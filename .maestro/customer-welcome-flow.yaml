@@ -24,6 +24,10 @@ appId: com.jamyangperenchio.maithing
     id: "welcome-screen"
 - assertVisible:
     id: "welcome-title"
+- scrollUntilVisible:
+    element:
+      id: "test-customer-button"
+    direction: DOWN
 - extendedWaitUntil:
     visible:
       id: "test-customer-button"
@@ -33,6 +37,13 @@ appId: com.jamyangperenchio.maithing
     id: "test-customer-button"
 
 - waitForAnimationToEnd
+# Dismiss the first-time customer tutorial overlay if it appears
+- runFlow:
+    when:
+      visible: "Welcome to Maithing!"
+    commands:
+      - tapOn: "Skip"
+      - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "customer-home-screen"
@@ -40,16 +51,14 @@ appId: com.jamyangperenchio.maithing
 
 # Verify customer home loads
 - assertVisible:
-    id: "home-hero-title"
+    text: "Good .*"
 - assertVisible:
-    id: "home-hero-subtitle"
+    text: "Ariya Wong"
+# Verify core home content sections are present
 - assertVisible:
-    id: "home-featured-section"
-- assertVisible:
-    id: "first-featured-merchant"
-
-# Scroll down to reveal the Near You section
+    text: "Categories"
 - scroll
-
+- waitForAnimationToEnd
+# After scrolling, at least one content section should be visible
 - assertVisible:
-    text: "Near You"
+    text: "Craving right now"

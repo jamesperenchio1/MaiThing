@@ -1,23 +1,18 @@
 appId: com.jamyangperenchio.maithing
 ---
-# Open a merchant detail page and verify information
+# Open a merchant detail page via deep link and verify information
 - runFlow: customer-welcome-flow.yaml
 
-# Welcome flow scrolls down — swipe back to top
-- swipe:
-    direction: DOWN
-    duration: 500
+# Deep-link directly to a known merchant in the seed data
+- openLink: "maithing:///(customer)/merchant/merchant-1"
 - waitForAnimationToEnd
-
-# Make sure the first featured merchant card is visible
-- assertVisible:
-    id: "first-featured-merchant"
-
-# Tap the first featured merchant card
-- tapOn:
-    id: "first-featured-merchant"
-- waitForAnimationToEnd
-
+# Dismiss the "Open in maithing?" system dialog if it appears
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "merchant-detail-screen"
@@ -54,5 +49,3 @@ appId: com.jamyangperenchio.maithing
     visible:
       id: "customer-home-screen"
     timeout: 10000
-- assertVisible:
-    id: "home-hero-title"

@@ -204,6 +204,7 @@ export default function OrdersScreen() {
               scale={0.94}
             >
               <View
+                testID={`orders-filter-${filter}`}
                 className="rounded-full px-4 py-2"
                 style={{
                   backgroundColor: active ? colors.primary : `${colors.primary}15`,

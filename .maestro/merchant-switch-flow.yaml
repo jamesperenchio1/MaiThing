@@ -53,6 +53,7 @@ appId: com.jamyangperenchio.maithing
 - assertVisible:
     id: "new-listing-button"
 
+# Access Settings via the merchant tab bar
 - tapOn:
     id: "merchant-settings-tab"
 - waitForAnimationToEnd
@@ -62,6 +63,11 @@ appId: com.jamyangperenchio.maithing
     timeout: 10000
 - assertVisible:
     id: "merchant-settings-title"
+- scrollUntilVisible:
+    element:
+      id: "switch-to-customer-button"
+    direction: DOWN
+    timeout: 10000
 - assertVisible:
     id: "switch-to-customer-button"
 

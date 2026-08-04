@@ -676,12 +676,12 @@ const merchantsRepo: MerchantRepository = {
 
   async getCategories(): Promise<Category[]> {
     return [
-      { id: 'thai', name: 'Thai', nameTh: 'ไทย', icon: '🍜' },
-      { id: 'bakery', name: 'Bakery', nameTh: 'เบเกอรี่', icon: '🥐' },
-      { id: 'japanese', name: 'Japanese', nameTh: 'ญี่ปุ่น', icon: '🍱' },
-      { id: 'coffee', name: 'Coffee', nameTh: 'กาแฟ', icon: '☕' },
-      { id: 'dessert', name: 'Dessert', nameTh: 'ของหวาน', icon: '🍰' },
-      { id: 'healthy', name: 'Healthy', nameTh: 'เพื่อสุขภาพ', icon: '🥗' },
+      { id: 'thai', name: 'Thai', nameTh: 'ไทย', icon: 'utensils' },
+      { id: 'bakery', name: 'Bakery', nameTh: 'เบเกอรี่', icon: 'cake' },
+      { id: 'japanese', name: 'Japanese', nameTh: 'ญี่ปุ่น', icon: 'utensils' },
+      { id: 'coffee', name: 'Coffee', nameTh: 'กาแฟ', icon: 'coffee' },
+      { id: 'dessert', name: 'Dessert', nameTh: 'ของหวาน', icon: 'ice-cream' },
+      { id: 'healthy', name: 'Healthy', nameTh: 'เพื่อสุขภาพ', icon: 'leaf' },
     ];
   },
 

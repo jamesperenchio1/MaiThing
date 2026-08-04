@@ -2835,7 +2835,7 @@ SPEC CHECKSUMS:
   ExpoLinking: 5a796f9284535c0349537a844dd40680229b7fcb
   ExpoLocation: 187949911b868f72e34a8a6f8f487207ba86388a
   ExpoLogBox: 8a3cfa2897e088083cd49fc1ff7fdb2de4385547
-  ExpoModulesCore: f8bca7434c327e2e27416cf9bdc67384402c9975
+  ExpoModulesCore: 21e6ab14303a6f2ce43d232575d6cb04cb705ed7
   ExpoModulesJSI: b20fefa4cdd9097e7e6b715466d1900b8c5d4711
   ExpoModulesWorklets: b21b8f233b5fd71ca74327217601fa4ead9ddaaf
   ExpoModulesWorkletsAdapter: 84dda2eadeca1b4f0de62691ae3c90e70e6213c5
@@ -2847,7 +2847,7 @@ SPEC CHECKSUMS:
   ExpoUI: 19f2ca6e82d91240530ee9762dedccc31fc6f429
   ExpoWebBrowser: 9b98d939d5f1c5dd8f523f0a0683056fb1204434
   FBLazyVector: b3e7ad108f0d882e30445c5527d774e3fd432f3d
-  hermes-engine: b52534132fc45edeb001e1c631bf7e571807112e
+  hermes-engine: f18c8e517c8d3bb621a6926099cd875d64553bd7
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   NitroMmkv: 85a251e15c39d7c95fe58cf40786fa126b8d143c
   NitroModules: b4174dd303728e16ad1afb79f64c1a5c69a3b373

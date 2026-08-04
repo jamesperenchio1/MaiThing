@@ -3,7 +3,7 @@ appId: com.jamyangperenchio.maithing
 # Merchant settings screens navigation flow
 - runFlow: merchant-switch-flow.yaml
 
-# Open merchant settings tab
+# Open merchant settings from the tab bar
 - tapOn:
     id: "merchant-settings-tab"
 - waitForAnimationToEnd
@@ -11,6 +11,11 @@ appId: com.jamyangperenchio.maithing
 - extendedWaitUntil:
     visible:
       id: "merchant-settings-screen"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "business-profile-menu-item"
+    direction: UP
     timeout: 10000
 - assertVisible:
     id: "business-profile-menu-item"

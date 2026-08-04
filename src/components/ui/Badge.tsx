@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Children } from 'react';
 import { View } from 'react-native';
 import { cn } from '@/src/lib/utils';
 import { Text } from './Text';
@@ -38,9 +39,19 @@ interface BadgeProps extends VariantProps<typeof badgeVariants> {
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {
   const resolvedVariant = variant ?? 'default';
+  const childArray = Children.toArray(children);
+  const allText = childArray.every(
+    (child) => typeof child === 'string' || typeof child === 'number'
+  );
   return (
     <View className={cn(badgeVariants({ variant }), className)}>
-      <Text className={cn('text-xs font-semibold', textVariants[resolvedVariant])}>{children}</Text>
+      {allText ? (
+        <Text className={cn('text-xs font-semibold', textVariants[resolvedVariant])}>
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
     </View>
   );
 }
