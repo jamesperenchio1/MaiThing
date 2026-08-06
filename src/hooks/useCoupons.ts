@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { repositories } from '@/src/repositories';
-import type { Coupon } from '@/src/types';
+import type { Coupon, CouponValidationResult, ListingType } from '@/src/types';
 
 export function useCoupons(merchantId: string) {
   return useQuery({
@@ -39,5 +39,17 @@ export function useDeleteCoupon() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coupons'] });
     },
+  });
+}
+
+export function useValidateCoupon() {
+  return useMutation({
+    mutationFn: (input: {
+      code: string;
+      customerId: string;
+      merchantId: string;
+      subtotal: number;
+      listing: { id: string; category: string; type: ListingType };
+    }): Promise<CouponValidationResult> => repositories.coupons.validateCoupon(input),
   });
 }

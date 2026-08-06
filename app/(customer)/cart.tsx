@@ -87,6 +87,7 @@ export default function CartScreen() {
         items: orderItems,
         subtotal: cartSubtotal,
         discount,
+        couponDiscount: 0,
         total,
         status: 'pending',
         pickupCode: generatePickupCode(),

@@ -44,10 +44,12 @@ import type {
   BroadcastMessage,
   BusinessHours,
   Coupon,
+  CouponValidationResult,
   CustomerImpact,
   CustomerProfile,
   Listing,
   ListingStatus,
+  ListingType,
   ListingTemplate,
   Merchant,
   MerchantAnalytics,
@@ -69,6 +71,15 @@ import type {
 
 // In-memory store for broadcast messages
 const BROADCAST_MESSAGES: BroadcastMessage[] = [];
+
+// In-memory store for coupon redemptions (mirrors Supabase coupon_uses table in mock mode)
+interface CouponUse {
+  couponId: string;
+  customerId: string;
+  orderId: string;
+  usedAt: string;
+}
+const COUPON_USES: CouponUse[] = [];
 
 
 class MockAuthRepository implements AuthRepository {
@@ -734,6 +745,17 @@ class MockOrderRepository implements OrderRepository {
     };
     ORDERS.unshift(order);
 
+    if (data.couponId) {
+      COUPON_USES.push({
+        couponId: data.couponId,
+        customerId: data.customerId,
+        orderId: order.id,
+        usedAt: new Date().toISOString(),
+      });
+      const coupon = COUPONS.find((c) => c.id === data.couponId);
+      if (coupon) coupon.usesCount += 1;
+    }
+
     // Reduce inventory
     for (const item of data.items) {
       const listing = LISTINGS.find((l) => l.id === item.listingId);
@@ -952,10 +974,46 @@ class MockPayoutRepository implements PayoutRepository {
   }
 }
 
+function calculateCouponDiscount(coupon: Coupon, subtotal: number): number {
+  if (subtotal < (coupon.minOrderAmount ?? 0)) return 0;
+  let discount = 0;
+  if (coupon.discountType === 'percentage') {
+    discount = Math.round((subtotal * coupon.discountValue) / 100);
+    if (coupon.maxDiscountAmount) discount = Math.min(discount, coupon.maxDiscountAmount);
+  } else {
+    discount = Math.round(coupon.discountValue);
+  }
+  return Math.min(discount, subtotal);
+}
+
+function isCouponValidForListing(
+  coupon: Coupon,
+  listing: { id: string; category: string; type: ListingType }
+): boolean {
+  if (coupon.applicableCategories && coupon.applicableCategories.length > 0) {
+    if (!coupon.applicableCategories.includes(listing.category)) return false;
+  }
+  if (coupon.applicableListingTypes && coupon.applicableListingTypes.length > 0) {
+    if (!coupon.applicableListingTypes.includes(listing.type)) return false;
+  }
+  return true;
+}
+
 class MockCouponRepository implements CouponRepository {
   async getCoupons(merchantId: string): Promise<Coupon[]> {
     return COUPONS.filter((c) => c.merchantId === merchantId).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getCouponByCode(code: string, merchantId?: string): Promise<Coupon | null> {
+    const normalized = code.trim().toUpperCase();
+    return (
+      COUPONS.find(
+        (c) =>
+          c.code.toUpperCase() === normalized &&
+          (!merchantId || c.merchantId === merchantId)
+      ) ?? null
     );
   }
 
@@ -984,6 +1042,66 @@ class MockCouponRepository implements CouponRepository {
   async deleteCoupon(id: string): Promise<void> {
     const index = COUPONS.findIndex((c) => c.id === id);
     if (index !== -1) COUPONS.splice(index, 1);
+  }
+
+  async validateCoupon(input: {
+    code: string;
+    customerId: string;
+    merchantId: string;
+    subtotal: number;
+    listing: { id: string; category: string; type: ListingType };
+  }): Promise<CouponValidationResult> {
+    const coupon = await this.getCouponByCode(input.code, input.merchantId);
+    if (!coupon) return { valid: false, discountAmount: 0, message: 'Coupon not found' };
+
+    const now = new Date();
+    if (coupon.status !== 'active') return { valid: false, discountAmount: 0, message: 'Coupon is inactive' };
+    if (new Date(coupon.validFrom) > now) return { valid: false, discountAmount: 0, message: 'Coupon not yet valid' };
+    if (new Date(coupon.validUntil) < now) return { valid: false, discountAmount: 0, message: 'Coupon expired' };
+
+    const totalUses = COUPON_USES.filter((u) => u.couponId === coupon.id).length;
+    if (coupon.maxUses != null && totalUses >= coupon.maxUses) {
+      return { valid: false, discountAmount: 0, message: 'Coupon fully redeemed' };
+    }
+
+    const customerUses = COUPON_USES.filter(
+      (u) => u.couponId === coupon.id && u.customerId === input.customerId
+    ).length;
+    if (coupon.perCustomerMaxUses != null && customerUses >= coupon.perCustomerMaxUses) {
+      return { valid: false, discountAmount: 0, message: 'You already used this coupon' };
+    }
+
+    if (coupon.firstTimeCustomerOnly) {
+      const hasOrders = ORDERS.some(
+        (o) =>
+          o.customerId === input.customerId &&
+          !['cancelled', 'refunded'].includes(o.status)
+      );
+      if (hasOrders) {
+        return { valid: false, discountAmount: 0, message: 'First-time customers only' };
+      }
+    }
+
+    if (input.subtotal < (coupon.minOrderAmount ?? 0)) {
+      return {
+        valid: false,
+        discountAmount: 0,
+        message: `Minimum order ${coupon.minOrderAmount} THB required`,
+      };
+    }
+
+    if (!isCouponValidForListing(coupon, input.listing)) {
+      return { valid: false, discountAmount: 0, message: 'Coupon not valid for this item' };
+    }
+
+    const discountAmount = calculateCouponDiscount(coupon, input.subtotal);
+    return { valid: true, coupon, discountAmount };
+  }
+
+  async recordCouponUse(couponId: string, customerId: string, orderId: string): Promise<void> {
+    COUPON_USES.push({ couponId, customerId, orderId, usedAt: new Date().toISOString() });
+    const coupon = COUPONS.find((c) => c.id === couponId);
+    if (coupon) coupon.usesCount += 1;
   }
 }
 

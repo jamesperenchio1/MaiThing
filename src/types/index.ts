@@ -152,6 +152,9 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   discount: number;
+  couponId?: string;
+  couponCode?: string;
+  couponDiscount: number;
   total: number;
   status: OrderStatus;
   pickupCode: string;
@@ -346,13 +349,25 @@ export interface Coupon {
   description: string;
   discountType: CouponDiscountType;
   discountValue: number;
+  maxDiscountAmount?: number;
   minOrderAmount?: number;
   maxUses?: number;
+  perCustomerMaxUses?: number;
+  firstTimeCustomerOnly?: boolean;
+  applicableCategories?: string[];
+  applicableListingTypes?: ('mystery_box' | 'fixed_item')[];
   usesCount: number;
   status: CouponStatus;
   validFrom: string;
   validUntil: string;
   createdAt: string;
+}
+
+export interface CouponValidationResult {
+  valid: boolean;
+  coupon?: Coupon;
+  discountAmount: number;
+  message?: string;
 }
 
 export interface MerchantMessage {

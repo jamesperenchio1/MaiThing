@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Alert, Modal, ScrollView } from 'react-native';
-import { Tag, Percent, Banknote, Clock, Trash2, Plus } from 'lucide-react-native';
+import { Tag, Percent, Banknote, Clock, Trash2, Plus, Check } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Card } from '@/src/components/ui/Card';
@@ -13,7 +13,7 @@ import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { DateTimePickerField } from '@/src/components/ui/DateTimePickerField';
 import { useAuthStore } from '@/src/stores/auth';
-import { useMerchantByOwner } from '@/src/hooks/useMerchants';
+import { useMerchantByOwner, useCategories } from '@/src/hooks/useMerchants';
 import {
   useCoupons,
   useCreateCoupon,
@@ -22,7 +22,12 @@ import {
 } from '@/src/hooks/useCoupons';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
-import type { Coupon, CouponDiscountType, CouponStatus } from '@/src/types';
+import type { Category, Coupon, CouponDiscountType, CouponStatus, ListingType } from '@/src/types';
+
+const LISTING_TYPES: { key: ListingType; label: string }[] = [
+  { key: 'mystery_box', label: 'Mystery Box' },
+  { key: 'fixed_item', label: 'Fixed Item' },
+];
 
 const DISCOUNT_TYPES: CouponDiscountType[] = ['percentage', 'fixed'];
 
@@ -76,8 +81,8 @@ function CouponItem({
       <Text variant="body-sm" className="mb-2 text-muted">
         {coupon.description}
       </Text>
-      <View className="mb-3 flex-row items-center">
-        <View className="mr-3 flex-row items-center rounded-lg bg-primary/10 px-2 py-1">
+      <View className="mb-3 flex-row flex-wrap items-center gap-2">
+        <View className="flex-row items-center rounded-lg bg-primary/10 px-2 py-1">
           {coupon.discountType === 'percentage' ? (
             <Percent size={12} color={colors.primary} />
           ) : (
@@ -85,10 +90,26 @@ function CouponItem({
           )}
           <Text className="ml-1 text-xs font-semibold text-primary">{discountLabel}</Text>
         </View>
-        <Text variant="caption" className="text-muted">
-          {t('merchant.coupons.uses', { count: coupon.usesCount })}
-        </Text>
+        {coupon.maxDiscountAmount ? (
+          <Text variant="caption" className="text-muted">
+            cap {formatCurrency(coupon.maxDiscountAmount)}
+          </Text>
+        ) : null}
+        {coupon.minOrderAmount ? (
+          <Text variant="caption" className="text-muted">
+            min {formatCurrency(coupon.minOrderAmount)}
+          </Text>
+        ) : null}
+        {coupon.firstTimeCustomerOnly && (
+          <Text variant="caption" className="text-primary">
+            new customers only
+          </Text>
+        )}
       </View>
+      <Text variant="caption" className="mb-2 text-muted">
+        {t('merchant.coupons.uses', { count: coupon.usesCount })} / customer limit{' '}
+        {coupon.perCustomerMaxUses ?? 1}
+      </Text>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center">
           <Clock size={12} color={colors.muted} />
@@ -143,13 +164,20 @@ export default function PromotionsScreen() {
   const updateCoupon = useUpdateCoupon();
   const deleteCoupon = useDeleteCoupon();
 
+  const { data: categories } = useCategories();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
   const [discountType, setDiscountType] = useState<CouponDiscountType>('percentage');
   const [discountValue, setDiscountValue] = useState('');
+  const [maxDiscount, setMaxDiscount] = useState('');
   const [minOrder, setMinOrder] = useState('');
   const [maxUses, setMaxUses] = useState('');
+  const [perCustomerMaxUses, setPerCustomerMaxUses] = useState('1');
+  const [firstTimeOnly, setFirstTimeOnly] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedListingTypes, setSelectedListingTypes] = useState<ListingType[]>([]);
   const [validFrom, setValidFrom] = useState(new Date());
   const [validUntil, setValidUntil] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
   const [status, setStatus] = useState<CouponStatus>('active');
@@ -159,11 +187,28 @@ export default function PromotionsScreen() {
     setDescription('');
     setDiscountType('percentage');
     setDiscountValue('');
+    setMaxDiscount('');
     setMinOrder('');
     setMaxUses('');
+    setPerCustomerMaxUses('1');
+    setFirstTimeOnly(false);
+    setSelectedCategories([]);
+    setSelectedListingTypes([]);
     setValidFrom(new Date());
     setValidUntil(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
     setStatus('active');
+  };
+
+  const toggleCategory = (slug: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  };
+
+  const toggleListingType = (type: ListingType) => {
+    setSelectedListingTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
   };
 
   const handleToggle = async (coupon: Coupon) => {
@@ -214,8 +259,13 @@ export default function PromotionsScreen() {
         description: description.trim(),
         discountType,
         discountValue: value,
+        maxDiscountAmount: maxDiscount ? Number(maxDiscount) : undefined,
         minOrderAmount: minOrder ? Number(minOrder) : undefined,
         maxUses: maxUses ? Number(maxUses) : undefined,
+        perCustomerMaxUses: perCustomerMaxUses ? Number(perCustomerMaxUses) : undefined,
+        firstTimeCustomerOnly: firstTimeOnly,
+        applicableCategories: selectedCategories.length > 0 ? selectedCategories : undefined,
+        applicableListingTypes: selectedListingTypes.length > 0 ? selectedListingTypes : undefined,
         validFrom: validFrom.toISOString(),
         validUntil: validUntil.toISOString(),
         status,
@@ -376,6 +426,96 @@ export default function PromotionsScreen() {
                 onChangeText={setMaxUses}
                 keyboardType="number-pad"
               />
+              <Input
+                testID="coupon-per-customer-max-uses-input"
+                label="Max uses per customer"
+                placeholder="1"
+                value={perCustomerMaxUses}
+                onChangeText={setPerCustomerMaxUses}
+                keyboardType="number-pad"
+              />
+              {discountType === 'percentage' && (
+                <Input
+                  testID="coupon-max-discount-input"
+                  label="Max discount cap (THB)"
+                  placeholder="No cap"
+                  value={maxDiscount}
+                  onChangeText={setMaxDiscount}
+                  keyboardType="numeric"
+                />
+              )}
+
+              <Text variant="label" className="mb-2 ml-1">
+                Applicable categories
+              </Text>
+              <View className="mb-4 flex-row flex-wrap" style={{ gap: 8 }}>
+                {(categories ?? []).map((cat: Category) => {
+                  const selected = selectedCategories.includes(cat.id);
+                  return (
+                    <PressableScale
+                      key={cat.id}
+                      onPress={() => toggleCategory(cat.id)}
+                      scale={0.97}
+                      className={`flex-row items-center rounded-xl border px-3 py-2 ${
+                        selected ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                      }`}
+                    >
+                      {selected && <Check size={12} color={colors.primary} className="mr-1" />}
+                      <Text
+                        variant="caption"
+                        className={`font-medium ${selected ? 'text-primary' : 'text-muted'}`}
+                      >
+                        {cat.name}
+                      </Text>
+                    </PressableScale>
+                  );
+                })}
+              </View>
+
+              <Text variant="label" className="mb-2 ml-1">
+                Applicable item types
+              </Text>
+              <View className="mb-4 flex-row" style={{ gap: 8 }}>
+                {LISTING_TYPES.map((type) => {
+                  const selected = selectedListingTypes.includes(type.key);
+                  return (
+                    <PressableScale
+                      key={type.key}
+                      onPress={() => toggleListingType(type.key)}
+                      scale={0.97}
+                      className={`flex-1 flex-row items-center justify-center rounded-2xl border px-3 py-3 ${
+                        selected ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                      }`}
+                    >
+                      {selected && <Check size={14} color={colors.primary} className="mr-1" />}
+                      <Text
+                        variant="caption"
+                        className={`font-semibold ${selected ? 'text-primary' : 'text-muted'}`}
+                      >
+                        {type.label}
+                      </Text>
+                    </PressableScale>
+                  );
+                })}
+              </View>
+
+              <PressableScale
+                onPress={() => setFirstTimeOnly((v) => !v)}
+                className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5"
+              >
+                <Text variant="body-sm" className="font-medium">
+                  First-time customers only
+                </Text>
+                <View
+                  className={`h-6 w-11 rounded-full ${firstTimeOnly ? 'bg-primary' : 'bg-muted/30'}`}
+                >
+                  <View
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ${
+                      firstTimeOnly ? 'left-6' : 'left-0.5'
+                    }`}
+                  />
+                </View>
+              </PressableScale>
 
               <DateTimePickerField
                 label={t('merchant.coupons.validFrom')}

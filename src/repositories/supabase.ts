@@ -36,10 +36,12 @@ import type {
   BusinessHours,
   Category,
   Coupon,
+  CouponValidationResult,
   CustomerImpact,
   CustomerProfile,
   Listing,
   ListingTemplate,
+  ListingType,
   Merchant,
   MerchantAnalytics,
   MerchantMessage,
@@ -264,6 +266,9 @@ function mapOrder(row: Record<string, unknown>): Order {
     items,
     subtotal: total,
     discount: 0,
+    couponId: (row.coupon_id as string) ?? undefined,
+    couponCode: (row.coupon_code as string) ?? undefined,
+    couponDiscount: typeof row.coupon_discount_thb === 'number' ? row.coupon_discount_thb : 0,
     total,
     status: STATUS_DB_TO_APP[row.status as string] ?? 'pending',
     pickupCode: qrPayload,
@@ -280,6 +285,8 @@ function mapCoupon(row: Record<string, unknown>): Coupon {
   const now = new Date().toISOString();
   let status: Coupon['status'] = (row.status as Coupon['status']) ?? 'active';
   if (status === 'active' && (row.valid_until as string) < now) status = 'expired';
+  const categories = row.applicable_categories;
+  const listingTypes = row.applicable_listing_types;
   return {
     id: row.id as string,
     merchantId: row.merchant_id as string,
@@ -287,8 +294,17 @@ function mapCoupon(row: Record<string, unknown>): Coupon {
     description: (row.description as string) ?? '',
     discountType: (row.discount_type as Coupon['discountType']) ?? 'percentage',
     discountValue: typeof row.discount_value === 'number' ? row.discount_value : 0,
+    maxDiscountAmount:
+      typeof row.max_discount_amount_thb === 'number' ? row.max_discount_amount_thb : undefined,
     minOrderAmount: typeof row.min_order_amount === 'number' ? row.min_order_amount : undefined,
     maxUses: typeof row.max_uses === 'number' ? row.max_uses : undefined,
+    perCustomerMaxUses:
+      typeof row.per_customer_max_uses === 'number' ? row.per_customer_max_uses : undefined,
+    firstTimeCustomerOnly: !!row.first_time_customer_only,
+    applicableCategories: Array.isArray(categories) ? (categories as string[]) : undefined,
+    applicableListingTypes: Array.isArray(listingTypes)
+      ? (listingTypes as ListingType[])
+      : undefined,
     usesCount: typeof row.uses_count === 'number' ? row.uses_count : 0,
     status,
     validFrom: (row.valid_from as string) ?? now,
@@ -1217,10 +1233,19 @@ const ordersRepo: OrderRepository = {
         pickup_start: data.pickupWindowStart,
         pickup_end: data.pickupWindowEnd,
         customer_note: data.notes ?? null,
+        coupon_id: data.couponId ?? null,
+        coupon_discount_thb: data.couponDiscount ?? 0,
       })
       .select('*, listings(*), locations(*, merchant_orgs(*)), profiles(*)')
       .single();
     if (error) throw error;
+
+    if (data.couponId) {
+      await couponsRepo.recordCouponUse(data.couponId, data.customerId, row.id as string).catch(() => {
+        // Don't fail the order if coupon-use tracking fails; log is ignored here.
+      });
+    }
+
     return mapOrder(row as Record<string, unknown>);
   },
 
@@ -1644,6 +1669,14 @@ const couponsRepo: CouponRepository = {
     if (error) return [];
     return (data ?? []).map((r) => mapCoupon(r as Record<string, unknown>));
   },
+  async getCouponByCode(code, merchantId): Promise<Coupon | null> {
+    const normalized = code.trim().toUpperCase();
+    let query = supabase.from('coupons').select('*').ilike('code', normalized);
+    if (merchantId) query = query.eq('merchant_id', merchantId);
+    const { data, error } = await query.maybeSingle();
+    if (error || !data) return null;
+    return mapCoupon(data as Record<string, unknown>);
+  },
   async createCoupon(merchantId, data): Promise<Coupon> {
     const { data: row, error } = await supabase
       .from('coupons')
@@ -1653,8 +1686,13 @@ const couponsRepo: CouponRepository = {
         description: data.description,
         discount_type: data.discountType,
         discount_value: data.discountValue,
+        max_discount_amount_thb: data.maxDiscountAmount,
         min_order_amount: data.minOrderAmount,
         max_uses: data.maxUses,
+        per_customer_max_uses: data.perCustomerMaxUses,
+        first_time_customer_only: data.firstTimeCustomerOnly,
+        applicable_categories: data.applicableCategories,
+        applicable_listing_types: data.applicableListingTypes,
         valid_from: data.validFrom,
         valid_until: data.validUntil,
         status: data.status,
@@ -1670,8 +1708,14 @@ const couponsRepo: CouponRepository = {
     if (data.description) update.description = data.description;
     if (data.discountType) update.discount_type = data.discountType;
     if (data.discountValue !== undefined) update.discount_value = data.discountValue;
+    if (data.maxDiscountAmount !== undefined) update.max_discount_amount_thb = data.maxDiscountAmount;
     if (data.minOrderAmount !== undefined) update.min_order_amount = data.minOrderAmount;
     if (data.maxUses !== undefined) update.max_uses = data.maxUses;
+    if (data.perCustomerMaxUses !== undefined) update.per_customer_max_uses = data.perCustomerMaxUses;
+    if (data.firstTimeCustomerOnly !== undefined) update.first_time_customer_only = data.firstTimeCustomerOnly;
+    if (data.applicableCategories !== undefined) update.applicable_categories = data.applicableCategories;
+    if (data.applicableListingTypes !== undefined)
+      update.applicable_listing_types = data.applicableListingTypes;
     if (data.validFrom) update.valid_from = data.validFrom;
     if (data.validUntil) update.valid_until = data.validUntil;
     if (data.status) update.status = data.status;
@@ -1686,6 +1730,89 @@ const couponsRepo: CouponRepository = {
   },
   async deleteCoupon(id) {
     await supabase.from('coupons').delete().eq('id', id);
+  },
+  async validateCoupon(input): Promise<CouponValidationResult> {
+    const coupon = await this.getCouponByCode(input.code, input.merchantId);
+    if (!coupon) return { valid: false, discountAmount: 0, message: 'Coupon not found' };
+
+    const now = new Date();
+    if (coupon.status !== 'active') return { valid: false, discountAmount: 0, message: 'Coupon is inactive' };
+    if (new Date(coupon.validFrom) > now)
+      return { valid: false, discountAmount: 0, message: 'Coupon not yet valid' };
+    if (new Date(coupon.validUntil) < now)
+      return { valid: false, discountAmount: 0, message: 'Coupon expired' };
+
+    const { data: totalUsesData, error: totalError } = await supabase.rpc('count_coupon_uses', {
+      p_coupon_id: coupon.id,
+    });
+    if (totalError) throw totalError;
+    const totalUses = typeof totalUsesData === 'number' ? totalUsesData : 0;
+    if (coupon.maxUses != null && totalUses >= coupon.maxUses) {
+      return { valid: false, discountAmount: 0, message: 'Coupon fully redeemed' };
+    }
+
+    const { data: customerUsesData, error: customerError } = await supabase.rpc(
+      'count_customer_coupon_uses',
+      { p_coupon_id: coupon.id, p_customer_id: input.customerId }
+    );
+    if (customerError) throw customerError;
+    const customerUses = typeof customerUsesData === 'number' ? customerUsesData : 0;
+    if (coupon.perCustomerMaxUses != null && customerUses >= coupon.perCustomerMaxUses) {
+      return { valid: false, discountAmount: 0, message: 'You already used this coupon' };
+    }
+
+    if (coupon.firstTimeCustomerOnly) {
+      const { data: hasOrders, error: firstError } = await supabase.rpc(
+        'customer_has_completed_orders',
+        { p_customer_id: input.customerId }
+      );
+      if (firstError) throw firstError;
+      if (hasOrders) {
+        return { valid: false, discountAmount: 0, message: 'First-time customers only' };
+      }
+    }
+
+    if (input.subtotal < (coupon.minOrderAmount ?? 0)) {
+      return {
+        valid: false,
+        discountAmount: 0,
+        message: `Minimum order ${coupon.minOrderAmount} THB required`,
+      };
+    }
+
+    if (
+      coupon.applicableCategories &&
+      coupon.applicableCategories.length > 0 &&
+      !coupon.applicableCategories.includes(input.listing.category)
+    ) {
+      return { valid: false, discountAmount: 0, message: 'Coupon not valid for this category' };
+    }
+
+    if (
+      coupon.applicableListingTypes &&
+      coupon.applicableListingTypes.length > 0 &&
+      !coupon.applicableListingTypes.includes(input.listing.type)
+    ) {
+      return { valid: false, discountAmount: 0, message: 'Coupon not valid for this item type' };
+    }
+
+    let discountAmount = 0;
+    if (coupon.discountType === 'percentage') {
+      discountAmount = Math.round((input.subtotal * coupon.discountValue) / 100);
+      if (coupon.maxDiscountAmount) discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
+    } else {
+      discountAmount = Math.round(coupon.discountValue);
+    }
+    discountAmount = Math.min(discountAmount, input.subtotal);
+
+    return { valid: true, coupon, discountAmount };
+  },
+  async recordCouponUse(couponId, customerId, orderId): Promise<void> {
+    await supabase.from('coupon_uses').insert({
+      coupon_id: couponId,
+      customer_id: customerId,
+      order_id: orderId,
+    });
   },
 };
 

@@ -3,8 +3,10 @@ import type {
   BusinessHours,
   Category,
   Coupon,
+  CouponValidationResult,
   CustomerProfile,
   Listing,
+  ListingType,
   ListingTemplate,
   Merchant,
   MerchantAnalytics,
@@ -174,12 +176,25 @@ export interface PayoutRepository {
 
 export interface CouponRepository {
   getCoupons(merchantId: string): Promise<Coupon[]>;
+  getCouponByCode(code: string, merchantId?: string): Promise<Coupon | null>;
   createCoupon(
     merchantId: string,
     data: Omit<Coupon, 'id' | 'merchantId' | 'usesCount' | 'createdAt'>
   ): Promise<Coupon>;
   updateCoupon(id: string, data: Partial<Coupon>): Promise<Coupon>;
   deleteCoupon(id: string): Promise<void>;
+  validateCoupon(input: {
+    code: string;
+    customerId: string;
+    merchantId: string;
+    subtotal: number;
+    listing: {
+      id: string;
+      category: string;
+      type: ListingType;
+    };
+  }): Promise<CouponValidationResult>;
+  recordCouponUse(couponId: string, customerId: string, orderId: string): Promise<void>;
 }
 
 export interface MessageRepository {

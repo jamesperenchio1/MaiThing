@@ -513,6 +513,16 @@ export default function OrderDetailScreen() {
               </Text>
               <Text variant="body-sm">{formatCurrency(order.subtotal)}</Text>
             </View>
+            {order.couponDiscount > 0 && (
+              <View className="mb-2 flex-row justify-between">
+                <Text variant="body-sm" className="text-muted">
+                  Coupon {order.couponCode ? `(${order.couponCode})` : ''}
+                </Text>
+                <Text variant="body-sm" className="text-success">
+                  -{formatCurrency(order.couponDiscount)}
+                </Text>
+              </View>
+            )}
             <View className="flex-row justify-between">
               <Text variant="body" className="font-semibold">
                 Total

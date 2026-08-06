@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Platform, ActivityIndicator, Modal } from 'react-native';
-import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar, Globe, Check } from 'lucide-react-native';
+import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar, Globe, Check, Tag, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 // Lazy-loaded so Expo Go doesn't crash on missing native CalendarNext module
 let ExpoCalendar: typeof import('expo-calendar') | null = null;
@@ -15,6 +15,7 @@ try {
 }
 
 import { Button } from '@/src/components/ui/Button';
+import { Input } from '@/src/components/ui/Input';
 import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
 import { Card } from '@/src/components/ui/Card';
@@ -24,6 +25,7 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useNotificationPreferences } from '@/src/hooks/useNotifications';
+import { useValidateCoupon } from '@/src/hooks/useCoupons';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import {
@@ -60,6 +62,10 @@ export default function ConfirmOrderScreen() {
   const [calendarAdded, setCalendarAdded] = useState(false);
   const [upsellListings, setUpsellListings] = useState<Listing[]>([]);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const { mutateAsync: validateCoupon, isPending: validatingCoupon } = useValidateCoupon();
 
   const handleAddToCalendar = async (o: Order) => {
     if (Platform.OS === 'web' || !ExpoCalendar) return;
@@ -104,7 +110,8 @@ export default function ConfirmOrderScreen() {
   const discount = listing.originalPrice - listing.salePrice;
   const subtotal = listing.salePrice * quantity;
   const totalDiscount = discount * quantity;
-  const total = subtotal;
+  const couponDiscount = appliedCoupon?.discount ?? 0;
+  const total = Math.max(0, subtotal - couponDiscount);
   const isSoldOut = listing.quantityRemaining === 0;
   const distance = merchant
     ? formatDistance(calculateDistance(DEFAULT_USER_LOCATION, merchant.coordinates))
@@ -132,6 +139,9 @@ export default function ConfirmOrderScreen() {
         ],
         subtotal,
         discount: totalDiscount,
+        couponId: appliedCoupon?.id,
+        couponCode: appliedCoupon?.code,
+        couponDiscount,
         total,
         status: 'confirmed',
         pickupCode: generatePickupCode(),
@@ -381,6 +391,35 @@ export default function ConfirmOrderScreen() {
                 -{formatCurrency(totalDiscount)}
               </Text>
             </View>
+
+            <View className="mb-3 flex-row items-center justify-between">
+              <Text variant="body-sm" className="text-muted">
+                Coupon
+              </Text>
+              {appliedCoupon ? (
+                <View className="flex-row items-center">
+                  <Text variant="body-sm" className="text-success">
+                    -{formatCurrency(couponDiscount)}
+                  </Text>
+                  <PressableScale
+                    onPress={() => {
+                      setAppliedCoupon(null);
+                      setCouponCode('');
+                      setCouponError(null);
+                    }}
+                    className="ml-2 rounded-full bg-muted/20 p-1"
+                    scale={0.9}
+                  >
+                    <X size={12} color={colors.muted} />
+                  </PressableScale>
+                </View>
+              ) : (
+                <Text variant="body-sm" className="text-muted">
+                  None
+                </Text>
+              )}
+            </View>
+
             <View className="border-t border-border pt-3 flex-row items-center justify-between">
               <Text className="font-semibold">Total</Text>
               <Text className="text-xl font-bold text-primary">{formatCurrency(total)}</Text>
@@ -423,6 +462,83 @@ export default function ConfirmOrderScreen() {
                   </Text>
                 </View>
               </>
+            )}
+          </Card>
+
+          <Card variant="outlined" className="mb-4">
+            <View className="mb-2 flex-row items-center">
+              <Tag size={16} color={colors.primary} />
+              <Text variant="body-sm" className="ml-2 font-semibold">
+                Coupon code
+              </Text>
+            </View>
+            {appliedCoupon ? (
+              <View className="flex-row items-center justify-between rounded-xl bg-success/10 px-3 py-2">
+                <Text className="font-semibold text-success">{appliedCoupon.code}</Text>
+                <Text variant="body-sm" className="text-success">
+                  -{formatCurrency(appliedCoupon.discount)}
+                </Text>
+              </View>
+            ) : (
+              <View>
+                <View className="flex-row items-center gap-2">
+                  <Input
+                    containerClassName="flex-1"
+                    placeholder="Enter code"
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    value={couponCode}
+                    onChangeText={(text) => {
+                      setCouponCode(text.toUpperCase());
+                      setCouponError(null);
+                    }}
+                    editable={!validatingCoupon}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    loading={validatingCoupon}
+                    disabled={!couponCode.trim() || validatingCoupon}
+                    onPress={async () => {
+                      if (!user) return;
+                      try {
+                        const result = await validateCoupon({
+                          code: couponCode,
+                          customerId: user.id,
+                          merchantId: listing.merchantId,
+                          subtotal,
+                          listing: {
+                            id: listing.id,
+                            category: listing.category,
+                            type: listing.type,
+                          },
+                        });
+                        if (result.valid && result.coupon) {
+                          setAppliedCoupon({
+                            id: result.coupon.id,
+                            code: result.coupon.code,
+                            discount: result.discountAmount,
+                          });
+                          setCouponCode('');
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        } else {
+                          setCouponError(result.message ?? 'Invalid coupon');
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                        }
+                      } catch {
+                        setCouponError('Could not validate coupon');
+                      }
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </View>
+                {couponError && (
+                  <Text variant="caption" className="mt-2 text-danger">
+                    {couponError}
+                  </Text>
+                )}
+              </View>
             )}
           </Card>
 
