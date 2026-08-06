@@ -56,3 +56,4 @@ Thumbs.db
 /*.png
 snapshot-landing.yml
 report.xml
+supabase/.temp/
