@@ -18,6 +18,7 @@ export default {
     phone: 'เบอร์โทรศัพท์',
     continueAsTestCustomer: 'ทดลองใช้งานในฐานะลูกค้า',
     continueAsTestMerchant: 'ทดลองใช้งานในฐานะร้านค้า',
+    continueWith: 'เข้าสู่ระบบด้วย {{provider}}',
     onboarding: {
       saveMoney: 'ประหยัดเงิน',
       saveMoneyDesc: 'รับอาหารคุณภาพลดสูงสุด 70%',
@@ -133,6 +134,9 @@ export default {
       quantityLeft: 'เหลือ {{count}}',
       quantityLeft_one: 'เหลือ {{count}}',
       quantityLeft_other: 'เหลือ {{count}}',
+      onlyLeft: 'เหลือเพียง {{count}}',
+      onlyLeft_one: 'เหลือเพียง {{count}}',
+      onlyLeft_other: 'เหลือเพียง {{count}}',
       soldOut: 'หมดแล้ว',
       fixed: 'แน่นอน',
       worthOfSurprises: 'มูลค่า {{value}}+',
@@ -447,6 +451,7 @@ export default {
     staff: {
       title: 'ทีมงาน',
       addStaff: 'เพิ่มทีมงาน',
+      sendInvite: 'ส่งคำเชิญ',
       role: 'บทบาท',
       owner: 'เจ้าของ',
       manager: 'ผู้จัดการ',
@@ -454,6 +459,31 @@ export default {
       email: 'อีเมล',
       phone: 'โทรศัพท์',
       noStaff: 'ยังไม่มีทีมงาน',
+      active: 'ใช้งาน',
+      invited: 'รอการยืนยัน',
+      permissions: 'สิทธิ์',
+      permissionsHint:
+        'เลือกสิทธิ์ที่ต้องการให้ทีมงานคนนี้มี โดยสามารถเปลี่ยนแปลงได้หลังจากยอมรับคำเชิญ',
+      nameEmailRequired: 'กรุณากรอกชื่อและอีเมล',
+      addError: 'ไม่สามารถเพิ่มทีมงานได้',
+      loadError: 'ไม่สามารถโหลดทีมงานได้',
+      removeTitle: 'ลบทีมงาน?',
+      removeConfirm: 'คุณแน่ใจหรือไม่ว่าต้องการลบ {{name}}?',
+      removeError: 'ไม่สามารถลบทีมงานได้',
+      roleDescription: {
+        owner: 'เข้าถึงทุกอย่างได้ทั้งหมด',
+        manager: 'จัดการคำสั่งซื้อ สินค้า และทีมงาน',
+        staff: 'จัดการการรับสินค้าและงานพื้นฐาน',
+      },
+      permission: {
+        manage_orders: 'คำสั่งซื้อ',
+        manage_inventory: 'สินค้า',
+        manage_staff: 'ทีมงาน',
+        manage_payouts: 'การจ่ายเงิน',
+        manage_promotions: 'โปรโมชั่น',
+        view_analytics: 'สถิติ',
+        manage_messages: 'ข้อความ',
+      },
     },
     coupons: {
       title: 'โปรโมชั่น',
@@ -539,6 +569,15 @@ export default {
       autoConfirmOrders: 'ยืนยันออเดอร์อัตโนมัติ',
       autoConfirmOrdersDesc: 'ยืนยันออเดอร์ที่เข้ามาโดยอัตโนมัติ',
     },
+    storeHours: {
+      helperHint: 'การดำเนินการด่วน:',
+      applyToAll: 'ใช้กับทุกวัน',
+      copyMondayToWeekdays: 'คัดลอกวันจันทร์ไปวันธรรมดา',
+      resetToDefault: 'รีเซ็ตเป็นค่าเริ่มต้น',
+      applyToAllConfirm: 'คัดลอกเวลาของวันที่เลือกไปทุกวัน ต้องการดำเนินการต่อ?',
+      copyMondayConfirm: 'คัดลอกเวลาวันจันทร์ไปวันอังคาร–ศุกร์ ต้องการดำเนินการต่อ?',
+      resetConfirm: 'รีเซ็ตทุกวันเป็น 07:00–21:00 ต้องการดำเนินการต่อ?',
+    },
     scanner: {
       title: 'สแกนรหัสรับสินค้า',
       manualEntry: 'ป้อนรหัสด้วยตนเอง',
@@ -565,13 +604,11 @@ export default {
     },
     feed: {
       title: 'ฟีดอาหารของคุณ',
-      description:
-        'ค้นหาดีลจากคาเฟ่ เบเกอรี่ และร้านอาหารใกล้คุณ เลื่อนลงเพื่อค้นหารายการเพิ่ม!',
+      description: 'ค้นหาดีลจากคาเฟ่ เบเกอรี่ และร้านอาหารใกล้คุณ เลื่อนลงเพื่อค้นหารายการเพิ่ม!',
     },
     discover: {
       title: 'สำรวจรายการทั้งหมด',
-      description:
-        'ค้นหาอาหารเฉพาะ เรียงตามคะแนนหรือระยะทาง และกรองตามหมวดหมู่ แตะเพื่อสำรวจ!',
+      description: 'ค้นหาอาหารเฉพาะ เรียงตามคะแนนหรือระยะทาง และกรองตามหมวดหมู่ แตะเพื่อสำรวจ!',
     },
     map: {
       title: 'ค้นหาร้านค้าบนแผนที่',
@@ -580,8 +617,7 @@ export default {
     },
     orders: {
       title: 'ติดตามคำสั่งซื้อของคุณ',
-      description:
-        'ทุกคำสั่งซื้อแสดงช่วงเวลารับสินค้าและรหัส QR โชว์ที่ร้านเพื่อรับอาหารของคุณ',
+      description: 'ทุกคำสั่งซื้อแสดงช่วงเวลารับสินค้าและรหัส QR โชว์ที่ร้านเพื่อรับอาหารของคุณ',
     },
     profile: {
       title: 'โปรไฟล์และผลกระทบของคุณ',
@@ -595,8 +631,7 @@ export default {
     },
     finish: {
       title: 'พร้อมแล้ว!',
-      description:
-        'เริ่มช่วยอาหารวันนี้ คุณสามารถเล่นทัวร์นี้ซ้ำได้จากการตั้งค่าโปรไฟล์ของคุณ',
+      description: 'เริ่มช่วยอาหารวันนี้ คุณสามารถเล่นทัวร์นี้ซ้ำได้จากการตั้งค่าโปรไฟล์ของคุณ',
     },
     tapHint: {
       discover: 'แตะสำรวจเพื่อดำเนินการต่อ',

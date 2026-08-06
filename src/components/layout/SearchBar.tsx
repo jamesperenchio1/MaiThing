@@ -37,8 +37,13 @@ export function SearchBar({
   };
 
   return (
-    <View className={cn('flex-row items-center rounded-2xl bg-muted/10 px-4 py-3', className)}>
-      <Search size={20} color={colors.muted} className="mr-3" />
+    <View
+      className={cn(
+        'flex-row items-center rounded-2xl border border-border bg-card px-4 py-4 shadow-sm',
+        className
+      )}
+    >
+      <Search size={22} color={colors.primary} className="mr-3" />
       <TextInput
         className="flex-1 text-base text-foreground"
         placeholder={placeholder}
@@ -47,12 +52,13 @@ export function SearchBar({
         onChangeText={handleChange}
         onSubmitEditing={() => onSubmit?.(currentText)}
         returnKeyType="search"
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         {...props}
       />
       {currentText.length > 0 && (
         <PressableScale onPress={handleClear}>
-          <View className="ml-2 rounded-full bg-muted/20 p-1">
-            <X size={14} color={colors.muted} />
+          <View className="ml-2 rounded-full bg-muted/30 p-1.5">
+            <X size={16} color={colors.muted} />
           </View>
         </PressableScale>
       )}

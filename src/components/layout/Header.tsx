@@ -3,8 +3,7 @@ import { View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { cn } from '@/src/lib/utils';
 import { Text } from '@/src/components/ui/Text';
-import { Button } from '@/src/components/ui/Button';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 
 interface HeaderProps {
@@ -18,31 +17,30 @@ interface HeaderProps {
 
 export function Header({ title, showBack = true, right, className, onBack, testID }: HeaderProps) {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const colors = useThemeColor();
 
   return (
     <View
       testID={testID}
       className={cn(
-        'flex-row items-center justify-between border-b border-border px-4 pb-3 pt-2',
+        'flex-row items-center justify-between border-b border-border px-4 pb-3',
         className
       )}
       style={{ paddingTop: 8 }}
     >
-      <View className="w-12">
+      <View className="w-12 items-start">
         {showBack && (
-          <Button
+          <PressableScale
             testID="header-back-button"
-            variant="ghost"
-            size="icon"
             onPress={onBack ?? (() => router.back())}
-            className="self-start"
-            accessibilityLabel="Go back"
+            scale={0.92}
             hitSlop={8}
+            className="h-10 w-10 items-center justify-center rounded-full bg-muted/10"
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <ChevronLeft size={24} color={colors.foreground} />
-          </Button>
+          </PressableScale>
         )}
       </View>
       {title && (

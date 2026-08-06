@@ -23,15 +23,11 @@ export function MealTimeShortcuts({ selected, onSelect, locale = 'en' }: MealTim
   const colors = useThemeColor();
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingRight: 16 }}
-      className="mb-6"
-    >
-      {MEAL_TIMES.map((meal) => {
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
+      {MEAL_TIMES.map((meal, index) => {
         const Icon = ICONS[meal.id];
         const isActive = selected === meal.id;
+        const isLast = index === MEAL_TIMES.length - 1;
         return (
           <PressableScale
             key={meal.id}
@@ -40,8 +36,9 @@ export function MealTimeShortcuts({ selected, onSelect, locale = 'en' }: MealTim
           >
             <View
               className={cn(
-                'mr-3 flex-row items-center rounded-2xl border px-4 py-3',
-                isActive ? 'border-primary bg-primary' : 'border-border bg-card'
+                'flex-row items-center rounded-2xl border px-4 py-3',
+                isActive ? 'border-primary bg-primary' : 'border-border bg-card',
+                !isLast && 'mr-3'
               )}
             >
               <Icon size={18} color={isActive ? colors.white : colors.foreground} />

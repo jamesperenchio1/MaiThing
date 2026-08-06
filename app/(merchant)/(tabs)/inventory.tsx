@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Image, RefreshControl, Alert, Modal, ScrollView } from 'react-native';
@@ -20,6 +20,7 @@ import {
   Tag,
   AlertTriangle,
   Eye,
+  RotateCcw,
 } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -28,6 +29,7 @@ import { Badge } from '@/src/components/ui/Badge';
 import { Card } from '@/src/components/ui/Card';
 import { Input } from '@/src/components/ui/Input';
 import { Screen } from '@/src/components/layout/Screen';
+import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { EmptyState } from '@/src/components/ui/EmptyState';
@@ -482,6 +484,13 @@ export default function InventoryScreen() {
   const [showAdjustPriceModal, setShowAdjustPriceModal] = useState(false);
   const [adjustPriceValue, setAdjustPriceValue] = useState('');
 
+  type PendingAction =
+    | { type: 'status'; id: string; title: string; nextStatus: ListingStatus; data: Partial<Listing> }
+    | { type: 'delete'; id: string; title: string };
+
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [countdown, setCountdown] = useState(5);
+
   const { data: merchant, isLoading: isLoadingMerchant } = useMerchantByOwner(user?.id ?? '');
   const merchantId = merchant?.id;
 
@@ -504,6 +513,34 @@ export default function InventoryScreen() {
   const deleteTemplate = useDeleteListingTemplate();
 
   const isLoading = isLoadingMerchant || isLoadingListings;
+
+  useEffect(() => {
+    if (!pendingAction) {
+      setCountdown(5);
+      return;
+    }
+    setCountdown(5);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [pendingAction]);
+
+  useEffect(() => {
+    if (countdown !== 0 || !pendingAction) return;
+    if (pendingAction.type === 'delete') {
+      deleteListing.mutate(pendingAction.id);
+    } else {
+      updateListing.mutate({ id: pendingAction.id, data: pendingAction.data });
+    }
+    setPendingAction(null);
+  }, [countdown, pendingAction, deleteListing, updateListing]);
 
   const enterSelectionMode = (listingId: string) => {
     setIsSelecting(true);
@@ -581,9 +618,13 @@ export default function InventoryScreen() {
   };
 
   const handleToggleStatus = (listing: Listing) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const nextStatus = listing.status === 'active' ? 'sold_out' : 'active';
-    updateListing.mutate({
+    setPendingAction({
+      type: 'status',
       id: listing.id,
+      title: listing.title,
+      nextStatus,
       data: {
         status: nextStatus,
         quantityRemaining: nextStatus === 'sold_out' ? 0 : listing.quantity,
@@ -593,19 +634,11 @@ export default function InventoryScreen() {
 
   const handleDelete = (listing: Listing) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    Alert.alert(
-      t('common.delete'),
-      `${t('merchant.inventory.delete')} "${listing.title}"?`,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => deleteListing.mutate(listing.id),
-        },
-      ],
-      { cancelable: true }
-    );
+    setPendingAction({
+      type: 'delete',
+      id: listing.id,
+      title: listing.title,
+    });
   };
 
   const handleDuplicate = (listing: Listing) => {
@@ -697,10 +730,7 @@ export default function InventoryScreen() {
 
   const listHeader = (
     <View className="pt-4 pb-2">
-      <View className="mb-4 flex-row items-center justify-between">
-        <Text testID="inventory-title" variant="h1">
-          {t('merchant.inventory.title')}
-        </Text>
+      <View className="mb-4 flex-row items-center justify-end">
         <Button
           testID="new-listing-button"
           size="sm"
@@ -791,6 +821,38 @@ export default function InventoryScreen() {
 
   return (
     <Screen testID="inventory-screen" scrollable={false} className="bg-background">
+      <Header title={t('merchant.inventory.title')} />
+      {pendingAction && (
+        <View className="px-6 pt-4">
+          <Card className="border-l-4 border-primary bg-primary/5 p-4">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 flex-row items-center">
+                <RotateCcw size={18} color={colors.primary} />
+                <View className="ml-3 flex-1">
+                  <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
+                    {pendingAction.type === 'delete'
+                      ? `"${pendingAction.title}" will be deleted`
+                      : `"${pendingAction.title}" will be marked ${pendingAction.nextStatus === 'sold_out' ? 'sold out' : 'active'}`}
+                  </Text>
+                  <Text variant="caption" className="text-muted">
+                    Undo in {countdown}s
+                  </Text>
+                </View>
+              </View>
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setPendingAction(null);
+                }}
+              >
+                Undo
+              </Button>
+            </View>
+          </Card>
+        </View>
+      )}
       {isError || isLoading ? (
         <View className="flex-1 px-6 pb-6">
           {listHeader}

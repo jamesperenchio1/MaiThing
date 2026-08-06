@@ -198,6 +198,7 @@ export interface Review {
   listingId?: string;
   rating: number;
   comment: string;
+  images?: string[];
   merchantReply?: string;
   merchantRepliedAt?: string;
   createdAt: string;
@@ -328,6 +329,9 @@ export interface StaffMember {
   email: string;
   phone?: string;
   role: StaffRole;
+  isActive: boolean;
+  lastActiveAt?: string;
+  permissions: string[];
   avatarUrl?: string;
   createdAt: string;
 }

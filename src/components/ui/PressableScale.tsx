@@ -14,6 +14,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function PressableScale({
   children,
   className,
+  style,
   scale = 0.97,
   onPressIn,
   onPressOut,
@@ -31,7 +32,7 @@ export function PressableScale({
     <AnimatedPressable
       testID={testID}
       className={cn(className)}
-      style={reducedMotion ? undefined : animatedStyle}
+      style={reducedMotion ? style : [animatedStyle, style]}
       onPressIn={(e) => {
         if (!reducedMotion) {
           sharedValue.value = withSpring(scale, { damping: 15, stiffness: 300 });

@@ -46,7 +46,10 @@ export function Badge({ children, variant = 'default', className }: BadgeProps) 
   return (
     <View className={cn(badgeVariants({ variant }), className)}>
       {allText ? (
-        <Text className={cn('text-xs font-semibold', textVariants[resolvedVariant])}>
+        <Text
+          className={cn('text-xs font-semibold', textVariants[resolvedVariant])}
+          numberOfLines={1}
+        >
           {children}
         </Text>
       ) : (

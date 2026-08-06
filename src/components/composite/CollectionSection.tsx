@@ -1,5 +1,6 @@
 import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/src/lib/utils';
 import { ListingCard } from '@/src/components/composite/ListingCard';
 import { SectionHeader } from '@/src/components/composite/SectionHeader';
 import { Skeleton } from '@/src/components/ui/Skeleton';
@@ -19,6 +20,7 @@ export function CollectionSection({
   onSeeAll,
 }: CollectionSectionProps) {
   const { t } = useTranslation();
+  const visibleListings = listings.slice(0, 6);
   return (
     <View className="mb-6">
       <SectionHeader
@@ -29,16 +31,18 @@ export function CollectionSection({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="px-4"
         contentContainerStyle={{ alignItems: 'flex-start' }}
       >
         {isLoading
           ? Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} width={260} height={280} className="mr-3 rounded-3xl" />
             ))
-          : listings.slice(0, 6).map((listing) => (
-              <View key={listing.id} className="mr-3 w-64" style={{ minHeight: 280 }}>
-                <ListingCard listing={listing} variant="vertical" />
+          : visibleListings.map((listing, index) => (
+              <View
+                key={listing.id}
+                className={cn('w-64 h-[400]', index !== visibleListings.length - 1 && 'mr-3')}
+              >
+                <ListingCard listing={listing} variant="vertical" className="h-full" />
               </View>
             ))}
       </ScrollView>

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -9,11 +9,26 @@ import {
   Share,
   Linking,
   Dimensions,
+  useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Minus, Plus, Share2, Clock, MapPin, AlertCircle, Bookmark, BookmarkCheck, Bell, BellOff, ExternalLink, Store, Zap } from 'lucide-react-native';
-import MapView, { Marker } from 'react-native-maps';
+import {
+  Minus,
+  Plus,
+  Share2,
+  Clock,
+  MapPin,
+  AlertCircle,
+  Bookmark,
+  BookmarkCheck,
+  Bell,
+  BellOff,
+  ExternalLink,
+  Store,
+  X,
+  Zap,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Button } from '@/src/components/ui/Button';
@@ -29,10 +44,16 @@ import { CountdownTimer } from '@/src/components/composite/CountdownTimer';
 import { TrustBadge } from '@/src/components/composite/TrustBadge';
 import { ReviewSummary } from '@/src/components/composite/ReviewSummary';
 import { ReviewCard } from '@/src/components/composite/ReviewCard';
+import { StaticMap } from '@/src/components/map/StaticMap';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
 import { useReviews } from '@/src/hooks/useReviews';
-import { useSavedListings, useSaveListingToggle, useRestockAlert, useToggleRestockAlert } from '@/src/hooks/useFavorites';
+import {
+  useSavedListings,
+  useSaveListingToggle,
+  useRestockAlert,
+  useToggleRestockAlert,
+} from '@/src/hooks/useFavorites';
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
@@ -46,6 +67,79 @@ import {
 import { getListingUrl } from '@/src/lib/links';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 
+function ImageLightbox({
+  images,
+  visible,
+  initialIndex,
+  onClose,
+}: {
+  images: string[];
+  visible: boolean;
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const { width, height } = useWindowDimensions();
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    if (visible) {
+      setActiveIndex(initialIndex);
+    }
+  }, [visible, initialIndex]);
+
+  if (!visible) return null;
+
+  return (
+    <View
+      className="absolute inset-0 z-50 bg-black"
+      style={{ top: 0, left: 0, right: 0, bottom: 0 }}
+    >
+      <PressableScale
+        onPress={onClose}
+        className="absolute right-4 top-12 z-10 rounded-full bg-black/50 p-2"
+        scale={0.9}
+        accessibilityLabel="Close image"
+      >
+        <X size={24} color="#fff" />
+      </PressableScale>
+
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        contentOffset={{ x: activeIndex * width, y: 0 }}
+        onMomentumScrollEnd={(e) =>
+          setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / width))
+        }
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+      >
+        {images.map((uri, index) => (
+          <View
+            key={`lightbox-${uri}-${index}`}
+            style={{ width }}
+            className="flex-1 items-center justify-center"
+          >
+            <Image source={{ uri }} style={{ width, height }} resizeMode="contain" />
+          </View>
+        ))}
+      </ScrollView>
+
+      {images.length > 1 && (
+        <View className="absolute bottom-8 left-0 right-0 flex-row items-center justify-center">
+          {images.map((_, index) => (
+            <View
+              key={index}
+              className={`mx-1 rounded-full ${
+                index === activeIndex ? 'h-2 w-2 bg-white' : 'h-1.5 w-1.5 bg-white/50'
+              }`}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function ListingDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -55,6 +149,8 @@ export default function ListingDetailScreen() {
   const { data: reviews } = useReviews(listing?.merchantId ?? '');
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [lightboxVisible, setLightboxVisible] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const colors = useThemeColor();
   const addItem = useCartStore((s) => s.addItem);
   const { width: screenWidth } = Dimensions.get('window');
@@ -163,13 +259,24 @@ export default function ListingDetailScreen() {
             className="h-full w-full"
           >
             {listing.images.map((uri, index) => (
-              <Image
+              <PressableScale
                 key={index}
-                source={{ uri }}
-                style={{ width: screenWidth }}
+                onPress={() => {
+                  setLightboxIndex(index);
+                  setLightboxVisible(true);
+                }}
                 className="h-full"
-                resizeMode="cover"
-              />
+                style={{ width: screenWidth }}
+                scale={0.98}
+                accessibilityLabel="View full-screen image"
+              >
+                <Image
+                  source={{ uri }}
+                  style={{ width: screenWidth }}
+                  className="h-full"
+                  resizeMode="cover"
+                />
+              </PressableScale>
             ))}
           </ScrollView>
           <View className="absolute left-4 top-4">
@@ -177,11 +284,6 @@ export default function ListingDetailScreen() {
               {isMystery ? 'Mystery Box' : 'Fixed Item'}
             </Badge>
           </View>
-          {urgency && (
-            <View className="absolute bottom-4 left-4">
-              <UrgencyBadge urgency={urgency} />
-            </View>
-          )}
           {listing.images.length > 1 && (
             <View className="absolute bottom-4 left-0 right-0 flex-row items-center justify-center">
               {listing.images.map((_, index) => (
@@ -209,7 +311,9 @@ export default function ListingDetailScreen() {
                 scale={0.9}
                 accessibilityLabel={isSaved ? 'Remove from saved listings' : 'Save listing'}
                 accessibilityHint={
-                  isSaved ? 'Removes this listing from your saved items' : 'Saves this listing for later'
+                  isSaved
+                    ? 'Removes this listing from your saved items'
+                    : 'Saves this listing for later'
                 }
                 hitSlop={8}
               >
@@ -282,6 +386,12 @@ export default function ListingDetailScreen() {
               </Badge>
             </View>
           </View>
+
+          {urgency && (
+            <View className="mb-4">
+              <UrgencyBadge urgency={urgency} />
+            </View>
+          )}
 
           {isMystery && (
             <Card
@@ -399,39 +509,7 @@ export default function ListingDetailScreen() {
                   {t('customer.listing.away')}
                 </Text>
 
-                {/* Embedded map */}
-                <View className="mb-3 overflow-hidden rounded-2xl" style={{ height: 160 }}>
-                  {Platform.OS === 'web' ? (
-                    <iframe
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${merchant.coordinates.longitude - 0.008},${merchant.coordinates.latitude - 0.008},${merchant.coordinates.longitude + 0.008},${merchant.coordinates.latitude + 0.008}&layer=mapnik&marker=${merchant.coordinates.latitude},${merchant.coordinates.longitude}`}
-                      style={{ width: '100%', height: '100%', border: 'none', borderRadius: 16 }}
-                      title={`${merchant.name} location`}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <MapView
-                      style={{ flex: 1 }}
-                      initialRegion={{
-                        latitude: merchant.coordinates.latitude,
-                        longitude: merchant.coordinates.longitude,
-                        latitudeDelta: 0.005,
-                        longitudeDelta: 0.005,
-                      }}
-                      scrollEnabled={false}
-                      zoomEnabled={false}
-                      rotateEnabled={false}
-                      pitchEnabled={false}
-                    >
-                      <Marker
-                        coordinate={{
-                          latitude: merchant.coordinates.latitude,
-                          longitude: merchant.coordinates.longitude,
-                        }}
-                        title={merchant.name}
-                      />
-                    </MapView>
-                  )}
-                </View>
+                <StaticMap merchant={merchant} />
 
                 {/* Open in Maps button */}
                 <Button
@@ -486,7 +564,6 @@ export default function ListingDetailScreen() {
               ))}
             </View>
           )}
-
         </View>
       </ScrollView>
 
@@ -532,19 +609,29 @@ export default function ListingDetailScreen() {
               )}
               <Button
                 testID="restock-alert-button"
-              variant={isAlertingRestock ? 'outline' : 'secondary'}
-              className="flex-1"
-              loading={restockAlertPending}
-              leftIcon={isAlertingRestock ? <BellOff size={18} color={colors.primary} /> : <Bell size={18} color={colors.foreground} />}
-              onPress={() => {
-                if (!userId) return;
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                toggleRestockAlert({ userId, listingId: id ?? '', isAlerting: isAlertingRestock });
-              }}
-            >
-              {isAlertingRestock
-                ? t('customer.listing.notifyRestockActive')
-                : t('customer.listing.notifyRestock')}
+                variant={isAlertingRestock ? 'outline' : 'secondary'}
+                className="flex-1"
+                loading={restockAlertPending}
+                leftIcon={
+                  isAlertingRestock ? (
+                    <BellOff size={18} color={colors.primary} />
+                  ) : (
+                    <Bell size={18} color={colors.foreground} />
+                  )
+                }
+                onPress={() => {
+                  if (!userId) return;
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  toggleRestockAlert({
+                    userId,
+                    listingId: id ?? '',
+                    isAlerting: isAlertingRestock,
+                  });
+                }}
+              >
+                {isAlertingRestock
+                  ? t('customer.listing.notifyRestockActive')
+                  : t('customer.listing.notifyRestock')}
               </Button>
             </View>
           ) : (
@@ -569,6 +656,13 @@ export default function ListingDetailScreen() {
           )}
         </View>
       </View>
+
+      <ImageLightbox
+        images={listing.images}
+        visible={lightboxVisible}
+        initialIndex={lightboxIndex}
+        onClose={() => setLightboxVisible(false)}
+      />
     </Screen>
   );
 }

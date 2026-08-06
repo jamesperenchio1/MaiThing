@@ -30,9 +30,16 @@ interface CategoryChipProps {
   isActive?: boolean;
   onPress?: () => void;
   locale?: 'en' | 'th';
+  className?: string;
 }
 
-export function CategoryChip({ category, isActive, onPress, locale = 'en' }: CategoryChipProps) {
+export function CategoryChip({
+  category,
+  isActive,
+  onPress,
+  locale = 'en',
+  className,
+}: CategoryChipProps) {
   const Icon = iconMap[category.icon] ?? Coffee;
 
   return (
@@ -40,7 +47,8 @@ export function CategoryChip({ category, isActive, onPress, locale = 'en' }: Cat
       <View
         className={cn(
           'mr-3 items-center rounded-2xl border border-border px-4 py-3',
-          isActive && 'border-primary bg-primary/10'
+          isActive && 'border-primary bg-primary/10',
+          className
         )}
       >
         <Icon size={24} color={isActive ? '#10B981' : '#6B7280'} />

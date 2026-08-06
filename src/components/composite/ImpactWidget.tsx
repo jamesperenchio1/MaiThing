@@ -30,20 +30,20 @@ export function ImpactWidget({ impact }: ImpactWidgetProps) {
   ];
 
   return (
-    <Card variant="outlined" className="mb-6 rounded-3xl p-4">
-      <View className="flex-row items-center justify-between">
+    <Card variant="outlined" className="mb-6 rounded-3xl p-5">
+      <View className="flex-row items-center justify-around gap-2">
         {items.map((item, index) => (
-          <View key={item.label} className="flex-1 items-center">
+          <View key={item.label} className="flex-1 min-w-0 items-center px-1 py-2">
             <View
-              className="mb-2 rounded-2xl p-2"
+              className="mb-3 h-10 w-10 items-center justify-center rounded-2xl"
               style={{ backgroundColor: `${colors.primary}15` }}
             >
-              <item.icon size={20} color={colors.primary} />
+              <item.icon size={16} color={colors.primary} />
             </View>
-            <Text variant="h3" className="text-center text-primary">
+            <Text variant="h4" className="text-center text-primary" numberOfLines={1}>
               {item.value}
             </Text>
-            <Text variant="caption" className="text-center">
+            <Text variant="caption" className="text-center" numberOfLines={1}>
               {item.label}
             </Text>
             {index < items.length - 1 && (

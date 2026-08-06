@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, Image, ScrollView } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/src/components/ui/Card';
@@ -37,6 +37,23 @@ export function ReviewCard({ review }: ReviewCardProps) {
       <Text variant="body-sm" className="text-muted">
         {review.comment}
       </Text>
+      {review.images && review.images.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mt-3"
+          contentContainerStyle={{ gap: 8 }}
+        >
+          {review.images.map((uri, index) => (
+            <Image
+              key={`${uri}-${index}`}
+              source={{ uri }}
+              className="h-16 w-16 rounded-xl"
+              resizeMode="cover"
+            />
+          ))}
+        </ScrollView>
+      )}
     </Card>
   );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Alert, Platform, Linking } from 'react-native';
+import { View, ScrollView, Image, Alert, Platform, Linking } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   Clock,
@@ -16,12 +16,22 @@ import {
   Star,
   Calendar,
   MessageCircle,
+  Camera,
+  Image as ImageIcon,
+  X,
   type LucideIcon,
 } from 'lucide-react-native';
 let ExpoCalendar: typeof import('expo-calendar') | null = null;
+let ImagePicker: typeof import('expo-image-picker') | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   ExpoCalendar = require('expo-calendar');
+} catch {
+  // not available in Expo Go
+}
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  ImagePicker = require('expo-image-picker');
 } catch {
   // not available in Expo Go
 }
@@ -59,37 +69,45 @@ function StatusStep({
   label,
   active,
   completed,
+  isFirst,
   isLast,
 }: {
   Icon: LucideIcon;
   label: string;
   active: boolean;
   completed: boolean;
+  isFirst: boolean;
   isLast: boolean;
 }) {
   const colors = useThemeColor();
   const circleColor = completed || active ? 'bg-primary' : 'bg-muted/20';
   const iconColor = completed || active ? '#fff' : colors.muted;
+  const lineColor = completed || active ? 'bg-primary' : 'bg-muted/20';
 
   return (
-    <View className="flex-1 flex-row items-center">
-      <View className="flex-1 items-center">
-        <View className={`mb-2 h-9 w-9 items-center justify-center rounded-full ${circleColor}`}>
+    <View className="flex-1 min-w-[48px] items-center">
+      <View className="w-full flex-row items-center">
+        {isFirst ? <View className="flex-1" /> : <View className={`h-0.5 flex-1 ${lineColor}`} />}
+        <View className={`mx-1 h-9 w-9 items-center justify-center rounded-full ${circleColor}`}>
           <Icon size={16} color={iconColor} />
         </View>
+        {isLast ? (
+          <View className="flex-1" />
+        ) : (
+          <View className={`h-0.5 flex-1 ${completed ? 'bg-primary' : 'bg-muted/20'}`} />
+        )}
+      </View>
+      <View className="mt-2 h-12 w-full items-center justify-center overflow-hidden">
         <Text
           variant="caption"
           className={`text-center ${active || completed ? 'text-foreground' : 'text-muted'}`}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          textBreakStrategy="simple"
         >
           {label}
         </Text>
       </View>
-      {!isLast && (
-        <View
-          className={`mx-1 h-0.5 flex-1 ${completed ? 'bg-primary' : 'bg-muted/20'}`}
-          style={{ marginTop: -18 }}
-        />
-      )}
     </View>
   );
 }
@@ -97,11 +115,13 @@ function StatusStep({
 function ReviewSection({ order }: { order: Order }) {
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
+  const { t } = useTranslation();
   const { data: reviews } = useReviews(order.merchantId);
   const submitReview = useSubmitReview();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [reviewImages, setReviewImages] = useState<string[]>([]);
 
   const isEligible =
     (order.status === 'completed' || order.status === 'picked_up') &&
@@ -110,6 +130,76 @@ function ReviewSection({ order }: { order: Order }) {
   if (!isEligible) return null;
 
   const alreadyReviewed = reviews?.some((r) => r.orderId === order.id);
+
+  const handleImagePick = async (source: 'camera' | 'library') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (Platform.OS === 'web') {
+      Alert.alert('Photo picker unavailable', 'Add a placeholder image instead?', [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.confirm'),
+          onPress: () =>
+            setReviewImages((prev) => [
+              ...prev,
+              `https://placehold.co/300x300/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
+            ]),
+        },
+      ]);
+      return;
+    }
+
+    if (!ImagePicker) return;
+
+    try {
+      let permissionResult;
+      if (source === 'camera') {
+        permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      } else {
+        permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      }
+
+      if (permissionResult.status !== 'granted') {
+        Alert.alert('Permission required', 'Add a placeholder image instead?', [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            onPress: () =>
+              setReviewImages((prev) => [
+                ...prev,
+                `https://placehold.co/300x300/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
+              ]),
+          },
+        ]);
+        return;
+      }
+
+      const options = {
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3] as [number, number],
+        quality: 0.8 as number,
+      };
+
+      const result =
+        source === 'camera'
+          ? await ImagePicker.launchCameraAsync(options)
+          : await ImagePicker.launchImageLibraryAsync(options);
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        if (uri) {
+          setReviewImages((prev) => [...prev, uri]);
+        }
+      }
+    } catch {
+      Alert.alert('Error', 'Could not pick image. Please try again.');
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setReviewImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   if (alreadyReviewed || submitted) {
     return (
@@ -150,6 +240,49 @@ function ReviewSection({ order }: { order: Order }) {
         inputClassName="min-h-[72px]"
         containerClassName="mb-2"
       />
+      {reviewImages.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mb-3"
+          contentContainerStyle={{ gap: 8 }}
+        >
+          {reviewImages.map((uri, index) => (
+            <View key={`${uri}-${index}`} className="relative">
+              <Image source={{ uri }} className="h-16 w-16 rounded-xl" resizeMode="cover" />
+              <PressableScale
+                onPress={() => removeImage(index)}
+                className="absolute -right-1 -top-1 rounded-full bg-danger p-1"
+                scale={0.9}
+              >
+                <X size={12} color="#fff" />
+              </PressableScale>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+      <View className="mb-4 flex-row items-center gap-3">
+        <PressableScale
+          onPress={() => handleImagePick('camera')}
+          scale={0.95}
+          className="flex-row items-center rounded-full bg-muted/10 px-3 py-2"
+        >
+          <Camera size={16} color={colors.primary} />
+          <Text variant="caption" className="ml-1 text-primary">
+            Camera
+          </Text>
+        </PressableScale>
+        <PressableScale
+          onPress={() => handleImagePick('library')}
+          scale={0.95}
+          className="flex-row items-center rounded-full bg-muted/10 px-3 py-2"
+        >
+          <ImageIcon size={16} color={colors.primary} />
+          <Text variant="caption" className="ml-1 text-primary">
+            Gallery
+          </Text>
+        </PressableScale>
+      </View>
       <Button
         fullWidth
         disabled={rating === 0 || submitReview.isPending}
@@ -165,6 +298,7 @@ function ReviewSection({ order }: { order: Order }) {
               listingId: order.items[0]?.listingId,
               rating,
               comment,
+              images: reviewImages.length > 0 ? reviewImages : undefined,
             },
             { onSuccess: () => setSubmitted(true) }
           );
@@ -190,7 +324,13 @@ export default function OrderDetailScreen() {
   const prevStatusRef = useRef<Order['status'] | undefined>(undefined);
 
   useEffect(() => {
-    if (order && prevStatusRef.current !== undefined && prevStatusRef.current !== 'ready' && order.status === 'ready' && Platform.OS !== 'web') {
+    if (
+      order &&
+      prevStatusRef.current !== undefined &&
+      prevStatusRef.current !== 'ready' &&
+      order.status === 'ready' &&
+      Platform.OS !== 'web'
+    ) {
       scheduleLocalNotification(
         'Your order is ready!',
         `Pick up at ${order.merchantName} now. Code: ${order.pickupCode}`
@@ -325,7 +465,7 @@ export default function OrderDetailScreen() {
             </Text>
           </Card>
         ) : (
-          <View className="mb-6 flex-row">
+          <View className="mb-6 flex-row items-start">
             {statusSteps.map((step, index) => (
               <StatusStep
                 key={step.status}
@@ -333,6 +473,7 @@ export default function OrderDetailScreen() {
                 label={t(`customer.orders.status.${step.status}`)}
                 active={index === activeIndex}
                 completed={index < activeIndex}
+                isFirst={index === 0}
                 isLast={index === statusSteps.length - 1}
               />
             ))}
@@ -404,28 +545,26 @@ export default function OrderDetailScreen() {
           </View>
         </Card>
 
-        {Platform.OS !== 'web' &&
-          order.status !== 'completed' &&
-          order.status !== 'cancelled' && (
-            <View className="mt-4">
-              <Button
-                variant="outline"
-                fullWidth
-                onPress={handleAddToCalendar}
-                leftIcon={<Calendar size={18} color={colors.primary} />}
-              >
-                Add to Calendar
-              </Button>
-              {calendarAdded && (
-                <View className="mt-2 flex-row items-center justify-center">
-                  <Check size={14} color={colors.success} />
-                  <Text variant="caption" className="ml-1 text-success">
-                    Added to calendar
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
+        {Platform.OS !== 'web' && order.status !== 'completed' && order.status !== 'cancelled' && (
+          <View className="mt-4">
+            <Button
+              variant="outline"
+              fullWidth
+              onPress={handleAddToCalendar}
+              leftIcon={<Calendar size={18} color={colors.primary} />}
+            >
+              Add to Calendar
+            </Button>
+            {calendarAdded && (
+              <View className="mt-2 flex-row items-center justify-center">
+                <Check size={14} color={colors.success} />
+                <Text variant="caption" className="ml-1 text-success">
+                  Added to calendar
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {order.merchantCoordinates &&
           !['cancelled', 'picked_up', 'completed'].includes(order.status) && (
@@ -457,9 +596,7 @@ export default function OrderDetailScreen() {
             fullWidth
             className="mt-4"
             leftIcon={<MessageCircle size={18} color={colors.primary} />}
-            onPress={() =>
-              router.push(`/(customer)/messages/${order.merchantId}` as never)
-            }
+            onPress={() => router.push(`/(customer)/messages/${order.merchantId}` as never)}
           >
             Chat with merchant
           </Button>

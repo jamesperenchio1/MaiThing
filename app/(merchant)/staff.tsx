@@ -1,24 +1,41 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Alert, Modal, ScrollView } from 'react-native';
-import { UserPlus, Mail, Phone, Shield, Trash2, Plus } from 'lucide-react-native';
+import { View, Alert, Modal, ScrollView, Switch } from 'react-native';
+import { UserPlus, Mail, Phone, Shield, Trash2, Plus, Clock } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { Card } from '@/src/components/ui/Card';
 import { Input } from '@/src/components/ui/Input';
 import { Button } from '@/src/components/ui/Button';
+import { Badge } from '@/src/components/ui/Badge';
 import { Header } from '@/src/components/layout/Header';
 import { Screen } from '@/src/components/layout/Screen';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuthStore } from '@/src/stores/auth';
-import { useMerchantByOwner } from '@/src/hooks/useMerchants';
-import { useStaff, useAddStaff, useRemoveStaff } from '@/src/hooks/useMerchants';
+import { useMerchantByOwner, useStaff, useAddStaff, useUpdateStaff, useRemoveStaff } from '@/src/hooks/useMerchants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { formatRelativeTime } from '@/src/lib/utils';
 import type { StaffRole, StaffMember } from '@/src/types';
 
 const ROLES: StaffRole[] = ['owner', 'manager', 'staff'];
+
+const ALL_PERMISSIONS = [
+  'manage_orders',
+  'manage_inventory',
+  'manage_staff',
+  'manage_payouts',
+  'manage_promotions',
+  'view_analytics',
+  'manage_messages',
+];
+
+const DEFAULT_PERMISSIONS_BY_ROLE: Record<StaffRole, string[]> = {
+  owner: ['all'],
+  manager: ['manage_orders', 'manage_inventory', 'manage_staff', 'view_analytics'],
+  staff: ['manage_orders'],
+};
 
 function RoleBadge({
   role,
@@ -39,49 +56,130 @@ function RoleBadge({
   );
 }
 
+function PermissionChip({
+  id,
+  selected,
+  onToggle,
+}: {
+  id: string;
+  selected: boolean;
+  onToggle: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <PressableScale
+      onPress={() => onToggle(id)}
+      scale={0.97}
+      className={`mb-2 mr-2 rounded-full border px-3 py-1.5 ${
+        selected ? 'border-primary bg-primary/10' : 'border-border bg-card'
+      }`}
+    >
+      <Text variant="caption" className={`font-medium ${selected ? 'text-primary' : 'text-muted'}`}>
+        {t(`merchant.staff.permission.${id}`)}
+      </Text>
+    </PressableScale>
+  );
+}
+
 function StaffItem({
   member,
   onDelete,
+  onToggleActive,
 }: {
   member: StaffMember;
   onDelete: (member: StaffMember) => void;
+  onToggleActive: (member: StaffMember) => void;
 }) {
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
+  const locale = i18n.language === 'th' ? 'th' : 'en';
 
   return (
-    <View className="flex-row items-center border-b border-border py-3 last:border-b-0">
-      <Avatar uri={member.avatarUrl} name={member.name} size="md" />
-      <View className="ml-3 flex-1">
-        <View className="mb-1 flex-row items-center">
-          <Text variant="body-sm" className="mr-2 font-semibold">
-            {member.name}
-          </Text>
-          <RoleBadge role={member.role} colors={colors} />
-        </View>
-        <View className="flex-row items-center">
-          <Mail size={12} color={colors.muted} />
-          <Text variant="caption" className="ml-1 text-muted">
-            {member.email}
-          </Text>
-        </View>
-        {member.phone && (
-          <View className="flex-row items-center">
-            <Phone size={12} color={colors.muted} />
-            <Text variant="caption" className="ml-1 text-muted">
-              {member.phone}
+    <View className="border-b border-border py-4 last:border-b-0">
+      <View className="flex-row items-start">
+        <Avatar uri={member.avatarUrl} name={member.name} size="md" />
+        <View className="ml-3 flex-1">
+          <View className="mb-1 flex-row flex-wrap items-center">
+            <Text variant="body-sm" className="mr-2 font-semibold">
+              {member.name}
             </Text>
+            <RoleBadge role={member.role} colors={colors} />
+          </View>
+
+          <View className="mb-2 flex-row flex-wrap items-center">
+            {member.isActive ? (
+              <Badge variant="success" className="mr-2">
+                {t('merchant.staff.active')}
+              </Badge>
+            ) : (
+              <Badge variant="warning" className="mr-2">
+                {t('merchant.staff.invited')}
+              </Badge>
+            )}
+            {member.lastActiveAt && member.isActive && (
+              <View className="flex-row items-center">
+                <Clock size={10} color={colors.muted} />
+                <Text variant="caption" className="ml-1 text-muted">
+                  {formatRelativeTime(member.lastActiveAt, locale)}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <Text variant="caption" className="mb-2 text-muted">
+            {t(`merchant.staff.roleDescription.${member.role}`)}
+          </Text>
+
+          <View className="flex-row items-center">
+            <Mail size={12} color={colors.muted} />
+            <Text variant="caption" className="ml-1 text-muted">
+              {member.email}
+            </Text>
+          </View>
+          {member.phone && (
+            <View className="flex-row items-center">
+              <Phone size={12} color={colors.muted} />
+              <Text variant="caption" className="ml-1 text-muted">
+                {member.phone}
+              </Text>
+            </View>
+          )}
+
+          {member.permissions.length > 0 && member.permissions[0] !== 'all' && (
+            <View className="mt-2 flex-row flex-wrap">
+              {member.permissions.map((permission) => (
+                <View
+                  key={permission}
+                  className="mb-1 mr-1.5 rounded-md bg-muted/10 px-2 py-1"
+                >
+                  <Text variant="caption" className="text-muted">
+                    {t(`merchant.staff.permission.${permission}`)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {member.role !== 'owner' && (
+          <View className="ml-2 items-end">
+            <Switch
+              testID={`staff-active-switch-${member.id}`}
+              value={member.isActive}
+              onValueChange={() => onToggleActive(member)}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+            <PressableScale
+              onPress={() => onDelete(member)}
+              scale={0.9}
+              className="mt-3 rounded-full bg-danger/10 p-2"
+            >
+              <Trash2 size={18} color={colors.danger} />
+            </PressableScale>
           </View>
         )}
       </View>
-      {member.role !== 'owner' && (
-        <PressableScale
-          onPress={() => onDelete(member)}
-          scale={0.9}
-          className="rounded-full bg-danger/10 p-2"
-        >
-          <Trash2 size={18} color={colors.danger} />
-        </PressableScale>
-      )}
     </View>
   );
 }
@@ -95,6 +193,7 @@ export default function StaffScreen() {
 
   const { data: staff, isLoading, isError, refetch } = useStaff(merchantId);
   const addStaff = useAddStaff(merchantId);
+  const updateStaff = useUpdateStaff(merchantId);
   const removeStaff = useRemoveStaff(merchantId);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -102,16 +201,18 @@ export default function StaffScreen() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<StaffRole>('staff');
+  const [permissions, setPermissions] = useState<string[]>(DEFAULT_PERMISSIONS_BY_ROLE.staff);
 
   const resetForm = () => {
     setName('');
     setEmail('');
     setPhone('');
     setRole('staff');
+    setPermissions(DEFAULT_PERMISSIONS_BY_ROLE.staff);
   };
 
   const handleDelete = (member: StaffMember) => {
-    Alert.alert('Remove staff member?', `Are you sure you want to remove ${member.name}?`, [
+    Alert.alert(t('merchant.staff.removeTitle'), t('merchant.staff.removeConfirm', { name: member.name }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),
@@ -120,16 +221,32 @@ export default function StaffScreen() {
           try {
             await removeStaff.mutateAsync(member.id);
           } catch {
-            Alert.alert(t('common.error'), 'Could not remove staff member.');
+            Alert.alert(t('common.error'), t('merchant.staff.removeError'));
           }
         },
       },
     ]);
   };
 
+  const handleToggleActive = (member: StaffMember) => {
+    updateStaff.mutate({
+      staffId: member.id,
+      data: {
+        isActive: !member.isActive,
+        lastActiveAt: !member.isActive ? new Date().toISOString() : undefined,
+      },
+    });
+  };
+
+  const togglePermission = (permission: string) => {
+    setPermissions((prev) =>
+      prev.includes(permission) ? prev.filter((p) => p !== permission) : [...prev, permission]
+    );
+  };
+
   const handleAdd = async () => {
     if (!name.trim() || !email.trim()) {
-      Alert.alert(t('common.error'), 'Please fill in name and email.');
+      Alert.alert(t('common.error'), t('merchant.staff.nameEmailRequired'));
       return;
     }
     try {
@@ -138,11 +255,13 @@ export default function StaffScreen() {
         email: email.trim(),
         phone: phone.trim() || undefined,
         role,
+        isActive: role === 'owner',
+        permissions: role === 'owner' ? ['all'] : permissions,
       });
       resetForm();
       setModalVisible(false);
     } catch {
-      Alert.alert(t('common.error'), 'Could not add staff member.');
+      Alert.alert(t('common.error'), t('merchant.staff.addError'));
     }
   };
 
@@ -153,7 +272,7 @@ export default function StaffScreen() {
         <View className="px-6 py-4">
           <ErrorState
             title={t('common.error')}
-            message="We couldn't load your team."
+            message={t('merchant.staff.loadError')}
             onRetry={refetch}
             retryLabel={t('common.retry')}
           />
@@ -185,7 +304,12 @@ export default function StaffScreen() {
               </Text>
             ) : staff && staff.length > 0 ? (
               staff.map((member) => (
-                <StaffItem key={member.id} member={member} onDelete={handleDelete} />
+                <StaffItem
+                  key={member.id}
+                  member={member}
+                  onDelete={handleDelete}
+                  onToggleActive={handleToggleActive}
+                />
               ))
             ) : (
               <View className="items-center py-8">
@@ -239,11 +363,14 @@ export default function StaffScreen() {
             <Text variant="label" className="mb-2 ml-1">
               {t('merchant.staff.role')}
             </Text>
-            <View className="mb-6 flex-row" style={{ gap: 8 }}>
+            <View className="mb-4 flex-row" style={{ gap: 8 }}>
               {ROLES.map((r) => (
                 <PressableScale
                   key={r}
-                  onPress={() => setRole(r)}
+                  onPress={() => {
+                    setRole(r);
+                    setPermissions(DEFAULT_PERMISSIONS_BY_ROLE[r]);
+                  }}
                   scale={0.97}
                   className={`flex-1 items-center rounded-2xl border px-3 py-3 ${
                     role === r ? 'border-primary bg-primary/10' : 'border-border bg-card'
@@ -260,6 +387,23 @@ export default function StaffScreen() {
               ))}
             </View>
 
+            <Text variant="label" className="mb-2 ml-1">
+              {t('merchant.staff.permissions')}
+            </Text>
+            <Text variant="caption" className="mb-2 ml-1 text-muted">
+              {t('merchant.staff.permissionsHint')}
+            </Text>
+            <View className="mb-6 flex-row flex-wrap">
+              {ALL_PERMISSIONS.map((permission) => (
+                <PermissionChip
+                  key={permission}
+                  id={permission}
+                  selected={permissions.includes(permission)}
+                  onToggle={togglePermission}
+                />
+              ))}
+            </View>
+
             <Button
               testID="save-staff-button"
               fullWidth
@@ -268,7 +412,7 @@ export default function StaffScreen() {
               onPress={handleAdd}
               className="mb-3"
             >
-              {t('common.save')}
+              {t('merchant.staff.sendInvite')}
             </Button>
             <Button
               testID="cancel-staff-button"

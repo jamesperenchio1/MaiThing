@@ -20,7 +20,7 @@ export default function SignUpScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const colors = useThemeColor();
-  const { signUp, signUpLoading, signUpError, continueAsTest } = useAuth();
+  const { signUp, signUpLoading, signUpError, signInWithProvider } = useAuth();
 
   const { control, handleSubmit } = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
@@ -43,7 +43,7 @@ export default function SignUpScreen() {
             {t('auth.subtitle')}
           </Text>
 
-          <SocialAuthButtons onPress={() => continueAsTest('customer')} />
+          <SocialAuthButtons onPress={signInWithProvider} />
 
           <View className="my-6 flex-row items-center gap-3">
             <View className="h-px flex-1 bg-border" />

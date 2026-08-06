@@ -1,4 +1,4 @@
-import { calculateDistance } from '@/src/lib/utils';
+import { calculateDistance, generatePickupCode } from '@/src/lib/utils';
 import { syncFollowNotification, syncRestockAlert } from '@/src/services/pushToken';
 import { triggerPushEvent } from '@/src/lib/supabase';
 import type {
@@ -393,6 +393,13 @@ class MockMerchantRepository implements MerchantRepository {
     return staff;
   }
 
+  async updateStaff(merchantId: string, staffId: string, data: Partial<StaffMember>): Promise<StaffMember> {
+    const index = STAFF_MEMBERS.findIndex((s) => s.merchantId === merchantId && s.id === staffId);
+    if (index === -1) throw new Error('Staff member not found');
+    STAFF_MEMBERS[index] = { ...STAFF_MEMBERS[index], ...data };
+    return STAFF_MEMBERS[index];
+  }
+
   async removeStaff(merchantId: string, staffId: string): Promise<void> {
     const index = STAFF_MEMBERS.findIndex((s) => s.merchantId === merchantId && s.id === staffId);
     if (index !== -1) STAFF_MEMBERS.splice(index, 1);
@@ -720,6 +727,7 @@ class MockOrderRepository implements OrderRepository {
       ...data,
       status: autoConfirm && data.status === 'pending' ? 'confirmed' : data.status,
       id: `order-${Date.now()}`,
+      pickupCode: generatePickupCode(),
       merchantCoordinates: data.merchantCoordinates ?? merchant?.coordinates,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

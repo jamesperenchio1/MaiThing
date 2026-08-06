@@ -118,6 +118,17 @@ export function useAddStaff(merchantId: string) {
   });
 }
 
+export function useUpdateStaff(merchantId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ staffId, data }: { staffId: string; data: Partial<StaffMember> }) =>
+      repositories.merchants.updateStaff(merchantId, staffId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staff', merchantId] });
+    },
+  });
+}
+
 export function useRemoveStaff(merchantId: string) {
   const queryClient = useQueryClient();
   return useMutation({

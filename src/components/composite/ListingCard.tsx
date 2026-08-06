@@ -93,21 +93,41 @@ export const ListingCard = React.memo(function ListingCard({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/(customer)/listing/${listing.id}`);
       }}
-      className={cn('mb-3', className)}
+      className={cn(variant === 'horizontal' && 'mb-3', className)}
       scale={0.98}
     >
       <Card
         variant="elevated"
-        className={cn('overflow-hidden p-0', variant === 'horizontal' && 'flex-row')}
+        className={cn(
+          'overflow-hidden p-0',
+          variant === 'horizontal' && 'flex-row',
+          variant === 'vertical' && 'h-full'
+        )}
       >
         <View
-          className={cn('relative bg-muted', variant === 'vertical' ? 'h-44 w-full' : 'h-28 w-28')}
+          className={cn(
+            'relative overflow-hidden bg-muted',
+            variant === 'vertical' ? 'h-40 w-full' : 'h-28 w-28'
+          )}
         >
           <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
           <View className="absolute left-2 top-2">
-            <Badge variant={isMystery ? 'warning' : 'info'}>
-              {isMystery ? t('customer.listing.mysteryBox') : t('customer.listing.fixed')}
-            </Badge>
+            {variant === 'horizontal' ? (
+              <Badge variant={isMystery ? 'warning' : 'info'} className="max-w-24 overflow-hidden">
+                <Text
+                  variant="caption"
+                  className={cn('font-semibold', isMystery ? 'text-amber-800' : 'text-blue-800')}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {isMystery ? t('customer.listing.mysteryBox') : t('customer.listing.fixed')}
+                </Text>
+              </Badge>
+            ) : (
+              <Badge variant={isMystery ? 'warning' : 'info'}>
+                {isMystery ? t('customer.listing.mysteryBox') : t('customer.listing.fixed')}
+              </Badge>
+            )}
           </View>
           {isSoldOut && (
             <View className="absolute inset-0 items-center justify-center bg-black/50">
@@ -123,7 +143,13 @@ export const ListingCard = React.memo(function ListingCard({
             />
           </View>
         </View>
-        <View className={cn('p-3', variant === 'horizontal' && 'flex-1')}>
+        <View
+          className={cn(
+            'p-3',
+            variant === 'vertical' && 'flex-1 overflow-hidden',
+            variant === 'horizontal' && 'flex-1'
+          )}
+        >
           {urgency && (
             <View className="mb-1.5">
               <UrgencyBadge urgency={urgency} />
@@ -132,6 +158,14 @@ export const ListingCard = React.memo(function ListingCard({
           <Text variant="body-sm" className="mb-1 font-semibold" numberOfLines={2}>
             {listing.title}
           </Text>
+
+          {!isSoldOut && listing.quantityRemaining <= 3 && (
+            <View className="mb-2">
+              <Badge variant="warning">
+                {t('customer.listing.onlyLeft', { count: listing.quantityRemaining })}
+              </Badge>
+            </View>
+          )}
 
           {isMystery && (
             <Text variant="caption" className="mb-1.5 text-muted">
@@ -142,14 +176,14 @@ export const ListingCard = React.memo(function ListingCard({
           )}
 
           <View className="mb-2 flex-row flex-wrap items-center">
-            <Text className="text-lg font-bold text-primary">
-              {formatCurrency(effectivePrice)}
-            </Text>
+            <Text className="text-lg font-bold text-primary">{formatCurrency(effectivePrice)}</Text>
             <Text className="ml-2 text-sm text-muted line-through">
               {formatCurrency(isFlashSale ? listing.salePrice : listing.originalPrice)}
             </Text>
             <Badge variant={isFlashSale ? 'danger' : 'success'} className="ml-2">
-              {isFlashSale ? t('customer.listing.flash') : t('customer.listing.discount', { discount })}
+              {isFlashSale
+                ? t('customer.listing.flash')
+                : t('customer.listing.discount', { discount })}
             </Badge>
           </View>
 

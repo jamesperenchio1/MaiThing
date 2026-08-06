@@ -20,7 +20,7 @@ export default function SignInScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const colors = useThemeColor();
-  const { signIn, signInLoading, signInError, continueAsTest } = useAuth();
+  const { signIn, signInLoading, signInError, signInWithProvider } = useAuth();
 
   const { control, handleSubmit } = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
@@ -31,9 +31,13 @@ export default function SignInScreen() {
     signIn(data);
   };
 
+  const handleBackToWelcome = () => {
+    router.push('/(auth)/welcome' as any);
+  };
+
   return (
     <Screen scrollable keyboardAvoiding>
-      <Header title={t('auth.signIn')} />
+      <Header title={t('auth.signIn')} onBack={handleBackToWelcome} />
       <View className="px-6 pb-10">
         <Animated.View entering={FadeInUp.duration(500)}>
           <Text variant="h1" className="mb-2 mt-4">
@@ -43,7 +47,7 @@ export default function SignInScreen() {
             {t('auth.subtitle')}
           </Text>
 
-          <SocialAuthButtons onPress={() => continueAsTest('customer')} />
+          <SocialAuthButtons onPress={signInWithProvider} />
 
           <View className="my-6 flex-row items-center gap-3">
             <View className="h-px flex-1 bg-border" />
@@ -81,6 +85,8 @@ export default function SignInScreen() {
                 label={t('auth.password')}
                 placeholder="••••••••"
                 secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
                 textContentType="password"
                 autoComplete="current-password"
                 leftIcon={<Lock size={20} color={colors.muted} />}
@@ -113,6 +119,12 @@ export default function SignInScreen() {
           >
             <Text variant="body-sm" className="text-primary">
               {t('auth.forgotPassword')}
+            </Text>
+          </Button>
+
+          <Button variant="ghost" className="mt-2" onPress={handleBackToWelcome}>
+            <Text variant="body-sm" className="text-muted">
+              {t('common.cancel')}
             </Text>
           </Button>
         </Animated.View>

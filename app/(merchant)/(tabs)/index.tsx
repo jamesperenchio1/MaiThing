@@ -31,6 +31,7 @@ import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/layout/Screen';
+import { Header } from '@/src/components/layout/Header';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { EmptyState } from '@/src/components/ui/EmptyState';
@@ -86,10 +87,10 @@ function StatCard({
 }) {
   return (
     <PressableScale testID={testID} onPress={onPress} className="flex-1" scale={0.98} disabled={!onPress}>
-      <Card variant="elevated" className="min-h-[120px] justify-between">
-        <View className={`mb-2 rounded-xl p-2 self-start ${iconBg}`}>{icon}</View>
+      <Card variant="elevated" className="min-h-[104px] justify-between">
+        <View className={`rounded-xl p-1.5 self-start ${iconBg}`}>{icon}</View>
         <View>
-          <Text variant="caption" className="mb-1 text-muted">
+          <Text variant="caption" className="mb-0.5 text-muted">
             {label}
           </Text>
           <Text variant="h3">{value}</Text>
@@ -390,6 +391,7 @@ export default function MerchantDashboardScreen() {
       refreshing={isRefetching}
       onRefresh={handleRefresh}
     >
+      <Header title={t('merchant.dashboard.title')} />
       <View className="px-6 pt-4 pb-2">
         {/* Greeting banner */}
         <View className="mb-6 rounded-3xl bg-primary p-5 overflow-hidden">

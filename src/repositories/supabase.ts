@@ -14,6 +14,8 @@
  *   saved_addresses, restock_alerts, followed_merchant_notifications, listing_templates
  */
 import { supabase } from '@/src/lib/supabase';
+import { generatePickupCode } from '@/src/lib/utils';
+import { Platform } from 'react-native';
 import type {
   AnalyticsRepository,
   AuthRepository,
@@ -173,13 +175,11 @@ function mapListing(row: Record<string, unknown>): Listing {
     pickupWindowEnd: (row.pickup_end as string) ?? new Date().toISOString(),
     dietaryTags: Array.isArray(row.dietary_tags) ? (row.dietary_tags as string[]) : [],
     allergens: Array.isArray(row.allergens) ? (row.allergens as string[]) : [],
-    status: (
-      row.is_active && (row.qty_remaining as number) > 0
-        ? 'active'
-        : row.qty_remaining === 0
-          ? 'sold_out'
-          : 'expired'
-    ) as Listing['status'],
+    status: (row.is_active && (row.qty_remaining as number) > 0
+      ? 'active'
+      : row.qty_remaining === 0
+        ? 'sold_out'
+        : 'expired') as Listing['status'],
     createdAt: (row.created_at as string) ?? new Date().toISOString(),
   };
   if (type === 'mystery_box') {
@@ -236,7 +236,9 @@ function mapOrder(row: Record<string, unknown>): Order {
   const total = typeof row.amount_thb === 'number' ? row.amount_thb : 0;
   const listingTitle = (listing.name as string) ?? 'Order item';
   const listingPrice = typeof listing.price_thb === 'number' ? listing.price_thb : total;
-  const listingImage = Array.isArray(listing.photo_urls) ? (listing.photo_urls[0] as string) : undefined;
+  const listingImage = Array.isArray(listing.photo_urls)
+    ? (listing.photo_urls[0] as string)
+    : undefined;
 
   const items: OrderItem[] = listing.id
     ? [
@@ -330,6 +332,9 @@ function mapStaff(row: Record<string, unknown>): StaffMember {
     email: (row.email as string) ?? '',
     phone: (row.phone as string) ?? undefined,
     role: (row.role as StaffMember['role']) ?? 'staff',
+    isActive: row.is_active === true,
+    lastActiveAt: (row.last_active_at as string) ?? undefined,
+    permissions: Array.isArray(row.permissions) ? (row.permissions as string[]) : [],
     avatarUrl: (row.avatar_url as string) ?? undefined,
     createdAt: (row.created_at as string) ?? new Date().toISOString(),
   };
@@ -364,19 +369,28 @@ function mapTemplate(row: Record<string, unknown>): ListingTemplate {
     salePrice: typeof row.sale_price === 'number' ? row.sale_price : 0,
     quantity: typeof row.quantity === 'number' ? row.quantity : 1,
     boxSize: (row.box_size as ListingTemplate['boxSize']) ?? undefined,
-    estimatedRetailValue: typeof row.estimated_retail_value === 'number'
-      ? row.estimated_retail_value
-      : undefined,
+    estimatedRetailValue:
+      typeof row.estimated_retail_value === 'number' ? row.estimated_retail_value : undefined,
     dietaryTags: Array.isArray(row.dietary_tags) ? (row.dietary_tags as string[]) : [],
     allergens: Array.isArray(row.allergens) ? (row.allergens as string[]) : [],
     images: Array.isArray(row.images) ? (row.images as string[]) : [],
-    pickupWindowDurationHours: typeof row.pickup_window_duration_hours === 'number'
-      ? row.pickup_window_duration_hours
-      : 2,
+    pickupWindowDurationHours:
+      typeof row.pickup_window_duration_hours === 'number' ? row.pickup_window_duration_hours : 2,
     autoExpiry: row.auto_expiry === true,
     createdAt: (row.created_at as string) ?? new Date().toISOString(),
     expiresAt: (row.expires_at as string) ?? undefined,
   };
+}
+
+// ─── auth helpers ───────────────────────────────────────────────────────────
+
+let pendingOtpEmail = '';
+
+function getAuthRedirectUrl(): string {
+  if (Platform.OS === 'web') {
+    return typeof window !== 'undefined' ? window.location.origin : '';
+  }
+  return 'maithing://';
 }
 
 // ─── auth ────────────────────────────────────────────────────────────────────
@@ -396,7 +410,12 @@ const authRepo: AuthRepository = {
   },
 
   async signUp(email, password, name) {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    pendingOtpEmail = email;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: getAuthRedirectUrl() },
+    });
     if (error) throw error;
     const userId = notNull(data.user?.id, 'user');
     await supabase.from('profiles').upsert({ id: userId, display_name: name, role: 'buyer' });
@@ -414,6 +433,7 @@ const authRepo: AuthRepository = {
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: { emailRedirectTo: getAuthRedirectUrl() },
     });
     if (error) throw error;
     const userId = notNull(authData.user?.id, 'user');
@@ -435,16 +455,26 @@ const authRepo: AuthRepository = {
   },
 
   async resetPassword(email) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: getAuthRedirectUrl(),
+    });
     if (error) throw error;
   },
 
   async verifyOtp(code) {
-    return code === '123456';
+    if (!pendingOtpEmail) return false;
+    const { error } = await supabase.auth.verifyOtp({
+      type: 'email',
+      token: code,
+      email: pendingOtpEmail,
+    });
+    return !error;
   },
 
   async resendVerification(email) {
-    await supabase.auth.resend({ type: 'signup', email });
+    pendingOtpEmail = email;
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    if (error) throw error;
   },
 };
 
@@ -499,7 +529,8 @@ const usersRepo: UserRepository = {
         supabase.from('restock_alerts').select('listing_id').eq('user_id', userId),
       ]);
 
-    const stored = (profile.notification_preferences as Partial<NotificationPreferences> | null) ?? {};
+    const stored =
+      (profile.notification_preferences as Partial<NotificationPreferences> | null) ?? {};
     const prefs: NotificationPreferences = {
       newDeals: stored.newDeals ?? defaultNotificationPreferences.newDeals,
       orderUpdates: stored.orderUpdates ?? defaultNotificationPreferences.orderUpdates,
@@ -590,7 +621,9 @@ const usersRepo: UserRepository = {
       .from('profiles')
       .update({ followed_merchant_notifications: [...existing, merchantId] })
       .eq('id', userId);
-    await supabase.from('followed_merchant_notifications').upsert({ user_id: userId, merchant_id: merchantId });
+    await supabase
+      .from('followed_merchant_notifications')
+      .upsert({ user_id: userId, merchant_id: merchantId });
   },
   async removeMerchantFollowNotification(userId, merchantId) {
     const { data } = await supabase
@@ -757,6 +790,7 @@ const merchantsRepo: MerchantRepository = {
         merchantId,
         rating: typeof r.rating === 'number' ? r.rating : 5,
         comment: (r.comment as string) ?? '',
+        images: Array.isArray(r.images) ? (r.images as string[]) : undefined,
         merchantReply: (r.merchant_reply as string) ?? undefined,
         merchantRepliedAt: (r.merchant_replied_at as string) ?? undefined,
         createdAt: (r.created_at as string) ?? new Date().toISOString(),
@@ -796,6 +830,7 @@ const merchantsRepo: MerchantRepository = {
         order_id: data.orderId || null,
         rating: data.rating,
         comment: data.comment,
+        images: data.images ?? null,
       })
       .select()
       .single();
@@ -826,18 +861,37 @@ const merchantsRepo: MerchantRepository = {
         phone: data.phone,
         role: data.role,
         user_id: data.userId,
+        is_active: data.isActive,
+        permissions: data.permissions,
       })
       .select()
       .single();
     if (error) throw error;
     return mapStaff(row as Record<string, unknown>);
   },
-  async removeStaff(merchantId, staffId) {
-    await supabase
+  async updateStaff(merchantId, staffId, data) {
+    const update: Record<string, unknown> = {};
+    if (data.name !== undefined) update.name = data.name;
+    if (data.email !== undefined) update.email = data.email;
+    if (data.phone !== undefined) update.phone = data.phone;
+    if (data.role !== undefined) update.role = data.role;
+    if (data.isActive !== undefined) update.is_active = data.isActive;
+    if (data.lastActiveAt !== undefined) update.last_active_at = data.lastActiveAt;
+    if (data.permissions !== undefined) update.permissions = data.permissions;
+    if (data.avatarUrl !== undefined) update.avatar_url = data.avatarUrl;
+
+    const { data: row, error } = await supabase
       .from('merchant_staff')
-      .delete()
+      .update(update)
       .eq('merchant_id', merchantId)
-      .eq('id', staffId);
+      .eq('id', staffId)
+      .select()
+      .single();
+    if (error) throw error;
+    return mapStaff(row as Record<string, unknown>);
+  },
+  async removeStaff(merchantId, staffId) {
+    await supabase.from('merchant_staff').delete().eq('merchant_id', merchantId).eq('id', staffId);
   },
   async setStoreClosure(merchantId, closedUntil) {
     const { data, error } = await supabase
@@ -910,7 +964,11 @@ const merchantsRepo: MerchantRepository = {
       completed_steps: Array.from(completed),
       current_step: nextStep,
     });
-    return { merchantId, completedSteps: Array.from(completed) as OnboardingStep[], currentStep: nextStep };
+    return {
+      merchantId,
+      completedSteps: Array.from(completed) as OnboardingStep[],
+      currentStep: nextStep,
+    };
   },
   async sendBroadcast(merchantId, content): Promise<BroadcastMessage> {
     const { data, error } = await supabase
@@ -1145,7 +1203,7 @@ const ordersRepo: OrderRepository = {
 
   async createOrder(data) {
     const listing = await listingsRepo.getListing(data.items[0]?.listingId ?? '');
-    const qrCode = `MT${String(Date.now()).slice(-5)}`;
+    const pickupCode = generatePickupCode();
     const { data: row, error } = await supabase
       .from('orders')
       .insert({
@@ -1155,7 +1213,7 @@ const ordersRepo: OrderRepository = {
         amount_thb: data.total,
         platform_fee_thb: Math.round(data.total * 0.15),
         status: STATUS_APP_TO_DB[data.status] ?? 'reserved',
-        qr_payload: JSON.stringify({ code: qrCode }),
+        qr_payload: JSON.stringify({ code: pickupCode }),
         pickup_start: data.pickupWindowStart,
         pickup_end: data.pickupWindowEnd,
         customer_note: data.notes ?? null,
@@ -1373,10 +1431,7 @@ const analyticsRepo: AnalyticsRepository = {
 
     const todayStart = startOfDay();
     const todayCompleted = completed.filter((o) => (o.created_at as string) >= todayStart);
-    const todayRevenue = todayCompleted.reduce(
-      (s, o) => s + ((o.amount_thb as number) ?? 0),
-      0
-    );
+    const todayRevenue = todayCompleted.reduce((s, o) => s + ((o.amount_thb as number) ?? 0), 0);
 
     const weekStart = startOfWeek();
     const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -1401,10 +1456,7 @@ const analyticsRepo: AnalyticsRepository = {
         .reduce((s, o) => s + ((o.amount_thb as number) ?? 0), 0),
     }));
 
-    const listingRevenue: Record<
-      string,
-      { title: string; revenue: number; orders: number }
-    > = {};
+    const listingRevenue: Record<string, { title: string; revenue: number; orders: number }> = {};
     completed.forEach((o) => {
       const id = (o.listing_id as string) ?? 'unknown';
       const listingsArray = (o.listings as { name?: string }[] | null) ?? [];
@@ -1654,7 +1706,9 @@ const messagesRepo: MessageRepository = {
       if (!latestByCustomer.has(customerId)) latestByCustomer.set(customerId, r);
     });
 
-    return Array.from(latestByCustomer.values()).map((r) => mapMessage(r as Record<string, unknown>));
+    return Array.from(latestByCustomer.values()).map((r) =>
+      mapMessage(r as Record<string, unknown>)
+    );
   },
   async getMessages(merchantId, customerId): Promise<MerchantMessage[]> {
     const { data, error } = await supabase
@@ -1675,7 +1729,12 @@ const messagesRepo: MessageRepository = {
     if (error) throw error;
     return mapMessage(row as Record<string, unknown>);
   },
-  async sendWelcomeMessage(merchantId, customerId, customerName, orderId): Promise<MerchantMessage> {
+  async sendWelcomeMessage(
+    merchantId,
+    customerId,
+    customerName,
+    orderId
+  ): Promise<MerchantMessage> {
     const content = `Welcome, ${customerName}! Your order is confirmed.`;
     return messagesRepo.sendMessage(merchantId, customerId, content, 'merchant');
   },

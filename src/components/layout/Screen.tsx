@@ -42,6 +42,8 @@ export function Screen({
     <View
       className={cn('flex-1 bg-background', contentClassName)}
       style={{
+        paddingTop,
+        paddingBottom,
         paddingLeft,
         paddingRight,
       }}
@@ -57,7 +59,7 @@ export function Screen({
     ) : undefined;
 
   const screenBody = scrollable ? (
-    <View className={cn('flex-1 bg-background', className)} style={{ paddingTop, paddingBottom }}>
+    <View className={cn('flex-1 bg-background', className)}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
@@ -69,9 +71,7 @@ export function Screen({
       </ScrollView>
     </View>
   ) : (
-    <View className={cn('flex-1 bg-background', className)} style={{ paddingTop, paddingBottom }}>
-      {content}
-    </View>
+    <View className={cn('flex-1 bg-background', className)}>{content}</View>
   );
 
   if (keyboardAvoiding) {

@@ -85,6 +85,7 @@ export interface MerchantRepository {
     merchantId: string,
     data: Omit<StaffMember, 'id' | 'merchantId' | 'createdAt'>
   ): Promise<StaffMember>;
+  updateStaff(merchantId: string, staffId: string, data: Partial<StaffMember>): Promise<StaffMember>;
   removeStaff(merchantId: string, staffId: string): Promise<void>;
   setStoreClosure(merchantId: string, closedUntil: string | null): Promise<Merchant>;
   getMerchantNotificationPreferences(merchantId: string): Promise<MerchantNotificationPreferences>;

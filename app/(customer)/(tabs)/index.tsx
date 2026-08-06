@@ -29,7 +29,8 @@ import { ImpactWidget } from '@/src/components/composite/ImpactWidget';
 import { MealTimeShortcuts } from '@/src/components/composite/MealTimeShortcuts';
 import { CollectionSection } from '@/src/components/composite/CollectionSection';
 import { MapPreviewCard } from '@/src/components/composite/MapPreviewCard';
-import { formatCurrency, getMealTimeForHour } from '@/src/lib/utils';
+import { formatCurrency, getMealTimeForHour, cn } from '@/src/lib/utils';
+import { useResponsiveScale } from '@/src/lib/responsive';
 import { DEFAULT_USER_LOCATION } from '@/src/lib/constants';
 import type { MealTimeId } from '@/src/lib/constants';
 import type { Listing } from '@/src/types';
@@ -47,6 +48,9 @@ export default function CustomerHomeScreen() {
   const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
+  const { scale } = useResponsiveScale();
+  const tabBarExtra = Math.round(72 * scale);
+  const listBottomPadding = 24 + tabBarExtra;
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMealTime, setSelectedMealTime] = useState<MealTimeId | null>(null);
 
@@ -169,9 +173,14 @@ export default function CustomerHomeScreen() {
           <Text variant="body-sm" className="text-muted">
             {t('customer.home.greeting', { timeOfDay })}
           </Text>
-          <Text testID="home-hero-subtitle" variant="h3">{user?.name ?? 'Guest'}</Text>
+          <Text testID="home-hero-subtitle" variant="h3">
+            {user?.name ?? 'Guest'}
+          </Text>
         </Animated.View>
-        <Animated.View entering={FadeInRight.duration(400).delay(100).springify()} className="flex-row items-center space-x-1">
+        <Animated.View
+          entering={FadeInRight.duration(400).delay(100).springify()}
+          className="flex-row items-center space-x-1"
+        >
           <CartButton />
           <Button
             variant="ghost"
@@ -272,14 +281,10 @@ export default function CustomerHomeScreen() {
         }
       />
 
-      <View className="mb-2 px-4">
+      <View className="mb-2">
         <SectionHeader title={t('customer.home.categories')} />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 16 }}
-        >
-          {categories?.map((category) => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {categories?.map((category, index) => (
             <CategoryChip
               key={category.id}
               category={category}
@@ -288,13 +293,14 @@ export default function CustomerHomeScreen() {
                 setSelectedCategory((prev) => (prev === category.id ? null : category.id))
               }
               locale={i18n.language as 'en' | 'th'}
+              className={index === (categories?.length ?? 0) - 1 ? 'mr-0' : 'mr-3'}
             />
           ))}
         </ScrollView>
       </View>
 
       <View className="px-4">
-      <SectionHeader title={t('customer.home.cravingNow')} className="mb-2" />
+        <SectionHeader title={t('customer.home.cravingNow')} className="mb-2" />
       </View>
       <MealTimeShortcuts
         selected={selectedMealTime}
@@ -354,19 +360,22 @@ export default function CustomerHomeScreen() {
 
       <View testID="home-featured-section" className="mb-6">
         <View className="px-4">
-        <SectionHeader
-          title={t('customer.home.featured')}
-          action={t('common.seeAll')}
-          onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
-        />
+          <SectionHeader
+            title={t('customer.home.featured')}
+            action={t('common.seeAll')}
+            onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
+          />
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {merchantsLoading
             ? Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} width={280} height={160} className="mr-3 rounded-3xl" />
               ))
             : featuredMerchants.map((merchant, index) => (
-                <View key={merchant.id} className="mr-3 w-72">
+                <View
+                  key={merchant.id}
+                  className={cn('w-72', index === featuredMerchants.length - 1 ? '' : 'mr-3')}
+                >
                   <MerchantCard
                     merchant={merchant}
                     testID={index === 0 ? 'first-featured-merchant' : undefined}
@@ -398,11 +407,11 @@ export default function CustomerHomeScreen() {
       )}
 
       <View className="px-5">
-      <SectionHeader
-        title={t('customer.home.nearYou')}
-        action={t('common.seeAll')}
-        onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
-      />
+        <SectionHeader
+          title={t('customer.home.nearYou')}
+          action={t('common.seeAll')}
+          onPress={() => router.push('/(customer)/(tabs)/discover' as any)}
+        />
       </View>
     </View>
   );
@@ -435,7 +444,7 @@ export default function CustomerHomeScreen() {
         ListEmptyComponent={listEmpty}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: listBottomPadding }}
       />
     </Screen>
   );

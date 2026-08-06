@@ -16,6 +16,7 @@ import { QrCode, Check, Search, XCircle, X } from 'lucide-react-native';
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
+import { Header } from '@/src/components/layout/Header';
 import { Screen } from '@/src/components/layout/Screen';
 import { Badge } from '@/src/components/ui/Badge';
 import { useUpdateOrderStatus, useOrderByPickupCode } from '@/src/hooks/useOrders';
@@ -176,14 +177,12 @@ export default function ScannerScreen() {
 
   return (
     <Screen scrollable className="bg-background">
+      <Header title={t('merchant.scanner.title')} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
         <View className="px-6 pb-8 pt-4">
-          <Text variant="h1" className="mb-2">
-            {t('merchant.scanner.title')}
-          </Text>
           <Text variant="body" className="mb-8 text-muted">
             {t('merchant.scanner.scanHint')}
           </Text>

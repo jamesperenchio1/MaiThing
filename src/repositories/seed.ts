@@ -371,8 +371,7 @@ export const MERCHANTS: Merchant[] = MERCHANT_SEEDS.map((m, idx) => ({
   createdAt: '2025-01-01T00:00:00Z',
   // Test merchant (idx 0) starts unverified so the dashboard progress card is visible
   isVerified: idx !== 0 && idx < 12,
-  verificationStatus:
-    idx === 0 ? 'unverified' : idx < 12 ? 'verified' : ('unverified' as const),
+  verificationStatus: idx === 0 ? 'unverified' : idx < 12 ? 'verified' : ('unverified' as const),
   completedOrders: idx === 0 ? 8 : 10 + idx * 5,
   refundDisputes: 0,
   joinedAt: new Date(Date.now() - (idx + 1) * 30 * 86400000).toISOString(),
@@ -549,7 +548,8 @@ export const LISTINGS: Listing[] = [
     merchantId: 'merchant-1',
     type: 'fixed_item',
     title: 'Sold Out Demo — Tap Notify Me',
-    description: 'This listing is sold out. Customers can join the waitlist and get notified when it restocks.',
+    description:
+      'This listing is sold out. Customers can join the waitlist and get notified when it restocks.',
     images: ['https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'],
     category: 'restaurant',
     originalPrice: 300,
@@ -845,6 +845,12 @@ const REVIEWER_NAMES = [
   'Chaiwat T',
 ];
 
+const REVIEW_SAMPLE_IMAGES = [
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1563729784474-d8b8c88a8b5f?w=300&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=300&h=300&fit=crop',
+];
+
 export const REVIEWS: Review[] = MERCHANTS.flatMap((merchant) => {
   const count = Math.min(merchant.reviewCount, 12);
   return Array.from({ length: count }).map((_, i) => {
@@ -860,6 +866,7 @@ export const REVIEWS: Review[] = MERCHANTS.flatMap((merchant) => {
       merchantId: merchant.id,
       rating,
       comment: REVIEW_TEMPLATES[i % REVIEW_TEMPLATES.length],
+      images: i % 3 === 0 ? REVIEW_SAMPLE_IMAGES.slice(0, Math.min(3, (i % 5) + 1)) : undefined,
       createdAt: new Date(Date.now() - daysAgo * 86400000).toISOString(),
     };
   });
@@ -885,7 +892,9 @@ export const LISTING_TEMPLATES: ListingTemplate[] = [
     pickupWindowDurationHours: 2,
     autoExpiry: true,
     createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    expiresAt: new Date(new Date(Date.now() - 30 * 86400000).getTime() + 90 * 86400000).toISOString(),
+    expiresAt: new Date(
+      new Date(Date.now() - 30 * 86400000).getTime() + 90 * 86400000
+    ).toISOString(),
   },
   {
     id: 'template-2',
@@ -904,7 +913,9 @@ export const LISTING_TEMPLATES: ListingTemplate[] = [
     pickupWindowDurationHours: 1.5,
     autoExpiry: true,
     createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-    expiresAt: new Date(new Date(Date.now() - 20 * 86400000).getTime() + 90 * 86400000).toISOString(),
+    expiresAt: new Date(
+      new Date(Date.now() - 20 * 86400000).getTime() + 90 * 86400000
+    ).toISOString(),
   },
 ];
 
@@ -961,6 +972,9 @@ export const STAFF_MEMBERS: StaffMember[] = [
     email: 'merchant@maithing.test',
     phone: '089-876-5432',
     role: 'owner',
+    isActive: true,
+    lastActiveAt: new Date().toISOString(),
+    permissions: ['all'],
     avatarUrl: 'https://i.pravatar.cc/150?u=kornchai',
     createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
   },
@@ -971,6 +985,9 @@ export const STAFF_MEMBERS: StaffMember[] = [
     email: 'nattapong@maithing.test',
     phone: '081-111-2233',
     role: 'manager',
+    isActive: true,
+    lastActiveAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+    permissions: ['manage_orders', 'manage_inventory', 'manage_staff', 'view_analytics'],
     avatarUrl: 'https://i.pravatar.cc/150?u=nattapong',
     createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
   },
@@ -981,6 +998,8 @@ export const STAFF_MEMBERS: StaffMember[] = [
     email: 'supansa@maithing.test',
     phone: '082-333-4455',
     role: 'staff',
+    isActive: false,
+    permissions: ['manage_orders'],
     avatarUrl: 'https://i.pravatar.cc/150?u=supansa',
     createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
   },

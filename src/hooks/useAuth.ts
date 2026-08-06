@@ -1,7 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { useCallback, useState } from 'react';
+import { Platform } from 'react-native';
 
+import { supabase } from '@/src/lib/supabase';
 import { repositories } from '@/src/repositories';
 import { TEST_CUSTOMER, TEST_MERCHANT_USER } from '@/src/repositories/seed';
 import { useAuthStore } from '@/src/stores/auth';
@@ -13,6 +16,7 @@ export function useAuth() {
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
+  const [socialLoading, setSocialLoading] = useState(false);
 
   const signInMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
@@ -105,6 +109,70 @@ export function useAuth() {
     [setUser, setRole, router]
   );
 
+  const signInWithProvider = useCallback(
+    async (provider: 'google' | 'apple') => {
+      // In mock mode we don't have real OAuth, so fall back to the test customer.
+      if (!IS_SUPABASE) {
+        const user = await repositories.auth.signIn(TEST_CUSTOMER.email, 'password');
+        setUser({ ...user, roles: ['customer', 'merchant'] as UserRole[] });
+        setRole('customer');
+        router.replace('/(customer)/(tabs)' as any);
+        return;
+      }
+
+      setSocialLoading(true);
+      try {
+        const redirectTo =
+          Platform.OS === 'web'
+            ? (typeof window !== 'undefined' ? window.location.origin : '')
+            : 'maithing://';
+
+        if (Platform.OS === 'web') {
+          // On web Supabase redirects the browser back to the current origin.
+          await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
+          return;
+        }
+
+        // Native: open the provider's OAuth page in an in-app browser.
+        // NOTE: full native OAuth also requires the iOS/Android bundle to
+        // handle the maithing:// deep-link callback and exchange the URL tokens
+        // for a session. The flow below parses the result returned by the browser
+        // on platforms that support it; on others the app must handle the deep
+        // link via a global Linking listener.
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: { redirectTo, skipBrowserRedirect: true },
+        });
+        if (error) throw error;
+        if (!data.url) throw new Error('No OAuth URL returned');
+
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        if (result.type === 'success' && result.url) {
+          const url = new URL(result.url);
+          const params = new URLSearchParams(url.hash.replace('#', ''));
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          if (accessToken && refreshToken) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (sessionError) throw sessionError;
+            const user = await repositories.users.getCurrentUser();
+            setUser(user);
+            const selectedRole = useAuthStore.getState().selectedRole;
+            router.replace(
+              (selectedRole === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)') as any
+            );
+          }
+        }
+      } finally {
+        setSocialLoading(false);
+      }
+    },
+    [router, setUser, setRole]
+  );
+
   const logout = useCallback(async () => {
     await repositories.auth.signOut();
     useAuthStore.getState().logout();
@@ -124,5 +192,7 @@ export function useAuth() {
     continueAsTest,
     switchRole,
     logout,
+    signInWithProvider,
+    signInWithProviderLoading: socialLoading,
   };
 }
