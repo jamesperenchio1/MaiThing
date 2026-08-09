@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mmkvZustandStorage } from '@/src/lib/mmkvStorage';
 
 export const TUTORIAL_TOTAL_STEPS = 8;
 
@@ -34,7 +34,7 @@ export const useTutorialStore = create<TutorialState>()(
     }),
     {
       name: 'maithing-tutorial-v2',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvZustandStorage),
       // Only persist hasSeenTutorial — never resume a mid-flight tutorial on restart
       partialize: (state) => ({ hasSeenTutorial: state.hasSeenTutorial }),
     }

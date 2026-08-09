@@ -27,6 +27,7 @@ export default {
       helpPlanet: 'Help the Planet',
       helpPlanetDesc: 'Reduce food waste one delicious rescue at a time.',
       getStarted: 'Get Started',
+    saveChanges: 'Save Changes',
       next: 'Next',
       step: 'Step {{step}}',
       howItWorks: {
@@ -275,6 +276,7 @@ export default {
       promotions: 'Promotions',
       appTour: 'App Tour',
       switchToMerchant: 'Switch to Merchant mode',
+      editPreferences: 'Food Preferences',
     },
     wallet: {
       balance: 'Balance',
@@ -318,6 +320,7 @@ export default {
       stepListing: 'First listing',
       stepListingDesc: 'Create your first rescue box or fixed item in under 2 minutes.',
       getStarted: 'Get Started',
+    saveChanges: 'Save Changes',
       skipForNow: 'Skip for now',
       businessInfo: 'Business Info',
       verification: 'Verification',
@@ -603,9 +606,11 @@ export default {
   personality: {
     stepCounter: '{{current}} / {{total}}',
     skip: 'Skip for now',
+    skipAll: 'Show me everything',
     next: 'Next',
     back: 'Back',
     getStarted: 'Get Started',
+    saveChanges: 'Save Changes',
     screen1: {
       title: 'What do you love to eat?',
       subtitle: "We'll personalize your home feed based on your tastes",

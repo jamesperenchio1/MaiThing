@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mmkvZustandStorage } from '@/src/lib/mmkvStorage';
 
 export type PriceRange = 'budget' | 'mid' | 'premium' | 'luxury' | 'any';
 export type DiscoveryStyle = 'mystery' | 'fixed' | 'both';
@@ -43,7 +43,7 @@ export const usePersonalityStore = create<PersonalityState>()(
     }),
     {
       name: 'maithing-personality-v1',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvZustandStorage),
     }
   )
 );

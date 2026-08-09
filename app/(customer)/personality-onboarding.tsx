@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -206,6 +206,9 @@ export default function PersonalityOnboardingScreen() {
   const colors = useThemeColor();
   const { s } = useScaledSize();
 
+  const store = usePersonalityStore();
+  const isEditMode = store.onboardingCompleted;
+
   const setOnboardingCompleted = usePersonalityStore((s) => s.setOnboardingCompleted);
   const setPreferredCategories = usePersonalityStore((s) => s.setPreferredCategories);
   const setDietaryPreferences = usePersonalityStore((s) => s.setDietaryPreferences);
@@ -219,6 +222,16 @@ export default function PersonalityOnboardingScreen() {
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [selectedPrice, setSelectedPrice] = useState<PriceRange | null>(null);
   const [selectedDiscovery, setSelectedDiscovery] = useState<DiscoveryStyle | null>(null);
+
+  // Pre-populate from store when in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      setSelectedCategories(store.preferredCategories ?? []);
+      setSelectedDietary(store.dietaryPreferences ?? []);
+      setSelectedPrice(store.priceRange);
+      setSelectedDiscovery(store.discoveryStyle);
+    }
+  }, [isEditMode]);
 
   const isFirstStep = step === 0;
   const isLastStep = step === TOTAL_STEPS - 1;
@@ -322,9 +335,25 @@ export default function PersonalityOnboardingScreen() {
     finishOnboarding();
   };
 
+  const handleSkipAll = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Defaults: all categories, no restrictions, any price, both styles
+    setSelectedCategories([]);
+    setSelectedDietary(['noRestrictions']);
+    setSelectedPrice('any');
+    setSelectedDiscovery('both');
+    // Save immediately and navigate
+    setPreferredCategories([]);
+    setDietaryPreferences(['noRestrictions']);
+    setPriceRange('any');
+    setDiscoveryStyle('both');
+    setOnboardingCompleted(true);
+    router.replace('/(customer)/(tabs)' as never);
+  };
+
   const finishOnboarding = () => {
     setPreferredCategories(selectedCategories);
-    setDietaryPreferences(selectedDietary);
+    setDietaryPreferences(selectedDietary.length > 0 ? selectedDietary : ['noRestrictions']);
     if (selectedPrice) setPriceRange(selectedPrice);
     if (selectedDiscovery) setDiscoveryStyle(selectedDiscovery);
     setOnboardingCompleted(true);
@@ -354,6 +383,15 @@ export default function PersonalityOnboardingScreen() {
                 />
               ))}
             </View>
+            {!isEditMode && (
+              <View className="mt-6 items-center">
+                <Button variant="ghost" onPress={handleSkipAll}>
+                  <Text variant="body-sm" className="text-primary font-semibold">
+                    {t('personality.skipAll')}
+                  </Text>
+                </Button>
+              </View>
+            )}
           </View>
         );
 
@@ -493,15 +531,21 @@ export default function PersonalityOnboardingScreen() {
                 ) : undefined
               }
             >
-              {isLastStep ? t('personality.getStarted') : t('personality.next')}
+              {isLastStep
+                ? isEditMode
+                  ? t('personality.saveChanges')
+                  : t('personality.getStarted')
+                : t('personality.next')}
             </Button>
           </View>
 
-          <Button variant="ghost" onPress={handleSkip}>
-            <Text variant="body-sm" className="text-muted">
-              {t('personality.skip')}
-            </Text>
-          </Button>
+          {!isEditMode && (
+            <Button variant="ghost" onPress={handleSkip}>
+              <Text variant="body-sm" className="text-muted">
+                {t('personality.skip')}
+              </Text>
+            </Button>
+          )}
         </View>
       </View>
     </Screen>

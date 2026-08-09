@@ -24,6 +24,7 @@ import { useCustomerImpact } from '@/src/hooks/useImpact';
 import { useCustomerProfile } from '@/src/hooks/useFavorites';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
+import { usePersonalityStore } from '@/src/stores/personality';
 import { CartButton } from '@/src/components/composite/CartButton';
 import { ImpactWidget } from '@/src/components/composite/ImpactWidget';
 import { MealTimeShortcuts } from '@/src/components/composite/MealTimeShortcuts';
@@ -43,6 +44,78 @@ function filterListingsByMealTime(listings: Listing[], mealTime: MealTimeId | nu
   });
 }
 
+/* Personality key → listing category id */
+const CATEGORY_MAP: Record<string, string> = {
+  cafes: 'cafe',
+  bakeries: 'bakery',
+  restaurants: 'restaurant',
+  grocery: 'grocery',
+  streetFood: 'street_food',
+  desserts: 'dessert',
+  healthy: 'healthy',
+  halal: 'halal',
+};
+
+function filterByPersonality(listings: Listing[], personality: ReturnType<typeof usePersonalityStore.getState>) {
+  if (!personality.onboardingCompleted) return null;
+
+  return listings.filter((l) => {
+    // Category filter
+    if (personality.preferredCategories.length > 0) {
+      const mapped = personality.preferredCategories.map((k) => CATEGORY_MAP[k] ?? k);
+      if (!mapped.includes(l.category)) return false;
+    }
+
+    // Price filter
+    if (personality.priceRange && personality.priceRange !== 'any') {
+      const priceMap: Record<string, [number, number]> = {
+        budget: [0, 50],
+        mid: [50, 100],
+        premium: [100, 200],
+        luxury: [200, Infinity],
+      };
+      const [min, max] = priceMap[personality.priceRange] ?? [0, Infinity];
+      if (l.salePrice < min || l.salePrice > max) return false;
+    }
+
+    // Discovery style filter
+    if (personality.discoveryStyle && personality.discoveryStyle !== 'both') {
+      if (personality.discoveryStyle === 'mystery' && l.type !== 'mystery_box') return false;
+      if (personality.discoveryStyle === 'fixed' && l.type !== 'fixed_item') return false;
+    }
+
+    // Dietary / allergen filter
+    const prefs = personality.dietaryPreferences;
+    if (prefs.length > 0 && !prefs.includes('noRestrictions')) {
+      // Hard exclude: allergen conflicts
+      const allergenMap: Record<string, string[]> = {
+        nutFree: ['nuts', 'peanuts', 'tree nuts'],
+        glutenFree: ['gluten', 'wheat'],
+        dairyFree: ['dairy', 'milk'],
+      };
+      for (const pref of prefs) {
+        const forbidden = allergenMap[pref];
+        if (forbidden) {
+          const hasForbidden = l.allergens.some((a) =>
+            forbidden.some((f) => a.toLowerCase().includes(f.toLowerCase()))
+          );
+          if (hasForbidden) return false;
+        }
+      }
+      // Soft include: lifestyle preferences (vegetarian, vegan, halal)
+      const lifestylePrefs = prefs.filter((p) => ['vegetarian', 'vegan', 'halal'].includes(p));
+      if (lifestylePrefs.length > 0) {
+        const hasMatch = lifestylePrefs.some((pref) =>
+          l.dietaryTags.some((tag) => tag.toLowerCase().includes(pref.toLowerCase()))
+        );
+        if (!hasMatch) return false;
+      }
+    }
+
+    return true;
+  });
+}
+
 export default function CustomerHomeScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -53,6 +126,8 @@ export default function CustomerHomeScreen() {
   const listBottomPadding = 24 + tabBarExtra;
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMealTime, setSelectedMealTime] = useState<MealTimeId | null>(null);
+
+  const personality = usePersonalityStore();
 
   const {
     data: listings,
@@ -92,6 +167,13 @@ export default function CustomerHomeScreen() {
 
   const featuredMerchants = merchants?.slice(0, 5) ?? [];
   const nearbyListings = filteredListings.slice(0, 6);
+
+  // Personality-based "For You" section
+  const forYouListings = useMemo(() => {
+    const filtered = filterByPersonality(listings ?? [], personality);
+    if (filtered === null) return [];
+    return filtered.slice(0, 6);
+  }, [listings, personality]);
 
   const favoriteListings = useMemo(
     () => (listings ?? []).filter((l) => favoriteMerchantIds.has(l.merchantId)).slice(0, 6),
@@ -321,9 +403,18 @@ export default function CustomerHomeScreen() {
         />
       )}
 
-      {favoriteListings.length > 0 && (
+      {/* Personality-based "For You" */}
+      {forYouListings.length > 0 && (
         <CollectionSection
           title={t('customer.home.forYou')}
+          listings={forYouListings}
+          onSeeAll={() => router.push('/(customer)/(tabs)/discover' as any)}
+        />
+      )}
+
+      {favoriteListings.length > 0 && (
+        <CollectionSection
+          title={t('common.favorites')}
           listings={favoriteListings}
           onSeeAll={() => router.push('/(customer)/favorites' as any)}
         />

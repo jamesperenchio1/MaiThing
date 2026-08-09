@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mmkvZustandStorage } from '@/src/lib/mmkvStorage';
 import i18n from '@/src/i18n';
 
 interface LanguageState {
@@ -34,7 +34,7 @@ export const useLanguageStore = create<LanguageState>()(
     }),
     {
       name: 'maithing-language',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvZustandStorage),
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.hydrated = true;

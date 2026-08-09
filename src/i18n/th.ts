@@ -27,6 +27,7 @@ export default {
       helpPlanet: 'ช่วยโลก',
       helpPlanetDesc: 'ลด food waste ทีละมื้อ',
       getStarted: 'เริ่มต้นใช้งาน',
+    saveChanges: 'บันทึกการเปลี่ยนแปลง',
       next: 'ถัดไป',
       step: 'ขั้นตอน {{step}}',
       howItWorks: {
@@ -273,6 +274,7 @@ export default {
       promotions: 'โปรโมชั่น',
       appTour: 'ทัวร์แอป',
       switchToMerchant: 'สลับเป็นโหมดร้านค้า',
+      editPreferences: 'รสนิยมอาหาร',
     },
     wallet: {
       balance: 'ยอดคงเหลือ',
@@ -601,9 +603,11 @@ export default {
   personality: {
     stepCounter: '{{current}} / {{total}}',
     skip: 'ข้ามไปก่อน',
+    skipAll: 'แสดงทั้งหมด',
     next: 'ถัดไป',
     back: 'ย้อนกลับ',
     getStarted: 'เริ่มต้นใช้งาน',
+    saveChanges: 'บันทึกการเปลี่ยนแปลง',
     screen1: {
       title: 'คุณชอบกินอะไร?',
       subtitle: 'เราจะปรับหน้าแรกตามรสนิยมของคุณ',

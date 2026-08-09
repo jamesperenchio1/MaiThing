@@ -22,6 +22,7 @@ import {
   Store,
   ShoppingBag,
   BookOpen,
+  Sparkles,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -273,6 +274,12 @@ export default function ProfileScreen() {
             icon={<ShoppingBag size={20} color={colors.muted} />}
             label={t('customer.profile.myOrders')}
             onPress={() => router.navigate('/(customer)/(tabs)/orders' as any)}
+          />
+          <MenuItem
+            testID="edit-preferences-menu-item"
+            icon={<Sparkles size={20} color={colors.muted} />}
+            label={t('customer.profile.editPreferences')}
+            onPress={() => router.push('/(customer)/personality-onboarding' as any)}
           />
         </Card>
 

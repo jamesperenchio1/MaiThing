@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mmkvZustandStorage } from '@/src/lib/mmkvStorage';
 import type { Listing } from '@/src/types';
 
 interface CartItem {
@@ -54,7 +54,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'maithing-cart',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvZustandStorage),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         // Prune listings whose pickup window has already closed

@@ -35,6 +35,7 @@ import {
 } from '@/src/services/notifications';
 import { ErrorBoundary } from '@/src/components/layout/ErrorBoundary';
 import { registerPushToken } from '@/src/services/pushToken';
+import { useRealtimeOrders } from '@/src/hooks/useRealtimeOrders';
 import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
@@ -59,6 +60,10 @@ export default function RootLayout() {
   const isDark = useThemeStore((s) => s.isDark);
   const colors = useThemeColor();
   const setUser = useAuthStore((s) => s.setUser);
+  const user = useAuthStore((s) => s.user);
+  const selectedRole = useAuthStore((s) => s.selectedRole);
+
+  useRealtimeOrders(user?.id, selectedRole ?? undefined);
 
   const init = useCallback(async () => {
     try {
