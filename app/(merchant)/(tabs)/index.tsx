@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Modal } from 'react-native';
+import { View, Image } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import * as Haptics from 'expo-haptics';
 import {
   Plus,
@@ -929,17 +930,13 @@ export default function MerchantDashboardScreen() {
       </View>
 
       {/* ── Closure Duration Bottom Sheet ── */}
-      <Modal
-        visible={closureSheetVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => {
+      <BottomSheet
+        isOpen={closureSheetVisible}
+        onClose={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           setClosureSheetVisible(false);
         }}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="rounded-t-3xl bg-background px-6 pt-6 pb-10">
             {/* Sheet header */}
             <View className="mb-6 flex-row items-center justify-between">
               <Text variant="h3">Temporarily close your store</Text>
@@ -1093,22 +1090,19 @@ export default function MerchantDashboardScreen() {
             >
               Cancel
             </Button>
-          </View>
-        </View>
-      </Modal>
+
+      </BottomSheet>
 
       {/* ── Reopen Confirmation Modal ── */}
-      <Modal
-        visible={reopenConfirmVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
+      <BottomSheet
+        isOpen={reopenConfirmVisible}
+        onClose={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           setReopenConfirmVisible(false);
         }}
+        snapPoints={['35%']}
       >
-        <View className="flex-1 items-center justify-center bg-black/50 px-6">
-          <View className="w-full rounded-3xl bg-background p-6">
+
             <Text variant="h3" className="mb-2 text-center">
               Reopen your store?
             </Text>
@@ -1135,9 +1129,8 @@ export default function MerchantDashboardScreen() {
             >
               Keep closed
             </Button>
-          </View>
-        </View>
-      </Modal>
+
+      </BottomSheet>
     </Screen>
   );
 }

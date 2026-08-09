@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Alert, Modal, ScrollView } from 'react-native';
+import { View, Alert, ScrollView } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Landmark, Check, Star, Plus } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -195,14 +196,11 @@ export default function BankAccountScreen() {
         </View>
       </ScrollView>
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+      <BottomSheet
+        isOpen={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={['50%']}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="rounded-t-3xl bg-background px-6 pb-8 pt-6">
             <Text variant="h3" className="mb-6">
               {t('merchant.payouts.addBankAccount')}
             </Text>
@@ -274,9 +272,7 @@ export default function BankAccountScreen() {
             >
               {t('common.cancel')}
             </Button>
-          </View>
-        </View>
-      </Modal>
+      </BottomSheet>
     </Screen>
   );
 }

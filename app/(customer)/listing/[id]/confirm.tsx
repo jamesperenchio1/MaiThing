@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, Platform, ActivityIndicator, Modal } from 'react-native';
+import { View, ScrollView, Image, Platform, ActivityIndicator } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar, Globe, Check, Tag, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 // Lazy-loaded so Expo Go doesn't crash on missing native CalendarNext module
@@ -210,14 +211,11 @@ export default function ConfirmOrderScreen() {
     return (
       <Screen className="bg-background">
         <Header title="Order confirmed" />
-        <Modal
-          visible={showUpsell}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setShowUpsell(false)}
+        <BottomSheet
+          isOpen={showUpsell}
+          onClose={() => setShowUpsell(false)}
+          enableScroll={true}
         >
-          <View className="flex-1 justify-end bg-black/50">
-            <View className="rounded-t-3xl bg-background px-5 pb-8 pt-5">
               <View className="mb-4 flex-row items-center justify-center">
                 <Globe size={24} color={colors.primary} />
                 <Text variant="h3" className="ml-2">
@@ -277,9 +275,7 @@ export default function ConfirmOrderScreen() {
               >
                 No thanks
               </Button>
-            </View>
-          </View>
-        </Modal>
+        </BottomSheet>
         <View className="flex-1 items-center justify-center px-6">
           <View className="mb-6 rounded-full bg-primary/10 p-4">
             <CheckCircle size={48} color={colors.primary} />

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, RefreshControl, Alert, Modal, ScrollView } from 'react-native';
+import { View, Image, RefreshControl, Alert, ScrollView } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import * as Haptics from 'expo-haptics';
 import {
   Package,
@@ -366,14 +367,11 @@ function InventoryCard({
         </View>
       </Card>
 
-      <Modal
-        visible={showPromoModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowPromoModal(false)}
+      <BottomSheet
+        isOpen={showPromoModal}
+        onClose={() => setShowPromoModal(false)}
+        enableScroll={true}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="max-h-[70%] rounded-t-3xl bg-card px-4 pb-8 pt-4">
             <View className="mb-4 flex-row items-center justify-between">
               <PressableScale
                 onPress={() => {
@@ -461,9 +459,7 @@ function InventoryCard({
                 </PressableScale>
               )}
             </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      </BottomSheet>
     </PressableScale>
   );
 }
@@ -965,14 +961,11 @@ export default function InventoryScreen() {
         </View>
       )}
 
-      <Modal
-        visible={showTemplates}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowTemplates(false)}
+      <BottomSheet
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        enableScroll={true}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[80%] rounded-t-3xl bg-card px-4 pb-8 pt-4">
             <View className="mb-4 flex-row items-center justify-between">
               <Button variant="ghost" onPress={() => setShowTemplates(false)}>
                 {t('common.cancel')}
@@ -1078,21 +1071,16 @@ export default function InventoryScreen() {
                 description={t('merchant.createListing.title')}
               />
             )}
-          </View>
-        </View>
-      </Modal>
+      </BottomSheet>
 
-      <Modal
-        visible={showDuplicateModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => {
+      <BottomSheet
+        isOpen={showDuplicateModal}
+        onClose={() => {
           setShowDuplicateModal(false);
           setDuplicateListing(null);
         }}
+        snapPoints={['40%']}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="rounded-t-3xl bg-background px-5 pb-8 pt-5">
             <Text variant="h3" className="mb-5">
               When is pickup?
             </Text>
@@ -1151,18 +1139,13 @@ export default function InventoryScreen() {
             >
               {t('common.cancel')}
             </Button>
-          </View>
-        </View>
-      </Modal>
+      </BottomSheet>
 
-      <Modal
-        visible={showAdjustPriceModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowAdjustPriceModal(false)}
+      <BottomSheet
+        isOpen={showAdjustPriceModal}
+        onClose={() => setShowAdjustPriceModal(false)}
+        snapPoints={['35%']}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="rounded-t-3xl bg-card px-5 pb-8 pt-5">
             <Text variant="h3" className="mb-1">
               Adjust sale price
             </Text>
@@ -1195,9 +1178,7 @@ export default function InventoryScreen() {
                 Apply
               </Button>
             </View>
-          </View>
-        </View>
-      </Modal>
+      </BottomSheet>
     </Screen>
   );
 }

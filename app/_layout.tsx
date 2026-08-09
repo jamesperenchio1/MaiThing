@@ -7,6 +7,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { View, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import {
@@ -144,29 +146,33 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={persistOptions}
-        onSuccess={onRestoreSuccess}
-      >
-        <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
-          <OfflineBanner />
-          <ErrorBoundary>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.background },
-              }}
-            >
-              <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-              <Stack.Screen name="(customer)" options={{ animation: 'default' }} />
-              <Stack.Screen name="(merchant)" options={{ animation: 'default' }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-          </ErrorBoundary>
-        </View>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-      </PersistQueryClientProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <BottomSheetModalProvider>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={persistOptions}
+            onSuccess={onRestoreSuccess}
+          >
+            <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
+              <OfflineBanner />
+              <ErrorBoundary>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.background },
+                  }}
+                >
+                  <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+                  <Stack.Screen name="(customer)" options={{ animation: 'default' }} />
+                  <Stack.Screen name="(merchant)" options={{ animation: 'default' }} />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+              </ErrorBoundary>
+            </View>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </PersistQueryClientProvider>
+        </BottomSheetModalProvider>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }

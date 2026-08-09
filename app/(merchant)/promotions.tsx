@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Alert, Modal, ScrollView } from 'react-native';
+import { View, Alert, ScrollView } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Tag, Percent, Banknote, Clock, Trash2, Plus, Check } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -335,15 +336,11 @@ export default function PromotionsScreen() {
         </View>
       </ScrollView>
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+      <BottomSheet
+        isOpen={modalVisible}
+        onClose={() => setModalVisible(false)}
+        enableScroll={true}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <ScrollView className="flex-1" contentContainerStyle={{ justifyContent: 'flex-end' }}>
-            <View className="rounded-t-3xl bg-background px-6 pb-8 pt-6">
               <Text variant="h3" className="mb-6">
                 {t('merchant.coupons.create')}
               </Text>
@@ -569,10 +566,7 @@ export default function PromotionsScreen() {
               >
                 {t('common.cancel')}
               </Button>
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
+      </BottomSheet>
     </Screen>
   );
 }

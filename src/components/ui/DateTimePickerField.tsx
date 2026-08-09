@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Modal, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { CalendarClock } from 'lucide-react-native';
 
@@ -80,9 +81,11 @@ export function DateTimePickerField({
         </View>
       </Pressable>
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={handleCancel}>
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="rounded-t-3xl bg-card px-4 pb-8 pt-4">
+      <BottomSheet
+        isOpen={open}
+        onClose={handleCancel}
+        snapPoints={['40%']}
+      >
             <View className="mb-4 flex-row items-center justify-between">
               <Button variant="ghost" onPress={handleCancel}>
                 Cancel
@@ -101,9 +104,7 @@ export function DateTimePickerField({
               onChange={handleChange}
               themeVariant="light"
             />
-          </View>
-        </View>
-      </Modal>
+      </BottomSheet>
     </>
   );
 }

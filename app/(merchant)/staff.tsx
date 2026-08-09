@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Alert, Modal, ScrollView, Switch } from 'react-native';
+import { View, Alert, ScrollView, Switch } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { UserPlus, Mail, Phone, Shield, Trash2, Plus, Clock } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -323,14 +324,11 @@ export default function StaffScreen() {
         </View>
       </ScrollView>
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+      <BottomSheet
+        isOpen={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={['55%']}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="rounded-t-3xl bg-background px-6 pb-8 pt-6">
             <Text variant="h3" className="mb-6">
               {t('merchant.staff.addStaff')}
             </Text>
@@ -425,9 +423,7 @@ export default function StaffScreen() {
             >
               {t('common.cancel')}
             </Button>
-          </View>
-        </View>
-      </Modal>
+      </BottomSheet>
     </Screen>
   );
 }

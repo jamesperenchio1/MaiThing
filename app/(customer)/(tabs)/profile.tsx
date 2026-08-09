@@ -4,12 +4,12 @@ import {
   View,
   Switch,
   Alert,
-  Modal,
   TextInput,
   TouchableWithoutFeedback,
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
+import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import {
   User,
   Heart,
@@ -154,14 +154,11 @@ export default function ProfileScreen() {
   return (
     <Screen testID="profile-screen" scrollable className="bg-background">
       {/* Edit Profile Modal */}
-      <Modal visible={editModalVisible} transparent animationType="fade">
-        <TouchableWithoutFeedback onPress={() => setEditModalVisible(false)}>
-          <View
-            className="flex-1 items-center justify-center"
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-          >
-            <TouchableWithoutFeedback>
-              <View className="mx-6 w-full max-w-sm rounded-3xl bg-card p-6">
+      <BottomSheet
+        isOpen={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        snapPoints={['35%']}
+      >
                 <Text variant="h3" className="mb-4">
                   {t('customer.profile.editProfile')}
                 </Text>
@@ -193,11 +190,7 @@ export default function ProfileScreen() {
                     {t('common.save')}
                   </Button>
                 </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+      </BottomSheet>
 
       <View className="px-6 pt-4 pb-2">
         <Text testID="profile-title" variant="h1" className="mb-6">
