@@ -28,6 +28,7 @@ import { useNotificationPreferences } from '@/src/hooks/useNotifications';
 import { useValidateCoupon } from '@/src/hooks/useCoupons';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useNetworkState } from '@/src/hooks/useNetworkState';
 import {
   formatCurrency,
   formatDistance,
@@ -58,6 +59,7 @@ export default function ConfirmOrderScreen() {
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(Math.max(1, Number(quantityParam) || 1));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isOffline } = useNetworkState();
   const [order, setOrder] = useState<Order | null>(null);
   const [calendarAdded, setCalendarAdded] = useState(false);
   const [upsellListings, setUpsellListings] = useState<Listing[]>([]);
@@ -118,6 +120,7 @@ export default function ConfirmOrderScreen() {
     : null;
 
   const handleConfirm = async () => {
+    if (isOffline) return;
     if (!user || !merchant) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsSubmitting(true);
@@ -420,6 +423,13 @@ export default function ConfirmOrderScreen() {
               )}
             </View>
 
+      {isOffline && (
+        <View className="bg-amber-100 px-6 py-3 dark:bg-amber-900">
+          <Text variant="body-sm" className="text-amber-800 dark:text-amber-200">
+            You are offline. Connect to the internet to place your order.
+          </Text>
+        </View>
+      )}
             <View className="border-t border-border pt-3 flex-row items-center justify-between">
               <Text className="font-semibold">Total</Text>
               <Text className="text-xl font-bold text-primary">{formatCurrency(total)}</Text>
@@ -554,11 +564,11 @@ export default function ConfirmOrderScreen() {
         <Button
           testID="confirm-order-button"
           fullWidth
-          disabled={isSoldOut || isSubmitting}
+          disabled={isSoldOut || isSubmitting || isOffline}
           loading={isSubmitting}
           onPress={handleConfirm}
         >
-          Confirm order · {formatCurrency(total)}
+          {isOffline ? 'No connection' : 'Confirm order'} · {formatCurrency(total)}
         </Button>
       </View>
     </Screen>

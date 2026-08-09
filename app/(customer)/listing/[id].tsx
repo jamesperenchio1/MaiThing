@@ -56,6 +56,7 @@ import {
 } from '@/src/hooks/useFavorites';
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useNetworkState } from '@/src/hooks/useNetworkState';
 import { useAuthStore } from '@/src/stores/auth';
 import {
   formatCurrency,
@@ -154,6 +155,7 @@ export default function ListingDetailScreen() {
   const colors = useThemeColor();
   const addItem = useCartStore((s) => s.addItem);
   const { width: screenWidth } = Dimensions.get('window');
+  const { isOffline } = useNetworkState();
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const savedListings = useSavedListings(userId);
   const { mutate: toggleSave } = useSaveListingToggle();
@@ -245,6 +247,13 @@ export default function ListingDetailScreen() {
   return (
     <Screen testID="listing-detail-screen" scrollable={false}>
       <Header testID="listing-detail-header" />
+        {isOffline && (
+          <View className="mx-4 mt-2 rounded-lg bg-amber-100 px-3 py-2 dark:bg-amber-900">
+            <Text variant="body-sm" className="text-amber-800 dark:text-amber-200">
+              You are offline. Purchase requires an internet connection.
+            </Text>
+          </View>
+        )}
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -640,6 +649,7 @@ export default function ListingDetailScreen() {
                 testID="add-to-cart-button"
                 variant="secondary"
                 className="flex-1"
+                disabled={isOffline}
                 onPress={handleAddToCart}
               >
                 {t('customer.listing.addToCart')}
@@ -648,9 +658,10 @@ export default function ListingDetailScreen() {
                 testID="buy-now-button"
                 className="flex-1"
                 loading={false}
+                disabled={isOffline}
                 onPress={handleBuyNow}
               >
-                {t('customer.listing.buyNow')}
+                {isOffline ? t('common.offline') : t('customer.listing.buyNow')}
               </Button>
             </>
           )}

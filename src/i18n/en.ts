@@ -101,6 +101,8 @@ export default {
     savedAddresses: 'Saved Addresses',
     noSavedAddresses: 'No saved addresses yet',
     addAddress: 'Add Address',
+    offline: 'Offline',
+    noConnection: 'No connection. Some features may be limited until you are back online.',
   },
   customer: {
     home: {

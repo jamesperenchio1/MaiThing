@@ -101,6 +101,8 @@ export default {
     savedAddresses: 'ที่อยู่ที่บันทึกไว้',
     noSavedAddresses: 'ยังไม่มีที่อยู่ที่บันทึกไว้',
     addAddress: 'เพิ่มที่อยู่',
+    offline: 'ออฟไลน์',
+    noConnection: 'ไม่มีการเชื่อมต่อ บางฟีเจอร์อาจใช้งานไม่ได้จนกว่าจะกลับออนไลน์',
   },
   customer: {
     home: {

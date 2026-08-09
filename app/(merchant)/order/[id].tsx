@@ -16,6 +16,7 @@ import {
   Calendar,
   QrCode,
   MessageSquare,
+  AlertTriangle,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -34,6 +35,7 @@ import {
   useRefundOrder,
 } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useNetworkState } from '@/src/hooks/useNetworkState';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
@@ -60,6 +62,7 @@ function StatusStep({
   isLast: boolean;
 }) {
   const colors = useThemeColor();
+  const { isOffline } = useNetworkState();
   const circleColor = completed || active ? 'bg-primary' : 'bg-muted/20';
   const iconColor = completed || active ? '#fff' : colors.muted;
 
@@ -106,6 +109,7 @@ export default function MerchantOrderDetailScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const colors = useThemeColor();
+  const { isOffline } = useNetworkState();
   const { data: order, isLoading } = useOrder(id);
   const updateStatus = useUpdateOrderStatus();
   const cancelOrder = useCancelOrder();
@@ -261,6 +265,14 @@ export default function MerchantOrderDetailScreen() {
   return (
     <Screen scrollable>
       <Header title={t('merchant.orders.orderDetail')} />
+      {isOffline && (
+        <View className="mx-6 mt-4 flex-row items-center rounded-2xl bg-amber-500/10 px-4 py-3">
+          <AlertTriangle size={18} color={colors.warning} />
+          <Text variant="body-sm" className="ml-2 flex-1 text-amber-700 dark:text-amber-300">
+            {t('common.noConnection')}
+          </Text>
+        </View>
+      )}
       <View className="px-6 py-4">
         <Card variant="elevated" className="mb-4 flex-row items-center p-4">
           <Avatar

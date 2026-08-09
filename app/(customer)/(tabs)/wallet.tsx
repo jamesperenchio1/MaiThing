@@ -17,6 +17,7 @@ import {
   ChevronRight,
   X,
   Sparkles,
+  AlertTriangle,
   TrendingUp,
 } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
@@ -31,6 +32,7 @@ import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { FlashList } from '@shopify/flash-list';
 import { useWallet, useWalletTransactions, useWalletRewards } from '@/src/hooks/useWallet';
+import { useNetworkState } from'@/src/hooks/useNetworkState';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
@@ -95,7 +97,7 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
 
 const TOP_UP_AMOUNTS = [50, 100, 200, 500, 1000];
 
-function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+function TopUpModal({ visible, onClose, isOffline }: { visible: boolean; onClose: () => void; isOffline: boolean }) {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
@@ -199,9 +201,17 @@ function TopUpModal({ visible, onClose }: { visible: boolean; onClose: () => voi
                 />
               )}
               {!isCustom && <View className="mb-6" />}
+              {isOffline && (
+                <View className="mb-4 flex-row items-center rounded-2xl bg-amber-500/10 px-4 py-3">
+                  <AlertTriangle size={18} color={colors.warning} />
+                  <Text variant="body-sm" className="ml-2 flex-1 text-amber-700 dark:text-amber-300">
+                    {t('common.noConnection')}
+                  </Text>
+                </View>
+              )}
               <Button
                 fullWidth
-                disabled={!effectiveAmount || loading}
+                disabled={!effectiveAmount || loading || isOffline}
                 loading={loading}
                 onPress={handleTopUp}
               >
@@ -274,6 +284,7 @@ export default function WalletScreen() {
     refetch: refetchTransactions,
   } = useWalletTransactions(user?.id ?? '');
   const { data: rewards } = useWalletRewards(user?.id ?? '');
+  const { isOffline } = useNetworkState();
   const [topUpVisible, setTopUpVisible] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
@@ -409,7 +420,7 @@ export default function WalletScreen() {
 
   return (
     <Screen testID="wallet-screen" scrollable={false} className="bg-background">
-      <TopUpModal visible={topUpVisible} onClose={() => setTopUpVisible(false)} />
+      <TopUpModal visible={topUpVisible} onClose={() => setTopUpVisible(false)} isOffline={isOffline} />
       {isError ? (
         <View className="flex-1 pb-6">
           {listHeader}

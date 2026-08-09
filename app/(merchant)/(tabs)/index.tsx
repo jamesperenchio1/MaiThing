@@ -44,6 +44,7 @@ import { useListings } from '@/src/hooks/useListings';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useConversations } from '@/src/hooks/useMessages';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useNetworkState } from '@/src/hooks/useNetworkState';
 import { formatCurrency, formatPickupWindow, getInitials, formatRelativeTime } from '@/src/lib/utils';
 import type { Listing, Order } from '@/src/types';
 
@@ -189,6 +190,7 @@ export default function MerchantDashboardScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const { isOffline } = useNetworkState();
   const colors = useThemeColor();
 
   // Closure sheet state
@@ -393,6 +395,16 @@ export default function MerchantDashboardScreen() {
     >
       <Header title={t('merchant.dashboard.title')} />
       <View className="px-6 pt-4 pb-2">
+        {/* Offline warning banner */}
+        {isOffline && (
+          <View className="mb-4 flex-row items-center rounded-2xl bg-amber-500/10 px-4 py-3">
+            <AlertTriangle size={18} color={colors.warning} />
+            <Text variant="body-sm" className="ml-2 flex-1 text-amber-700 dark:text-amber-300">
+              {t('common.noConnection')}
+            </Text>
+          </View>
+        )}
+
         {/* Greeting banner */}
         <View className="mb-6 rounded-3xl bg-primary p-5 overflow-hidden">
           {/* Open/Closed status pill — top left */}
