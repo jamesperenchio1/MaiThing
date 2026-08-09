@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Home, Search, MapPin, ShoppingBag, Wallet, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWindowDimensions } from 'react-native';
@@ -7,22 +7,30 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { TutorialOverlay } from '@/src/components/tutorial/TutorialOverlay';
 import { useTutorialStore } from '@/src/stores/tutorial';
+import { usePersonalityStore } from '@/src/stores/personality';
 import { getScale } from '@/src/lib/responsive';
 
 export default function CustomerTabsLayout() {
+  const router = useRouter();
   const colors = useThemeColor();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const scale = getScale(width);
   const { hasSeenTutorial, isActive, startTutorial } = useTutorialStore();
+  const { onboardingCompleted } = usePersonalityStore();
 
   useEffect(() => {
+    if (!onboardingCompleted) {
+      router.replace('/personality-onboarding' as never);
+      return;
+    }
+
     if (!hasSeenTutorial && !isActive) {
       const timer = setTimeout(startTutorial, 600);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [onboardingCompleted, hasSeenTutorial, isActive, router, startTutorial]);
 
   const tabBarHeight = Math.round(72 * scale) + insets.bottom;
   const iconSize = Math.round(24 * scale);
