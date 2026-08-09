@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 import { supabase } from '@/src/lib/supabase';
 import { repositories } from '@/src/repositories';
@@ -71,6 +71,7 @@ export function useAuth() {
           );
         } catch (e) {
           // Fall back to mock user if Supabase auth fails (no network, etc.)
+          Alert.alert('Offline', 'You appear to be offline. Using offline mode.');
           const fallback = role === 'customer' ? TEST_CUSTOMER : TEST_MERCHANT_USER;
           setUser({ ...fallback, roles: ['customer', 'merchant'] as UserRole[] });
           setRole(role);

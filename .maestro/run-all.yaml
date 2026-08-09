@@ -6,7 +6,10 @@ appId: com.jamyangperenchio.maithing
 - runFlow: customer-listing-detail.yaml
 - runFlow: customer-buy-listing-flow.yaml
 - runFlow: customer-merchant-detail.yaml
+- runFlow: customer-personality-onboarding.yaml
 - runFlow: merchant-switch-flow.yaml
 - runFlow: merchant-analytics-flow.yaml
 - runFlow: merchant-settings-flow.yaml
 - runFlow: merchant-create-listing.yaml
+- runFlow: merchant-personality-setup.yaml
+- runFlow: offline-mode-flow.yaml

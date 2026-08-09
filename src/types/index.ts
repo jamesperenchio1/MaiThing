@@ -408,3 +408,60 @@ export interface BroadcastMessage {
   sentAt: string;
   recipientCount: number;
 }
+
+/* ─── Personality Profiles ──────────────────────────────────────────────── */
+
+export type PriceRange = 'budget' | 'mid' | 'premium' | 'any';
+export type DiscoveryStyle = 'explore' | 'favorites' | 'deals';
+export type EnvironmentalMotivation = 'high' | 'medium' | 'low';
+export type PickupTimePreference = 'morning' | 'lunch' | 'evening' | 'night' | 'any';
+export type NotificationStyle = 'all' | 'important' | 'minimal';
+
+export interface UserPersonality {
+  userId: string;
+  dietaryPreferences: string[];
+  priceRange: PriceRange;
+  preferredCategories: string[];
+  discoveryStyle: DiscoveryStyle;
+  environmentalMotivation: EnvironmentalMotivation;
+  pickupTimePreference: PickupTimePreference;
+  maxDistanceKm: number;
+  notificationStyle: NotificationStyle;
+  favoriteMerchants: string[];
+  orderPatterns: Record<string, unknown>;
+  onboardingCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BrandVoice = 'friendly' | 'professional' | 'playful' | 'luxury' | 'minimal';
+export type SustainabilityFocus = 'high' | 'medium' | 'low';
+export type CommunityEngagement = 'high' | 'medium' | 'low';
+export type CustomerCommunication = 'proactive' | 'responsive' | 'minimal';
+export type PickupPersonality = 'standard' | 'warm' | 'express' | 'zero_waste';
+export type PackagingStyle = 'standard' | 'eco' | 'premium' | 'minimal';
+
+export interface MerchantPersonality {
+  merchantId: string;
+  brandVoice: BrandVoice;
+  sustainabilityFocus: SustainabilityFocus;
+  communityEngagement: CommunityEngagement;
+  customerCommunication: CustomerCommunication;
+  story?: string;
+  values: string[];
+  autoWelcomeMessage?: string;
+  pickupPersonality: PickupPersonality;
+  packagingStyle: PackagingStyle;
+  socialLinks: Record<string, string>;
+  onboardingCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BroadcastMessage {
+  id: string;
+  merchantId: string;
+  content: string;
+  sentAt: string;
+  recipientCount: number;
+}

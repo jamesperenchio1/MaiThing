@@ -1,0 +1,66 @@
+appId: com.jamyangperenchio.maithing
+---
+# Customer personality onboarding flow
+- runFlow: customer-welcome-flow.yaml
+
+# Navigate to profile tab
+- tapOn:
+    id: "profile-tab"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 10000
+
+# Tap personality/edit preferences
+- scrollUntilVisible:
+    element:
+      id: "edit-personality-button"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "edit-personality-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "personality-screen"
+    timeout: 10000
+
+# Verify personality fields
+- assertVisible:
+    text: "Dietary Preferences"
+- assertVisible:
+    text: "Price Range"
+- assertVisible:
+    text: "Discovery Style"
+
+# Select dietary preference
+- tapOn:
+    id: "dietary-vegetarian"
+- tapOn:
+    id: "dietary-halal"
+
+# Select price range
+- tapOn:
+    id: "price-range-mid"
+
+# Select discovery style
+- tapOn:
+    id: "discovery-favorites"
+
+# Select pickup time preference
+- tapOn:
+    id: "pickup-evening"
+
+# Save personality
+- tapOn:
+    id: "save-personality-button"
+- waitForAnimationToEnd
+
+# Verify success toast or return to profile
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 10000

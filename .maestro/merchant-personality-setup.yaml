@@ -1,0 +1,60 @@
+appId: com.jamyangperenchio.maithing
+---
+# Merchant personality setup flow
+- runFlow: merchant-switch-flow.yaml
+
+# Navigate to settings tab
+- tapOn:
+    id: "settings-tab"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+
+# Tap personality/brand voice
+- scrollUntilVisible:
+    element:
+      id: "edit-brand-personality-button"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "edit-brand-personality-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-personality-screen"
+    timeout: 10000
+
+# Verify personality fields
+- assertVisible:
+    text: "Brand Voice"
+- assertVisible:
+    text: "Sustainability Focus"
+- assertVisible:
+    text: "Packaging Style"
+
+# Select brand voice
+- tapOn:
+    id: "brand-voice-friendly"
+
+# Select sustainability focus
+- tapOn:
+    id: "sustainability-high"
+
+# Select packaging style
+- tapOn:
+    id: "packaging-eco"
+
+# Save personality
+- tapOn:
+    id: "save-merchant-personality-button"
+- waitForAnimationToEnd
+
+# Verify return to settings
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000

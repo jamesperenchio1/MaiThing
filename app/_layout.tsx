@@ -4,10 +4,10 @@ import { Stack, useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import {
   useFonts,
@@ -23,7 +23,7 @@ import {
   NotoSansThai_700Bold,
 } from '@expo-google-fonts/noto-sans-thai';
 
-import { queryClient } from '@/src/services/queryClient';
+import { queryClient, persistOptions } from '@/src/services/queryClient';
 import { initializeI18n } from '@/src/i18n';
 import { useThemeStore } from '@/src/stores/theme';
 import { useAuthStore } from '@/src/stores/auth';
@@ -35,6 +35,7 @@ import {
 } from '@/src/services/notifications';
 import { ErrorBoundary } from '@/src/components/layout/ErrorBoundary';
 import { registerPushToken } from '@/src/services/pushToken';
+import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
@@ -85,6 +86,26 @@ export default function RootLayout() {
     }
   }, [setUser]);
 
+  const onRestoreSuccess = useCallback(() => {
+    const user = useAuthStore.getState().user;
+    if (user) {
+      Promise.allSettled([
+        queryClient.prefetchQuery({
+          queryKey: ['wallet', user.id],
+          queryFn: () => repositories.wallet.getWallet(user.id),
+        }),
+        queryClient.prefetchQuery({
+          queryKey: ['orders', user.id, 'customer'],
+          queryFn: () => repositories.orders.getOrders(user.id, 'customer'),
+        }),
+        queryClient.prefetchQuery({
+          queryKey: ['customer-profile', user.id],
+          queryFn: () => repositories.users.getCustomerProfile(user.id),
+        }),
+      ]);
+    }
+  }, []);
+
   useEffect(() => {
     useThemeStore.getState().syncSystem();
     setNotificationHandler();
@@ -118,8 +139,13 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={persistOptions}
+        onSuccess={onRestoreSuccess}
+      >
         <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
+          <OfflineBanner />
           <ErrorBoundary>
             <Stack
               screenOptions={{
@@ -135,7 +161,7 @@ export default function RootLayout() {
           </ErrorBoundary>
         </View>
         <StatusBar style={isDark ? 'light' : 'dark'} />
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </SafeAreaProvider>
   );
 }

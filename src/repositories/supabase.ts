@@ -62,6 +62,8 @@ import type {
   Wallet,
   WalletReward,
   WalletTransaction,
+  UserPersonality,
+  MerchantPersonality,
 } from '@/src/types';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -670,6 +672,56 @@ const usersRepo: UserRepository = {
       .eq('user_id', userId)
       .eq('listing_id', listingId);
   },
+
+  /* ─── personality ─────────────────────────────────────────────────────── */
+
+  async getUserPersonality(userId): Promise<UserPersonality | null> {
+    const { data, error } = await supabase
+      .from('user_personality')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    if (error || !data) return null;
+    return {
+      userId: data.user_id as string,
+      dietaryPreferences: Array.isArray(data.dietary_preferences) ? (data.dietary_preferences as string[]) : [],
+      priceRange: (data.price_range as UserPersonality['priceRange']) ?? 'any',
+      preferredCategories: Array.isArray(data.preferred_categories) ? (data.preferred_categories as string[]) : [],
+      discoveryStyle: (data.discovery_style as UserPersonality['discoveryStyle']) ?? 'explore',
+      environmentalMotivation: (data.environmental_motivation as UserPersonality['environmentalMotivation']) ?? 'medium',
+      pickupTimePreference: (data.pickup_time_preference as UserPersonality['pickupTimePreference']) ?? 'any',
+      maxDistanceKm: typeof data.max_distance_km === 'number' ? data.max_distance_km : 10,
+      notificationStyle: (data.notification_style as UserPersonality['notificationStyle']) ?? 'all',
+      favoriteMerchants: Array.isArray(data.favorite_merchants) ? (data.favorite_merchants as string[]) : [],
+      orderPatterns: (data.order_patterns as Record<string, unknown>) ?? {},
+      onboardingCompleted: data.onboarding_completed === true,
+      createdAt: (data.created_at as string) ?? new Date().toISOString(),
+      updatedAt: (data.updated_at as string) ?? new Date().toISOString(),
+    };
+  },
+
+  async upsertUserPersonality(userId, data): Promise<UserPersonality> {
+    const payload: Record<string, unknown> = {};
+    if (data.dietaryPreferences !== undefined) payload.dietary_preferences = data.dietaryPreferences;
+    if (data.priceRange !== undefined) payload.price_range = data.priceRange;
+    if (data.preferredCategories !== undefined) payload.preferred_categories = data.preferredCategories;
+    if (data.discoveryStyle !== undefined) payload.discovery_style = data.discoveryStyle;
+    if (data.environmentalMotivation !== undefined) payload.environmental_motivation = data.environmentalMotivation;
+    if (data.pickupTimePreference !== undefined) payload.pickup_time_preference = data.pickupTimePreference;
+    if (data.maxDistanceKm !== undefined) payload.max_distance_km = data.maxDistanceKm;
+    if (data.notificationStyle !== undefined) payload.notification_style = data.notificationStyle;
+    if (data.favoriteMerchants !== undefined) payload.favorite_merchants = data.favoriteMerchants;
+    if (data.orderPatterns !== undefined) payload.order_patterns = data.orderPatterns;
+    if (data.onboardingCompleted !== undefined) payload.onboarding_completed = data.onboardingCompleted;
+
+    const { data: row, error } = await supabase
+      .from('user_personality')
+      .upsert({ user_id: userId, ...payload })
+      .select()
+      .single();
+    if (error) throw error;
+    return usersRepo.getUserPersonality(userId).then((p) => p ?? (row as unknown as UserPersonality));
+  },
 };
 
 // ─── merchants ───────────────────────────────────────────────────────────────
@@ -1039,6 +1091,56 @@ const merchantsRepo: MerchantRepository = {
       .single();
     if (error) throw error;
     return mapLocation(data as Record<string, unknown>);
+  },
+
+  /* ─── personality ─────────────────────────────────────────────────────── */
+
+  async getMerchantPersonality(merchantId): Promise<MerchantPersonality | null> {
+    const { data, error } = await supabase
+      .from('merchant_personality')
+      .select('*')
+      .eq('merchant_id', merchantId)
+      .single();
+    if (error || !data) return null;
+    return {
+      merchantId: data.merchant_id as string,
+      brandVoice: (data.brand_voice as MerchantPersonality['brandVoice']) ?? 'friendly',
+      sustainabilityFocus: (data.sustainability_focus as MerchantPersonality['sustainabilityFocus']) ?? 'medium',
+      communityEngagement: (data.community_engagement as MerchantPersonality['communityEngagement']) ?? 'medium',
+      customerCommunication: (data.customer_communication as MerchantPersonality['customerCommunication']) ?? 'responsive',
+      story: (data.story as string) ?? undefined,
+      values: Array.isArray(data.values) ? (data.values as string[]) : [],
+      autoWelcomeMessage: (data.auto_welcome_message as string) ?? undefined,
+      pickupPersonality: (data.pickup_personality as MerchantPersonality['pickupPersonality']) ?? 'standard',
+      packagingStyle: (data.packaging_style as MerchantPersonality['packagingStyle']) ?? 'standard',
+      socialLinks: (data.social_links as Record<string, string>) ?? {},
+      onboardingCompleted: data.onboarding_completed === true,
+      createdAt: (data.created_at as string) ?? new Date().toISOString(),
+      updatedAt: (data.updated_at as string) ?? new Date().toISOString(),
+    };
+  },
+
+  async upsertMerchantPersonality(merchantId, data): Promise<MerchantPersonality> {
+    const payload: Record<string, unknown> = {};
+    if (data.brandVoice !== undefined) payload.brand_voice = data.brandVoice;
+    if (data.sustainabilityFocus !== undefined) payload.sustainability_focus = data.sustainabilityFocus;
+    if (data.communityEngagement !== undefined) payload.community_engagement = data.communityEngagement;
+    if (data.customerCommunication !== undefined) payload.customer_communication = data.customerCommunication;
+    if (data.story !== undefined) payload.story = data.story;
+    if (data.values !== undefined) payload.values = data.values;
+    if (data.autoWelcomeMessage !== undefined) payload.auto_welcome_message = data.autoWelcomeMessage;
+    if (data.pickupPersonality !== undefined) payload.pickup_personality = data.pickupPersonality;
+    if (data.packagingStyle !== undefined) payload.packaging_style = data.packagingStyle;
+    if (data.socialLinks !== undefined) payload.social_links = data.socialLinks;
+    if (data.onboardingCompleted !== undefined) payload.onboarding_completed = data.onboardingCompleted;
+
+    const { data: row, error } = await supabase
+      .from('merchant_personality')
+      .upsert({ merchant_id: merchantId, ...payload })
+      .select()
+      .single();
+    if (error) throw error;
+    return merchantsRepo.getMerchantPersonality(merchantId).then((p) => p ?? (row as unknown as MerchantPersonality));
   },
 };
 

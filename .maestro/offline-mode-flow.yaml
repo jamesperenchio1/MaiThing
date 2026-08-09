@@ -1,0 +1,66 @@
+appId: com.jamyangperenchio.maithing
+---
+# Offline mode behavior validation
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Continue as test customer (works offline with mock fallback)
+- scrollUntilVisible:
+    element:
+      id: "test-customer-button"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "test-customer-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000
+
+# Verify offline banner is NOT shown when online
+- assertNotVisible:
+    id: "offline-banner"
+
+# Navigate to a listing and verify it loads from cache
+- tapOn:
+    id: "discover-tab"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "discover-screen"
+    timeout: 10000
+
+# Tap first listing card
+- tapOn:
+    id: "listing-card-0"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "listing-detail-screen"
+    timeout: 10000
+
+# Verify listing content loads
+- assertVisible:
+    text: "Pick up"
+- assertVisible:
+    text: "Surplus"
+
+# Navigate to wallet (should work offline with cached data)
+- tapOn:
+    id: "wallet-tab"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "wallet-screen"
+    timeout: 10000
+
+# Verify wallet balance shows cached value
+- assertVisible:
+    text: "THB"

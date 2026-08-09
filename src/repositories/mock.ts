@@ -67,10 +67,14 @@ import type {
   Wallet,
   WalletReward,
   WalletTransaction,
+  UserPersonality,
+  MerchantPersonality,
 } from '@/src/types';
 
 // In-memory store for broadcast messages
 const BROADCAST_MESSAGES: BroadcastMessage[] = [];
+const USER_PERSONALITIES = new Map<string, UserPersonality>();
+const MERCHANT_PERSONALITIES = new Map<string, MerchantPersonality>();
 
 // In-memory store for coupon redemptions (mirrors Supabase coupon_uses table in mock mode)
 interface CouponUse {
@@ -270,6 +274,36 @@ class MockUserRepository implements UserRepository {
       (id) => id !== listingId
     );
     syncRestockAlert(userId, listingId, false).catch(() => {});
+  }
+
+
+  async getUserPersonality(userId: string): Promise<UserPersonality | null> {
+    return USER_PERSONALITIES.get(userId) ?? null;
+  }
+
+  async upsertUserPersonality(
+    userId: string,
+    data: Partial<Omit<UserPersonality, 'userId' | 'createdAt' | 'updatedAt'>>
+  ): Promise<UserPersonality> {
+    const existing = USER_PERSONALITIES.get(userId);
+    const updated: UserPersonality = {
+      userId,
+      dietaryPreferences: data.dietaryPreferences ?? existing?.dietaryPreferences ?? [],
+      priceRange: data.priceRange ?? existing?.priceRange ?? 'any',
+      preferredCategories: data.preferredCategories ?? existing?.preferredCategories ?? [],
+      discoveryStyle: data.discoveryStyle ?? existing?.discoveryStyle ?? 'explore',
+      environmentalMotivation: data.environmentalMotivation ?? existing?.environmentalMotivation ?? 'medium',
+      pickupTimePreference: data.pickupTimePreference ?? existing?.pickupTimePreference ?? 'any',
+      maxDistanceKm: data.maxDistanceKm ?? existing?.maxDistanceKm ?? 10,
+      notificationStyle: data.notificationStyle ?? existing?.notificationStyle ?? 'all',
+      favoriteMerchants: data.favoriteMerchants ?? existing?.favoriteMerchants ?? [],
+      orderPatterns: data.orderPatterns ?? existing?.orderPatterns ?? {},
+      onboardingCompleted: data.onboardingCompleted ?? existing?.onboardingCompleted ?? false,
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    USER_PERSONALITIES.set(userId, updated);
+    return updated;
   }
 }
 
@@ -493,6 +527,35 @@ class MockMerchantRepository implements MerchantRepository {
 
   async getRecentBroadcasts(merchantId: string): Promise<BroadcastMessage[]> {
     return BROADCAST_MESSAGES.filter((b) => b.merchantId === merchantId).slice(0, 5);
+  }
+
+  async getMerchantPersonality(merchantId: string): Promise<MerchantPersonality | null> {
+    return MERCHANT_PERSONALITIES.get(merchantId) ?? null;
+  }
+
+  async upsertMerchantPersonality(
+    merchantId: string,
+    data: Partial<Omit<MerchantPersonality, 'merchantId' | 'createdAt' | 'updatedAt'>>
+  ): Promise<MerchantPersonality> {
+    const existing = MERCHANT_PERSONALITIES.get(merchantId);
+    const updated: MerchantPersonality = {
+      merchantId,
+      brandVoice: data.brandVoice ?? existing?.brandVoice ?? 'friendly',
+      sustainabilityFocus: data.sustainabilityFocus ?? existing?.sustainabilityFocus ?? 'medium',
+      communityEngagement: data.communityEngagement ?? existing?.communityEngagement ?? 'medium',
+      customerCommunication: data.customerCommunication ?? existing?.customerCommunication ?? 'responsive',
+      story: data.story ?? existing?.story,
+      values: data.values ?? existing?.values ?? [],
+      autoWelcomeMessage: data.autoWelcomeMessage ?? existing?.autoWelcomeMessage,
+      pickupPersonality: data.pickupPersonality ?? existing?.pickupPersonality ?? 'standard',
+      packagingStyle: data.packagingStyle ?? existing?.packagingStyle ?? 'standard',
+      socialLinks: data.socialLinks ?? existing?.socialLinks ?? {},
+      onboardingCompleted: data.onboardingCompleted ?? existing?.onboardingCompleted ?? false,
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    MERCHANT_PERSONALITIES.set(merchantId, updated);
+    return updated;
   }
 }
 

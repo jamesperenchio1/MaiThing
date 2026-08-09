@@ -13,6 +13,7 @@ import type {
   MerchantMessage,
   MerchantNotificationPreferences,
   MerchantOnboarding,
+  MerchantPersonality,
   MerchantWallet,
   Notification,
   NotificationPreferences,
@@ -25,6 +26,7 @@ import type {
   Wallet,
   WalletReward,
   WalletTransaction,
+  UserPersonality,
   CustomerImpact,
 } from '@/src/types';
 
@@ -61,6 +63,11 @@ export interface UserRepository {
   removeMerchantFollowNotification(userId: string, merchantId: string): Promise<void>;
   addRestockAlert(userId: string, listingId: string): Promise<void>;
   removeRestockAlert(userId: string, listingId: string): Promise<void>;
+  getUserPersonality(userId: string): Promise<UserPersonality | null>;
+  upsertUserPersonality(
+    userId: string,
+    data: Partial<Omit<UserPersonality, 'userId' | 'createdAt' | 'updatedAt'>>
+  ): Promise<UserPersonality>;
 }
 
 export interface MerchantRepository {
@@ -101,6 +108,11 @@ export interface MerchantRepository {
   getRecentBroadcasts(merchantId: string): Promise<BroadcastMessage[]>;
   verifyMerchant(merchantId: string, override?: boolean): Promise<Merchant>;
   uploadFoodSafetyCert(merchantId: string, certUrl: string): Promise<Merchant>;
+  getMerchantPersonality(merchantId: string): Promise<MerchantPersonality | null>;
+  upsertMerchantPersonality(
+    merchantId: string,
+    data: Partial<Omit<MerchantPersonality, 'merchantId' | 'createdAt' | 'updatedAt'>>
+  ): Promise<MerchantPersonality>;
 }
 
 export interface ListingRepository {
