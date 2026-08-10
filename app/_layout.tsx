@@ -40,6 +40,14 @@ import { registerPushToken } from '@/src/services/pushToken';
 import { useRealtimeOrders } from '@/src/hooks/useRealtimeOrders';
 import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
 import { useOfflineQueue } from '@/src/hooks/useOfflineQueue';
+import { offlineQueue } from '@/src/lib/offlineQueue';
+import {
+  CURRENT_CACHE_VERSION,
+  getStoredCacheVersion,
+  setStoredCacheVersion,
+} from '@/src/lib/cacheVersion';
+import { useNotificationPermission } from '@/src/hooks/useNotificationPermission';
+import { useBackgroundNotifications } from '@/src/hooks/useBackgroundNotifications';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
@@ -68,6 +76,9 @@ export default function RootLayout() {
 
   useRealtimeOrders(user?.id, selectedRole ?? undefined);
   useOfflineQueue();
+  useBackgroundNotifications();
+
+  const { request: requestNotificationPermission, hasAsked } = useNotificationPermission();
 
   const init = useCallback(async () => {
     try {
@@ -118,13 +129,29 @@ export default function RootLayout() {
   useEffect(() => {
     useThemeStore.getState().syncSystem();
     setNotificationHandler();
-    requestNotificationPermissions()
-      .then(() => {
-        const user = useAuthStore.getState().user;
-        if (user) registerPushToken(user.id).catch(() => {});
-      })
-      .catch(() => {});
-    init();
+
+    // Request notification permissions on first app open
+    if (!hasAsked) {
+      requestNotificationPermission().catch(() => {});
+    }
+
+    // Cache schema version check — clear stale cache after schema changes
+    const storedVersion = getStoredCacheVersion();
+    if (storedVersion !== CURRENT_CACHE_VERSION) {
+      queryClient.clear();
+      offlineQueue.clear();
+      setStoredCacheVersion(CURRENT_CACHE_VERSION);
+    }
+
+    init().then(() => {
+      // After auth is hydrated, register push token if we have a user
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        requestNotificationPermissions()
+          .then(() => registerPushToken(currentUser.id))
+          .catch(() => {});
+      }
+    });
 
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const url = response.notification.request.content.data?.url as string | undefined;
@@ -134,7 +161,7 @@ export default function RootLayout() {
     });
 
     return () => subscription.remove();
-  }, [init, router]);
+  }, [init, router, hasAsked, requestNotificationPermission]);
 
   useEffect(() => {
     if (fontsLoaded && ready) {

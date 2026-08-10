@@ -26,6 +26,10 @@ import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { usePersonalityStore } from '@/src/stores/personality';
 import { CartButton } from '@/src/components/composite/CartButton';
+import { useAnalytics } from '@/src/hooks/useAnalytics';
+import { useFocusEffect } from 'expo-router';
+import { usePersonalityStore } from '@/src/stores/personality';
+import { CartButton } from '@/src/components/composite/CartButton';
 import { ImpactWidget } from '@/src/components/composite/ImpactWidget';
 import { MealTimeShortcuts } from '@/src/components/composite/MealTimeShortcuts';
 import { CollectionSection } from '@/src/components/composite/CollectionSection';
@@ -128,6 +132,11 @@ export default function CustomerHomeScreen() {
   const [selectedMealTime, setSelectedMealTime] = useState<MealTimeId | null>(null);
 
   const personality = usePersonalityStore();
+
+  const { screenView } = useAnalytics();
+  useFocusEffect(() => {
+    screenView('customer_home');
+  });
 
   const {
     data: listings,

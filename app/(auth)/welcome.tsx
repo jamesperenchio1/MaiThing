@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import {
   Leaf,
   Utensils,

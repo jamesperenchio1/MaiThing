@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, ActivityIndicator, TextInput } from 'react-native';
+import { View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import { Minus, Plus, Trash2, ShoppingCart, Clock, MapPin, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 

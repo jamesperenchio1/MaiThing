@@ -1,4 +1,5 @@
-import { View, Image, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import { Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/src/components/ui/Card';

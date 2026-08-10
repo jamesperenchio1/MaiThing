@@ -1,4 +1,5 @@
-import { View, Image } from 'react-native';
+import { View } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import { cn, getInitials } from '@/src/lib/utils';
 import { Text } from './Text';
 

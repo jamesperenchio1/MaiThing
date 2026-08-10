@@ -4,6 +4,13 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Enable PostGIS for geospatial queries
+CREATE EXTENSION IF NOT EXISTS postgis;
+-- Covers all tables, indexes, RLS policies, and RPC functions
+
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- ============================================
 -- PROFILES (extends Supabase Auth users)
 -- ============================================
@@ -70,6 +77,13 @@ CREATE TABLE IF NOT EXISTS locations (
   food_safety_cert_url TEXT,
   hygiene_rating NUMERIC(2,1),
   coordinates JSONB,
+  geo_point GEOGRAPHY(POINT, 4326),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_locations_active ON locations(is_active);
+CREATE INDEX idx_locations_name ON locations USING gin(to_tsvector('english', name));
+CREATE INDEX idx_locations_geo_point ON locations USING GIST (geo_point);
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -732,3 +746,144 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- ============================================
+-- POSTGIS NEARBY LOCATIONS RPC
+-- ============================================
+
+CREATE OR REPLACE FUNCTION nearby_locations(lat float, lng float, radius_meters int)
+RETURNS TABLE (
+  id UUID,
+  merchant_org_id UUID,
+  name TEXT,
+  description TEXT,
+  address_line1 TEXT,
+  subdistrict TEXT,
+  district TEXT,
+  province TEXT,
+  postal_code TEXT,
+  phone TEXT,
+  cuisine_types TEXT[],
+  cover_photo_url TEXT,
+  is_active BOOLEAN,
+  is_verified BOOLEAN,
+  verification_status TEXT,
+  closed_until TIMESTAMPTZ,
+  pickup_instructions TEXT,
+  follower_count INTEGER,
+  completed_orders INTEGER,
+  refund_disputes INTEGER,
+  avg_rating NUMERIC,
+  total_reviews INTEGER,
+  food_safety_cert_url TEXT,
+  hygiene_rating NUMERIC,
+  coordinates JSONB,
+  geo_point GEOGRAPHY,
+  created_at TIMESTAMPTZ,
+  distance_meters float
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    l.id,
+    l.merchant_org_id,
+    l.name,
+    l.description,
+    l.address_line1,
+    l.subdistrict,
+    l.district,
+    l.province,
+    l.postal_code,
+    l.phone,
+    l.cuisine_types,
+    l.cover_photo_url,
+    l.is_active,
+    l.is_verified,
+    l.verification_status,
+    l.closed_until,
+    l.pickup_instructions,
+    l.follower_count,
+    l.completed_orders,
+    l.refund_disputes,
+    l.avg_rating,
+    l.total_reviews,
+    l.food_safety_cert_url,
+    l.hygiene_rating,
+    l.coordinates,
+    l.geo_point,
+    l.created_at,
+    ST_Distance(l.geo_point, ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography)::float AS distance_meters
+  FROM locations l
+  WHERE l.is_active = true
+    AND l.geo_point IS NOT NULL
+    AND ST_DWithin(
+      l.geo_point,
+      ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography,
+      radius_meters
+    )
+  ORDER BY distance_meters ASC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================
+-- updated_at AUTOMATIC TRIGGER FUNCTION
+-- ============================================
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach updated_at triggers to all tables with updated_at column
+
+-- merchant_wallets needs updated_at added first
+ALTER TABLE merchant_wallets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DROP TRIGGER IF EXISTS profiles_updated_at ON profiles;
+CREATE TRIGGER profiles_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS listings_updated_at ON listings;
+CREATE TRIGGER listings_updated_at
+  BEFORE UPDATE ON listings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS orders_updated_at ON orders;
+CREATE TRIGGER orders_updated_at
+  BEFORE UPDATE ON orders
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS wallet_rewards_updated_at ON wallet_rewards;
+CREATE TRIGGER wallet_rewards_updated_at
+  BEFORE UPDATE ON wallet_rewards
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS user_impact_updated_at ON user_impact;
+CREATE TRIGGER user_impact_updated_at
+  BEFORE UPDATE ON user_impact
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS merchant_wallets_updated_at ON merchant_wallets;
+CREATE TRIGGER merchant_wallets_updated_at
+  BEFORE UPDATE ON merchant_wallets
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS merchant_onboarding_updated_at ON merchant_onboarding;
+CREATE TRIGGER merchant_onboarding_updated_at
+  BEFORE UPDATE ON merchant_onboarding
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS merchant_personality_updated_at ON merchant_personality;
+CREATE TRIGGER merchant_personality_updated_at
+  BEFORE UPDATE ON merchant_personality
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS user_personality_updated_at ON user_personality;
+CREATE TRIGGER user_personality_updated_at
+  BEFORE UPDATE ON user_personality
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

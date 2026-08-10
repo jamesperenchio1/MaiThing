@@ -1,81 +1,130 @@
-/**
- * Lightweight analytics event tracker for Maithing.
- * In production, swap the console.log with a real analytics provider
- * (e.g. Mixpanel, Amplitude, PostHog, or a Supabase Edge Function).
- *
- * All events are typed so adding new ones is self-documenting.
- */
-
+import { supabase } from '@/src/lib/supabase';
 import { featureFlags } from '@/src/lib/featureFlags';
 
-type EventName =
+export type AnalyticsEventName =
   | 'screen_view'
-  | 'listing_view'
-  | 'listing_purchase'
-  | 'order_status_change'
-  | 'merchant_follow'
-  | 'merchant_unfollow'
-  | 'search_query'
-  | 'coupon_applied'
-  | 'wallet_top_up'
-  | 'personality_updated'
+  | 'listing_tap'
+  | 'add_to_cart'
+  | 'order_placed'
+  | 'order_cancelled'
   | 'personality_onboarding_completed'
-  | 'notification_tapped'
-  | 'offline_mode_detected'
-  | 'online_mode_restored';
+  | 'offline_queue_replay_started'
+  | 'offline_queue_replay_completed';
 
 interface AnalyticsEvent {
-  name: EventName;
-  timestamp: string;
-  userId?: string;
-  merchantId?: string;
-  properties?: Record<string, unknown>;
+  id: string;
+  user_id: string | null;
+  event_name: AnalyticsEventName;
+  properties: Record<string, unknown>;
+  created_at: string;
 }
 
 const EVENT_QUEUE: AnalyticsEvent[] = [];
 const MAX_QUEUE_SIZE = 100;
+const IS_SUPABASE_MODE = process.env.EXPO_PUBLIC_REPOSITORY_MODE === 'supabase';
 
-export function trackEvent(
-  name: EventName,
-  payload?: { userId?: string; merchantId?: string; properties?: Record<string, unknown> }
-) {
+function generateId(): string {
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * Track an analytics event.
+ * In supabase mode, writes to the analytics_events table.
+ * In mock mode, queues in memory and logs to console.
+ */
+export async function trackEvent(
+  eventName: AnalyticsEventName,
+  properties?: Record<string, unknown>,
+  userId?: string
+): Promise<void> {
+  const effectiveUserId = userId ?? null;
+
   if (!featureFlags.enableAnalytics) {
-    // In dev/mock mode just log to console
-    console.log('[Analytics]', name, payload);
+    console.log('[Analytics]', eventName, { ...properties, userId: effectiveUserId });
     return;
   }
 
-  const event: AnalyticsEvent = {
-    name,
-    timestamp: new Date().toISOString(),
-    ...payload,
+  const payload: AnalyticsEvent = {
+    id: generateId(),
+    user_id: effectiveUserId,
+    event_name: eventName,
+    properties: properties ?? {},
+    created_at: new Date().toISOString(),
   };
 
-  EVENT_QUEUE.push(event);
-  if (EVENT_QUEUE.length > MAX_QUEUE_SIZE) {
-    EVENT_QUEUE.shift();
+  if (!IS_SUPABASE_MODE) {
+    EVENT_QUEUE.push(payload);
+    if (EVENT_QUEUE.length > MAX_QUEUE_SIZE) {
+      EVENT_QUEUE.shift();
+    }
+    console.log('[Analytics]', eventName, payload.properties);
+    return;
   }
 
-  // TODO: flush queue to backend in batches
-  flushEvents().catch(() => {});
-}
-
-async function flushEvents() {
-  if (EVENT_QUEUE.length === 0) return;
-  const batch = EVENT_QUEUE.splice(0, EVENT_QUEUE.length);
-
-  // Placeholder: replace with real analytics provider
   try {
-    await fetch('https://your-analytics-endpoint.com/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ events: batch }),
+    await supabase.from('analytics_events').insert({
+      user_id: payload.user_id,
+      event_name: payload.event_name,
+      properties: payload.properties,
     });
   } catch {
     // Silently drop analytics failures — don't block user flow
+    EVENT_QUEUE.push(payload);
   }
 }
 
-export function getQueuedEvents(): AnalyticsEvent[] {
+/**
+ * Flush queued analytics events to Supabase.
+ * Call this when the app comes online or on a timer.
+ */
+export async function flushAnalyticsEvents(userId?: string): Promise<void> {
+  if (EVENT_QUEUE.length === 0) return;
+  if (!IS_SUPABASE_MODE) return;
+
+  const batch = EVENT_QUEUE.splice(0, EVENT_QUEUE.length);
+  try {
+    await supabase.from('analytics_events').insert(
+      batch.map((e) => ({
+        user_id: userId ?? e.user_id,
+        event_name: e.event_name,
+        properties: e.properties,
+      }))
+    );
+  } catch {
+    // Restore failed events back to queue
+    EVENT_QUEUE.unshift(...batch);
+  }
+}
+
+export function getQueuedAnalyticsEvents(): AnalyticsEvent[] {
   return [...EVENT_QUEUE];
 }
+
+/**
+ * Convenience helpers for common analytics events.
+ */
+export const analytics = {
+  screenView: (screenName: string, userId?: string) =>
+    trackEvent('screen_view', { screen_name: screenName }, userId),
+
+  listingTap: (listingId: string, userId?: string) =>
+    trackEvent('listing_tap', { listing_id: listingId }, userId),
+
+  addToCart: (listingId: string, userId?: string) =>
+    trackEvent('add_to_cart', { listing_id: listingId }, userId),
+
+  orderPlaced: (orderId: string, amount: number, userId?: string) =>
+    trackEvent('order_placed', { order_id: orderId, amount }, userId),
+
+  orderCancelled: (orderId: string, userId?: string) =>
+    trackEvent('order_cancelled', { order_id: orderId }, userId),
+
+  personalityOnboardingCompleted: (userId?: string) =>
+    trackEvent('personality_onboarding_completed', {}, userId),
+
+  offlineQueueReplayStarted: (userId?: string) =>
+    trackEvent('offline_queue_replay_started', {}, userId),
+
+  offlineQueueReplayCompleted: (userId?: string) =>
+    trackEvent('offline_queue_replay_completed', {}, userId),
+};

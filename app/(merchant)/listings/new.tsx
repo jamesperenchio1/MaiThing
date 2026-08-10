@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, TextInput, Alert, Modal, Platform, Switch } from 'react-native';
+import { View, ScrollView, TextInput, Alert, Modal, Platform, Switch } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {

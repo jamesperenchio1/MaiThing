@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Alert, ScrollView, Switch } from 'react-native';
+import { View, Alert, Switch } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { UserPlus, Mail, Phone, Shield, Trash2, Plus, Clock } from 'lucide-react-native';
 
@@ -86,17 +87,19 @@ function StaffItem({
   member,
   onDelete,
   onToggleActive,
+  isLast,
 }: {
   member: StaffMember;
   onDelete: (member: StaffMember) => void;
   onToggleActive: (member: StaffMember) => void;
+  isLast?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const locale = i18n.language === 'th' ? 'th' : 'en';
 
   return (
-    <View className="border-b border-border py-4 last:border-b-0">
+    <View className={`py-4 ${!isLast ? 'border-b border-border' : ''}`}>
       <View className="flex-row items-start">
         <Avatar uri={member.avatarUrl} name={member.name} size="md" />
         <View className="ml-3 flex-1">
@@ -283,146 +286,163 @@ export default function StaffScreen() {
   }
 
   return (
-    <Screen testID="merchant-staff-screen" scrollable className="bg-background">
+    <Screen testID="merchant-staff-screen" scrollable={false} className="bg-background">
       <Header title={t('merchant.staff.title')} />
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }}>
-        <View className="px-6 py-4">
-          <Button
-            testID="add-staff-button"
-            fullWidth
-            variant="secondary"
-            onPress={() => setModalVisible(true)}
-            leftIcon={<Plus size={18} color={colors.foreground} />}
-            className="mb-6"
-          >
-            {t('merchant.staff.addStaff')}
-          </Button>
+      <FlashList
+        className="flex-1"
+        data={staff ?? []}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={140}
+        ListHeaderComponent={
+          <View className="px-6 py-4">
+            <Button
+              testID="add-staff-button"
+              fullWidth
+              variant="secondary"
+              onPress={() => setModalVisible(true)}
+              leftIcon={<Plus size={18} color={colors.foreground} />}
+              className="mb-6"
+            >
+              {t('merchant.staff.addStaff')}
+            </Button>
 
-          <Card variant="outlined">
-            {isLoading ? (
-              <Text variant="body-sm" className="py-6 text-center text-muted">
-                {t('common.loading')}
-              </Text>
-            ) : staff && staff.length > 0 ? (
-              staff.map((member) => (
-                <StaffItem
-                  key={member.id}
-                  member={member}
-                  onDelete={handleDelete}
-                  onToggleActive={handleToggleActive}
-                />
-              ))
-            ) : (
-              <View className="items-center py-8">
-                <UserPlus size={40} color={colors.muted} />
-                <Text variant="body-sm" className="mt-3 text-center text-muted">
-                  {t('merchant.staff.noStaff')}
+            {isLoading && (
+              <Card variant="outlined">
+                <Text variant="body-sm" className="py-6 text-center text-muted">
+                  {t('common.loading')}
                 </Text>
-              </View>
+              </Card>
             )}
-          </Card>
-        </View>
-      </ScrollView>
+          </View>
+        }
+        renderItem={({ item, index }) => (
+          <View className="px-6">
+            <Card variant="outlined">
+              <StaffItem
+                member={item}
+                onDelete={handleDelete}
+                onToggleActive={handleToggleActive}
+                isLast={index === (staff?.length ?? 0) - 1}
+              />
+            </Card>
+          </View>
+        )}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View className="px-6">
+              <Card variant="outlined">
+                <View className="items-center py-8">
+                  <UserPlus size={40} color={colors.muted} />
+                  <Text variant="body-sm" className="mt-3 text-center text-muted">
+                    {t('merchant.staff.noStaff')}
+                  </Text>
+                </View>
+              </Card>
+            </View>
+          ) : null
+        }
+        contentContainerStyle={{ paddingBottom: 24 }}
+      />
 
       <BottomSheet
         isOpen={modalVisible}
         onClose={() => setModalVisible(false)}
         snapPoints={['55%']}
       >
-            <Text variant="h3" className="mb-6">
-              {t('merchant.staff.addStaff')}
-            </Text>
+        <Text variant="h3" className="mb-6">
+          {t('merchant.staff.addStaff')}
+        </Text>
 
-            <Input
-              testID="staff-name-input"
-              label={t('auth.name')}
-              placeholder="Somchai Jaidee"
-              value={name}
-              onChangeText={setName}
-            />
-            <Input
-              testID="staff-email-input"
-              label={t('merchant.staff.email')}
-              placeholder="staff@example.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <Input
-              testID="staff-phone-input"
-              label={t('merchant.staff.phone')}
-              placeholder="081-234-5678"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
+        <Input
+          testID="staff-name-input"
+          label={t('auth.name')}
+          placeholder="Somchai Jaidee"
+          value={name}
+          onChangeText={setName}
+        />
+        <Input
+          testID="staff-email-input"
+          label={t('merchant.staff.email')}
+          placeholder="staff@example.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <Input
+          testID="staff-phone-input"
+          label={t('merchant.staff.phone')}
+          placeholder="081-234-5678"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+        />
 
-            <Text variant="label" className="mb-2 ml-1">
-              {t('merchant.staff.role')}
-            </Text>
-            <View className="mb-4 flex-row" style={{ gap: 8 }}>
-              {ROLES.map((r) => (
-                <PressableScale
-                  key={r}
-                  onPress={() => {
-                    setRole(r);
-                    setPermissions(DEFAULT_PERMISSIONS_BY_ROLE[r]);
-                  }}
-                  scale={0.97}
-                  className={`flex-1 items-center rounded-2xl border px-3 py-3 ${
-                    role === r ? 'border-primary bg-primary/10' : 'border-border bg-card'
-                  }`}
-                >
-                  <Shield size={18} color={role === r ? colors.primary : colors.muted} />
-                  <Text
-                    variant="caption"
-                    className={`mt-1 font-semibold ${role === r ? 'text-primary' : 'text-muted'}`}
-                  >
-                    {t(`merchant.staff.${r}`)}
-                  </Text>
-                </PressableScale>
-              ))}
-            </View>
-
-            <Text variant="label" className="mb-2 ml-1">
-              {t('merchant.staff.permissions')}
-            </Text>
-            <Text variant="caption" className="mb-2 ml-1 text-muted">
-              {t('merchant.staff.permissionsHint')}
-            </Text>
-            <View className="mb-6 flex-row flex-wrap">
-              {ALL_PERMISSIONS.map((permission) => (
-                <PermissionChip
-                  key={permission}
-                  id={permission}
-                  selected={permissions.includes(permission)}
-                  onToggle={togglePermission}
-                />
-              ))}
-            </View>
-
-            <Button
-              testID="save-staff-button"
-              fullWidth
-              loading={addStaff.isPending}
-              disabled={!name.trim() || !email.trim()}
-              onPress={handleAdd}
-              className="mb-3"
-            >
-              {t('merchant.staff.sendInvite')}
-            </Button>
-            <Button
-              testID="cancel-staff-button"
-              fullWidth
-              variant="ghost"
+        <Text variant="label" className="mb-2 ml-1">
+          {t('merchant.staff.role')}
+        </Text>
+        <View className="mb-4 flex-row" style={{ gap: 8 }}>
+          {ROLES.map((r) => (
+            <PressableScale
+              key={r}
               onPress={() => {
-                resetForm();
-                setModalVisible(false);
+                setRole(r);
+                setPermissions(DEFAULT_PERMISSIONS_BY_ROLE[r]);
               }}
+              scale={0.97}
+              className={`flex-1 items-center rounded-2xl border px-3 py-3 ${
+                role === r ? 'border-primary bg-primary/10' : 'border-border bg-card'
+              }`}
             >
-              {t('common.cancel')}
-            </Button>
+              <Shield size={18} color={role === r ? colors.primary : colors.muted} />
+              <Text
+                variant="caption"
+                className={`mt-1 font-semibold ${role === r ? 'text-primary' : 'text-muted'}`}
+              >
+                {t(`merchant.staff.${r}`)}
+              </Text>
+            </PressableScale>
+          ))}
+        </View>
+
+        <Text variant="label" className="mb-2 ml-1">
+          {t('merchant.staff.permissions')}
+        </Text>
+        <Text variant="caption" className="mb-2 ml-1 text-muted">
+          {t('merchant.staff.permissionsHint')}
+        </Text>
+        <View className="mb-6 flex-row flex-wrap">
+          {ALL_PERMISSIONS.map((permission) => (
+            <PermissionChip
+              key={permission}
+              id={permission}
+              selected={permissions.includes(permission)}
+              onToggle={togglePermission}
+            />
+          ))}
+        </View>
+
+        <Button
+          testID="save-staff-button"
+          fullWidth
+          loading={addStaff.isPending}
+          disabled={!name.trim() || !email.trim()}
+          onPress={handleAdd}
+          className="mb-3"
+        >
+          {t('merchant.staff.sendInvite')}
+        </Button>
+        <Button
+          testID="cancel-staff-button"
+          fullWidth
+          variant="ghost"
+          onPress={() => {
+            resetForm();
+            setModalVisible(false);
+          }}
+        >
+          {t('common.cancel')}
+        </Button>
       </BottomSheet>
     </Screen>
   );

@@ -26,7 +26,7 @@ import { BarChart } from '@/src/components/ui/BarChart';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuthStore } from '@/src/stores/auth';
-import { useAnalytics } from '@/src/hooks/useAnalytics';
+import { useMerchantAnalytics } from '@/src/hooks/useMerchantAnalytics';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatCurrency } from '@/src/lib/utils';
@@ -212,7 +212,7 @@ export default function MerchantAnalyticsScreen() {
     isLoading: analyticsLoading,
     isError: analyticsError,
     refetch: refetchAnalytics,
-  } = useAnalytics(merchantId);
+  } = useMerchantAnalytics(merchantId);
   const {
     data: orders,
     isLoading: ordersLoading,

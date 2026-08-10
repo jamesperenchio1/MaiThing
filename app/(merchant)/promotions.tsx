@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Alert, ScrollView } from 'react-native';
+import { View, Alert } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import { Tag, Percent, Banknote, Clock, Trash2, Plus, Check } from 'lucide-react-native';
 
@@ -55,10 +56,12 @@ function CouponItem({
   coupon,
   onToggle,
   onDelete,
+  isLast,
 }: {
   coupon: Coupon;
   onToggle: (coupon: Coupon) => void;
   onDelete: (coupon: Coupon) => void;
+  isLast?: boolean;
 }) {
   const { t } = useTranslation();
   const colors = useThemeColor();
@@ -69,7 +72,7 @@ function CouponItem({
   const isExpired = new Date(coupon.validUntil) < new Date();
 
   return (
-    <View className="border-b border-border py-4 last:border-b-0">
+    <View className={`py-4 ${!isLast ? 'border-b border-border' : ''}`}>
       <View className="mb-2 flex-row items-center justify-between">
         <View className="flex-row items-center">
           <Tag size={16} color={colors.primary} />
@@ -295,277 +298,294 @@ export default function PromotionsScreen() {
   }
 
   return (
-    <Screen testID="merchant-promotions-screen" scrollable className="bg-background">
+    <Screen testID="merchant-promotions-screen" scrollable={false} className="bg-background">
       <Header title={t('merchant.coupons.title')} />
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }}>
-        <View className="px-6 py-4">
-          <Button
-            testID="create-coupon-button"
-            fullWidth
-            variant="secondary"
-            onPress={() => setModalVisible(true)}
-            leftIcon={<Plus size={18} color={colors.foreground} />}
-            className="mb-6"
-          >
-            {t('merchant.coupons.create')}
-          </Button>
+      <FlashList
+        className="flex-1"
+        data={coupons ?? []}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={180}
+        ListHeaderComponent={
+          <View className="px-6 py-4">
+            <Button
+              testID="create-coupon-button"
+              fullWidth
+              variant="secondary"
+              onPress={() => setModalVisible(true)}
+              leftIcon={<Plus size={18} color={colors.foreground} />}
+              className="mb-6"
+            >
+              {t('merchant.coupons.create')}
+            </Button>
 
-          <Card variant="outlined">
-            {isLoading ? (
-              <Text variant="body-sm" className="py-6 text-center text-muted">
-                {t('common.loading')}
-              </Text>
-            ) : coupons && coupons.length > 0 ? (
-              coupons.map((coupon) => (
-                <CouponItem
-                  key={coupon.id}
-                  coupon={coupon}
-                  onToggle={handleToggle}
-                  onDelete={handleDelete}
-                />
-              ))
-            ) : (
-              <View className="items-center py-8">
-                <Tag size={40} color={colors.muted} />
-                <Text variant="body-sm" className="mt-3 text-center text-muted">
-                  {t('merchant.coupons.noCoupons')}
+            {isLoading && (
+              <Card variant="outlined">
+                <Text variant="body-sm" className="py-6 text-center text-muted">
+                  {t('common.loading')}
                 </Text>
-              </View>
+              </Card>
             )}
-          </Card>
-        </View>
-      </ScrollView>
+          </View>
+        }
+        renderItem={({ item, index }) => (
+          <View className="px-6">
+            <Card variant="outlined">
+              <CouponItem
+                coupon={item}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                isLast={index === (coupons?.length ?? 0) - 1}
+              />
+            </Card>
+          </View>
+        )}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View className="px-6">
+              <Card variant="outlined">
+                <View className="items-center py-8">
+                  <Tag size={40} color={colors.muted} />
+                  <Text variant="body-sm" className="mt-3 text-center text-muted">
+                    {t('merchant.coupons.noCoupons')}
+                  </Text>
+                </View>
+              </Card>
+            </View>
+          ) : null
+        }
+        contentContainerStyle={{ paddingBottom: 24 }}
+      />
 
       <BottomSheet
         isOpen={modalVisible}
         onClose={() => setModalVisible(false)}
         enableScroll={true}
       >
-              <Text variant="h3" className="mb-6">
-                {t('merchant.coupons.create')}
-              </Text>
+        <Text variant="h3" className="mb-6">
+          {t('merchant.coupons.create')}
+        </Text>
 
-              <Input
-                testID="coupon-code-input"
-                label={t('merchant.coupons.code')}
-                placeholder="SAVE20"
-                value={code}
-                onChangeText={setCode}
-                autoCapitalize="characters"
-              />
-              <Input
-                testID="coupon-description-input"
-                label={t('merchant.coupons.description')}
-                placeholder="20% off your first rescue"
-                value={description}
-                onChangeText={setDescription}
-              />
+        <Input
+          testID="coupon-code-input"
+          label={t('merchant.coupons.code')}
+          placeholder="SAVE20"
+          value={code}
+          onChangeText={setCode}
+          autoCapitalize="characters"
+        />
+        <Input
+          testID="coupon-description-input"
+          label={t('merchant.coupons.description')}
+          placeholder="20% off your first rescue"
+          value={description}
+          onChangeText={setDescription}
+        />
 
-              <Text variant="label" className="mb-2 ml-1">
-                {t('merchant.coupons.discountType')}
-              </Text>
-              <View className="mb-4 flex-row" style={{ gap: 8 }}>
-                {DISCOUNT_TYPES.map((type) => (
-                  <PressableScale
-                    key={type}
-                    onPress={() => setDiscountType(type)}
-                    scale={0.97}
-                    className={`flex-1 flex-row items-center justify-center rounded-2xl border px-3 py-3 ${
-                      discountType === type
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border bg-card'
-                    }`}
-                  >
-                    {type === 'percentage' ? (
-                      <Percent
-                        size={16}
-                        color={discountType === type ? colors.primary : colors.muted}
-                      />
-                    ) : (
-                      <Banknote
-                        size={16}
-                        color={discountType === type ? colors.primary : colors.muted}
-                      />
-                    )}
-                    <Text
-                      variant="caption"
-                      className={`ml-1 font-semibold ${
-                        discountType === type ? 'text-primary' : 'text-muted'
-                      }`}
-                    >
-                      {t(`merchant.coupons.${type}`)}
-                    </Text>
-                  </PressableScale>
-                ))}
-              </View>
-
-              <Input
-                testID="coupon-discount-value-input"
-                label={t('merchant.coupons.discountValue')}
-                placeholder={discountType === 'percentage' ? '20' : '50'}
-                value={discountValue}
-                onChangeText={setDiscountValue}
-                keyboardType="numeric"
-              />
-              <Input
-                testID="coupon-min-order-input"
-                label={t('merchant.coupons.minOrder')}
-                placeholder="0"
-                value={minOrder}
-                onChangeText={setMinOrder}
-                keyboardType="numeric"
-              />
-              <Input
-                testID="coupon-max-uses-input"
-                label={t('merchant.coupons.maxUses')}
-                placeholder="Unlimited"
-                value={maxUses}
-                onChangeText={setMaxUses}
-                keyboardType="number-pad"
-              />
-              <Input
-                testID="coupon-per-customer-max-uses-input"
-                label="Max uses per customer"
-                placeholder="1"
-                value={perCustomerMaxUses}
-                onChangeText={setPerCustomerMaxUses}
-                keyboardType="number-pad"
-              />
-              {discountType === 'percentage' && (
-                <Input
-                  testID="coupon-max-discount-input"
-                  label="Max discount cap (THB)"
-                  placeholder="No cap"
-                  value={maxDiscount}
-                  onChangeText={setMaxDiscount}
-                  keyboardType="numeric"
+        <Text variant="label" className="mb-2 ml-1">
+          {t('merchant.coupons.discountType')}
+        </Text>
+        <View className="mb-4 flex-row" style={{ gap: 8 }}>
+          {DISCOUNT_TYPES.map((type) => (
+            <PressableScale
+              key={type}
+              onPress={() => setDiscountType(type)}
+              scale={0.97}
+              className={`flex-1 flex-row items-center justify-center rounded-2xl border px-3 py-3 ${
+                discountType === type
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-card'
+              }`}
+            >
+              {type === 'percentage' ? (
+                <Percent
+                  size={16}
+                  color={discountType === type ? colors.primary : colors.muted}
+                />
+              ) : (
+                <Banknote
+                  size={16}
+                  color={discountType === type ? colors.primary : colors.muted}
                 />
               )}
-
-              <Text variant="label" className="mb-2 ml-1">
-                Applicable categories
+              <Text
+                variant="caption"
+                className={`ml-1 font-semibold ${
+                  discountType === type ? 'text-primary' : 'text-muted'
+                }`}
+              >
+                {t(`merchant.coupons.${type}`)}
               </Text>
-              <View className="mb-4 flex-row flex-wrap" style={{ gap: 8 }}>
-                {(categories ?? []).map((cat: Category) => {
-                  const selected = selectedCategories.includes(cat.id);
-                  return (
-                    <PressableScale
-                      key={cat.id}
-                      onPress={() => toggleCategory(cat.id)}
-                      scale={0.97}
-                      className={`flex-row items-center rounded-xl border px-3 py-2 ${
-                        selected ? 'border-primary bg-primary/10' : 'border-border bg-card'
-                      }`}
-                    >
-                      {selected && <Check size={12} color={colors.primary} className="mr-1" />}
-                      <Text
-                        variant="caption"
-                        className={`font-medium ${selected ? 'text-primary' : 'text-muted'}`}
-                      >
-                        {cat.name}
-                      </Text>
-                    </PressableScale>
-                  );
-                })}
-              </View>
+            </PressableScale>
+          ))}
+        </View>
 
-              <Text variant="label" className="mb-2 ml-1">
-                Applicable item types
-              </Text>
-              <View className="mb-4 flex-row" style={{ gap: 8 }}>
-                {LISTING_TYPES.map((type) => {
-                  const selected = selectedListingTypes.includes(type.key);
-                  return (
-                    <PressableScale
-                      key={type.key}
-                      onPress={() => toggleListingType(type.key)}
-                      scale={0.97}
-                      className={`flex-1 flex-row items-center justify-center rounded-2xl border px-3 py-3 ${
-                        selected ? 'border-primary bg-primary/10' : 'border-border bg-card'
-                      }`}
-                    >
-                      {selected && <Check size={14} color={colors.primary} className="mr-1" />}
-                      <Text
-                        variant="caption"
-                        className={`font-semibold ${selected ? 'text-primary' : 'text-muted'}`}
-                      >
-                        {type.label}
-                      </Text>
-                    </PressableScale>
-                  );
-                })}
-              </View>
+        <Input
+          testID="coupon-discount-value-input"
+          label={t('merchant.coupons.discountValue')}
+          placeholder={discountType === 'percentage' ? '20' : '50'}
+          value={discountValue}
+          onChangeText={setDiscountValue}
+          keyboardType="numeric"
+        />
+        <Input
+          testID="coupon-min-order-input"
+          label={t('merchant.coupons.minOrder')}
+          placeholder="0"
+          value={minOrder}
+          onChangeText={setMinOrder}
+          keyboardType="numeric"
+        />
+        <Input
+          testID="coupon-max-uses-input"
+          label={t('merchant.coupons.maxUses')}
+          placeholder="Unlimited"
+          value={maxUses}
+          onChangeText={setMaxUses}
+          keyboardType="number-pad"
+        />
+        <Input
+          testID="coupon-per-customer-max-uses-input"
+          label="Max uses per customer"
+          placeholder="1"
+          value={perCustomerMaxUses}
+          onChangeText={setPerCustomerMaxUses}
+          keyboardType="number-pad"
+        />
+        {discountType === 'percentage' && (
+          <Input
+            testID="coupon-max-discount-input"
+            label="Max discount cap (THB)"
+            placeholder="No cap"
+            value={maxDiscount}
+            onChangeText={setMaxDiscount}
+            keyboardType="numeric"
+          />
+        )}
 
+        <Text variant="label" className="mb-2 ml-1">
+          Applicable categories
+        </Text>
+        <View className="mb-4 flex-row flex-wrap" style={{ gap: 8 }}>
+          {(categories ?? []).map((cat: Category) => {
+            const selected = selectedCategories.includes(cat.id);
+            return (
               <PressableScale
-                onPress={() => setFirstTimeOnly((v) => !v)}
-                className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5"
+                key={cat.id}
+                onPress={() => toggleCategory(cat.id)}
+                scale={0.97}
+                className={`flex-row items-center rounded-xl border px-3 py-2 ${
+                  selected ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                }`}
               >
-                <Text variant="body-sm" className="font-medium">
-                  First-time customers only
-                </Text>
-                <View
-                  className={`h-6 w-11 rounded-full ${firstTimeOnly ? 'bg-primary' : 'bg-muted/30'}`}
+                {selected && <Check size={12} color={colors.primary} className="mr-1" />}
+                <Text
+                  variant="caption"
+                  className={`font-medium ${selected ? 'text-primary' : 'text-muted'}`}
                 >
-                  <View
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ${
-                      firstTimeOnly ? 'left-6' : 'left-0.5'
-                    }`}
-                  />
-                </View>
+                  {cat.name}
+                </Text>
               </PressableScale>
+            );
+          })}
+        </View>
 
-              <DateTimePickerField
-                label={t('merchant.coupons.validFrom')}
-                value={validFrom}
-                onChange={setValidFrom}
-                maximumDate={validUntil}
-              />
-              <DateTimePickerField
-                label={t('merchant.coupons.validUntil')}
-                value={validUntil}
-                onChange={setValidUntil}
-                minimumDate={validFrom}
-              />
-
+        <Text variant="label" className="mb-2 ml-1">
+          Applicable item types
+        </Text>
+        <View className="mb-4 flex-row" style={{ gap: 8 }}>
+          {LISTING_TYPES.map((type) => {
+            const selected = selectedListingTypes.includes(type.key);
+            return (
               <PressableScale
-                onPress={() => setStatus((s) => (s === 'active' ? 'inactive' : 'active'))}
-                className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5"
+                key={type.key}
+                onPress={() => toggleListingType(type.key)}
+                scale={0.97}
+                className={`flex-1 flex-row items-center justify-center rounded-2xl border px-3 py-3 ${
+                  selected ? 'border-primary bg-primary/10' : 'border-border bg-card'
+                }`}
               >
-                <Text variant="body-sm" className="font-medium">
-                  {t('merchant.coupons.active')}
-                </Text>
-                <View
-                  className={`h-6 w-11 rounded-full ${status === 'active' ? 'bg-primary' : 'bg-muted/30'}`}
+                {selected && <Check size={14} color={colors.primary} className="mr-1" />}
+                <Text
+                  variant="caption"
+                  className={`font-semibold ${selected ? 'text-primary' : 'text-muted'}`}
                 >
-                  <View
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ${
-                      status === 'active' ? 'left-6' : 'left-0.5'
-                    }`}
-                  />
-                </View>
+                  {type.label}
+                </Text>
               </PressableScale>
+            );
+          })}
+        </View>
 
-              <Button
-                testID="save-coupon-button"
-                fullWidth
-                loading={createCoupon.isPending}
-                disabled={!code.trim() || !description.trim() || !discountValue}
-                onPress={handleCreate}
-                className="mb-3"
-              >
-                {t('common.save')}
-              </Button>
-              <Button
-                testID="cancel-coupon-button"
-                fullWidth
-                variant="ghost"
-                onPress={() => {
-                  resetForm();
-                  setModalVisible(false);
-                }}
-              >
-                {t('common.cancel')}
-              </Button>
+        <PressableScale
+          onPress={() => setFirstTimeOnly((v) => !v)}
+          className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5"
+        >
+          <Text variant="body-sm" className="font-medium">
+            First-time customers only
+          </Text>
+          <View
+            className={`h-6 w-11 rounded-full ${firstTimeOnly ? 'bg-primary' : 'bg-muted/30'}`}
+          >
+            <View
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ${
+                firstTimeOnly ? 'left-6' : 'left-0.5'
+              }`}
+            />
+          </View>
+        </PressableScale>
+
+        <DateTimePickerField
+          label={t('merchant.coupons.validFrom')}
+          value={validFrom}
+          onChange={setValidFrom}
+          maximumDate={validUntil}
+        />
+        <DateTimePickerField
+          label={t('merchant.coupons.validUntil')}
+          value={validUntil}
+          onChange={setValidUntil}
+          minimumDate={validFrom}
+        />
+
+        <PressableScale
+          onPress={() => setStatus((s) => (s === 'active' ? 'inactive' : 'active'))}
+          className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5"
+        >
+          <Text variant="body-sm" className="font-medium">
+            {t('merchant.coupons.active')}
+          </Text>
+          <View
+            className={`h-6 w-11 rounded-full ${status === 'active' ? 'bg-primary' : 'bg-muted/30'}`}
+          >
+            <View
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ${
+                status === 'active' ? 'left-6' : 'left-0.5'
+              }`}
+            />
+          </View>
+        </PressableScale>
+
+        <Button
+          testID="save-coupon-button"
+          fullWidth
+          loading={createCoupon.isPending}
+          disabled={!code.trim() || !description.trim() || !discountValue}
+          onPress={handleCreate}
+          className="mb-3"
+        >
+          {t('common.save')}
+        </Button>
+        <Button
+          testID="cancel-coupon-button"
+          fullWidth
+          variant="ghost"
+          onPress={() => {
+            resetForm();
+            setModalVisible(false);
+          }}
+        >
+          {t('common.cancel')}
+        </Button>
       </BottomSheet>
     </Screen>
   );

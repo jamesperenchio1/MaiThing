@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import { MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';

@@ -29,6 +29,9 @@ export async function registerPushToken(userId: string): Promise<void> {
       },
       { onConflict: 'token' }
     );
+
+    // Also store on profiles for quick lookup
+    await supabase.from('profiles').update({ push_token: token }).eq('id', userId);
   } catch {
     // Non-critical — swallow silently
   }
@@ -39,6 +42,7 @@ export async function unregisterPushToken(userId: string): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
     await supabase.from('push_tokens').delete().eq('user_id', userId);
+    await supabase.from('profiles').update({ push_token: null }).eq('id', userId);
   } catch {
     // Non-critical
   }

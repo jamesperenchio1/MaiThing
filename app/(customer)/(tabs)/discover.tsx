@@ -28,6 +28,12 @@ import { useListings, type ListingFilters } from '@/src/hooks/useListings';
 import { useCategories, useMerchants } from '@/src/hooks/useMerchants';
 import { useRecentSearches } from '@/src/hooks/useRecentSearches';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useAnalytics } from '@/src/hooks/useAnalytics';
+import { useFocusEffect } from 'expo-router';
+import { CartButton } from '@/src/components/composite/CartButton';
+import { useCategories, useMerchants } from '@/src/hooks/useMerchants';
+import { useRecentSearches } from '@/src/hooks/useRecentSearches';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { CartButton } from '@/src/components/composite/CartButton';
 import { DIETARY_TAGS, ALLERGENS } from '@/src/lib/constants';
 import { cn, formatCurrency } from '@/src/lib/utils';
@@ -245,6 +251,11 @@ export default function DiscoverScreen() {
   const [minRating, setMinRating] = useState<number>(0);
   const [filterVisible, setFilterVisible] = useState(false);
   const { recent, addSearch, removeSearch, clearSearches } = useRecentSearches();
+
+  const { screenView } = useAnalytics();
+  useFocusEffect(() => {
+    screenView('customer_discover');
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);

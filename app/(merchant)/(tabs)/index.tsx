@@ -38,7 +38,7 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { useAuthStore } from '@/src/stores/auth';
-import { useAnalytics } from '@/src/hooks/useAnalytics';
+import { useMerchantAnalytics } from '@/src/hooks/useMerchantAnalytics';
 import { useMerchantByOwner, useSetStoreClosure } from '@/src/hooks/useMerchants';
 import { useMerchantWallet } from '@/src/hooks/usePayouts';
 import { useListings } from '@/src/hooks/useListings';
@@ -215,7 +215,7 @@ export default function MerchantDashboardScreen() {
     isRefetching: analyticsRefetching,
     isError: analyticsError,
     refetch: refetchAnalytics,
-  } = useAnalytics(merchantId);
+  } = useMerchantAnalytics(merchantId);
 
   const {
     data: orders,

@@ -1,5 +1,6 @@
 import React, { useMemo, useRef } from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';

@@ -20,6 +20,8 @@ import { useOrders } from '@/src/hooks/useOrders';
 import { ReviewNudgeBanner } from '@/src/components/composite/ReviewNudgeBanner';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useAnalytics } from '@/src/hooks/useAnalytics';
+import { useFocusEffect } from 'expo-router';
 import { formatCurrency, formatPickupWindow } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
@@ -129,6 +131,11 @@ export default function OrdersScreen() {
     isError,
     refetch,
   } = useOrders(user?.id ?? '', 'customer');
+
+  const { screenView } = useAnalytics();
+  useFocusEffect(() => {
+    screenView('customer_orders');
+  });
 
   const handleRefresh = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

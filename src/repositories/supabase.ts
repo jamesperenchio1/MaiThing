@@ -14,7 +14,7 @@
  *   saved_addresses, restock_alerts, followed_merchant_notifications, listing_templates
  */
 import { supabase } from '@/src/lib/supabase';
-import { generatePickupCode } from '@/src/lib/utils';
+import { generatePickupCode, calculateDistance } from '@/src/lib/utils';
 import { Platform } from 'react-native';
 import type {
   AnalyticsRepository,
@@ -117,8 +117,36 @@ function mapProfile(row: Record<string, unknown>): User {
   };
 }
 
-function mapLocation(row: Record<string, unknown>, index = 0): Merchant {
+function mapLocation(
+  row: Record<string, unknown>,
+  index = 0,
+  userCoords?: { latitude: number; longitude: number }
+): Merchant {
   const org = (row.merchant_orgs as Record<string, unknown> | null) ?? {};
+
+  // Parse coordinates from geo_point (GeoJSON) or coordinates JSONB, fallback to seeded coords
+  let coordinates = coordsFromIndex(index);
+  if (row.geo_point) {
+    const gp = row.geo_point as Record<string, unknown>;
+    if (gp.type === 'Point' && Array.isArray(gp.coordinates)) {
+      const [lng, lat] = gp.coordinates as number[];
+      coordinates = { latitude: lat, longitude: lng };
+    }
+  } else if (row.coordinates) {
+    const coords = row.coordinates as Record<string, unknown>;
+    if (typeof coords.latitude === 'number' && typeof coords.longitude === 'number') {
+      coordinates = { latitude: coords.latitude, longitude: coords.longitude };
+    }
+  }
+
+  // Distance: prefer PostGIS distance_meters from RPC, else compute client-side
+  let distance: number | undefined;
+  if (typeof row.distance_meters === 'number') {
+    distance = row.distance_meters;
+  } else if (userCoords) {
+    distance = calculateDistance(userCoords, coordinates);
+  }
+
   return {
     id: row.id as string,
     ownerId: (org.owner_id as string) ?? '',
@@ -135,7 +163,8 @@ function mapLocation(row: Record<string, unknown>, index = 0): Merchant {
       postalCode: (row.postal_code as string) ?? '',
       country: 'Thailand',
     },
-    coordinates: coordsFromIndex(index),
+    coordinates,
+    distance,
     phone: (row.phone as string) ?? '',
     categories: Array.isArray(row.cuisine_types) ? (row.cuisine_types as string[]) : [],
     rating: typeof row.avg_rating === 'number' ? row.avg_rating : 4.5,
@@ -728,6 +757,17 @@ const usersRepo: UserRepository = {
 
 const merchantsRepo: MerchantRepository = {
   async getMerchants(params) {
+    // Use PostGIS nearby_locations RPC when lat/lng are provided
+    if (params?.lat != null && params?.lng != null) {
+      const { data, error } = await supabase.rpc('nearby_locations', {
+        lat: params.lat,
+        lng: params.lng,
+        radius_meters: params.radius ?? 10000,
+      });
+      if (error) throw error;
+      return (data ?? []).map((row) => mapLocation(row as Record<string, unknown>));
+    }
+
     let query = supabase
       .from('locations')
       .select('*, merchant_orgs(*)')
@@ -1147,6 +1187,88 @@ const merchantsRepo: MerchantRepository = {
 // ─── listings ────────────────────────────────────────────────────────────────
 
 const listingsRepo: ListingRepository = {
+  async getListings(params) {
+    // Use PostGIS to find nearby merchant IDs when lat/lng are provided
+    let nearbyMerchantIds: string[] | undefined;
+    const merchantDistances = new Map<string, number>();
+
+    if (params?.lat != null && params?.lng != null) {
+      const { data: nearbyData, error: nearbyError } = await supabase.rpc('nearby_locations', {
+        lat: params.lat,
+        lng: params.lng,
+        radius_meters: params.radius ?? 10000,
+      });
+      if (!nearbyError && nearbyData) {
+        nearbyMerchantIds = nearbyData.map((row) => row.id as string);
+        nearbyData.forEach((row) => {
+          merchantDistances.set(row.id as string, (row.distance_meters as number) ?? 0);
+        });
+      }
+    }
+
+    let query = supabase
+      .from('listings')
+      .select('*')
+      .gt('qty_remaining', 0)
+      .eq('is_active', true)
+      .limit(100);
+
+    if (nearbyMerchantIds) {
+      query = query.in('location_id', nearbyMerchantIds);
+    }
+    if (params?.merchantId) {
+      query = query.eq('location_id', params.merchantId);
+    }
+    if (params?.query) {
+      query = query.ilike('name', `%${params.query}%`);
+    }
+    if (params?.status === 'active') {
+      // already filtered above
+    } else if (params?.status) {
+      // ignore complex status for now
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    const listings = (data ?? []).map((row) => mapListing(row as Record<string, unknown>));
+
+    // Attach distances from PostGIS results
+    listings.forEach((l) => {
+      const d = merchantDistances.get(l.merchantId);
+      if (d != null) {
+        (l as Listing & { distance?: number }).distance = d;
+      }
+    });
+
+    // Sort listings
+    switch (params?.sortBy) {
+      case 'distance':
+        listings.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+        break;
+      case 'price_asc':
+        listings.sort((a, b) => a.salePrice - b.salePrice);
+        break;
+      case 'price_desc':
+        listings.sort((a, b) => b.salePrice - a.salePrice);
+        break;
+      case 'discount':
+        listings.sort((a, b) => b.originalPrice - b.salePrice - (a.originalPrice - a.salePrice));
+        break;
+      case 'newest':
+        listings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'going_fast':
+        listings.sort((a, b) => a.quantityRemaining - b.quantityRemaining);
+        break;
+      default:
+        if (params?.lat != null && params?.lng != null) {
+          listings.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+        }
+        break;
+    }
+
+    return listings;
+  },
   async getListings(params) {
     let query = supabase
       .from('listings')

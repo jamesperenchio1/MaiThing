@@ -2,7 +2,8 @@ import React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, Alert, Platform, Linking } from 'react-native';
+import { View, ScrollView, Alert, Platform, Linking } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import * as Haptics from 'expo-haptics';
 import {
   Clock,

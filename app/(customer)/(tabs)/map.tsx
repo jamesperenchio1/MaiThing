@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Image, Share, Linking, ScrollView } from 'react-native';
+import { View, Share, Linking, ScrollView } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import { useRouter } from 'expo-router';
 import {
   LocateFixed,
