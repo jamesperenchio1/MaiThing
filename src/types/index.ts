@@ -411,8 +411,8 @@ export interface BroadcastMessage {
 
 /* ─── Personality Profiles ──────────────────────────────────────────────── */
 
-export type PriceRange = 'budget' | 'mid' | 'premium' | 'any';
-export type DiscoveryStyle = 'explore' | 'favorites' | 'deals';
+export type PriceRange = 'budget' | 'mid' | 'premium' | 'luxury' | 'any';
+export type DiscoveryStyle = 'explore' | 'favorites' | 'deals' | 'mystery' | 'fixed' | 'both';
 export type EnvironmentalMotivation = 'high' | 'medium' | 'low';
 export type PickupTimePreference = 'morning' | 'lunch' | 'evening' | 'night' | 'any';
 export type NotificationStyle = 'all' | 'important' | 'minimal';

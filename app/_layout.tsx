@@ -39,6 +39,7 @@ import { ErrorBoundary } from '@/src/components/layout/ErrorBoundary';
 import { registerPushToken } from '@/src/services/pushToken';
 import { useRealtimeOrders } from '@/src/hooks/useRealtimeOrders';
 import { OfflineBanner } from '@/src/components/ui/OfflineBanner';
+import { useOfflineQueue } from '@/src/hooks/useOfflineQueue';
 
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
@@ -66,6 +67,7 @@ export default function RootLayout() {
   const selectedRole = useAuthStore((s) => s.selectedRole);
 
   useRealtimeOrders(user?.id, selectedRole ?? undefined);
+  useOfflineQueue();
 
   const init = useCallback(async () => {
     try {

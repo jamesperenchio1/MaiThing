@@ -40,6 +40,8 @@ import { Button } from '@/src/components/ui/Button';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useScaledSize } from '@/src/lib/responsive';
+import { useUpsertUserPersonality } from '@/src/hooks/usePersonality';
+import { useAuthStore } from '@/src/stores/auth';
 import {
   usePersonalityStore,
   type PriceRange,
@@ -205,6 +207,8 @@ export default function PersonalityOnboardingScreen() {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const { s } = useScaledSize();
+  const user = useAuthStore((s) => s.user);
+  const upsertPersonality = useUpsertUserPersonality();
 
   const store = usePersonalityStore();
   const isEditMode = store.onboardingCompleted;
@@ -342,21 +346,26 @@ export default function PersonalityOnboardingScreen() {
     setSelectedDietary(['noRestrictions']);
     setSelectedPrice('any');
     setSelectedDiscovery('both');
-    // Save immediately and navigate
-    setPreferredCategories([]);
-    setDietaryPreferences(['noRestrictions']);
-    setPriceRange('any');
-    setDiscoveryStyle('both');
-    setOnboardingCompleted(true);
-    router.replace('/(customer)/(tabs)' as never);
+    finishOnboarding();
   };
 
   const finishOnboarding = () => {
+    const prefs = {
+      preferredCategories: selectedCategories,
+      dietaryPreferences: selectedDietary.length > 0 ? selectedDietary : ['noRestrictions'],
+      priceRange: selectedPrice ?? 'any',
+      discoveryStyle: selectedDiscovery ?? 'both',
+      onboardingCompleted: true,
+    };
     setPreferredCategories(selectedCategories);
     setDietaryPreferences(selectedDietary.length > 0 ? selectedDietary : ['noRestrictions']);
     if (selectedPrice) setPriceRange(selectedPrice);
     if (selectedDiscovery) setDiscoveryStyle(selectedDiscovery);
     setOnboardingCompleted(true);
+    // Sync to Supabase if online
+    if (user?.id) {
+      upsertPersonality.mutate({ userId: user.id, data: prefs });
+    }
     router.replace('/(customer)/(tabs)' as never);
   };
 

@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 const rawSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const rawSupabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const rawSupabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY;
 
 // Provide a non-empty placeholder so @supabase/supabase-js does not throw during
 // module initialization when the app is running in mock mode (the default).
