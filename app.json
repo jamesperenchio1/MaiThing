@@ -52,7 +52,8 @@
       [
         "react-native-maps",
         {
-          "androidGoogleMapsApiKey": "AIzaSyDUMMY_API_KEY_REPLACE_BEFORE_PRODUCTION"
+          "androidGoogleMapsApiKey": "AIzaSyDUMMY_API_KEY_REPLACE_BEFORE_PRODUCTION",
+          "iosGoogleMapsApiKey": "AIzaSyDUMMY_API_KEY_REPLACE_BEFORE_PRODUCTION"
         }
       ]
     ],

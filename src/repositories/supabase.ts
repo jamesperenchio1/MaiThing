@@ -845,6 +845,7 @@ const merchantsRepo: MerchantRepository = {
     if (data.description) updateData.description = data.description;
     if (data.phone) updateData.phone = data.phone;
     if (data.categories) updateData.cuisine_types = data.categories;
+    if (data.coordinates) updateData.coordinates = data.coordinates;
     const { data: row, error } = await supabase
       .from('locations')
       .update(updateData)

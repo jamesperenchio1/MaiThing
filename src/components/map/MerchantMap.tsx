@@ -1,4 +1,4 @@
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 import type { Merchant } from '@/src/types';
@@ -11,7 +11,7 @@ export function MerchantMap({ merchant }: MerchantMapProps) {
   return (
     <View style={{ height: 200 }}>
       <MapView
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFill as any}
         initialRegion={{
           latitude: merchant.coordinates.latitude,

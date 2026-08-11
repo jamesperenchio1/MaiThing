@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 import type { Merchant } from '@/src/types';
 
@@ -12,6 +12,7 @@ export function StaticMap({ merchant, height = 160 }: StaticMapProps) {
   return (
     <View className="overflow-hidden rounded-2xl" style={{ height }}>
       <MapView
+        provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={{
           latitude: merchant.coordinates.latitude,

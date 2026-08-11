@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import MapView, { Marker, Callout, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
+import { View, StyleSheet } from 'react-native';
+import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Navigation, Heart, Star } from 'lucide-react-native';
 
 import { Text } from '@/src/components/ui/Text';
@@ -91,7 +91,7 @@ export function Map({
     <View className="relative flex-1">
       <MapView
         ref={mapRef}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
+        provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFill as any}
         initialRegion={initialRegion}
         showsUserLocation={!!userLocation && !!locationGranted}
