@@ -57,6 +57,7 @@ import {
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useNetworkState } from '@/src/hooks/useNetworkState';
+import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useAuthStore } from '@/src/stores/auth';
 import {
   formatCurrency,
@@ -154,6 +155,7 @@ export default function ListingDetailScreen() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const colors = useThemeColor();
   const addItem = useCartStore((s) => s.addItem);
+  const { addToCart } = useAnalytics();
   const { width: screenWidth } = Dimensions.get('window');
   const { isOffline } = useNetworkState();
   const userId = useAuthStore((s) => s.user?.id ?? '');
@@ -241,6 +243,7 @@ export default function ListingDetailScreen() {
 
   const handleAddToCart = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    addToCart(listing.id);
     addItem(listing, quantity);
   };
 

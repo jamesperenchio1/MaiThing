@@ -4,6 +4,7 @@ import { supabase } from '@/src/lib/supabase';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { scheduleLocalNotification } from '@/src/services/notifications';
+import { getUserPushTokens, sendRemoteNotification } from '@/src/services/pushNotifications';
 import { useAuthStore } from '@/src/stores/auth';
 
 const IS_SUPABASE_MODE = process.env.EXPO_PUBLIC_REPOSITORY_MODE === 'supabase';
@@ -13,6 +14,9 @@ const IS_SUPABASE_MODE = process.env.EXPO_PUBLIC_REPOSITORY_MODE === 'supabase';
  * Listens for order status updates, new merchant messages, and restock alerts,
  * then schedules local notifications when relevant events occur.
  *
+ * In Supabase mode, also sends real remote push notifications to the target
+ * user's registered device tokens via the push-notify Edge Function.
+ *
  * Mount once at app root (e.g. in _layout.tsx).
  */
 export function useBackgroundNotifications() {
@@ -21,7 +25,29 @@ export function useBackgroundNotifications() {
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
 
   useEffect(() => {
-    if (!IS_SUPABASE_MODE || !user?.id || Platform.OS === 'web') return;
+    if (!user?.id || Platform.OS === 'web') return;
+
+    const sendRemote = async (
+      userId: string,
+      title: string,
+      body: string,
+      data?: Record<string, unknown>
+    ) => {
+      if (!IS_SUPABASE_MODE) return;
+      try {
+        const tokens = await getUserPushTokens(userId);
+        if (tokens.length === 0) return;
+        await sendRemoteNotification({
+          to: tokens,
+          title,
+          body,
+          data,
+          sound: 'default',
+        });
+      } catch {
+        // Non-critical — swallow silently
+      }
+    };
 
     // ── Order status updates ──────────────────────────────────────────────
     const ordersChannel = supabase
@@ -61,6 +87,17 @@ export function useBackgroundNotifications() {
               `/(customer)/order/${orderId}`
             );
 
+            await sendRemote(
+              user.id,
+              'Order Update',
+              `Your order from ${merchantName} is now ${label}.`,
+              {
+                orderId,
+                type: 'order_update',
+                url: `/(customer)/order/${orderId}`,
+              }
+            );
+
             queryClient.invalidateQueries({ queryKey: ['orders'] });
             queryClient.invalidateQueries({ queryKey: ['order', orderId] });
           }
@@ -96,6 +133,12 @@ export function useBackgroundNotifications() {
             'merchant_message',
             orderId ? `/(customer)/order/${orderId}` : undefined
           );
+
+          await sendRemote(user.id, merchantName, content, {
+            orderId,
+            type: 'merchant_message',
+            url: orderId ? `/(customer)/order/${orderId}` : undefined,
+          });
 
           queryClient.invalidateQueries({ queryKey: ['messages'] });
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -139,6 +182,12 @@ export function useBackgroundNotifications() {
                 'new_deal',
                 `/(customer)/listing/${listingId}`
               );
+
+              await sendRemote(user.id, 'Back in Stock', `${title} is now available again.`, {
+                listingId,
+                type: 'restock',
+                url: `/(customer)/listing/${listingId}`,
+              });
             }
           }
 

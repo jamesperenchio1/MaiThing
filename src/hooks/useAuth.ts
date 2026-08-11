@@ -59,6 +59,11 @@ export function useAuth() {
 
   const continueAsTest = useCallback(
     async (role: UserRole) => {
+      if (!__DEV__) {
+        Alert.alert('Not available', 'Test accounts are only available in development builds.');
+        return;
+      }
+
       if (IS_SUPABASE) {
         const email =
           role === 'merchant' ? 'merchant@maithing.test' : 'customer@maithing.test';
@@ -94,10 +99,11 @@ export function useAuth() {
       const currentUser = useAuthStore.getState().user;
       if (!currentUser) return;
 
-      // In mock mode the test customer does not own a merchant, so always swap
+      // In mock / dev mode the test customer does not own a merchant, so always swap
       // to the dedicated test merchant/customer user when switching roles. In
       // Supabase mode we only swap when the current user lacks the target role.
-      if (!IS_SUPABASE || !currentUser.roles.includes(role)) {
+      // In production, never fall back to hardcoded seed users.
+      if (__DEV__ && (!IS_SUPABASE || !currentUser.roles.includes(role))) {
         const targetUser = role === 'merchant' ? TEST_MERCHANT_USER : TEST_CUSTOMER;
         setUser({ ...targetUser, roles: ['customer', 'merchant'] });
       }
@@ -112,8 +118,12 @@ export function useAuth() {
 
   const signInWithProvider = useCallback(
     async (provider: 'google' | 'apple') => {
-      // In mock mode we don't have real OAuth, so fall back to the test customer.
+      // In mock / dev mode we don't have real OAuth, so fall back to the test customer.
       if (!IS_SUPABASE) {
+        if (!__DEV__) {
+          Alert.alert('Not available', 'Social sign-in is only available in production builds with Supabase.');
+          return;
+        }
         const user = await repositories.auth.signIn(TEST_CUSTOMER.email, 'password');
         setUser({ ...user, roles: ['customer', 'merchant'] as UserRole[] });
         setRole('customer');

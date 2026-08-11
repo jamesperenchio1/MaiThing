@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { mmkvZustandStorage } from '@/src/lib/mmkvStorage';
+import { unregisterPushToken } from '@/src/services/pushToken';
 import type { CustomerProfile, MerchantProfile, User, UserRole } from '@/src/types';
 
 type AppUser = User & Partial<CustomerProfile & MerchantProfile>;
@@ -31,7 +32,13 @@ export const useAuthStore = create<AuthState>()(
         }),
       setRole: (role) => set({ selectedRole: role }),
       switchRole: (role) => set({ selectedRole: role }),
-      logout: () => set({ user: null, selectedRole: null, isLoading: false }),
+      logout: () => {
+        const userId = get().user?.id;
+        if (userId) {
+          unregisterPushToken(userId).catch(() => {});
+        }
+        set({ user: null, selectedRole: null, isLoading: false });
+      },
       isAuthenticated: () => !!get().user,
       hasRole: (role) => get().user?.roles.includes(role) ?? false,
     }),

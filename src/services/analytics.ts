@@ -7,6 +7,11 @@ export type AnalyticsEventName =
   | 'add_to_cart'
   | 'order_placed'
   | 'order_cancelled'
+  | 'favorite_toggled'
+  | 'saved_listing_toggled'
+  | 'merchant_follow_notification_toggled'
+  | 'review_submitted'
+  | 'coupon_applied'
   | 'personality_onboarding_completed'
   | 'offline_queue_replay_started'
   | 'offline_queue_replay_completed';
@@ -40,7 +45,9 @@ export async function trackEvent(
   const effectiveUserId = userId ?? null;
 
   if (!featureFlags.enableAnalytics) {
-    console.log('[Analytics]', eventName, { ...properties, userId: effectiveUserId });
+    if (__DEV__) {
+      console.log('[Analytics]', eventName, { ...properties, userId: effectiveUserId });
+    }
     return;
   }
 
@@ -57,7 +64,9 @@ export async function trackEvent(
     if (EVENT_QUEUE.length > MAX_QUEUE_SIZE) {
       EVENT_QUEUE.shift();
     }
-    console.log('[Analytics]', eventName, payload.properties);
+    if (__DEV__) {
+      console.log('[Analytics]', eventName, payload.properties);
+    }
     return;
   }
 
@@ -118,6 +127,29 @@ export const analytics = {
 
   orderCancelled: (orderId: string, userId?: string) =>
     trackEvent('order_cancelled', { order_id: orderId }, userId),
+
+  favoriteToggled: (merchantId: string, isFavorite: boolean, userId?: string) =>
+    trackEvent('favorite_toggled', { merchant_id: merchantId, is_favorite: isFavorite }, userId),
+
+  savedListingToggled: (listingId: string, isSaved: boolean, userId?: string) =>
+    trackEvent('saved_listing_toggled', { listing_id: listingId, is_saved: isSaved }, userId),
+
+  merchantFollowNotificationToggled: (
+    merchantId: string,
+    isFollowing: boolean,
+    userId?: string
+  ) =>
+    trackEvent(
+      'merchant_follow_notification_toggled',
+      { merchant_id: merchantId, is_following: isFollowing },
+      userId
+    ),
+
+  reviewSubmitted: (merchantId: string, rating: number, userId?: string) =>
+    trackEvent('review_submitted', { merchant_id: merchantId, rating }, userId),
+
+  couponApplied: (couponCode: string, discount: number, userId?: string) =>
+    trackEvent('coupon_applied', { coupon_code: couponCode, discount }, userId),
 
   personalityOnboardingCompleted: (userId?: string) =>
     trackEvent('personality_onboarding_completed', {}, userId),

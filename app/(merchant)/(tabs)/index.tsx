@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image } from 'react-native';
+import { View } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import * as Haptics from 'expo-haptics';
 import {

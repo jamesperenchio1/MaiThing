@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, TextInput, FlatList } from 'react-native';
+import { View, TextInput } from 'react-native';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Send } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -47,7 +48,7 @@ export default function MerchantMessageThreadScreen() {
   const merchantId = user?.id ?? '';
   const colors = useThemeColor();
   const [input, setInput] = useState('');
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlashListRef<MerchantMessage>>(null);
 
   const { data: messages, isLoading, isError, refetch } = useMessages(merchantId, customerId);
   const sendMessage = useSendMessage(merchantId, customerId);
@@ -102,11 +103,12 @@ export default function MerchantMessageThreadScreen() {
           />
         )}
 
-        <FlatList
+        <FlashList
           ref={flatListRef}
           data={messages ?? []}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingVertical: 16, flexGrow: 1 }}
+          contentContainerStyle={{ paddingVertical: 16 }}
+          estimatedItemSize={60}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
           renderItem={({ item }) => (

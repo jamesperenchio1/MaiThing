@@ -6,6 +6,9 @@ import reactNativePlugin from 'eslint-plugin-react-native';
 
 export default [
   {
+    ignores: ['supabase/functions/**/*'],
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,

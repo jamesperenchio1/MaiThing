@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STORAGE_KEY = 'maithing_recent_searches';
+import { createSSRSafeMMKV } from '@/src/lib/mmkvStorage';
+
+const recentSearchStorage = createSSRSafeMMKV({ id: 'maithing-recent-searches' });
+
+const STORAGE_KEY = 'recent_searches';
 const MAX_ITEMS = 8;
 
 export function useRecentSearches() {
@@ -9,16 +12,20 @@ export function useRecentSearches() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((raw) => {
-        if (raw) setRecent(JSON.parse(raw));
-      })
-      .finally(() => setLoaded(true));
+    const raw = recentSearchStorage.getString(STORAGE_KEY);
+    if (raw) {
+      try {
+        setRecent(JSON.parse(raw));
+      } catch {
+        setRecent([]);
+      }
+    }
+    setLoaded(true);
   }, []);
 
   const persist = useCallback((items: string[]) => {
     setRecent(items);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch(() => {});
+    recentSearchStorage.set(STORAGE_KEY, JSON.stringify(items));
   }, []);
 
   const addSearch = useCallback(

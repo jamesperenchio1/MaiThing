@@ -44,6 +44,20 @@ appId: com.jamyangperenchio.maithing
     commands:
       - tapOn: "Skip"
       - waitForAnimationToEnd
+# Complete/skip the personality onboarding if it appears
+- runFlow:
+    when:
+      visible: "What do you love to eat?"
+    commands:
+      - tapOn: "Show me everything"
+      - waitForAnimationToEnd
+# Dismiss the first-time customer tutorial overlay if it appears after onboarding
+- runFlow:
+    when:
+      visible: "Welcome to Maithing!"
+    commands:
+      - tapOn: "Skip"
+      - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "customer-home-screen"

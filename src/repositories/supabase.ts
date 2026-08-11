@@ -765,7 +765,7 @@ const merchantsRepo: MerchantRepository = {
         radius_meters: params.radius ?? 10000,
       });
       if (error) throw error;
-      return (data ?? []).map((row) => mapLocation(row as Record<string, unknown>));
+      return (data ?? []).map((row: Record<string, unknown>) => mapLocation(row));
     }
 
     let query = supabase
@@ -1199,8 +1199,8 @@ const listingsRepo: ListingRepository = {
         radius_meters: params.radius ?? 10000,
       });
       if (!nearbyError && nearbyData) {
-        nearbyMerchantIds = nearbyData.map((row) => row.id as string);
-        nearbyData.forEach((row) => {
+        nearbyMerchantIds = nearbyData.map((row: Record<string, unknown>) => row.id as string);
+        nearbyData.forEach((row: Record<string, unknown>) => {
           merchantDistances.set(row.id as string, (row.distance_meters as number) ?? 0);
         });
       }
@@ -1268,30 +1268,6 @@ const listingsRepo: ListingRepository = {
     }
 
     return listings;
-  },
-  async getListings(params) {
-    let query = supabase
-      .from('listings')
-      .select('*')
-      .gt('qty_remaining', 0)
-      .eq('is_active', true)
-      .limit(100);
-
-    if (params?.merchantId) {
-      query = query.eq('location_id', params.merchantId);
-    }
-    if (params?.query) {
-      query = query.ilike('name', `%${params.query}%`);
-    }
-    if (params?.status === 'active') {
-      // already filtered above
-    } else if (params?.status) {
-      // ignore complex status for now
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data ?? []).map((row) => mapListing(row as Record<string, unknown>));
   },
 
   async getListing(id) {

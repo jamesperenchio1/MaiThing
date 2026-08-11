@@ -17,6 +17,7 @@ import { Text } from '@/src/components/ui/Text';
 import { Badge } from '@/src/components/ui/Badge';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
+import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { UrgencyBadge } from '@/src/components/composite/UrgencyBadge';
 import { DietaryBadgeRow } from '@/src/components/composite/DietaryBadgeRow';
 import { CountdownTimer } from '@/src/components/composite/CountdownTimer';
@@ -37,6 +38,7 @@ export const ListingCard = React.memo(function ListingCard({
 }: ListingCardProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const { listingTap } = useAnalytics();
   const navigating = useRef(false);
 
   const isMystery = listing.type === 'mystery_box';
@@ -92,6 +94,7 @@ export const ListingCard = React.memo(function ListingCard({
           navigating.current = false;
         }, 1000);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        listingTap(listing.id);
         router.push(`/(customer)/listing/${listing.id}`);
       }}
       className={cn(variant === 'horizontal' && 'mb-3', className)}

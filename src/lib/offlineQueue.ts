@@ -1,4 +1,4 @@
-import { createMMKV } from 'react-native-mmkv';
+import { createSSRSafeMMKV } from '@/src/lib/mmkvStorage';
 
 /**
  * Offline Write Queue
@@ -9,7 +9,7 @@ import { createMMKV } from 'react-native-mmkv';
  * Supported operations mirror repository write methods.
  */
 
-const queueStorage = createMMKV({ id: 'maithing-offline-queue' });
+const queueStorage = createSSRSafeMMKV({ id: 'maithing-offline-queue' });
 
 const QUEUE_KEY = 'offline_queue_v1';
 
@@ -17,6 +17,7 @@ export type OfflineOperationType =
   | 'createOrder'
   | 'updateOrderStatus'
   | 'cancelOrder'
+  | 'refundOrder'
   | 'addFavorite'
   | 'removeFavorite'
   | 'addSavedListing'
@@ -54,6 +55,7 @@ export type OfflineOperationType =
   | 'sendBroadcast'
   | 'verifyMerchant'
   | 'uploadFoodSafetyCert'
+  | 'markConversationAsRead'
   | 'addBankAccount'
   | 'setDefaultBankAccount'
   | 'requestPayout'
@@ -139,13 +141,27 @@ class OfflineQueue {
 
   /**
    * Remove operations that have failed too many times (max 3 retries).
+   * Returns the operations that were pruned so callers can roll back
+   * stale optimistic UI state.
    */
-  pruneFailed(maxRetries = 3): void {
-    const before = this.state.operations.length;
-    this.state.operations = this.state.operations.filter((o) => o.retryCount < maxRetries);
-    if (this.state.operations.length !== before) {
+  pruneFailed(maxRetries = 3): OfflineOperation[] {
+    const pruned: OfflineOperation[] = [];
+    const remaining: OfflineOperation[] = [];
+
+    for (const op of this.state.operations) {
+      if (op.retryCount >= maxRetries) {
+        pruned.push(op);
+      } else {
+        remaining.push(op);
+      }
+    }
+
+    if (pruned.length > 0) {
+      this.state.operations = remaining;
       saveQueue(this.state);
     }
+
+    return pruned;
   }
 }
 

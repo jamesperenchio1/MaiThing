@@ -1,4 +1,4 @@
-import { createMMKV } from 'react-native-mmkv';
+import { createSSRSafeMMKV } from '@/src/lib/mmkvStorage';
 
 /**
  * Cache Schema Version
@@ -10,7 +10,7 @@ import { createMMKV } from 'react-native-mmkv';
  * the query cache and offline queue are cleared and the new version is stored.
  */
 
-const cacheVersionStorage = createMMKV({ id: 'maithing-cache-version' });
+const cacheVersionStorage = createSSRSafeMMKV({ id: 'maithing-cache-version' });
 const CACHE_VERSION_KEY = 'cache_schema_version';
 
 export const CURRENT_CACHE_VERSION = '2';

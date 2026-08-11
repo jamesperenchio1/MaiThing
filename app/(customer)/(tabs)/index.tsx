@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, Image, RefreshControl, Dimensions, StyleSheet } from 'react-native';
+import { View, ScrollView, RefreshControl, Dimensions, StyleSheet } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import * as Haptics from 'expo-haptics';
 import { Bell, MapPin } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight, ZoomIn } from 'react-native-reanimated';
@@ -28,8 +29,6 @@ import { usePersonalityStore } from '@/src/stores/personality';
 import { CartButton } from '@/src/components/composite/CartButton';
 import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useFocusEffect } from 'expo-router';
-import { usePersonalityStore } from '@/src/stores/personality';
-import { CartButton } from '@/src/components/composite/CartButton';
 import { ImpactWidget } from '@/src/components/composite/ImpactWidget';
 import { MealTimeShortcuts } from '@/src/components/composite/MealTimeShortcuts';
 import { CollectionSection } from '@/src/components/composite/CollectionSection';

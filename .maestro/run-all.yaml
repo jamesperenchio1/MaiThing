@@ -13,3 +13,4 @@ appId: com.jamyangperenchio.maithing
 - runFlow: merchant-create-listing.yaml
 - runFlow: merchant-personality-setup.yaml
 - runFlow: offline-mode-flow.yaml
+- runFlow: offline-sync-flow.yaml

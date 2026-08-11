@@ -26,8 +26,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // In production this would go to Sentry / crash reporting
-    console.error('[ErrorBoundary]', error, errorInfo);
+    // In production this would go to Sentry / crash reporting; only log locally in dev.
+    if (__DEV__) {
+      console.error('[ErrorBoundary]', error, errorInfo);
+    }
   }
 
   handleRetry = () => {

@@ -26,6 +26,7 @@ import {
 } from '@expo-google-fonts/noto-sans-thai';
 
 import { queryClient, persistOptions } from '@/src/services/queryClient';
+import { persister } from '@/src/services/offlineCache';
 import { initializeI18n } from '@/src/i18n';
 import { useThemeStore } from '@/src/stores/theme';
 import { useAuthStore } from '@/src/stores/auth';
@@ -73,12 +74,6 @@ export default function RootLayout() {
   const setUser = useAuthStore((s) => s.setUser);
   const user = useAuthStore((s) => s.user);
   const selectedRole = useAuthStore((s) => s.selectedRole);
-
-  useRealtimeOrders(user?.id, selectedRole ?? undefined);
-  useOfflineQueue();
-  useBackgroundNotifications();
-
-  const { request: requestNotificationPermission, hasAsked } = useNotificationPermission();
 
   const init = useCallback(async () => {
     try {
@@ -130,16 +125,12 @@ export default function RootLayout() {
     useThemeStore.getState().syncSystem();
     setNotificationHandler();
 
-    // Request notification permissions on first app open
-    if (!hasAsked) {
-      requestNotificationPermission().catch(() => {});
-    }
-
-    // Cache schema version check — clear stale cache after schema changes
+    // Cache schema version check — clear stale persisted cache after schema changes
     const storedVersion = getStoredCacheVersion();
     if (storedVersion !== CURRENT_CACHE_VERSION) {
       queryClient.clear();
       offlineQueue.clear();
+      Promise.resolve(persister.removeClient()).catch(() => {});
       setStoredCacheVersion(CURRENT_CACHE_VERSION);
     }
 
@@ -161,7 +152,7 @@ export default function RootLayout() {
     });
 
     return () => subscription.remove();
-  }, [init, router, hasAsked, requestNotificationPermission]);
+  }, [init, router]);
 
   useEffect(() => {
     if (fontsLoaded && ready) {
@@ -182,26 +173,56 @@ export default function RootLayout() {
             persistOptions={persistOptions}
             onSuccess={onRestoreSuccess}
           >
-            <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
-              <OfflineBanner />
-              <ErrorBoundary>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: colors.background },
-                  }}
-                >
-                  <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-                  <Stack.Screen name="(customer)" options={{ animation: 'default' }} />
-                  <Stack.Screen name="(merchant)" options={{ animation: 'default' }} />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-              </ErrorBoundary>
-            </View>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
+            <AppContent
+              isDark={isDark}
+              colors={colors}
+              userId={user?.id}
+              selectedRole={selectedRole}
+            />
           </PersistQueryClientProvider>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
+  );
+}
+
+interface AppContentProps {
+  isDark: boolean;
+  colors: ReturnType<typeof useThemeColor>;
+  userId?: string;
+  selectedRole: ReturnType<typeof useAuthStore.getState>['selectedRole'];
+}
+
+function AppContent({ isDark, colors, userId, selectedRole }: AppContentProps) {
+  useRealtimeOrders(userId, selectedRole ?? undefined);
+  useOfflineQueue();
+  useBackgroundNotifications();
+  const { request: requestNotificationPermission, hasAsked } = useNotificationPermission();
+
+  useEffect(() => {
+    // Request notification permissions on first app open
+    if (!hasAsked) {
+      requestNotificationPermission().catch(() => {});
+    }
+  }, [hasAsked, requestNotificationPermission]);
+
+  return (
+    <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
+      <OfflineBanner />
+      <ErrorBoundary>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+          <Stack.Screen name="(customer)" options={{ animation: 'default' }} />
+          <Stack.Screen name="(merchant)" options={{ animation: 'default' }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </ErrorBoundary>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+    </View>
   );
 }

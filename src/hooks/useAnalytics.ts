@@ -9,6 +9,11 @@ interface UseAnalyticsReturn {
   addToCart: (listingId: string) => void;
   orderPlaced: (orderId: string, amount: number) => void;
   orderCancelled: (orderId: string) => void;
+  favoriteToggled: (merchantId: string, isFavorite: boolean) => void;
+  savedListingToggled: (listingId: string, isSaved: boolean) => void;
+  merchantFollowNotificationToggled: (merchantId: string, isFollowing: boolean) => void;
+  reviewSubmitted: (merchantId: string, rating: number) => void;
+  couponApplied: (couponCode: string, discount: number) => void;
   personalityOnboardingCompleted: () => void;
   offlineQueueReplayStarted: () => void;
   offlineQueueReplayCompleted: () => void;
@@ -60,6 +65,41 @@ export function useAnalytics(): UseAnalyticsReturn {
     [userId]
   );
 
+  const favoriteToggled = useCallback(
+    (merchantId: string, isFavorite: boolean) => {
+      analytics.favoriteToggled(merchantId, isFavorite, userId).catch(() => {});
+    },
+    [userId]
+  );
+
+  const savedListingToggled = useCallback(
+    (listingId: string, isSaved: boolean) => {
+      analytics.savedListingToggled(listingId, isSaved, userId).catch(() => {});
+    },
+    [userId]
+  );
+
+  const merchantFollowNotificationToggled = useCallback(
+    (merchantId: string, isFollowing: boolean) => {
+      analytics.merchantFollowNotificationToggled(merchantId, isFollowing, userId).catch(() => {});
+    },
+    [userId]
+  );
+
+  const reviewSubmitted = useCallback(
+    (merchantId: string, rating: number) => {
+      analytics.reviewSubmitted(merchantId, rating, userId).catch(() => {});
+    },
+    [userId]
+  );
+
+  const couponApplied = useCallback(
+    (couponCode: string, discount: number) => {
+      analytics.couponApplied(couponCode, discount, userId).catch(() => {});
+    },
+    [userId]
+  );
+
   const personalityOnboardingCompleted = useCallback(() => {
     analytics.personalityOnboardingCompleted(userId).catch(() => {});
   }, [userId]);
@@ -79,6 +119,11 @@ export function useAnalytics(): UseAnalyticsReturn {
     addToCart,
     orderPlaced,
     orderCancelled,
+    favoriteToggled,
+    savedListingToggled,
+    merchantFollowNotificationToggled,
+    reviewSubmitted,
+    couponApplied,
     personalityOnboardingCompleted,
     offlineQueueReplayStarted,
     offlineQueueReplayCompleted,

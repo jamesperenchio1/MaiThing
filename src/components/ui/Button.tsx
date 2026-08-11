@@ -1,6 +1,8 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { ActivityIndicator, Pressable, type PressableProps, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
 import { cn } from '@/src/lib/utils';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useReducedMotion } from '@/src/hooks/useReducedMotion';
@@ -40,6 +42,7 @@ interface ButtonProps extends PressableProps, VariantProps<typeof buttonVariants
   rightIcon?: React.ReactNode;
   className?: string;
   textClassName?: string;
+  disableHaptics?: boolean;
 }
 
 export function Button({
@@ -53,8 +56,10 @@ export function Button({
   className,
   textClassName,
   disabled,
+  disableHaptics,
   onPressIn,
   onPressOut,
+  onPress,
   ...props
 }: ButtonProps) {
   const reducedMotion = useReducedMotion();
@@ -66,6 +71,13 @@ export function Button({
 
   const isDisabled = disabled || loading;
   const colors = useThemeColor();
+
+  const handlePress = (e: Parameters<NonNullable<PressableProps['onPress']>>[0]) => {
+    if (Platform.OS !== 'web' && !disableHaptics && !isDisabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    onPress?.(e);
+  };
 
   const textColor =
     variant === 'primary' || variant === 'danger'
@@ -92,6 +104,7 @@ export function Button({
         }
         onPressOut?.(e);
       }}
+      onPress={handlePress}
       style={reducedMotion ? undefined : animatedStyle}
       {...props}
     >

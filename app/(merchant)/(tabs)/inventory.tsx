@@ -818,7 +818,7 @@ export default function InventoryScreen() {
 
   return (
     <Screen testID="inventory-screen" scrollable={false} className="bg-background">
-      <Header title={t('merchant.inventory.title')} />
+      <Header title={t('merchant.inventory.title')} titleTestID="inventory-title" />
       {pendingAction && (
         <View className="px-6 pt-4">
           <Card className="border-l-4 border-primary bg-primary/5 p-4">

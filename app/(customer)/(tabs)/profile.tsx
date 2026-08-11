@@ -23,6 +23,7 @@ import {
   ShoppingBag,
   BookOpen,
   Sparkles,
+  WifiOff,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -44,6 +45,7 @@ import { useThemeStore } from '@/src/stores/theme';
 import { useLanguageStore } from '@/src/stores/language';
 import { useTutorialStore } from '@/src/stores/tutorial';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useNetworkState, setForceOffline } from '@/src/hooks/useNetworkState';
 import { repositories } from '@/src/repositories';
 import { getFontScale } from '@/src/lib/responsive';
 import type { NotificationPreferences } from '@/src/types';
@@ -89,6 +91,7 @@ export default function ProfileScreen() {
   const colors = useThemeColor();
   const { logout, switchRole } = useAuth();
   const { resetTutorial, startTutorial } = useTutorialStore();
+  const { isOffline } = useNetworkState();
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? '');
@@ -368,6 +371,22 @@ export default function ProfileScreen() {
             }
             onPress={handleLanguagePress}
           />
+
+          {__DEV__ && (
+            <MenuItem
+              testID="offline-simulation-toggle"
+              icon={<WifiOff size={20} color={colors.muted} />}
+              label="Simulate offline mode"
+              onPress={() => setForceOffline(!isOffline)}
+              right={
+                <Switch
+                  value={isOffline}
+                  onValueChange={(value) => setForceOffline(value)}
+                  trackColor={{ false: colors.border, true: colors.danger }}
+                />
+              }
+            />
+          )}
         </Card>
 
         {hasMerchantRole && (

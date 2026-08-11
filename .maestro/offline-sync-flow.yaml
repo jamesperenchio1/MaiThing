@@ -1,0 +1,179 @@
+appId: com.jamyangperenchio.maithing
+---
+# Offline → Online Sync Validation
+# Verifies that a mutation performed while offline is queued and replayed
+# when connectivity is restored.
+#
+# Run on a DEV build so the offline simulation toggle is available.
+# The flow is safe to run with a live network because it forces offline
+# mode from inside the app, performs the mutation, then forces online again.
+
+# NOTE: This flow assumes the app is already logged in as the test customer.
+# Run it after customer-welcome-flow.yaml in a suite, or run it standalone with
+# a logged-in customer session. We intentionally do NOT clear state because the
+# dev-client build loses its Metro URL when the app data is wiped.
+- launchApp
+
+- waitForAnimationToEnd
+
+# Handle notification permission dialog on a fresh install/session
+- runFlow:
+    when:
+      visible: "Would Like to Send You Notifications"
+    commands:
+      - tapOn: "Allow"
+      - waitForAnimationToEnd
+
+# If we land on the welcome screen (no active session), sign in as test customer
+- runFlow:
+    when:
+      visible:
+        id: "welcome-screen"
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: "test-customer-button"
+          direction: DOWN
+          timeout: 20000
+      - extendedWaitUntil:
+          visible:
+            id: "test-customer-button"
+          timeout: 10000
+      - tapOn:
+          id: "test-customer-button"
+      - waitForAnimationToEnd
+      # Dismiss the first-time customer tutorial overlay if it appears
+      - runFlow:
+          when:
+            visible: "Welcome to Maithing!"
+          commands:
+            - tapOn: "Skip"
+            - waitForAnimationToEnd
+      # Complete/skip the personality onboarding if it appears
+      - runFlow:
+          when:
+            visible: "What do you love to eat?"
+          commands:
+            - tapOn: "Show me everything"
+            - waitForAnimationToEnd
+      # Dismiss the first-time customer tutorial overlay if it appears after onboarding
+      - runFlow:
+          when:
+            visible: "Welcome to Maithing!"
+          commands:
+            - tapOn: "Skip"
+            - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000
+
+# Navigate to profile to enable offline simulation (DEV builds only)
+- tapOn:
+    id: "profile-tab"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 10000
+
+- scrollUntilVisible:
+    element:
+      id: "offline-simulation-toggle"
+    direction: DOWN
+    timeout: 5000
+
+# Enable offline simulation
+- tapOn:
+    id: "offline-simulation-toggle"
+- waitForAnimationToEnd
+
+# Verify offline banner appears
+- extendedWaitUntil:
+    visible:
+      id: "offline-banner"
+    timeout: 15000
+
+# Go to discover and favorite the first listing while offline
+- tapOn:
+    id: "discover-tab"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "discover-screen"
+    timeout: 10000
+
+# Tap the featured "Deal of the Day" listing card (reliably above the fold)
+- tapOn:
+    id: "deal-of-the-day-card"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "listing-detail-screen"
+    timeout: 10000
+
+# Ensure we perform a favorite mutation while offline. If already favorited, unfavorite
+# first so that the final queued mutation is a favorite and the heart ends filled.
+- runFlow:
+    when:
+      visible:
+        id: "favorite-button-filled"
+    commands:
+      - tapOn:
+          id: "favorite-button-filled"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "favorite-button-empty"
+    commands:
+      - tapOn:
+          id: "favorite-button-empty"
+      - waitForAnimationToEnd
+
+# Go back to discover so the tab bar is reachable
+- tapOn:
+    id: "header-back-button"
+- waitForAnimationToEnd
+
+# Return to profile and disable offline simulation to trigger queue replay
+- tapOn:
+    id: "profile-tab"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "offline-simulation-toggle"
+    direction: DOWN
+    timeout: 5000
+
+- tapOn:
+    id: "offline-simulation-toggle"
+- waitForAnimationToEnd
+
+# Wait for the offline banner to disappear (queue replay should complete quickly in mock mode)
+- extendedWaitUntil:
+    notVisible:
+      id: "offline-banner"
+    timeout: 20000
+
+# Return to discover and verify the favorite persisted (heart filled)
+- tapOn:
+    id: "discover-tab"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "deal-of-the-day-card"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "listing-detail-screen"
+    timeout: 10000
+
+- assertVisible:
+    id: "favorite-button-filled"

@@ -4,10 +4,10 @@ import { View, ViewStyle, StyleProp } from 'react-native';
 const DEFAULT_BLURHASH = 'LEHV6nWB2yk8pyo0adR*.7kCMdnj';
 
 interface ImageProps {
-  source: { uri: string } | number;
+  source: { uri?: string } | number;
   className?: string;
   style?: StyleProp<ViewStyle>;
-  resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
+  resizeMode?: 'cover' | 'contain';
   priority?: boolean;
   transition?: number;
   placeholderBlurhash?: string;

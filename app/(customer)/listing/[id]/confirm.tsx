@@ -26,10 +26,12 @@ import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useListing } from '@/src/hooks/useListings';
 import { useMerchant } from '@/src/hooks/useMerchants';
+import { useCreateOrder } from '@/src/hooks/useOrders';
 import { useNotificationPreferences } from '@/src/hooks/useNotifications';
 import { useValidateCoupon } from '@/src/hooks/useCoupons';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useNetworkState } from '@/src/hooks/useNetworkState';
 import {
   formatCurrency,
@@ -60,8 +62,9 @@ export default function ConfirmOrderScreen() {
   const { data: preferences } = useNotificationPreferences(user?.id ?? '');
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(Math.max(1, Number(quantityParam) || 1));
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createOrder = useCreateOrder();
   const { isOffline } = useNetworkState();
+  const { couponApplied } = useAnalytics();
   const [order, setOrder] = useState<Order | null>(null);
   const [calendarAdded, setCalendarAdded] = useState(false);
   const [upsellListings, setUpsellListings] = useState<Listing[]>([]);
@@ -122,90 +125,96 @@ export default function ConfirmOrderScreen() {
     : null;
 
   const handleConfirm = async () => {
-    if (isOffline) return;
-    if (!user || !merchant) return;
+    if (!user || !merchant || createOrder.isPending) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setIsSubmitting(true);
-    try {
-      const newOrder = await repositories.orders.createOrder({
-        customerId: user.id,
-        merchantId: merchant.id,
-        merchantName: merchant.name,
-        merchantLogoUrl: merchant.logoUrl,
-        items: [
-          {
-            listingId: listing.id,
-            title: listing.title,
-            quantity,
-            unitPrice: listing.salePrice,
-            totalPrice: total,
-            imageUrl: listing.images[0],
-          },
-        ],
-        subtotal,
-        discount: totalDiscount,
-        couponId: appliedCoupon?.id,
-        couponCode: appliedCoupon?.code,
-        couponDiscount,
-        total,
-        status: 'confirmed',
-        pickupCode: generatePickupCode(),
-        pickupWindowStart: listing.pickupWindowStart,
-        pickupWindowEnd: listing.pickupWindowEnd,
-      });
-      setOrder(newOrder);
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      repositories.messages
-        .sendWelcomeMessage(merchant.id, user.id, user.name, newOrder.id)
-        .then(() => queryClient.invalidateQueries({ queryKey: ['conversations'] }))
-        .catch(() => {});
-      repositories.listings.getListings().then((all) => {
-        const nearby = all
-          .filter(
-            (l) =>
-              l.merchantId !== newOrder.merchantId &&
-              l.status === 'active' &&
-              l.quantityRemaining > 0
-          )
-          .slice(0, 3);
-        setUpsellListings(nearby);
-        setShowUpsell(true);
-      });
-      repositories.wallet.addPurchasePoints(user.id, newOrder.total).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['wallet-rewards', user.id] });
-      });
-      scheduleLocalNotification(
-        'Order confirmed',
-        `Your order from ${merchant.name} has been confirmed. Pickup code: ${newOrder.pickupCode}`,
-        { orderId: newOrder.id, type: 'order_confirmed' },
-        preferences,
-        'order_update',
-        `/(customer)/order/${newOrder.id}`
-      ).catch(() => {});
-      scheduleLocalNotification(
-        'New order received',
-        `You have a new order from ${user.name} for ${formatCurrency(newOrder.total)}`,
-        { orderId: newOrder.id, type: 'new_order' },
-        undefined,
-        undefined,
-        `/(merchant)/(tabs)/orders`
-      ).catch(() => {});
 
-      const pickupStart = new Date(newOrder.pickupWindowStart);
-      const reminderTime = new Date(pickupStart.getTime() - 30 * 60 * 1000);
-      if (reminderTime > new Date()) {
-        scheduleNotificationAtDate(
-          'Pickup reminder',
-          `Your pickup at ${merchant.name} is in 30 minutes! Code: ${newOrder.pickupCode}`,
-          reminderTime,
-          { orderId: newOrder.id, type: 'pickup_reminder' },
+    const orderData = {
+      customerId: user.id,
+      merchantId: merchant.id,
+      merchantName: merchant.name,
+      merchantLogoUrl: merchant.logoUrl,
+      items: [
+        {
+          listingId: listing.id,
+          title: listing.title,
+          quantity,
+          unitPrice: listing.salePrice,
+          totalPrice: total,
+          imageUrl: listing.images[0],
+        },
+      ],
+      subtotal,
+      discount: totalDiscount,
+      couponId: appliedCoupon?.id,
+      couponCode: appliedCoupon?.code,
+      couponDiscount,
+      total,
+      status: 'confirmed' as const,
+      pickupCode: generatePickupCode(),
+      pickupWindowStart: listing.pickupWindowStart,
+      pickupWindowEnd: listing.pickupWindowEnd,
+    };
+
+    createOrder.mutate(orderData, {
+      onSuccess: (newOrder) => {
+        if (!newOrder) {
+          // Offline: order enqueued and will sync later.
+          router.replace('/(customer)/(tabs)/orders' as any);
+          return;
+        }
+
+        setOrder(newOrder);
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet'] });
+        repositories.messages
+          .sendWelcomeMessage(merchant.id, user.id, user.name, newOrder.id)
+          .then(() => queryClient.invalidateQueries({ queryKey: ['conversations'] }))
+          .catch(() => {});
+        repositories.listings.getListings().then((all) => {
+          const nearby = all
+            .filter(
+              (l) =>
+                l.merchantId !== newOrder.merchantId &&
+                l.status === 'active' &&
+                l.quantityRemaining > 0
+            )
+            .slice(0, 3);
+          setUpsellListings(nearby);
+          setShowUpsell(true);
+        });
+        repositories.wallet.addPurchasePoints(user.id, newOrder.total).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['wallet-rewards', user.id] });
+        });
+        scheduleLocalNotification(
+          'Order confirmed',
+          `Your order from ${merchant.name} has been confirmed. Pickup code: ${newOrder.pickupCode}`,
+          { orderId: newOrder.id, type: 'order_confirmed' },
+          preferences,
+          'order_update',
           `/(customer)/order/${newOrder.id}`
         ).catch(() => {});
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+        scheduleLocalNotification(
+          'New order received',
+          `You have a new order from ${user.name} for ${formatCurrency(newOrder.total)}`,
+          { orderId: newOrder.id, type: 'new_order' },
+          undefined,
+          undefined,
+          `/(merchant)/(tabs)/orders`
+        ).catch(() => {});
+
+        const pickupStart = new Date(newOrder.pickupWindowStart);
+        const reminderTime = new Date(pickupStart.getTime() - 30 * 60 * 1000);
+        if (reminderTime > new Date()) {
+          scheduleNotificationAtDate(
+            'Pickup reminder',
+            `Your pickup at ${merchant.name} is in 30 minutes! Code: ${newOrder.pickupCode}`,
+            reminderTime,
+            { orderId: newOrder.id, type: 'pickup_reminder' },
+            `/(customer)/order/${newOrder.id}`
+          ).catch(() => {});
+        }
+      },
+    });
   };
 
   if (order) {
@@ -526,6 +535,7 @@ export default function ConfirmOrderScreen() {
                             code: result.coupon.code,
                             discount: result.discountAmount,
                           });
+                          couponApplied(result.coupon.code, result.discountAmount);
                           setCouponCode('');
                           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         } else {
@@ -561,11 +571,11 @@ export default function ConfirmOrderScreen() {
         <Button
           testID="confirm-order-button"
           fullWidth
-          disabled={isSoldOut || isSubmitting || isOffline}
-          loading={isSubmitting}
+          disabled={isSoldOut || createOrder.isPending}
+          loading={createOrder.isPending}
           onPress={handleConfirm}
         >
-          {isOffline ? 'No connection' : 'Confirm order'} · {formatCurrency(total)}
+          Confirm order · {formatCurrency(total)}
         </Button>
       </View>
     </Screen>

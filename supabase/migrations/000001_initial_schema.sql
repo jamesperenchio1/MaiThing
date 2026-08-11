@@ -6,10 +6,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Enable PostGIS for geospatial queries
 CREATE EXTENSION IF NOT EXISTS postgis;
--- Covers all tables, indexes, RLS policies, and RPC functions
-
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
 -- PROFILES (extends Supabase Auth users)
@@ -84,11 +80,6 @@ CREATE TABLE IF NOT EXISTS locations (
 CREATE INDEX idx_locations_active ON locations(is_active);
 CREATE INDEX idx_locations_name ON locations USING gin(to_tsvector('english', name));
 CREATE INDEX idx_locations_geo_point ON locations USING GIST (geo_point);
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_locations_active ON locations(is_active);
-CREATE INDEX idx_locations_name ON locations USING gin(to_tsvector('english', name));
 
 ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "locations_select" ON locations FOR SELECT USING (true);

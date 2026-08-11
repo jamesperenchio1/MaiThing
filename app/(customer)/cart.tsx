@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
@@ -14,6 +13,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useMerchant } from '@/src/hooks/useMerchants';
+import { useCreateOrder } from '@/src/hooks/useOrders';
 import { useAuthStore } from '@/src/stores/auth';
 import { useCartStore } from '@/src/stores/cart';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -32,7 +32,6 @@ import type { OrderItem } from '@/src/types';
 export default function CartScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
 
@@ -42,7 +41,7 @@ export default function CartScreen() {
   const clearCart = useCartStore((s) => s.clear);
   const cartSubtotal = useCartStore((s) => s.subtotal());
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createOrder = useCreateOrder();
   const [note, setNote] = useState('');
 
   const grouped = items.reduce<Record<string, typeof items>>((acc, item) => {
@@ -65,78 +64,80 @@ export default function CartScreen() {
   const firstListing = items[0]?.listing;
 
   const handleConfirm = async () => {
-    if (!user || !merchant || items.length === 0) return;
+    if (!user || !merchant || items.length === 0 || createOrder.isPending) return;
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setIsSubmitting(true);
 
-    try {
-      const orderItems: OrderItem[] = items.map((item) => ({
-        listingId: item.listing.id,
-        title: item.listing.title,
-        quantity: item.quantity,
-        unitPrice: item.listing.salePrice,
-        totalPrice: item.listing.salePrice * item.quantity,
-        imageUrl: item.listing.images[0],
-      }));
+    const orderItems: OrderItem[] = items.map((item) => ({
+      listingId: item.listing.id,
+      title: item.listing.title,
+      quantity: item.quantity,
+      unitPrice: item.listing.salePrice,
+      totalPrice: item.listing.salePrice * item.quantity,
+      imageUrl: item.listing.images[0],
+    }));
 
-      const order = await repositories.orders.createOrder({
-        customerId: user.id,
-        merchantId: merchant.id,
-        merchantName: merchant.name,
-        merchantLogoUrl: merchant.logoUrl,
-        items: orderItems,
-        subtotal: cartSubtotal,
-        discount,
-        couponDiscount: 0,
-        total,
-        status: 'pending',
-        pickupCode: generatePickupCode(),
-        pickupWindowStart: firstListing?.pickupWindowStart ?? new Date().toISOString(),
-        pickupWindowEnd: firstListing?.pickupWindowEnd ?? new Date().toISOString(),
-        notes: note.trim() || undefined,
-      });
+    const orderData = {
+      customerId: user.id,
+      merchantId: merchant.id,
+      merchantName: merchant.name,
+      merchantLogoUrl: merchant.logoUrl,
+      items: orderItems,
+      subtotal: cartSubtotal,
+      discount,
+      couponDiscount: 0,
+      total,
+      status: 'pending' as const,
+      pickupCode: generatePickupCode(),
+      pickupWindowStart: firstListing?.pickupWindowStart ?? new Date().toISOString(),
+      pickupWindowEnd: firstListing?.pickupWindowEnd ?? new Date().toISOString(),
+      notes: note.trim() || undefined,
+    };
 
-      await repositories.wallet.spend(
-        user.id,
-        total,
-        t('customer.cart.purchaseNote', { merchant: merchant.name })
-      );
+    createOrder.mutate(orderData, {
+      onSuccess: (order) => {
+        if (!order) {
+          // Offline: order was enqueued and will sync later.
+          clearCart();
+          router.replace('/(customer)/(tabs)/orders' as any);
+          return;
+        }
 
-      clearCart();
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+        repositories.wallet
+          .spend(user.id, total, t('customer.cart.purchaseNote', { merchant: merchant.name }))
+          .catch(() => {});
 
-      scheduleLocalNotification(
-        t('customer.notifications.orderConfirmed.title'),
-        t('customer.notifications.orderConfirmed.body', {
-          merchant: merchant.name,
-          code: order.pickupCode,
-        }),
-        { orderId: order.id, type: 'order_confirmed' },
-        undefined,
-        'order_update',
-        `/(customer)/order/${order.id}`
-      ).catch(() => {});
+        clearCart();
 
-      scheduleLocalNotification(
-        t('merchant.notifications.newOrder.title'),
-        t('merchant.notifications.newOrder.body', {
-          customer: user.name,
-          total: formatCurrency(order.total),
-        }),
-        { orderId: order.id, type: 'new_order' },
-        undefined,
-        undefined,
-        `/(merchant)/(tabs)/orders`
-      ).catch(() => {});
+        scheduleLocalNotification(
+          t('customer.notifications.orderConfirmed.title'),
+          t('customer.notifications.orderConfirmed.body', {
+            merchant: merchant.name,
+            code: order.pickupCode,
+          }),
+          { orderId: order.id, type: 'order_confirmed' },
+          undefined,
+          'order_update',
+          `/(customer)/order/${order.id}`
+        ).catch(() => {});
 
-      schedulePickupReminder(merchant.name, order.pickupWindowEnd, order.id).catch(() => {});
+        scheduleLocalNotification(
+          t('merchant.notifications.newOrder.title'),
+          t('merchant.notifications.newOrder.body', {
+            customer: user.name,
+            total: formatCurrency(order.total),
+          }),
+          { orderId: order.id, type: 'new_order' },
+          undefined,
+          undefined,
+          `/(merchant)/(tabs)/orders`
+        ).catch(() => {});
 
-      router.replace(`/(customer)/order/${order.id}` as any);
-    } finally {
-      setIsSubmitting(false);
-    }
+        schedulePickupReminder(merchant.name, order.pickupWindowEnd, order.id).catch(() => {});
+
+        router.replace(`/(customer)/order/${order.id}` as any);
+      },
+    });
   };
 
   if (items.length === 0) {
@@ -358,8 +359,8 @@ export default function CartScreen() {
             </View>
             <Button
               fullWidth
-              loading={isSubmitting}
-              disabled={isSubmitting || !merchant}
+              loading={createOrder.isPending}
+              disabled={createOrder.isPending || !merchant}
               onPress={handleConfirm}
             >
               {t('customer.cart.confirmOrder')} · {formatCurrency(total)}

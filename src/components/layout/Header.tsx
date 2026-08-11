@@ -8,6 +8,7 @@ import { useThemeColor } from '@/src/hooks/useThemeColor';
 
 interface HeaderProps {
   title?: string;
+  titleTestID?: string;
   showBack?: boolean;
   right?: React.ReactNode;
   className?: string;
@@ -15,7 +16,7 @@ interface HeaderProps {
   testID?: string;
 }
 
-export function Header({ title, showBack = true, right, className, onBack, testID }: HeaderProps) {
+export function Header({ title, titleTestID, showBack = true, right, className, onBack, testID }: HeaderProps) {
   const router = useRouter();
   const colors = useThemeColor();
 
@@ -44,7 +45,7 @@ export function Header({ title, showBack = true, right, className, onBack, testI
         )}
       </View>
       {title && (
-        <Text variant="h3" className="flex-1 text-center" numberOfLines={1}>
+        <Text testID={titleTestID} variant="h3" className="flex-1 text-center" numberOfLines={1}>
           {title}
         </Text>
       )}

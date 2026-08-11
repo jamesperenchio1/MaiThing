@@ -13,6 +13,7 @@ interface FavoriteButtonProps {
   size?: number;
   variant?: 'overlay' | 'default';
   className?: string;
+  testID?: string;
 }
 
 export function FavoriteButton({
@@ -20,6 +21,7 @@ export function FavoriteButton({
   size = 20,
   variant = 'default',
   className,
+  testID,
 }: FavoriteButtonProps) {
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
@@ -36,6 +38,7 @@ export function FavoriteButton({
 
   return (
     <PressableScale
+      testID={testID ?? (isFavorite ? 'favorite-button-filled' : 'favorite-button-empty')}
       onPress={handlePress}
       className={cn(
         'rounded-full p-2',

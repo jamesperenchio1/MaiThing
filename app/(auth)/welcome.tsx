@@ -212,30 +212,34 @@ export default function WelcomeScreen() {
             {t('auth.signIn')}
           </Button>
 
-          <View className="my-4 flex-row items-center justify-center space-x-4">
-            <View className="h-px flex-1 bg-border" />
-            <Text variant="caption">{t('common.or')}</Text>
-            <View className="h-px flex-1 bg-border" />
-          </View>
+          {__DEV__ && (
+            <>
+              <View className="my-4 flex-row items-center justify-center space-x-4">
+                <View className="h-px flex-1 bg-border" />
+                <Text variant="caption">{t('common.or')}</Text>
+                <View className="h-px flex-1 bg-border" />
+              </View>
 
-          <Button
-            testID="test-customer-button"
-            variant="outline"
-            fullWidth
-            onPress={handleContinueAsCustomer}
-            leftIcon={<Wallet size={18} color={colors.foreground} />}
-          >
-            {t('auth.continueAsTestCustomer')}
-          </Button>
-          <Button
-            testID="test-merchant-button"
-            variant="outline"
-            fullWidth
-            onPress={handleContinueAsMerchant}
-            leftIcon={<Utensils size={18} color={colors.foreground} />}
-          >
-            {t('auth.continueAsTestMerchant')}
-          </Button>
+              <Button
+                testID="test-customer-button"
+                variant="outline"
+                fullWidth
+                onPress={handleContinueAsCustomer}
+                leftIcon={<Wallet size={18} color={colors.foreground} />}
+              >
+                {t('auth.continueAsTestCustomer')}
+              </Button>
+              <Button
+                testID="test-merchant-button"
+                variant="outline"
+                fullWidth
+                onPress={handleContinueAsMerchant}
+                leftIcon={<Utensils size={18} color={colors.foreground} />}
+              >
+                {t('auth.continueAsTestMerchant')}
+              </Button>
+            </>
+          )}
 
           {/* Merchant pitch */}
           <PressableScale

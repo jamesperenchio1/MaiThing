@@ -103,6 +103,7 @@ export default {
     noSavedAddresses: 'No saved addresses yet',
     addAddress: 'Add Address',
     offline: 'Offline',
+    offlineBanner: 'You are offline. Some features may be limited.',
     noConnection: 'No connection. Some features may be limited until you are back online.',
   },
   customer: {

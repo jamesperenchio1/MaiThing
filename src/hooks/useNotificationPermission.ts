@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { createMMKV } from 'react-native-mmkv';
 
-const storage = createMMKV({ id: 'maithing-notifications' });
+import { createSSRSafeMMKV } from '@/src/lib/mmkvStorage';
+
+const storage = createSSRSafeMMKV({ id: 'maithing-notifications' });
 const ASKED_KEY = 'notification_permission_asked';
 
 export function useNotificationPermission() {

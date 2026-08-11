@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Image, ScrollView, RefreshControl } from 'react-native';
+import { View, ScrollView, RefreshControl } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import * as Haptics from 'expo-haptics';
 import { Package, SearchX } from 'lucide-react-native';
 

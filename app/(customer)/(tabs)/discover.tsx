@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 import {
   View,
   ScrollView,
-  Image,
   Modal,
   Switch,
   Pressable,
   PanResponder,
   RefreshControl,
 } from 'react-native';
+import { Image } from '@/src/components/ui/Image';
 import * as Haptics from 'expo-haptics';
 import { SlidersHorizontal, X, Clock, Star } from 'lucide-react-native';
 
@@ -30,10 +30,6 @@ import { useRecentSearches } from '@/src/hooks/useRecentSearches';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useFocusEffect } from 'expo-router';
-import { CartButton } from '@/src/components/composite/CartButton';
-import { useCategories, useMerchants } from '@/src/hooks/useMerchants';
-import { useRecentSearches } from '@/src/hooks/useRecentSearches';
-import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { CartButton } from '@/src/components/composite/CartButton';
 import { DIETARY_TAGS, ALLERGENS } from '@/src/lib/constants';
 import { cn, formatCurrency } from '@/src/lib/utils';
@@ -428,6 +424,7 @@ export default function DiscoverScreen() {
           const discount = Math.round((1 - featured.salePrice / featured.originalPrice) * 100);
           return (
             <PressableScale
+              testID="deal-of-the-day-card"
               onPress={() => router.push(`/(customer)/listing/${featured.id}` as any)}
               scale={0.99}
               className="mb-3"
@@ -770,7 +767,9 @@ export default function DiscoverScreen() {
         <FlashList
           className="flex-1"
           data={listings ?? []}
-          renderItem={({ item }) => <ListingCard listing={item} variant="horizontal" />}
+          renderItem={({ item, index }) => (
+            <ListingCard listing={item} variant="horizontal" testID={`listing-card-${index}`} />
+          )}
           keyExtractor={(item) => item.id}
           estimatedItemSize={140}
           ListHeaderComponent={listHeader}

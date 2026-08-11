@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { repositories } from '@/src/repositories';
 import { scheduleLocalNotification } from '@/src/services/notifications';
+import { analytics } from '@/src/services/analytics';
 import { useCartStore } from '@/src/stores/cart';
+import { useOfflineMutation } from './useOfflineMutation';
 import type { CustomerProfile, Order } from '@/src/types';
 
 function getStatusNotification(order: Order, status: Order['status']) {
@@ -79,9 +81,73 @@ export function useLookupOrderByPickupCode() {
   });
 }
 
+export function useCreateOrder() {
+  const queryClient = useQueryClient();
+  return useOfflineMutation({
+    mutationFn: async (data: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const order = await repositories.orders.createOrder(data);
+      return order;
+    },
+    offlineOperation: {
+      type: 'createOrder',
+      payload: (data) => ({ ...data }),
+    },
+    onMutate: async (data) => {
+      const ordersFilter = { queryKey: ['orders'] };
+      await queryClient.cancelQueries(ordersFilter);
+      const previousOrders = queryClient.getQueriesData<Order[]>(ordersFilter);
+
+      const tempOrder: Order = {
+        ...data,
+        id: `temp_${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'pending',
+      };
+
+      queryClient.setQueriesData<Order[]>(ordersFilter, (old) => {
+        if (!old) return old;
+        return [tempOrder, ...old];
+      });
+
+      return { previousOrders, tempOrder };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousOrders) {
+        for (const [queryKey, data] of context.previousOrders) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+    onSuccess: (order) => {
+      if (!order) return;
+      analytics.orderPlaced(order.id, order.total).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet', order.customerId] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions', order.customerId] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+
+      scheduleLocalNotification(
+        'Order placed',
+        `Your order ${order.pickupCode} has been placed.`,
+        { orderId: order.id, type: 'order_placed' },
+        undefined,
+        'order_update',
+        `/(customer)/order/${order.id}`
+      ).catch(() => {});
+    },
+  });
+}
+
 export function useCancelOrder() {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useOfflineMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const order = await repositories.orders.cancelOrder(id, reason);
       await repositories.wallet.refund(
@@ -91,10 +157,51 @@ export function useCancelOrder() {
       );
       return order;
     },
-    onSuccess: (order, variables) => {
-      const userId = order.customerId;
-      queryClient.invalidateQueries({ queryKey: ['order', variables.id] });
+    offlineOperation: {
+      type: 'cancelOrder',
+      payload: ({ id, reason }) => ({ id, reason }),
+    },
+    onMutate: async ({ id, reason }) => {
+      const orderKey = ['order', id];
+      const ordersFilter = { queryKey: ['orders'] };
+
+      await queryClient.cancelQueries({ queryKey: orderKey });
+      await queryClient.cancelQueries(ordersFilter);
+
+      const previousOrder = queryClient.getQueryData<Order>(orderKey);
+      const previousOrders = queryClient.getQueriesData<Order[]>(ordersFilter);
+
+      queryClient.setQueryData<Order>(orderKey, (old) => {
+        if (!old) return old;
+        return { ...old, status: 'cancelled', cancellationReason: reason };
+      });
+
+      queryClient.setQueriesData<Order[]>(ordersFilter, (old) => {
+        if (!old) return old;
+        return old.map((o) =>
+          o.id === id ? { ...o, status: 'cancelled', cancellationReason: reason } : o
+        );
+      });
+
+      return { previousOrder, previousOrders };
+    },
+    onError: (_err, { id }, context) => {
+      if (context?.previousOrder) {
+        queryClient.setQueryData(['order', id], context.previousOrder);
+      }
+      if (context?.previousOrders) {
+        for (const [queryKey, data] of context.previousOrders) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onSettled: (_data, _err, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onSuccess: (order, variables) => {
+      if (!order) return;
+      const userId = order.customerId;
       queryClient.invalidateQueries({ queryKey: ['wallet', userId] });
       queryClient.invalidateQueries({ queryKey: ['wallet-transactions', userId] });
 
@@ -120,29 +227,111 @@ export function useCancelOrder() {
 
 export function useRefundOrder() {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useOfflineMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const order = await repositories.orders.refundOrder(id, reason);
       await repositories.wallet.refund(order.customerId, order.total, `Refund: ${reason}`);
       return order;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['order', variables.id] });
+    offlineOperation: {
+      type: 'refundOrder',
+      payload: ({ id, reason }) => ({ id, reason }),
+    },
+    onMutate: async ({ id, reason }) => {
+      const orderKey = ['order', id];
+      const ordersFilter = { queryKey: ['orders'] };
+
+      await queryClient.cancelQueries({ queryKey: orderKey });
+      await queryClient.cancelQueries(ordersFilter);
+
+      const previousOrder = queryClient.getQueryData<Order>(orderKey);
+      const previousOrders = queryClient.getQueriesData<Order[]>(ordersFilter);
+
+      queryClient.setQueryData<Order>(orderKey, (old) => {
+        if (!old) return old;
+        return { ...old, status: 'cancelled', cancellationReason: reason };
+      });
+
+      queryClient.setQueriesData<Order[]>(ordersFilter, (old) => {
+        if (!old) return old;
+        return old.map((o) =>
+          o.id === id ? { ...o, status: 'cancelled', cancellationReason: reason } : o
+        );
+      });
+
+      return { previousOrder, previousOrders };
+    },
+    onError: (_err, { id }, context) => {
+      if (context?.previousOrder) {
+        queryClient.setQueryData(['order', id], context.previousOrder);
+      }
+      if (context?.previousOrders) {
+        for (const [queryKey, data] of context.previousOrders) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onSettled: (_data, _err, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onSuccess: (order) => {
+      if (!order) return;
+      queryClient.invalidateQueries({ queryKey: ['wallet', order.customerId] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions', order.customerId] });
     },
   });
 }
 
 export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useOfflineMutation({
     mutationFn: async ({ id, status }: { id: string; status: Order['status'] }) => {
       const order = await repositories.orders.updateOrderStatus(id, status);
       return order;
     },
-    onSuccess: (order, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['order', variables.id] });
+    offlineOperation: {
+      type: 'updateOrderStatus',
+      payload: ({ id, status }) => ({ id, status }),
+    },
+    onMutate: async ({ id, status }) => {
+      const orderKey = ['order', id];
+      const ordersFilter = { queryKey: ['orders'] };
+
+      await queryClient.cancelQueries({ queryKey: orderKey });
+      await queryClient.cancelQueries(ordersFilter);
+
+      const previousOrder = queryClient.getQueryData<Order>(orderKey);
+      const previousOrders = queryClient.getQueriesData<Order[]>(ordersFilter);
+
+      queryClient.setQueryData<Order>(orderKey, (old) => {
+        if (!old) return old;
+        return { ...old, status };
+      });
+
+      queryClient.setQueriesData<Order[]>(ordersFilter, (old) => {
+        if (!old) return old;
+        return old.map((o) => (o.id === id ? { ...o, status } : o));
+      });
+
+      return { previousOrder, previousOrders };
+    },
+    onError: (_err, { id }, context) => {
+      if (context?.previousOrder) {
+        queryClient.setQueryData(['order', id], context.previousOrder);
+      }
+      if (context?.previousOrders) {
+        for (const [queryKey, data] of context.previousOrders) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onSettled: (_data, _err, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onSuccess: (order) => {
+      if (!order) return;
 
       const notification = getStatusNotification(order, order.status);
       if (notification) {

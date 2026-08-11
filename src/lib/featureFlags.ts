@@ -22,7 +22,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   enablePersonalityOnboarding: true,
   enableMerchantPersonality: true,
   enableOfflineBanner: true,
-  enableAnalytics: false, // flip to true when analytics backend is ready
+  enableAnalytics: true,
   enableSocialSharing: false,
   enableWaitlist: true,
   enableFlashSales: true,
