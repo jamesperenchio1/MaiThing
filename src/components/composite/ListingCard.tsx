@@ -97,12 +97,12 @@ export const ListingCard = React.memo(function ListingCard({
         listingTap(listing.id);
         router.push(`/(customer)/listing/${listing.id}`);
       }}
-      className={cn(variant === 'horizontal' && 'mb-3', className)}
+      className={cn('flex-1', variant === 'horizontal' && 'mb-3', className)}
       scale={0.98}
     >
       <Card
         variant="elevated"
-        className={cn('overflow-hidden p-0', variant === 'horizontal' && 'flex-row')}
+        className={cn('overflow-hidden p-0 flex-1', variant === 'horizontal' && 'flex-row')}
       >
         <View
           className={cn(
@@ -143,57 +143,59 @@ export const ListingCard = React.memo(function ListingCard({
             />
           </View>
         </View>
-        <View className={cn('p-3', variant === 'horizontal' && 'flex-1')}
+        <View
+          className={cn('p-3 flex-1 justify-between', variant === 'horizontal' && 'flex-1')}
         >
-          {urgency && (
-            <View className="mb-1.5">
-              <UrgencyBadge urgency={urgency} />
-            </View>
-          )}
-          <Text variant="body-sm" className="mb-1 font-semibold" numberOfLines={2}>
-            {listing.title}
-          </Text>
+          <View>
+            {urgency && (
+              <View className="mb-1.5">
+                <UrgencyBadge urgency={urgency} />
+              </View>
+            )}
+            <Text
+              variant="body-sm"
+              className="mb-1 font-semibold"
+              style={{ minHeight: 36 }}
+              numberOfLines={2}
+            >
+              {listing.title}
+            </Text>
 
-          {!isSoldOut && listing.quantityRemaining <= 3 && (
-            <View className="mb-2">
-              <Badge variant="warning">
-                {t('customer.listing.onlyLeft', { count: listing.quantityRemaining })}
+            {isMystery && variant !== 'horizontal' && (
+              <Text variant="caption" className="mb-1.5 text-muted">
+                {t('customer.listing.worthOfSurprises', {
+                  value: formatCurrency(listing.estimatedRetailValue ?? listing.originalPrice),
+                })}
+              </Text>
+            )}
+
+            <View className="mb-2 flex-row flex-wrap items-center">
+              <Text className="text-lg font-bold text-primary">
+                {formatCurrency(effectivePrice)}
+              </Text>
+              <Text className="ml-2 text-sm text-muted line-through">
+                {formatCurrency(isFlashSale ? listing.salePrice : listing.originalPrice)}
+              </Text>
+              <Badge variant={isFlashSale ? 'danger' : 'success'} className="ml-2">
+                {isFlashSale
+                  ? t('customer.listing.flash')
+                  : t('customer.listing.discount', { discount })}
               </Badge>
             </View>
-          )}
 
-          {isMystery && variant !== 'horizontal' && (
-            <Text variant="caption" className="mb-1.5 text-muted">
-              {t('customer.listing.worthOfSurprises', {
-                value: formatCurrency(listing.estimatedRetailValue ?? listing.originalPrice),
-              })}
-            </Text>
-          )}
+            {showCountdown && (
+              <View className="mb-2">
+                <CountdownTimer
+                  targetDate={listing.pickupWindowEnd}
+                  label={t('customer.listing.pickupEnds')}
+                />
+              </View>
+            )}
 
-          <View className="mb-2 flex-row flex-wrap items-center">
-            <Text className="text-lg font-bold text-primary">{formatCurrency(effectivePrice)}</Text>
-            <Text className="ml-2 text-sm text-muted line-through">
-              {formatCurrency(isFlashSale ? listing.salePrice : listing.originalPrice)}
-            </Text>
-            <Badge variant={isFlashSale ? 'danger' : 'success'} className="ml-2">
-              {isFlashSale
-                ? t('customer.listing.flash')
-                : t('customer.listing.discount', { discount })}
-            </Badge>
+            <DietaryBadgeRow tags={listing.dietaryTags} max={variant === 'horizontal' ? 1 : 2} />
           </View>
 
-          {showCountdown && (
-            <View className="mb-2">
-              <CountdownTimer
-                targetDate={listing.pickupWindowEnd}
-                label={t('customer.listing.pickupEnds')}
-              />
-            </View>
-          )}
-
-          <DietaryBadgeRow tags={listing.dietaryTags} max={variant === 'horizontal' ? 1 : 2} />
-
-          <Text variant="caption" className="mt-2 text-muted">
+          <Text variant="caption" className="mt-2 text-muted" numberOfLines={1}>
             {t('customer.listing.quantityLeft', { count: listing.quantityRemaining })}
             {' · '}
             {pickupTimeLabel}

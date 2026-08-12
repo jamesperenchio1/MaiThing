@@ -115,6 +115,7 @@ export default {
       featured: 'แนะนำ',
       nearYou: 'ใกล้คุณ',
       cravingNow: 'อยากกินตอนนี้',
+      almostGone: 'ใกล้หมดแล้ว',
       forYou: 'สำหรับคุณ',
       endingSoon: 'กำลังจะหมด',
       under100: 'ต่ำกว่า ฿100',

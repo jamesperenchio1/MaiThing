@@ -10,13 +10,26 @@ interface SectionHeaderProps {
   action?: string;
   onPress?: () => void;
   className?: string;
+  size?: 'default' | 'compact';
 }
 
-export function SectionHeader({ title, action, onPress, className }: SectionHeaderProps) {
+export function SectionHeader({
+  title,
+  action,
+  onPress,
+  className,
+  size = 'default',
+}: SectionHeaderProps) {
   const colors = useThemeColor();
   return (
-    <View className={cn('mb-3 flex-row items-center justify-between px-4', className)}>
-      <Text variant="h3">{title}</Text>
+    <View
+      className={cn(
+        'flex-row items-center justify-between px-4',
+        size === 'compact' ? 'mb-2' : 'mb-3',
+        className
+      )}
+    >
+      <Text variant={size === 'compact' ? 'h4' : 'h3'}>{title}</Text>
       {action && onPress && (
         <PressableScale onPress={onPress} className="flex-row items-center">
           <Text variant="body-sm" className="text-primary">

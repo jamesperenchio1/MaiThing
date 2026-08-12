@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "maithing.app"
-               BlueprintName = "maithing"
-               ReferencedContainer = "container:maithing.xcodeproj">
+               BuildableName = "MaiThing.app"
+               BlueprintName = "MaiThing"
+               ReferencedContainer = "container:MaiThing.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "maithingTests.xctest"
-               BlueprintName = "maithingTests"
-               ReferencedContainer = "container:maithing.xcodeproj">
+               BuildableName = "MaiThingTests.xctest"
+               BlueprintName = "MaiThingTests"
+               ReferencedContainer = "container:MaiThing.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "maithing.app"
-            BlueprintName = "maithing"
-            ReferencedContainer = "container:maithing.xcodeproj">
+            BuildableName = "MaiThing.app"
+            BlueprintName = "MaiThing"
+            ReferencedContainer = "container:MaiThing.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "maithing.app"
-            BlueprintName = "maithing"
-            ReferencedContainer = "container:maithing.xcodeproj">
+            BuildableName = "MaiThing.app"
+            BlueprintName = "MaiThing"
+            ReferencedContainer = "container:MaiThing.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

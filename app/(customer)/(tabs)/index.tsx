@@ -188,27 +188,28 @@ export default function CustomerHomeScreen() {
     [listings, favoriteMerchantIds]
   );
 
-  const endingSoon = useMemo(
-    () =>
-      [...(listings ?? [])]
-        .filter((l) => new Date(l.pickupWindowEnd).getTime() > Date.now())
-        .sort(
-          (a, b) => new Date(a.pickupWindowEnd).getTime() - new Date(b.pickupWindowEnd).getTime()
-        )
-        .slice(0, 6),
-    [listings]
-  );
-
   const under100 = useMemo(
     () => (listings ?? []).filter((l) => l.salePrice <= 100).slice(0, 6),
     [listings]
   );
 
-  const goingFast = useMemo(
+  // Merges the former "Going Fast" (low stock) and "Ending Soon" (soonest pickup)
+  // rails — both are urgency signals already surfaced per-card via UrgencyBadge.
+  const almostGone = useMemo(
     () =>
       [...(listings ?? [])]
-        .filter((l) => l.status === 'active' && l.quantityRemaining > 0 && l.quantityRemaining <= 3)
-        .sort((a, b) => a.quantityRemaining - b.quantityRemaining)
+        .filter(
+          (l) =>
+            l.status === 'active' &&
+            l.quantityRemaining > 0 &&
+            new Date(l.pickupWindowEnd).getTime() > Date.now()
+        )
+        .sort((a, b) => {
+          if (a.quantityRemaining !== b.quantityRemaining) {
+            return a.quantityRemaining - b.quantityRemaining;
+          }
+          return new Date(a.pickupWindowEnd).getTime() - new Date(b.pickupWindowEnd).getTime();
+        })
         .slice(0, 6),
     [listings]
   );
@@ -398,10 +399,11 @@ export default function CustomerHomeScreen() {
         locale={i18n.language as 'en' | 'th'}
       />
 
-      {goingFast.length > 0 && (
+      {almostGone.length > 0 && (
         <CollectionSection
-          title="Going Fast"
-          listings={goingFast}
+          title={t('customer.home.almostGone')}
+          listings={almostGone}
+          variant="featured"
           onSeeAll={() =>
             router.push({
               pathname: '/(customer)/(tabs)/discover',
@@ -428,18 +430,11 @@ export default function CustomerHomeScreen() {
         />
       )}
 
-      {endingSoon.length > 0 && (
-        <CollectionSection
-          title={t('customer.home.endingSoon')}
-          listings={endingSoon}
-          onSeeAll={() => router.push('/(customer)/(tabs)/discover' as any)}
-        />
-      )}
-
       {under100.length > 0 && (
         <CollectionSection
           title={t('customer.home.under100')}
           listings={under100}
+          variant="compact"
           onSeeAll={() => router.push('/(customer)/(tabs)/discover' as any)}
         />
       )}
@@ -448,6 +443,7 @@ export default function CustomerHomeScreen() {
         <CollectionSection
           title={t('customer.home.mysteryBoxes')}
           listings={mysteryBoxes}
+          variant="compact"
           onSeeAll={() =>
             router.push({
               pathname: '/(customer)/(tabs)/discover',
@@ -485,13 +481,15 @@ export default function CustomerHomeScreen() {
       </View>
 
       {merchants && merchants.length > 0 && (
-        <MapPreviewCard
-          title={t('customer.home.mapTitle', { count: merchants.length })}
-          subtitle={t('customer.home.mapSubtitle')}
-          buttonLabel={t('customer.home.openMap')}
-          merchants={merchants}
-          onPress={() => router.push('/(customer)/(tabs)/map' as any)}
-        />
+        <View className="mb-6">
+          <MapPreviewCard
+            title={t('customer.home.mapTitle', { count: merchants.length })}
+            subtitle={t('customer.home.mapSubtitle')}
+            buttonLabel={t('customer.home.openMap')}
+            merchants={merchants}
+            onPress={() => router.push('/(customer)/(tabs)/map' as any)}
+          />
+        </View>
       )}
 
       {hasError && (

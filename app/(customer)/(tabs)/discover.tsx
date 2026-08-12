@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -300,10 +300,20 @@ export default function DiscoverScreen() {
     [merchants]
   );
 
-  const handleSubmit = (value: string) => {
-    setSearchQuery(value);
-    addSearch(value);
-  };
+  const handleSubmit = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+      addSearch(value);
+    },
+    [addSearch]
+  );
+
+  const featuredDeal = useMemo(() => {
+    if (searchQuery || !listings || listings.length === 0) return null;
+    return [...listings].sort(
+      (a, b) => 1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice)
+    )[0];
+  }, [searchQuery, listings]);
 
   const activeFilterCount =
     (selectedCategory ? 1 : 0) +
@@ -414,24 +424,21 @@ export default function DiscoverScreen() {
       </ScrollView>
 
       {/* Deal of the Day — full bleed */}
-      {!searchQuery &&
-        listings &&
-        listings.length > 0 &&
+      {featuredDeal &&
         (() => {
-          const featured = [...listings].sort(
-            (a, b) => 1 - b.salePrice / b.originalPrice - (1 - a.salePrice / a.originalPrice)
-          )[0];
-          const discount = Math.round((1 - featured.salePrice / featured.originalPrice) * 100);
+          const discount = Math.round(
+            (1 - featuredDeal.salePrice / featuredDeal.originalPrice) * 100
+          );
           return (
             <PressableScale
               testID="deal-of-the-day-card"
-              onPress={() => router.push(`/(customer)/listing/${featured.id}` as any)}
+              onPress={() => router.push(`/(customer)/listing/${featuredDeal.id}` as any)}
               scale={0.99}
               className="mb-3"
             >
               <View className="h-44 overflow-hidden">
                 <Image
-                  source={{ uri: featured.images[0] }}
+                  source={{ uri: featuredDeal.images[0] }}
                   className="absolute inset-0 h-full w-full"
                   resizeMode="cover"
                 />
@@ -448,14 +455,14 @@ export default function DiscoverScreen() {
                   </View>
                   <View>
                     <Text variant="h3" className="text-white mb-1" numberOfLines={1}>
-                      {featured.title}
+                      {featuredDeal.title}
                     </Text>
                     <View className="flex-row items-center">
                       <Text className="text-white text-xl font-bold">
-                        {formatCurrency(featured.salePrice)}
+                        {formatCurrency(featuredDeal.salePrice)}
                       </Text>
                       <Text className="text-white/60 text-sm line-through ml-2">
-                        {formatCurrency(featured.originalPrice)}
+                        {formatCurrency(featuredDeal.originalPrice)}
                       </Text>
                       <View className="ml-2 bg-white/90 rounded-full px-2.5 py-0.5">
                         <Text variant="caption" className="text-primary font-bold">

@@ -11,6 +11,7 @@ interface CollectionSectionProps {
   listings: Listing[];
   isLoading?: boolean;
   onSeeAll?: () => void;
+  variant?: 'default' | 'featured' | 'compact';
 }
 
 export function CollectionSection({
@@ -18,20 +19,27 @@ export function CollectionSection({
   listings,
   isLoading,
   onSeeAll,
+  variant = 'default',
 }: CollectionSectionProps) {
   const { t } = useTranslation();
-  const visibleListings = listings.slice(0, 6);
+  const visibleListings = listings.slice(0, variant === 'compact' ? 4 : 6);
   return (
-    <View className="mb-6">
+    <View
+      className={cn(
+        variant === 'compact' ? 'mb-4' : 'mb-6',
+        variant === 'featured' && 'bg-primary/5 rounded-3xl py-4'
+      )}
+    >
       <SectionHeader
         title={title}
         action={onSeeAll ? t('common.seeAll') : undefined}
         onPress={onSeeAll}
+        size={variant === 'compact' ? 'compact' : 'default'}
       />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ alignItems: 'flex-start' }}
+        contentContainerStyle={{ alignItems: 'stretch' }}
       >
         {isLoading
           ? Array.from({ length: 3 }).map((_, i) => (
@@ -40,7 +48,7 @@ export function CollectionSection({
           : visibleListings.map((listing, index) => (
               <View
                 key={listing.id}
-                className={cn('w-64', index !== visibleListings.length - 1 && 'mr-3')}
+                className={cn('w-64 flex-1', index !== visibleListings.length - 1 && 'mr-3')}
               >
                 <ListingCard listing={listing} variant="vertical" />
               </View>

@@ -115,6 +115,7 @@ export default {
       featured: 'Featured',
       nearYou: 'Near You',
       cravingNow: 'Craving right now',
+      almostGone: 'Almost Gone',
       forYou: 'For You',
       endingSoon: 'Ending Soon',
       under100: 'Under ฿100',
