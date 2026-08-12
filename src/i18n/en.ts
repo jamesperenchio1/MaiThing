@@ -1,10 +1,10 @@
 export default {
   app: {
-    name: 'Maithing',
+    name: 'MaiThing',
     tagline: 'Save money. Save food. Help the planet.',
   },
   auth: {
-    welcome: 'Welcome to Maithing',
+    welcome: 'Welcome to MaiThing',
     subtitle: 'Rescue delicious food at unbeatable prices',
     signIn: 'Sign In',
     signUp: 'Sign Up',
@@ -27,7 +27,7 @@ export default {
       helpPlanet: 'Help the Planet',
       helpPlanetDesc: 'Reduce food waste one delicious rescue at a time.',
       getStarted: 'Get Started',
-    saveChanges: 'Save Changes',
+      saveChanges: 'Save Changes',
       next: 'Next',
       step: 'Step {{step}}',
       howItWorks: {
@@ -54,7 +54,7 @@ export default {
         mealsSaved: 'Meals saved',
         partners: 'Partners',
       },
-      context: 'From Siam to Thong Lor, Ari to Silom — rescue food you love at up to 70% off.',
+      context: 'Rescue food you love at up to 70% off.',
     },
   },
   common: {
@@ -299,7 +299,7 @@ export default {
       points: 'Points',
       bonusCredit: 'Bonus credit',
       lifetime: 'Lifetime',
-      cardTitle: 'Maithing Wallet',
+      cardTitle: 'MaiThing Wallet',
     },
   },
   merchant: {
@@ -321,7 +321,7 @@ export default {
       stepListing: 'First listing',
       stepListingDesc: 'Create your first rescue box or fixed item in under 2 minutes.',
       getStarted: 'Get Started',
-    saveChanges: 'Save Changes',
+      saveChanges: 'Save Changes',
       skipForNow: 'Skip for now',
       businessInfo: 'Business Info',
       verification: 'Verification',

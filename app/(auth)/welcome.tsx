@@ -132,7 +132,7 @@ export default function WelcomeScreen() {
               {t('auth.onboarding.stats.title')}
             </Text>
             <View className="flex-row justify-between">
-              <View className="flex-1 items-center">
+              <View className="flex-1 items-center px-1">
                 <Users size={24} color={colors.white} />
                 <Text className="mt-2 text-xl font-bold text-white">
                   {formatCompactNumber(APP_STATS.totalRescuers)}
@@ -141,7 +141,7 @@ export default function WelcomeScreen() {
                   {t('auth.onboarding.stats.rescuers')}
                 </Text>
               </View>
-              <View className="flex-1 items-center border-x border-white/20">
+              <View className="flex-1 items-center px-1">
                 <UtensilsCrossed size={24} color={colors.white} />
                 <Text className="mt-2 text-xl font-bold text-white">
                   {formatCompactNumber(APP_STATS.totalMealsSaved)}
@@ -150,7 +150,7 @@ export default function WelcomeScreen() {
                   {t('auth.onboarding.stats.mealsSaved')}
                 </Text>
               </View>
-              <View className="flex-1 items-center">
+              <View className="flex-1 items-center px-1">
                 <BadgeCheck size={24} color={colors.white} />
                 <Text className="mt-2 text-xl font-bold text-white">
                   {APP_STATS.totalMerchantPartners}+
@@ -183,8 +183,8 @@ export default function WelcomeScreen() {
             ))}
           </View>
 
-          <View className="mb-8 w-full rounded-2xl bg-muted/10 p-4">
-            <View className="mb-3 flex-row items-center justify-center space-x-4">
+          <View className="mb-8 w-full items-center rounded-2xl bg-muted/10 px-4 py-3">
+            <View className="flex-row items-center justify-center gap-4">
               <View className="flex-row items-center">
                 <ShieldCheck size={16} color={colors.success} />
                 <Text variant="body-sm" className="ml-1.5">
@@ -198,7 +198,7 @@ export default function WelcomeScreen() {
                 </Text>
               </View>
             </View>
-            <Text variant="caption" className="text-center text-muted">
+            <Text variant="caption" className="mt-1.5 text-center text-muted">
               {t('auth.onboarding.context')}
             </Text>
           </View>
@@ -254,7 +254,7 @@ export default function WelcomeScreen() {
               </View>
               <View className="flex-1">
                 <Text variant="h4" className="mb-0.5">
-                  Sell on Maithing
+                  Sell on MaiThing
                 </Text>
                 <Text variant="body-sm" className="text-muted">
                   Become a Partner and turn surplus food into revenue.

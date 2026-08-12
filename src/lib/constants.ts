@@ -1,6 +1,6 @@
 import type { Category, Coordinates } from '@/src/types';
 
-export const APP_NAME = 'Maithing';
+export const APP_NAME = 'MaiThing';
 export const APP_TAGLINE = 'Save money. Save food. Help the planet.';
 export const APP_TAGLINE_TH = 'ประหยัดเงิน ลด food waste ช่วยโลก';
 

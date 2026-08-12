@@ -1,10 +1,10 @@
 export default {
   app: {
-    name: 'Maithing',
+    name: 'MaiThing',
     tagline: 'ประหยัดเงิน ลด food waste ช่วยโลก',
   },
   auth: {
-    welcome: 'ยินดีต้อนรับสู่ Maithing',
+    welcome: 'ยินดีต้อนรับสู่ MaiThing',
     subtitle: 'ช่วยอาหารอร่อยในราคาที่ไม่ต้องแพง',
     signIn: 'เข้าสู่ระบบ',
     signUp: 'สมัครสมาชิก',
@@ -27,7 +27,7 @@ export default {
       helpPlanet: 'ช่วยโลก',
       helpPlanetDesc: 'ลด food waste ทีละมื้อ',
       getStarted: 'เริ่มต้นใช้งาน',
-    saveChanges: 'บันทึกการเปลี่ยนแปลง',
+      saveChanges: 'บันทึกการเปลี่ยนแปลง',
       next: 'ถัดไป',
       step: 'ขั้นตอน {{step}}',
       howItWorks: {
@@ -54,7 +54,7 @@ export default {
         mealsSaved: 'มื้ออาหารที่ช่วยไว้',
         partners: 'พาร์ทเนอร์',
       },
-      context: 'จากสยามถึงทองหล่อ อารีย์ถึงสีลม — ช่วยอาหารที่คุณชื่นชอบในราคาลดสูงสุด 70%',
+      context: 'ช่วยอาหารที่คุณชื่นชอบในราคาลดสูงสุด 70%',
     },
   },
   common: {
@@ -297,7 +297,7 @@ export default {
       points: 'คะแนน',
       bonusCredit: 'เครดิตโบนัส',
       lifetime: 'สะสม',
-      cardTitle: 'กระเป๋าเงิน Maithing',
+      cardTitle: 'กระเป๋าเงิน MaiThing',
     },
   },
   merchant: {

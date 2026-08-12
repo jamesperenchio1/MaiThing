@@ -46,9 +46,6 @@ export function ImpactWidget({ impact }: ImpactWidgetProps) {
             <Text variant="caption" className="text-center" numberOfLines={1}>
               {item.label}
             </Text>
-            {index < items.length - 1 && (
-              <View className="absolute right-0 top-1/4 h-1/2 w-px bg-border" />
-            )}
           </View>
         ))}
       </View>

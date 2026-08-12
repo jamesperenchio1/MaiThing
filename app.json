@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "maithing",
+    "name": "MaiThing",
     "slug": "maithing",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -44,8 +44,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Maithing to access your camera to scan customer pickup QR codes.",
-          "microphonePermission": "Allow Maithing to access your microphone.",
+          "cameraPermission": "Allow MaiThing to access your camera to scan customer pickup QR codes.",
+          "microphonePermission": "Allow MaiThing to access your microphone.",
           "recordAudioAndroid": false
         }
       ],

@@ -32,7 +32,7 @@ import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { FlashList } from '@shopify/flash-list';
 import { useWallet, useWalletTransactions, useWalletRewards } from '@/src/hooks/useWallet';
-import { useNetworkState } from'@/src/hooks/useNetworkState';
+import { useNetworkState } from '@/src/hooks/useNetworkState';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import { formatCurrency } from '@/src/lib/utils';
@@ -79,9 +79,7 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
           </Text>
         </View>
         <View className="flex-row items-center">
-          <Text
-            className={`text-base font-bold ${isIncoming ? 'text-primary' : 'text-danger'}`}
-          >
+          <Text className={`text-base font-bold ${isIncoming ? 'text-primary' : 'text-danger'}`}>
             {isIncoming ? '+' : '-'}
             {formatCurrency(transaction.amount)}
           </Text>
@@ -97,7 +95,15 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
 
 const TOP_UP_AMOUNTS = [50, 100, 200, 500, 1000];
 
-function TopUpModal({ visible, onClose, isOffline }: { visible: boolean; onClose: () => void; isOffline: boolean }) {
+function TopUpModal({
+  visible,
+  onClose,
+  isOffline,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  isOffline: boolean;
+}) {
   const { t } = useTranslation();
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
@@ -149,7 +155,12 @@ function TopUpModal({ visible, onClose, isOffline }: { visible: boolean; onClose
             <View className="rounded-t-3xl bg-background px-6 pb-10 pt-6">
               <View className="mb-6 flex-row items-center justify-between">
                 <Text variant="h3">{t('customer.wallet.topUpTitle')}</Text>
-                <PressableScale onPress={onClose} scale={0.9} accessibilityLabel="Close" hitSlop={8}>
+                <PressableScale
+                  onPress={onClose}
+                  scale={0.9}
+                  accessibilityLabel="Close"
+                  hitSlop={8}
+                >
                   <View className="rounded-full bg-muted/10 p-2">
                     <X size={20} color={colors.muted} />
                   </View>
@@ -185,7 +196,9 @@ function TopUpModal({ visible, onClose, isOffline }: { visible: boolean; onClose
                   className={`rounded-2xl border-2 px-5 py-3 ${isCustom ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}
                   scale={0.96}
                 >
-                  <Text className={`font-semibold ${isCustom ? 'text-primary' : 'text-foreground'}`}>
+                  <Text
+                    className={`font-semibold ${isCustom ? 'text-primary' : 'text-foreground'}`}
+                  >
                     {t('customer.wallet.other')}
                   </Text>
                 </PressableScale>
@@ -204,7 +217,10 @@ function TopUpModal({ visible, onClose, isOffline }: { visible: boolean; onClose
               {isOffline && (
                 <View className="mb-4 flex-row items-center rounded-2xl bg-amber-500/10 px-4 py-3">
                   <AlertTriangle size={18} color={colors.warning} />
-                  <Text variant="body-sm" className="ml-2 flex-1 text-amber-700 dark:text-amber-300">
+                  <Text
+                    variant="body-sm"
+                    className="ml-2 flex-1 text-amber-700 dark:text-amber-300"
+                  >
                     {t('common.noConnection')}
                   </Text>
                 </View>
@@ -232,7 +248,7 @@ function RewardStrip({ rewards }: { rewards?: WalletReward }) {
   const colors = useThemeColor();
   return (
     <View className="mx-4 mb-5 flex-row overflow-hidden rounded-2xl bg-card">
-      <View className="flex-1 items-center border-r border-border py-4">
+      <View className="flex-1 items-center py-4">
         <Sparkles size={16} color={colors.primary} />
         <Text className="mt-1 text-lg font-bold text-foreground">
           {(rewards?.points ?? 0).toLocaleString()}
@@ -241,7 +257,7 @@ function RewardStrip({ rewards }: { rewards?: WalletReward }) {
           {t('customer.wallet.points')}
         </Text>
       </View>
-      <View className="flex-1 items-center border-r border-border py-4">
+      <View className="flex-1 items-center py-4">
         <TrendingUp size={16} color={colors.primary} />
         <Text className="mt-1 text-lg font-bold text-primary">
           +{formatCurrency(rewards?.bonusBalance ?? 0)}
@@ -309,10 +325,7 @@ export default function WalletScreen() {
       </Text>
 
       {/* Balance card — edge-to-edge feel with mx-4 + premium rounding */}
-      <View
-        testID="balance-card"
-        className="mx-4 mb-5 overflow-hidden rounded-3xl bg-primary"
-      >
+      <View testID="balance-card" className="mx-4 mb-5 overflow-hidden rounded-3xl bg-primary">
         {/* Decorative circles */}
         <View
           style={{
@@ -363,12 +376,13 @@ export default function WalletScreen() {
           <Text
             adjustsFontSizeToFit
             numberOfLines={1}
-            minimumFontScale={0.6}
+            minimumFontScale={0.5}
             style={{
               color: '#fff',
               fontSize: Math.round(40 * fontScaleFactor),
               fontWeight: '700',
               marginBottom: 24,
+              width: '100%',
             }}
           >
             {isLoading
@@ -420,7 +434,11 @@ export default function WalletScreen() {
 
   return (
     <Screen testID="wallet-screen" scrollable={false} className="bg-background">
-      <TopUpModal visible={topUpVisible} onClose={() => setTopUpVisible(false)} isOffline={isOffline} />
+      <TopUpModal
+        visible={topUpVisible}
+        onClose={() => setTopUpVisible(false)}
+        isOffline={isOffline}
+      />
       {isError ? (
         <View className="flex-1 pb-6">
           {listHeader}
@@ -444,7 +462,12 @@ export default function WalletScreen() {
           ListEmptyComponent={listEmpty}
           ListFooterComponent={
             hasMore ? (
-              <Button variant="ghost" fullWidth onPress={() => setShowAll(true)} className="mt-1 mb-2">
+              <Button
+                variant="ghost"
+                fullWidth
+                onPress={() => setShowAll(true)}
+                className="mt-1 mb-2"
+              >
                 {t('common.loadMore')}
               </Button>
             ) : null
