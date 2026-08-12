@@ -260,8 +260,7 @@ export default function CreateListingScreen() {
 
   // Flag if original price is >10% higher than the source listing/template price
   const isPriceBumpFlagged =
-    sourceOriginalPrice !== null &&
-    currentOriginalPrice > sourceOriginalPrice * 1.1;
+    sourceOriginalPrice !== null && currentOriginalPrice > sourceOriginalPrice * 1.1;
 
   const loadTemplate = (template: {
     name?: string;
@@ -431,7 +430,9 @@ export default function CreateListingScreen() {
           pickupWindowDurationHours: durationHours,
           autoExpiry,
           isFlagged: isPriceBumpFlagged || undefined,
-          flagReason: isPriceBumpFlagged ? 'Price increase exceeds 10% of source listing' : undefined,
+          flagReason: isPriceBumpFlagged
+            ? 'Price increase exceeds 10% of source listing'
+            : undefined,
         },
         {
           onSuccess: () => {
@@ -496,7 +497,15 @@ export default function CreateListingScreen() {
           'new_deal',
           `/(merchant)/(tabs)/inventory`
         ).catch(() => {});
-        router.replace('/(merchant)/(tabs)/inventory' as any);
+        // Defer navigation one frame so the success state settles and the router
+        // context is stable (avoids the rare "NavigationContainer" error).
+        setTimeout(() => {
+          try {
+            router.replace('/(merchant)/(tabs)/inventory' as any);
+          } catch {
+            // Last-resort fallback if the router context is transiently unavailable.
+          }
+        }, 0);
       },
     });
   };

@@ -14,6 +14,7 @@
  *   saved_addresses, restock_alerts, followed_merchant_notifications, listing_templates
  */
 import { supabase } from '@/src/lib/supabase';
+import { buildStaticMapUrl } from '@/src/lib/maps';
 import { generatePickupCode, calculateDistance } from '@/src/lib/utils';
 import { Platform } from 'react-native';
 import type {
@@ -164,6 +165,7 @@ function mapLocation(
       country: 'Thailand',
     },
     coordinates,
+    staticMapUrl: (row.static_map_url as string) ?? undefined,
     distance,
     phone: (row.phone as string) ?? '',
     categories: Array.isArray(row.cuisine_types) ? (row.cuisine_types as string[]) : [],
@@ -713,15 +715,23 @@ const usersRepo: UserRepository = {
     if (error || !data) return null;
     return {
       userId: data.user_id as string,
-      dietaryPreferences: Array.isArray(data.dietary_preferences) ? (data.dietary_preferences as string[]) : [],
+      dietaryPreferences: Array.isArray(data.dietary_preferences)
+        ? (data.dietary_preferences as string[])
+        : [],
       priceRange: (data.price_range as UserPersonality['priceRange']) ?? 'any',
-      preferredCategories: Array.isArray(data.preferred_categories) ? (data.preferred_categories as string[]) : [],
+      preferredCategories: Array.isArray(data.preferred_categories)
+        ? (data.preferred_categories as string[])
+        : [],
       discoveryStyle: (data.discovery_style as UserPersonality['discoveryStyle']) ?? 'explore',
-      environmentalMotivation: (data.environmental_motivation as UserPersonality['environmentalMotivation']) ?? 'medium',
-      pickupTimePreference: (data.pickup_time_preference as UserPersonality['pickupTimePreference']) ?? 'any',
+      environmentalMotivation:
+        (data.environmental_motivation as UserPersonality['environmentalMotivation']) ?? 'medium',
+      pickupTimePreference:
+        (data.pickup_time_preference as UserPersonality['pickupTimePreference']) ?? 'any',
       maxDistanceKm: typeof data.max_distance_km === 'number' ? data.max_distance_km : 10,
       notificationStyle: (data.notification_style as UserPersonality['notificationStyle']) ?? 'all',
-      favoriteMerchants: Array.isArray(data.favorite_merchants) ? (data.favorite_merchants as string[]) : [],
+      favoriteMerchants: Array.isArray(data.favorite_merchants)
+        ? (data.favorite_merchants as string[])
+        : [],
       orderPatterns: (data.order_patterns as Record<string, unknown>) ?? {},
       onboardingCompleted: data.onboarding_completed === true,
       createdAt: (data.created_at as string) ?? new Date().toISOString(),
@@ -731,17 +741,22 @@ const usersRepo: UserRepository = {
 
   async upsertUserPersonality(userId, data): Promise<UserPersonality> {
     const payload: Record<string, unknown> = {};
-    if (data.dietaryPreferences !== undefined) payload.dietary_preferences = data.dietaryPreferences;
+    if (data.dietaryPreferences !== undefined)
+      payload.dietary_preferences = data.dietaryPreferences;
     if (data.priceRange !== undefined) payload.price_range = data.priceRange;
-    if (data.preferredCategories !== undefined) payload.preferred_categories = data.preferredCategories;
+    if (data.preferredCategories !== undefined)
+      payload.preferred_categories = data.preferredCategories;
     if (data.discoveryStyle !== undefined) payload.discovery_style = data.discoveryStyle;
-    if (data.environmentalMotivation !== undefined) payload.environmental_motivation = data.environmentalMotivation;
-    if (data.pickupTimePreference !== undefined) payload.pickup_time_preference = data.pickupTimePreference;
+    if (data.environmentalMotivation !== undefined)
+      payload.environmental_motivation = data.environmentalMotivation;
+    if (data.pickupTimePreference !== undefined)
+      payload.pickup_time_preference = data.pickupTimePreference;
     if (data.maxDistanceKm !== undefined) payload.max_distance_km = data.maxDistanceKm;
     if (data.notificationStyle !== undefined) payload.notification_style = data.notificationStyle;
     if (data.favoriteMerchants !== undefined) payload.favorite_merchants = data.favoriteMerchants;
     if (data.orderPatterns !== undefined) payload.order_patterns = data.orderPatterns;
-    if (data.onboardingCompleted !== undefined) payload.onboarding_completed = data.onboardingCompleted;
+    if (data.onboardingCompleted !== undefined)
+      payload.onboarding_completed = data.onboardingCompleted;
 
     const { data: row, error } = await supabase
       .from('user_personality')
@@ -749,7 +764,9 @@ const usersRepo: UserRepository = {
       .select()
       .single();
     if (error) throw error;
-    return usersRepo.getUserPersonality(userId).then((p) => p ?? (row as unknown as UserPersonality));
+    return usersRepo
+      .getUserPersonality(userId)
+      .then((p) => p ?? (row as unknown as UserPersonality));
   },
 };
 
@@ -845,7 +862,10 @@ const merchantsRepo: MerchantRepository = {
     if (data.description) updateData.description = data.description;
     if (data.phone) updateData.phone = data.phone;
     if (data.categories) updateData.cuisine_types = data.categories;
-    if (data.coordinates) updateData.coordinates = data.coordinates;
+    if (data.coordinates) {
+      updateData.coordinates = data.coordinates;
+      updateData.static_map_url = buildStaticMapUrl(data.coordinates) ?? undefined;
+    }
     const { data: row, error } = await supabase
       .from('locations')
       .update(updateData)
@@ -1146,13 +1166,18 @@ const merchantsRepo: MerchantRepository = {
     return {
       merchantId: data.merchant_id as string,
       brandVoice: (data.brand_voice as MerchantPersonality['brandVoice']) ?? 'friendly',
-      sustainabilityFocus: (data.sustainability_focus as MerchantPersonality['sustainabilityFocus']) ?? 'medium',
-      communityEngagement: (data.community_engagement as MerchantPersonality['communityEngagement']) ?? 'medium',
-      customerCommunication: (data.customer_communication as MerchantPersonality['customerCommunication']) ?? 'responsive',
+      sustainabilityFocus:
+        (data.sustainability_focus as MerchantPersonality['sustainabilityFocus']) ?? 'medium',
+      communityEngagement:
+        (data.community_engagement as MerchantPersonality['communityEngagement']) ?? 'medium',
+      customerCommunication:
+        (data.customer_communication as MerchantPersonality['customerCommunication']) ??
+        'responsive',
       story: (data.story as string) ?? undefined,
       values: Array.isArray(data.values) ? (data.values as string[]) : [],
       autoWelcomeMessage: (data.auto_welcome_message as string) ?? undefined,
-      pickupPersonality: (data.pickup_personality as MerchantPersonality['pickupPersonality']) ?? 'standard',
+      pickupPersonality:
+        (data.pickup_personality as MerchantPersonality['pickupPersonality']) ?? 'standard',
       packagingStyle: (data.packaging_style as MerchantPersonality['packagingStyle']) ?? 'standard',
       socialLinks: (data.social_links as Record<string, string>) ?? {},
       onboardingCompleted: data.onboarding_completed === true,
@@ -1164,16 +1189,21 @@ const merchantsRepo: MerchantRepository = {
   async upsertMerchantPersonality(merchantId, data): Promise<MerchantPersonality> {
     const payload: Record<string, unknown> = {};
     if (data.brandVoice !== undefined) payload.brand_voice = data.brandVoice;
-    if (data.sustainabilityFocus !== undefined) payload.sustainability_focus = data.sustainabilityFocus;
-    if (data.communityEngagement !== undefined) payload.community_engagement = data.communityEngagement;
-    if (data.customerCommunication !== undefined) payload.customer_communication = data.customerCommunication;
+    if (data.sustainabilityFocus !== undefined)
+      payload.sustainability_focus = data.sustainabilityFocus;
+    if (data.communityEngagement !== undefined)
+      payload.community_engagement = data.communityEngagement;
+    if (data.customerCommunication !== undefined)
+      payload.customer_communication = data.customerCommunication;
     if (data.story !== undefined) payload.story = data.story;
     if (data.values !== undefined) payload.values = data.values;
-    if (data.autoWelcomeMessage !== undefined) payload.auto_welcome_message = data.autoWelcomeMessage;
+    if (data.autoWelcomeMessage !== undefined)
+      payload.auto_welcome_message = data.autoWelcomeMessage;
     if (data.pickupPersonality !== undefined) payload.pickup_personality = data.pickupPersonality;
     if (data.packagingStyle !== undefined) payload.packaging_style = data.packagingStyle;
     if (data.socialLinks !== undefined) payload.social_links = data.socialLinks;
-    if (data.onboardingCompleted !== undefined) payload.onboarding_completed = data.onboardingCompleted;
+    if (data.onboardingCompleted !== undefined)
+      payload.onboarding_completed = data.onboardingCompleted;
 
     const { data: row, error } = await supabase
       .from('merchant_personality')
@@ -1181,7 +1211,9 @@ const merchantsRepo: MerchantRepository = {
       .select()
       .single();
     if (error) throw error;
-    return merchantsRepo.getMerchantPersonality(merchantId).then((p) => p ?? (row as unknown as MerchantPersonality));
+    return merchantsRepo
+      .getMerchantPersonality(merchantId)
+      .then((p) => p ?? (row as unknown as MerchantPersonality));
   },
 };
 
@@ -1442,9 +1474,11 @@ const ordersRepo: OrderRepository = {
     if (error) throw error;
 
     if (data.couponId) {
-      await couponsRepo.recordCouponUse(data.couponId, data.customerId, row.id as string).catch(() => {
-        // Don't fail the order if coupon-use tracking fails; log is ignored here.
-      });
+      await couponsRepo
+        .recordCouponUse(data.couponId, data.customerId, row.id as string)
+        .catch(() => {
+          // Don't fail the order if coupon-use tracking fails; log is ignored here.
+        });
     }
 
     return mapOrder(row as Record<string, unknown>);
@@ -1909,12 +1943,16 @@ const couponsRepo: CouponRepository = {
     if (data.description) update.description = data.description;
     if (data.discountType) update.discount_type = data.discountType;
     if (data.discountValue !== undefined) update.discount_value = data.discountValue;
-    if (data.maxDiscountAmount !== undefined) update.max_discount_amount_thb = data.maxDiscountAmount;
+    if (data.maxDiscountAmount !== undefined)
+      update.max_discount_amount_thb = data.maxDiscountAmount;
     if (data.minOrderAmount !== undefined) update.min_order_amount = data.minOrderAmount;
     if (data.maxUses !== undefined) update.max_uses = data.maxUses;
-    if (data.perCustomerMaxUses !== undefined) update.per_customer_max_uses = data.perCustomerMaxUses;
-    if (data.firstTimeCustomerOnly !== undefined) update.first_time_customer_only = data.firstTimeCustomerOnly;
-    if (data.applicableCategories !== undefined) update.applicable_categories = data.applicableCategories;
+    if (data.perCustomerMaxUses !== undefined)
+      update.per_customer_max_uses = data.perCustomerMaxUses;
+    if (data.firstTimeCustomerOnly !== undefined)
+      update.first_time_customer_only = data.firstTimeCustomerOnly;
+    if (data.applicableCategories !== undefined)
+      update.applicable_categories = data.applicableCategories;
     if (data.applicableListingTypes !== undefined)
       update.applicable_listing_types = data.applicableListingTypes;
     if (data.validFrom) update.valid_from = data.validFrom;
@@ -1937,7 +1975,8 @@ const couponsRepo: CouponRepository = {
     if (!coupon) return { valid: false, discountAmount: 0, message: 'Coupon not found' };
 
     const now = new Date();
-    if (coupon.status !== 'active') return { valid: false, discountAmount: 0, message: 'Coupon is inactive' };
+    if (coupon.status !== 'active')
+      return { valid: false, discountAmount: 0, message: 'Coupon is inactive' };
     if (new Date(coupon.validFrom) > now)
       return { valid: false, discountAmount: 0, message: 'Coupon not yet valid' };
     if (new Date(coupon.validUntil) < now)
@@ -2000,7 +2039,8 @@ const couponsRepo: CouponRepository = {
     let discountAmount = 0;
     if (coupon.discountType === 'percentage') {
       discountAmount = Math.round((input.subtotal * coupon.discountValue) / 100);
-      if (coupon.maxDiscountAmount) discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
+      if (coupon.maxDiscountAmount)
+        discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
     } else {
       discountAmount = Math.round(coupon.discountValue);
     }

@@ -97,14 +97,20 @@ export default function MerchantOnboardingScreen() {
 
   const handleSkipToDashboard = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.replace('/(merchant)/(tabs)' as any);
+    finishOnboarding({ route: '/(merchant)/(tabs)' });
   };
 
-  const finishOnboarding = async () => {
+  const finishOnboarding = async (options?: { route?: string; createListing?: boolean }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    const destination = options?.route ?? '/(merchant)/(tabs)';
+
     if (user) {
-      router.replace('/(merchant)/(tabs)' as any);
+      if (options?.createListing) {
+        router.replace('/(merchant)/listings/new' as any);
+      } else {
+        router.replace(destination as any);
+      }
       return;
     }
 
@@ -119,10 +125,14 @@ export default function MerchantOnboardingScreen() {
       });
       setUser(registeredUser);
       setRole('merchant');
-      router.replace('/(merchant)/(tabs)' as any);
+      if (options?.createListing) {
+        router.replace('/(merchant)/listings/new' as any);
+      } else {
+        router.replace(destination as any);
+      }
     } catch (err) {
       // If registration fails, still let the user into the dashboard for demo purposes
-      router.replace('/(merchant)/(tabs)' as any);
+      router.replace(destination as any);
     } finally {
       setIsRegistering(false);
     }
@@ -239,47 +249,53 @@ export default function MerchantOnboardingScreen() {
             <Text variant="body" className="mb-6 text-center text-muted">
               Tell us about your shop so we can verify your partnership.
             </Text>
-            <Input
-              label="Business Name"
-              placeholder="Sukhumvit Bakery"
-              value={businessName}
-              onChangeText={setBusinessName}
-              leftIcon={<Building2 size={20} color={colors.muted} />}
-            />
-            <Input
-              label="Owner Name"
-              placeholder="Kornchai Srisuk"
-              value={ownerName}
-              onChangeText={setOwnerName}
-              leftIcon={<User size={20} color={colors.muted} />}
-            />
-            <Input
-              label="Email"
-              placeholder="shop@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-              leftIcon={<Mail size={20} color={colors.muted} />}
-            />
-            <Input
-              label="Phone"
-              placeholder="081-234-5678"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-              leftIcon={<Phone size={20} color={colors.muted} />}
-            />
-            {!user && (
+            <Card variant="outlined" className="w-full p-5">
               <Input
-                label="Create Password"
-                placeholder="••••••••"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                leftIcon={<Lock size={20} color={colors.muted} />}
+                label="Business Name"
+                placeholder="Sukhumvit Bakery"
+                value={businessName}
+                onChangeText={setBusinessName}
+                leftIcon={<Building2 size={20} color={colors.muted} />}
+                containerClassName="mb-4"
               />
-            )}
+              <Input
+                label="Owner Name"
+                placeholder="Kornchai Srisuk"
+                value={ownerName}
+                onChangeText={setOwnerName}
+                leftIcon={<User size={20} color={colors.muted} />}
+                containerClassName="mb-4"
+              />
+              <Input
+                label="Email"
+                placeholder="shop@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+                leftIcon={<Mail size={20} color={colors.muted} />}
+                containerClassName="mb-4"
+              />
+              <Input
+                label="Phone"
+                placeholder="081-234-5678"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+                leftIcon={<Phone size={20} color={colors.muted} />}
+                containerClassName="mb-4"
+              />
+              {!user && (
+                <Input
+                  label="Create Password"
+                  placeholder="••••••••"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                  leftIcon={<Lock size={20} color={colors.muted} />}
+                />
+              )}
+            </Card>
           </View>
         );
 
@@ -344,7 +360,7 @@ export default function MerchantOnboardingScreen() {
               <Button
                 fullWidth
                 variant="outline"
-                onPress={() => router.push('/(merchant)/listings/new' as any)}
+                onPress={() => finishOnboarding({ createListing: true })}
               >
                 Create your first listing
               </Button>
@@ -406,16 +422,12 @@ export default function MerchantOnboardingScreen() {
       />
 
       <View className="px-6 pb-10">
-        {/* Progress dots */}
-        <View className="mb-6 flex-row justify-center space-x-2">
-          {STEPS.map((s, i) => (
-            <View
-              key={s.key}
-              className={`h-2 rounded-full ${
-                i <= stepIndex ? 'w-6 bg-primary' : 'w-2 bg-muted/30'
-              }`}
-            />
-          ))}
+        {/* Progress bar — full width */}
+        <View className="mb-6 h-2 w-full flex-row overflow-hidden rounded-full bg-muted/20">
+          <View
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${((stepIndex + 1) / STEPS.length) * 100}%` }}
+          />
         </View>
 
         <Animated.View
@@ -440,7 +452,7 @@ export default function MerchantOnboardingScreen() {
           <Button
             fullWidth={isFirstStep}
             className={isFirstStep ? 'w-full' : 'flex-1'}
-            onPress={handleNext}
+            onPress={isLastStep ? () => finishOnboarding() : handleNext}
             loading={isRegistering}
             rightIcon={!isLastStep ? <ArrowRight size={18} color={colors.white} /> : undefined}
           >

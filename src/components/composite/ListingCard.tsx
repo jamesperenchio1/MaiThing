@@ -111,7 +111,7 @@ export const ListingCard = React.memo(function ListingCard({
         <View
           className={cn(
             'relative overflow-hidden bg-muted',
-            variant === 'vertical' ? 'h-40 w-full' : 'h-28 w-28'
+            variant === 'vertical' ? 'h-40 w-full' : 'w-32 self-stretch'
           )}
         >
           <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
@@ -171,7 +171,7 @@ export const ListingCard = React.memo(function ListingCard({
             </View>
           )}
 
-          {isMystery && (
+          {isMystery && variant !== 'horizontal' && (
             <Text variant="caption" className="mb-1.5 text-muted">
               {t('customer.listing.worthOfSurprises', {
                 value: formatCurrency(listing.estimatedRetailValue ?? listing.originalPrice),

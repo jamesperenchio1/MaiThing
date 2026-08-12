@@ -87,7 +87,7 @@ export default function ForgotPasswordScreen() {
                 We've sent a password reset link to your email address.
               </Text>
               <Button fullWidth onPress={() => router.replace('/(auth)/sign-in' as any)}>
-                Back to Sign In
+                Back to Log in
               </Button>
             </View>
           )}

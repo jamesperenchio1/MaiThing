@@ -1,3 +1,4 @@
+import { buildStaticMapUrl } from '@/src/lib/maps';
 import type {
   Address,
   BankAccount,
@@ -31,7 +32,7 @@ export const TEST_CUSTOMER: User = {
   id: 'user-customer-1',
   email: 'customer@maithing.test',
   phone: '081-234-5678',
-  name: 'Ariya Wong',
+  name: 'TEST Customer',
   avatarUrl: 'https://i.pravatar.cc/150?u=ariya',
   roles: ['customer'],
   preferredLanguage: 'en',
@@ -66,7 +67,7 @@ export const TEST_MERCHANT_USER: User = {
   id: 'user-merchant-1',
   email: 'merchant@maithing.test',
   phone: '089-876-5432',
-  name: 'Kornchai Srisuk',
+  name: 'TEST Merchant',
   avatarUrl: 'https://i.pravatar.cc/150?u=kornchai',
   roles: ['merchant'],
   preferredLanguage: 'th',
@@ -360,6 +361,7 @@ export const MERCHANTS: Merchant[] = MERCHANT_SEEDS.map((m, idx) => ({
   coverUrl: getFoodImage(m.categories[0], m.name + '-cover') + '&w=800&h=400',
   address: m.address,
   coordinates: m.coords,
+  staticMapUrl: buildStaticMapUrl(m.coords) ?? undefined,
   phone: '02-123-4567',
   categories: m.categories,
   rating: m.rating,

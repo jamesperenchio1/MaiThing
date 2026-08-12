@@ -61,6 +61,7 @@ export interface Merchant {
   coverUrl?: string;
   address: Address;
   coordinates: Coordinates;
+  staticMapUrl?: string;
   phone: string;
   categories: string[];
   rating: number;

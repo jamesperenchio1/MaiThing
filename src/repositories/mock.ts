@@ -85,7 +85,6 @@ interface CouponUse {
 }
 const COUPON_USES: CouponUse[] = [];
 
-
 class MockAuthRepository implements AuthRepository {
   async signIn(email: string, password: string): Promise<User> {
     if (email === TEST_CUSTOMER.email && password === 'password') {
@@ -148,6 +147,7 @@ class MockAuthRepository implements AuthRepository {
         country: 'Thailand',
       },
       coordinates: { latitude: 13.7563, longitude: 100.5018 },
+      staticMapUrl: undefined,
       phone: data.phone,
       categories: [],
       rating: 0,
@@ -172,18 +172,15 @@ class MockAuthRepository implements AuthRepository {
     return user;
   }
 
-  async signOut(): Promise<void> {
-  }
+  async signOut(): Promise<void> {}
 
-  async resetPassword(email: string): Promise<void> {
-  }
+  async resetPassword(email: string): Promise<void> {}
 
   async verifyOtp(code: string): Promise<boolean> {
     return code === '123456';
   }
 
-  async resendVerification(email: string): Promise<void> {
-  }
+  async resendVerification(email: string): Promise<void> {}
 }
 
 class MockUserRepository implements UserRepository {
@@ -276,7 +273,6 @@ class MockUserRepository implements UserRepository {
     syncRestockAlert(userId, listingId, false).catch(() => {});
   }
 
-
   async getUserPersonality(userId: string): Promise<UserPersonality | null> {
     return USER_PERSONALITIES.get(userId) ?? null;
   }
@@ -292,7 +288,8 @@ class MockUserRepository implements UserRepository {
       priceRange: data.priceRange ?? existing?.priceRange ?? 'any',
       preferredCategories: data.preferredCategories ?? existing?.preferredCategories ?? [],
       discoveryStyle: data.discoveryStyle ?? existing?.discoveryStyle ?? 'explore',
-      environmentalMotivation: data.environmentalMotivation ?? existing?.environmentalMotivation ?? 'medium',
+      environmentalMotivation:
+        data.environmentalMotivation ?? existing?.environmentalMotivation ?? 'medium',
       pickupTimePreference: data.pickupTimePreference ?? existing?.pickupTimePreference ?? 'any',
       maxDistanceKm: data.maxDistanceKm ?? existing?.maxDistanceKm ?? 10,
       notificationStyle: data.notificationStyle ?? existing?.notificationStyle ?? 'all',
@@ -438,7 +435,11 @@ class MockMerchantRepository implements MerchantRepository {
     return staff;
   }
 
-  async updateStaff(merchantId: string, staffId: string, data: Partial<StaffMember>): Promise<StaffMember> {
+  async updateStaff(
+    merchantId: string,
+    staffId: string,
+    data: Partial<StaffMember>
+  ): Promise<StaffMember> {
     const index = STAFF_MEMBERS.findIndex((s) => s.merchantId === merchantId && s.id === staffId);
     if (index === -1) throw new Error('Staff member not found');
     STAFF_MEMBERS[index] = { ...STAFF_MEMBERS[index], ...data };
@@ -543,7 +544,8 @@ class MockMerchantRepository implements MerchantRepository {
       brandVoice: data.brandVoice ?? existing?.brandVoice ?? 'friendly',
       sustainabilityFocus: data.sustainabilityFocus ?? existing?.sustainabilityFocus ?? 'medium',
       communityEngagement: data.communityEngagement ?? existing?.communityEngagement ?? 'medium',
-      customerCommunication: data.customerCommunication ?? existing?.customerCommunication ?? 'responsive',
+      customerCommunication:
+        data.customerCommunication ?? existing?.customerCommunication ?? 'responsive',
       story: data.story ?? existing?.story,
       values: data.values ?? existing?.values ?? [],
       autoWelcomeMessage: data.autoWelcomeMessage ?? existing?.autoWelcomeMessage,
@@ -568,7 +570,8 @@ class MockListingRepository implements ListingRepository {
     lng?: number;
     radius?: number;
     type?: string;
-    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
+    sortBy?:
+      'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
     dietaryTags?: string[];
     allergens?: string[];
     minPrice?: number;
@@ -662,7 +665,8 @@ class MockListingRepository implements ListingRepository {
       case 'top_rated': {
         const merchantRatingMap = new Map(MERCHANTS.map((m) => [m.id, m.rating]));
         result.sort(
-          (a, b) => (merchantRatingMap.get(b.merchantId) ?? 0) - (merchantRatingMap.get(a.merchantId) ?? 0)
+          (a, b) =>
+            (merchantRatingMap.get(b.merchantId) ?? 0) - (merchantRatingMap.get(a.merchantId) ?? 0)
         );
         break;
       }
@@ -1073,9 +1077,7 @@ class MockCouponRepository implements CouponRepository {
     const normalized = code.trim().toUpperCase();
     return (
       COUPONS.find(
-        (c) =>
-          c.code.toUpperCase() === normalized &&
-          (!merchantId || c.merchantId === merchantId)
+        (c) => c.code.toUpperCase() === normalized && (!merchantId || c.merchantId === merchantId)
       ) ?? null
     );
   }
@@ -1118,9 +1120,12 @@ class MockCouponRepository implements CouponRepository {
     if (!coupon) return { valid: false, discountAmount: 0, message: 'Coupon not found' };
 
     const now = new Date();
-    if (coupon.status !== 'active') return { valid: false, discountAmount: 0, message: 'Coupon is inactive' };
-    if (new Date(coupon.validFrom) > now) return { valid: false, discountAmount: 0, message: 'Coupon not yet valid' };
-    if (new Date(coupon.validUntil) < now) return { valid: false, discountAmount: 0, message: 'Coupon expired' };
+    if (coupon.status !== 'active')
+      return { valid: false, discountAmount: 0, message: 'Coupon is inactive' };
+    if (new Date(coupon.validFrom) > now)
+      return { valid: false, discountAmount: 0, message: 'Coupon not yet valid' };
+    if (new Date(coupon.validUntil) < now)
+      return { valid: false, discountAmount: 0, message: 'Coupon expired' };
 
     const totalUses = COUPON_USES.filter((u) => u.couponId === coupon.id).length;
     if (coupon.maxUses != null && totalUses >= coupon.maxUses) {
@@ -1136,9 +1141,7 @@ class MockCouponRepository implements CouponRepository {
 
     if (coupon.firstTimeCustomerOnly) {
       const hasOrders = ORDERS.some(
-        (o) =>
-          o.customerId === input.customerId &&
-          !['cancelled', 'refunded'].includes(o.status)
+        (o) => o.customerId === input.customerId && !['cancelled', 'refunded'].includes(o.status)
       );
       if (hasOrders) {
         return { valid: false, discountAmount: 0, message: 'First-time customers only' };
@@ -1346,8 +1349,7 @@ class MockAnalyticsRepository implements AnalyticsRepository {
           clicks: seedEntry?.clicks ?? listing?.clickCount ?? 30,
           searchAppearances: seedEntry?.searchAppearances ?? listing?.searchAppearances ?? 50,
           conversionRate:
-            seedEntry?.conversionRate ??
-            (listing?.viewCount ? l.orders / listing.viewCount : 0),
+            seedEntry?.conversionRate ?? (listing?.viewCount ? l.orders / listing.viewCount : 0),
         };
       });
 

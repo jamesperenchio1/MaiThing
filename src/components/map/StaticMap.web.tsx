@@ -1,23 +1,12 @@
 import { useState } from 'react';
-import { View, Image as RNImage, useWindowDimensions } from 'react-native';
-import Constants from 'expo-constants';
+import { View, Image as RNImage } from 'react-native';
 
+import { buildStaticMapUrl } from '@/src/lib/maps';
 import type { Merchant } from '@/src/types';
 
 interface StaticMapProps {
   merchant: Merchant;
   height?: number;
-}
-
-function getGoogleMapsApiKey(): string | null {
-  const plugins = (Constants.expoConfig?.plugins ?? []) as Array<
-    string | [string, Record<string, string>]
-  >;
-  const mapsPlugin = plugins.find(
-    (p): p is [string, Record<string, string>] => Array.isArray(p) && p[0] === 'react-native-maps'
-  );
-  if (!mapsPlugin) return null;
-  return mapsPlugin[1]?.androidGoogleMapsApiKey ?? mapsPlugin[1]?.iosGoogleMapsApiKey ?? null;
 }
 
 function OSMMap({ merchant, height }: StaticMapProps) {
@@ -39,19 +28,16 @@ function OSMMap({ merchant, height }: StaticMapProps) {
 }
 
 export function StaticMap({ merchant, height = 160 }: StaticMapProps) {
-  const { width } = useWindowDimensions();
   const [hasError, setHasError] = useState(false);
-  const apiKey = getGoogleMapsApiKey();
-  const { latitude, longitude } = merchant.coordinates;
 
-  if (!apiKey || hasError) {
+  // Prefer the DB-cached URL so every customer view doesn't hit Google Static Maps API.
+  const cachedUrl = merchant.staticMapUrl;
+  const generatedUrl = !cachedUrl ? buildStaticMapUrl(merchant.coordinates) : null;
+  const uri = cachedUrl ?? generatedUrl ?? null;
+
+  if (!uri || hasError) {
     return <OSMMap merchant={merchant} height={height} />;
   }
-
-  const mapWidth = Math.min(Math.round(width - 48), 640);
-  const mapHeight = Math.min(Math.round(height * 2), 640);
-  const size = `${mapWidth}x${mapHeight}`;
-  const uri = `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=${size}&scale=2&maptype=roadmap&markers=color:0x16A34A%7C${latitude},${longitude}&key=${apiKey}`;
 
   return (
     <View className="mb-3 overflow-hidden rounded-2xl" style={{ height }}>

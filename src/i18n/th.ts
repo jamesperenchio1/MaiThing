@@ -16,8 +16,8 @@ export default {
     signInLink: 'เข้าสู่ระบบ',
     name: 'ชื่อ-นามสกุล',
     phone: 'เบอร์โทรศัพท์',
-    continueAsTestCustomer: 'ทดลองใช้งานในฐานะลูกค้า',
-    continueAsTestMerchant: 'ทดลองใช้งานในฐานะร้านค้า',
+    continueAsTestCustomer: 'ทดลองใช้งานในฐานะ TEST ลูกค้า',
+    continueAsTestMerchant: 'ทดลองใช้งานในฐานะ TEST ร้านค้า',
     continueWith: 'เข้าสู่ระบบด้วย {{provider}}',
     onboarding: {
       saveMoney: 'ประหยัดเงิน',
@@ -308,7 +308,7 @@ export default {
       },
     },
     onboarding: {
-      title: 'ร่วมเป็นพาร์ทเนอร์ Maithing',
+      title: 'ร่วมเป็นพาร์ทเนอร์ MaiThing',
       subtitle: 'เปลี่ยนอาหารส่วนเกินเป็นรายได้และเข้าถึงลูกค้าใหม่',
       stepValue: 'ทำไมต้องร่วม',
       stepValueDesc: 'ช่วยอาหาร ได้ทุนคืน และดึงดูดลูกค้าที่ใส่ใจสิ่งแวดล้อม',
