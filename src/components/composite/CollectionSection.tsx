@@ -40,9 +40,9 @@ export function CollectionSection({
           : visibleListings.map((listing, index) => (
               <View
                 key={listing.id}
-                className={cn('w-64 h-[400]', index !== visibleListings.length - 1 && 'mr-3')}
+                className={cn('w-64', index !== visibleListings.length - 1 && 'mr-3')}
               >
-                <ListingCard listing={listing} variant="vertical" className="h-full" />
+                <ListingCard listing={listing} variant="vertical" />
               </View>
             ))}
       </ScrollView>

@@ -102,16 +102,12 @@ export const ListingCard = React.memo(function ListingCard({
     >
       <Card
         variant="elevated"
-        className={cn(
-          'overflow-hidden p-0',
-          variant === 'horizontal' && 'flex-row',
-          variant === 'vertical' && 'h-full'
-        )}
+        className={cn('overflow-hidden p-0', variant === 'horizontal' && 'flex-row')}
       >
         <View
           className={cn(
             'relative overflow-hidden bg-muted',
-            variant === 'vertical' ? 'h-40 w-full' : 'w-32 self-stretch'
+            variant === 'vertical' ? 'h-40 w-full' : 'w-36 aspect-[4/3] self-center'
           )}
         >
           <Image source={{ uri: listing.images[0] }} className="h-full w-full" resizeMode="cover" />
@@ -147,12 +143,7 @@ export const ListingCard = React.memo(function ListingCard({
             />
           </View>
         </View>
-        <View
-          className={cn(
-            'p-3',
-            variant === 'vertical' && 'flex-1 overflow-hidden',
-            variant === 'horizontal' && 'flex-1'
-          )}
+        <View className={cn('p-3', variant === 'horizontal' && 'flex-1')}
         >
           {urgency && (
             <View className="mb-1.5">

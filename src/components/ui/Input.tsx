@@ -52,7 +52,7 @@ export function Input({
       >
         {leftIcon && <View className="mr-3">{leftIcon}</View>}
         <TextInput
-          className={cn('flex-1 py-1 text-base leading-6 text-foreground', inputClassName)}
+          className={cn('flex-1 py-2 text-base leading-7 text-foreground', inputClassName)}
           placeholderTextColor="#9CA3AF"
           value={value}
           defaultValue={defaultValue}

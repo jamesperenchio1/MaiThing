@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { WifiOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from './Text';
@@ -12,6 +13,7 @@ export function OfflineBanner() {
   const { isOffline, checkNetwork } = useNetworkState();
   const { t } = useTranslation();
   const colors = useThemeColor();
+  const insets = useSafeAreaInsets();
 
   if (!isOffline) {
     return null;
@@ -27,7 +29,8 @@ export function OfflineBanner() {
   return (
     <View
       testID="offline-banner"
-      className="flex-row items-center bg-primary px-4 py-2.5"
+      className="flex-row items-center bg-primary px-4 pb-2.5"
+      style={{ paddingTop: insets.top }}
       accessibilityRole="alert"
       accessibilityLabel={t('common.offlineBanner')}
     >

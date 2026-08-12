@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, Alert, Platform } from 'react-native';
+import { View, Alert, Platform, ScrollView } from 'react-native';
 import { Image } from '@/src/components/ui/Image';
 import * as Haptics from 'expo-haptics';
 import {
@@ -49,6 +49,8 @@ const statusSteps: { status: Order['status']; Icon: LucideIcon }[] = [
   { status: 'completed', Icon: CheckCircle },
 ];
 
+const STEP_WIDTH = 80;
+
 function StatusStep({
   Icon,
   label,
@@ -63,27 +65,25 @@ function StatusStep({
   isLast: boolean;
 }) {
   const colors = useThemeColor();
-  const { isOffline } = useNetworkState();
   const circleColor = completed || active ? 'bg-primary' : 'bg-muted/20';
   const iconColor = completed || active ? '#fff' : colors.muted;
 
   return (
-    <View className="flex-1 flex-row items-center">
-      <View className="flex-1 items-center">
-        <View className={`mb-2 h-9 w-9 items-center justify-center rounded-full ${circleColor}`}>
-          <Icon size={16} color={iconColor} />
-        </View>
-        <Text
-          variant="caption"
-          className={`text-center ${active || completed ? 'text-foreground' : 'text-muted'}`}
-        >
-          {label}
-        </Text>
+    <View className="w-[80px] items-center">
+      <View className={`mb-2 h-9 w-9 items-center justify-center rounded-full ${circleColor}`}>
+        <Icon size={16} color={iconColor} />
       </View>
+      <Text
+        variant="caption"
+        className={`text-center ${active || completed ? 'text-foreground' : 'text-muted'}`}
+        numberOfLines={2}
+        ellipsizeMode="tail"
+      >
+        {label}
+      </Text>
       {!isLast && (
         <View
-          className={`mx-1 h-0.5 flex-1 ${completed ? 'bg-primary' : 'bg-muted/20'}`}
-          style={{ marginTop: -18 }}
+          className={`absolute left-[58px] top-[18px] h-0.5 w-[44px] ${completed ? 'bg-primary' : 'bg-muted/20'}`}
         />
       )}
     </View>
@@ -122,6 +122,18 @@ export default function MerchantOrderDetailScreen() {
   }, [id]);
 
   const summary = useMemo(() => (order ? buildOrderSummary(order) : ''), [order]);
+  const stepperRef = useRef<ScrollView>(null);
+  const displayIndex = useMemo(() => {
+    if (!order) return 0;
+    const idx = statusSteps.findIndex((s) => s.status === order.status);
+    return idx >= 0 ? idx : statusSteps.length - 1;
+  }, [order]);
+
+  useEffect(() => {
+    if (!stepperRef.current) return;
+    const offset = Math.max(0, displayIndex * STEP_WIDTH - 40);
+    stepperRef.current.scrollTo({ x: offset, animated: true });
+  }, [displayIndex]);
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -260,9 +272,6 @@ export default function MerchantOrderDetailScreen() {
     );
   }
 
-  const activeIndex = statusSteps.findIndex((s) => s.status === order.status);
-  const displayIndex = activeIndex >= 0 ? activeIndex : statusSteps.length - 1;
-
   return (
     <Screen scrollable>
       <Header title={t('merchant.orders.orderDetail')} />
@@ -330,7 +339,12 @@ export default function MerchantOrderDetailScreen() {
             </Text>
           </Card>
         ) : (
-          <View className="mb-4 flex-row">
+          <ScrollView
+            ref={stepperRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mb-4"
+          >
             {statusSteps.map((step, index) => (
               <StatusStep
                 key={step.status}
@@ -341,7 +355,7 @@ export default function MerchantOrderDetailScreen() {
                 isLast={index === statusSteps.length - 1}
               />
             ))}
-          </View>
+          </ScrollView>
         )}
 
         <Card variant="outlined" className="mb-4">

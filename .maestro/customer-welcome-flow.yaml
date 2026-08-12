@@ -67,7 +67,7 @@ appId: com.jamyangperenchio.maithing
 - assertVisible:
     text: "Good .*"
 - assertVisible:
-    text: "Ariya Wong"
+    text: "TEST Customer"
 # Verify core home content sections are present
 - assertVisible:
     text: "Categories"
