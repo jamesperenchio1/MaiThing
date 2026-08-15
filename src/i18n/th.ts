@@ -22,6 +22,7 @@ export default {
     continueWith: 'เข้าสู่ระบบด้วย {{provider}}',
     sellOnMaithing: 'ขายของบน MaiThing',
     sellOnMaithingDesc: 'เป็นพาร์ทเนอร์กับเราและเปลี่ยนอาหารส่วนเกินเป็นรายได้',
+    orContinueWithEmail: 'หรือดำเนินการต่อด้วยอีเมล',
     onboarding: {
       saveMoney: 'ประหยัดเงิน',
       saveMoneyDesc: 'รับอาหารคุณภาพลดสูงสุด 70%',

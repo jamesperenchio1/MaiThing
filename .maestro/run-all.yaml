@@ -1,16 +1,28 @@
 appId: com.jamyangperenchio.maithing
 ---
 # Full regression suite for Maithing
+- runFlow: auth-sign-up-flow.yaml
+- runFlow: auth-sign-in-flow.yaml
 - runFlow: customer-welcome-flow.yaml
 - runFlow: customer-tab-navigation.yaml
 - runFlow: customer-listing-detail.yaml
 - runFlow: customer-buy-listing-flow.yaml
 - runFlow: customer-merchant-detail.yaml
 - runFlow: customer-personality-onboarding.yaml
+- runFlow: customer-thai-locale-flow.yaml
+- runFlow: customer-wallet-flow.yaml
+- runFlow: customer-sold-out-flow.yaml
+- runFlow: customer-cancel-resto.yaml
 - runFlow: merchant-switch-flow.yaml
 - runFlow: merchant-analytics-flow.yaml
 - runFlow: merchant-settings-flow.yaml
 - runFlow: merchant-create-listing.yaml
 - runFlow: merchant-personality-setup.yaml
+- runFlow: merchant-verification-flow.yaml
+- runFlow: merchant-coupons-flow.yaml
+- runFlow: merchant-staff-flow.yaml
+- runFlow: merchant-payouts-flow.yaml
+- runFlow: merchant-reviews-flow.yaml
+- runFlow: deep-link-flow.yaml
 - runFlow: offline-mode-flow.yaml
 - runFlow: offline-sync-flow.yaml

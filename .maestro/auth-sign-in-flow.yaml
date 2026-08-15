@@ -1,0 +1,74 @@
+appId: com.jamyangperenchio.maithing
+---
+# Sign-in flow: wrong password, invalid email, then a successful sign-in
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Would Like to Send You Notifications"
+    commands:
+      - tapOn: "Allow"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Cancel"
+      - waitForAnimationToEnd
+
+- assertVisible:
+    id: "welcome-screen"
+- tapOn:
+    id: "sign-in-button"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "sign-in-screen"
+    timeout: 10000
+
+# Invalid email format is rejected client-side before any request is made
+- tapOn:
+    id: "sign-in-email-input"
+- inputText: "not-an-email"
+- tapOn:
+    id: "sign-in-password-input"
+- inputText: "password"
+- hideKeyboard
+- tapOn:
+    id: "sign-in-submit-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "sign-in-screen"
+
+# Wrong password for a real seeded account
+- tapOn:
+    id: "sign-in-email-input"
+- eraseText
+- inputText: "customer@maithing.test"
+- tapOn:
+    id: "sign-in-password-input"
+- eraseText
+- inputText: "wrong-password"
+- hideKeyboard
+- tapOn:
+    id: "sign-in-submit-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "sign-in-screen"
+
+# Correct credentials sign in successfully
+- tapOn:
+    id: "sign-in-password-input"
+- eraseText
+- inputText: "password"
+- hideKeyboard
+- tapOn:
+    id: "sign-in-submit-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000

@@ -36,7 +36,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <Screen scrollable keyboardAvoiding>
+    <Screen testID="sign-in-screen" scrollable keyboardAvoiding>
       <Header title={t('auth.signIn')} onBack={handleBackToWelcome} />
       <View className="px-6 pb-10">
         <Animated.View entering={FadeInUp.duration(500)}>
@@ -52,7 +52,7 @@ export default function SignInScreen() {
           <View className="my-6 flex-row items-center gap-3">
             <View className="h-px flex-1 bg-border" />
             <Text variant="caption" className="text-muted">
-              or continue with email
+              {t('auth.orContinueWithEmail')}
             </Text>
             <View className="h-px flex-1 bg-border" />
           </View>
@@ -62,6 +62,7 @@ export default function SignInScreen() {
             name="email"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
+                testID="sign-in-email-input"
                 label={t('auth.email')}
                 placeholder="you@example.com"
                 keyboardType="email-address"
@@ -82,6 +83,7 @@ export default function SignInScreen() {
             name="password"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
+                testID="sign-in-password-input"
                 label={t('auth.password')}
                 placeholder="••••••••"
                 secureTextEntry
@@ -104,6 +106,7 @@ export default function SignInScreen() {
           )}
 
           <Button
+            testID="sign-in-submit-button"
             fullWidth
             loading={signInLoading}
             onPress={handleSubmit(onSubmit)}

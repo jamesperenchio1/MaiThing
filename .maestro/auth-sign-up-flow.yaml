@@ -1,0 +1,64 @@
+appId: com.jamyangperenchio.maithing
+---
+# Sign-up flow: validation errors, then a successful account creation
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Would Like to Send You Notifications"
+    commands:
+      - tapOn: "Allow"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Cancel"
+      - waitForAnimationToEnd
+
+- assertVisible:
+    id: "welcome-screen"
+- tapOn:
+    id: "sign-up-button"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "sign-up-screen"
+    timeout: 10000
+
+# Submitting an empty form should surface validation errors, not navigate away
+- tapOn:
+    id: "sign-up-submit-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "sign-up-screen"
+
+# Fill out a valid sign-up
+- tapOn:
+    id: "sign-up-name-input"
+- inputText: "Maestro Tester"
+- tapOn:
+    id: "sign-up-email-input"
+- inputText: "maestro.tester@example.com"
+- tapOn:
+    id: "sign-up-phone-input"
+- inputText: "0812345678"
+- tapOn:
+    id: "sign-up-password-input"
+- inputText: "TestPass123"
+- tapOn:
+    id: "sign-up-confirm-password-input"
+- inputText: "TestPass123"
+- hideKeyboard
+
+- tapOn:
+    id: "sign-up-submit-button"
+- waitForAnimationToEnd
+
+# Successful sign-up lands on the customer home tab
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000

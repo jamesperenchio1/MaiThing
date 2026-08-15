@@ -1,0 +1,52 @@
+appId: com.jamyangperenchio.maithing
+---
+# Switch the app to Thai, verify Thai copy renders, then switch back to English
+- runFlow: customer-welcome-flow.yaml
+
+- tapOn:
+    id: "profile-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "language-menu-item"
+    direction: DOWN
+
+- tapOn:
+    id: "language-menu-item"
+- waitForAnimationToEnd
+- assertVisible: "ภาษาไทย"
+- tapOn: "ภาษาไทย"
+- waitForAnimationToEnd
+
+# The bottom tab bar labels should now render in Thai
+- assertVisible: "หน้าแรก"
+- assertVisible: "สำรวจ"
+- assertVisible: "โปรไฟล์"
+
+- tapOn:
+    id: "home-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000
+
+# Switch back to English so subsequent flows aren't affected by leftover state
+- tapOn:
+    id: "profile-tab"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: "language-menu-item"
+    direction: DOWN
+- tapOn:
+    id: "language-menu-item"
+- waitForAnimationToEnd
+- assertVisible: "English"
+- tapOn: "English"
+- waitForAnimationToEnd
+- assertVisible: "Home"

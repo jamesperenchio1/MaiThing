@@ -1,0 +1,36 @@
+appId: com.jamyangperenchio.maithing
+---
+# Payouts: open the payouts screen and verify balance/history/request-payout are visible
+- runFlow: merchant-switch-flow.yaml
+
+- tapOn:
+    id: "merchant-settings-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+- tapOn:
+    id: "payouts-menu-item"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-payouts-screen"
+    timeout: 10000
+
+- assertVisible: "Available balance"
+- assertVisible: "Pending payout"
+- assertVisible: "Total earnings"
+- assertVisible: "Bank Accounts"
+- assertVisible:
+    id: "request-payout-button"
+
+# Bank account management is reachable from here
+- tapOn: "Bank Accounts"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "bank-account-screen"
+    timeout: 10000
+- assertVisible:
+    id: "add-bank-account-button"

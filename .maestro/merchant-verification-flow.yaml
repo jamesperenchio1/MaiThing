@@ -1,0 +1,24 @@
+appId: com.jamyangperenchio.maithing
+---
+# Merchant verification: open the Get Verified screen and check the criteria checklist
+- runFlow: merchant-switch-flow.yaml
+
+- openLink: "maithing:///(merchant)/verification"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-verification-screen"
+    timeout: 10000
+
+- assertVisible: "Get Verified"
+- assertVisible: "Verification Criteria"
+- assertVisible: "10+ completed orders"
+- assertVisible: "Rating ≥ 4.0"
+- assertVisible: "No refund disputes"
+- assertVisible: "Food Safety Certificate"

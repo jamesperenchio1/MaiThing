@@ -1,0 +1,44 @@
+appId: com.jamyangperenchio.maithing
+---
+# Create a coupon and verify it appears in the merchant's promotions list
+- runFlow: merchant-switch-flow.yaml
+
+- tapOn:
+    id: "merchant-settings-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+- tapOn:
+    id: "promotions-menu-item"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-promotions-screen"
+    timeout: 10000
+
+- tapOn:
+    id: "create-coupon-button"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "coupon-code-input"
+- inputText: "MAESTRO20"
+- tapOn:
+    id: "coupon-description-input"
+- inputText: "20% off for E2E testing"
+- tapOn:
+    id: "coupon-discount-value-input"
+- inputText: "20"
+- hideKeyboard
+
+- tapOn:
+    id: "save-coupon-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-promotions-screen"
+    timeout: 10000
+- assertVisible: "MAESTRO20"

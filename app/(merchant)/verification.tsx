@@ -105,11 +105,7 @@ export default function VerificationScreen() {
   const user = useAuthStore((s) => s.user);
   const [certUploaded, setCertUploaded] = useState(false);
 
-  const {
-    data: merchant,
-    isLoading,
-    refetch,
-  } = useMerchantByOwner(user?.id ?? '');
+  const { data: merchant, isLoading, refetch } = useMerchantByOwner(user?.id ?? '');
 
   const verifyMerchant = useVerifyMerchant(merchant?.id ?? '');
   const uploadCert = useUploadFoodSafetyCert(merchant?.id ?? '');
@@ -157,7 +153,7 @@ export default function VerificationScreen() {
   };
 
   return (
-    <Screen scrollable className="bg-background">
+    <Screen testID="merchant-verification-screen" scrollable className="bg-background">
       <Header title="Get Verified" showBack />
       <View className="px-6 pt-4 pb-8">
         {/* Header card */}
@@ -207,7 +203,10 @@ export default function VerificationScreen() {
             <View className="flex-row items-start">
               <CheckCircle2 size={20} color={colors.success} />
               <View className="ml-3 flex-1">
-                <Text variant="body-sm" className="font-semibold text-green-700 dark:text-green-400">
+                <Text
+                  variant="body-sm"
+                  className="font-semibold text-green-700 dark:text-green-400"
+                >
                   You qualify for verification!
                 </Text>
                 <Text variant="caption" className="mt-0.5 text-green-700 dark:text-green-400">
@@ -292,6 +291,7 @@ export default function VerificationScreen() {
           </Button>
         ) : (
           <Button
+            testID="submit-verification-button"
             variant="primary"
             onPress={handleVerify}
             disabled={!allCriteriaMet || verifyMerchant.isPending}

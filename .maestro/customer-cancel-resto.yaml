@@ -1,0 +1,23 @@
+appId: com.jamyangperenchio.maithing
+---
+# Cancel a just-placed order and verify it's marked cancelled + refunded
+- runFlow: customer-buy-listing-flow.yaml
+
+# customer-buy-listing-flow.yaml ends on the order detail screen
+- assertVisible: "Order Summary"
+- assertVisible: "Cancel order"
+
+- tapOn: "Cancel order"
+- waitForAnimationToEnd
+- assertVisible: "Why are you cancelling this order?"
+- tapOn: "Changed my mind"
+- waitForAnimationToEnd
+
+- assertVisible: "Confirm cancellation"
+- assertVisible: "Never mind"
+- tapOn: "Confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Order cancelled and refunded."
+    timeout: 10000

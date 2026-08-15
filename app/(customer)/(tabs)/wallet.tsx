@@ -56,7 +56,7 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
   };
 
   return (
-    <Pressable onPress={onPress} disabled={!transaction.orderId}>
+    <Pressable accessibilityRole="button" onPress={onPress} disabled={!transaction.orderId}>
       <View className="flex-row items-center px-4 py-3.5">
         <View
           className={`mr-3.5 rounded-2xl p-2.5 ${isIncoming ? 'bg-primary/10' : 'bg-danger/10'}`}
@@ -150,9 +150,9 @@ function TopUpModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
+      <TouchableWithoutFeedback accessibilityRole="button" onPress={onClose}>
         <View className="flex-1 justify-end bg-black/40">
-          <TouchableWithoutFeedback>
+          <TouchableWithoutFeedback accessibilityRole="button">
             <View className="rounded-t-3xl bg-background px-6 pb-10 pt-6">
               <View className="mb-6 flex-row items-center justify-between">
                 <Text variant="h3">{t('customer.wallet.topUpTitle')}</Text>
@@ -174,6 +174,7 @@ function TopUpModal({
                 {TOP_UP_AMOUNTS.map((amount) => (
                   <PressableScale
                     key={amount}
+                    testID={`top-up-amount-${amount}`}
                     onPress={() => {
                       setSelected(amount);
                       setIsCustom(false);
@@ -227,6 +228,7 @@ function TopUpModal({
                 </View>
               )}
               <Button
+                testID="confirm-top-up-button"
                 fullWidth
                 disabled={!effectiveAmount || loading || isOffline}
                 loading={loading}

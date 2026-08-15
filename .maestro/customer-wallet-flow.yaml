@@ -1,0 +1,35 @@
+appId: com.jamyangperenchio.maithing
+---
+# Wallet: top up a preset amount and verify the balance card updates
+- runFlow: customer-welcome-flow.yaml
+
+- tapOn:
+    id: "wallet-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "wallet-screen"
+    timeout: 10000
+- assertVisible:
+    id: "wallet-title"
+- assertVisible:
+    id: "balance-card"
+
+- tapOn:
+    id: "top-up-button"
+- waitForAnimationToEnd
+- assertVisible: "Top up wallet"
+
+- tapOn:
+    id: "top-up-amount-100"
+- tapOn:
+    id: "confirm-top-up-button"
+- waitForAnimationToEnd
+
+# Modal closes back to the wallet screen once the top-up completes
+- extendedWaitUntil:
+    visible:
+      id: "wallet-screen"
+    timeout: 10000
+- assertVisible:
+    id: "balance-card"

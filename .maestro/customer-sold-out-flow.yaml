@@ -1,0 +1,33 @@
+appId: com.jamyangperenchio.maithing
+---
+# Sold-out listing: verify the sold-out state and the waitlist/restock-notify toggle
+- runFlow: customer-welcome-flow.yaml
+
+- openLink: "maithing:///(customer)/listing/listing-demo-soldout"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "listing-detail-screen"
+    timeout: 10000
+
+- assertVisible: "Sold Out"
+- assertVisible:
+    id: "restock-alert-button"
+- assertVisible: "Notify me when back"
+
+- tapOn:
+    id: "restock-alert-button"
+- waitForAnimationToEnd
+- assertVisible: "Notifying you"
+
+# Toggling again removes the alert
+- tapOn:
+    id: "restock-alert-button"
+- waitForAnimationToEnd
+- assertVisible: "Notify me when back"

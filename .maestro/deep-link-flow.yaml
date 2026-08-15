@@ -1,0 +1,60 @@
+appId: com.jamyangperenchio.maithing
+---
+# Verify maithing:// deep links resolve to the right screen for listing, merchant, and order
+- runFlow: customer-welcome-flow.yaml
+
+# Listing deep link
+- openLink: "maithing:///(customer)/listing/listing-merchant-1-0-box"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "listing-detail-screen"
+    timeout: 10000
+
+# Merchant deep link
+- openLink: "maithing:///(customer)/merchant/merchant-1"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-detail-screen"
+    timeout: 10000
+
+# A malformed / unknown deep link should not crash the app — it should fall back gracefully
+- openLink: "maithing:///(customer)/listing/does-not-exist"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible:
+      text: "undefined"
+    timeout: 5000
+
+# Return to a known-good screen so downstream flows aren't affected
+- openLink: "maithing:///(customer)/(tabs)"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Cancel"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "customer-home-screen"
+    timeout: 10000

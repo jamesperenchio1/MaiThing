@@ -1,0 +1,44 @@
+appId: com.jamyangperenchio.maithing
+---
+# Invite a staff member and verify they appear in the merchant's staff list
+- runFlow: merchant-switch-flow.yaml
+
+- tapOn:
+    id: "merchant-settings-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+- tapOn:
+    id: "staff-menu-item"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-staff-screen"
+    timeout: 10000
+
+- tapOn:
+    id: "add-staff-button"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "staff-name-input"
+- inputText: "Maestro Staffer"
+- tapOn:
+    id: "staff-email-input"
+- inputText: "staff@example.com"
+- tapOn:
+    id: "staff-phone-input"
+- inputText: "0898765432"
+- hideKeyboard
+
+- tapOn:
+    id: "save-staff-button"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "merchant-staff-screen"
+    timeout: 10000
+- assertVisible: "Maestro Staffer"

@@ -1,0 +1,38 @@
+appId: com.jamyangperenchio.maithing
+---
+# Reviews: view seeded reviews and reply to one that hasn't been answered yet
+- runFlow: merchant-switch-flow.yaml
+
+- tapOn:
+    id: "merchant-settings-tab"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-settings-screen"
+    timeout: 10000
+- tapOn:
+    id: "reviews-menu-item"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "merchant-reviews-screen"
+    timeout: 10000
+
+- scrollUntilVisible:
+    element:
+      id: "reply-to-review-.*"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "reply-to-review-.*"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "reply-input-.*"
+- inputText: "Thanks so much for the kind words — see you again soon!"
+- hideKeyboard
+
+- tapOn:
+    id: "submit-reply-.*"
+- waitForAnimationToEnd
+- assertVisible: "Replied"

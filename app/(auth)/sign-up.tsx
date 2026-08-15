@@ -32,7 +32,7 @@ export default function SignUpScreen() {
   };
 
   return (
-    <Screen scrollable keyboardAvoiding>
+    <Screen testID="sign-up-screen" scrollable keyboardAvoiding>
       <Header title={t('auth.signUp')} />
       <View className="px-6 pb-10">
         <Animated.View entering={FadeInUp.duration(500)}>
@@ -48,7 +48,7 @@ export default function SignUpScreen() {
           <View className="my-6 flex-row items-center gap-3">
             <View className="h-px flex-1 bg-border" />
             <Text variant="caption" className="text-muted">
-              or continue with email
+              {t('auth.orContinueWithEmail')}
             </Text>
             <View className="h-px flex-1 bg-border" />
           </View>
@@ -58,6 +58,7 @@ export default function SignUpScreen() {
             name="name"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
+                testID="sign-up-name-input"
                 label={t('auth.name')}
                 placeholder={t('auth.namePlaceholder')}
                 textContentType="name"
@@ -75,6 +76,7 @@ export default function SignUpScreen() {
             name="email"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
+                testID="sign-up-email-input"
                 label={t('auth.email')}
                 placeholder="you@example.com"
                 keyboardType="email-address"
@@ -94,6 +96,7 @@ export default function SignUpScreen() {
             name="phone"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
+                testID="sign-up-phone-input"
                 label={t('auth.phone')}
                 placeholder="081-234-5678"
                 keyboardType="phone-pad"
@@ -112,6 +115,7 @@ export default function SignUpScreen() {
             name="password"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
+                testID="sign-up-password-input"
                 label={t('auth.password')}
                 placeholder="••••••••"
                 secureTextEntry
@@ -130,6 +134,7 @@ export default function SignUpScreen() {
             name="confirmPassword"
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
+                testID="sign-up-confirm-password-input"
                 label={t('auth.confirmPassword')}
                 placeholder="••••••••"
                 secureTextEntry
@@ -150,6 +155,7 @@ export default function SignUpScreen() {
           )}
 
           <Button
+            testID="sign-up-submit-button"
             fullWidth
             loading={signUpLoading}
             onPress={handleSubmit(onSubmit)}

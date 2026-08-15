@@ -22,6 +22,7 @@ export default {
     continueWith: 'Continue with {{provider}}',
     sellOnMaithing: 'Sell on MaiThing',
     sellOnMaithingDesc: 'Become a Partner and turn surplus food into revenue.',
+    orContinueWithEmail: 'or continue with email',
     onboarding: {
       saveMoney: 'Save Money',
       saveMoneyDesc: 'Get quality food for up to 70% off retail price.',

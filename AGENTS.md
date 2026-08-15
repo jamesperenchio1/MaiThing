@@ -141,6 +141,44 @@ OTP verification in mock auth accepts `123456`.
 - **Navigation**: file-system based. Route groups `(auth)`, `(customer)`, `(merchant)` hide their segment from the URL. Tab layouts are in `(tabs)/_layout.tsx`.
 - **Haptics**: wrapped in press handlers (`Haptics.impactAsync`). No-ops on web.
 
+## Internationalization (i18n)
+
+- The app supports **English and Thai** via `i18next` + `react-i18next`. Translation strings live
+  in `src/i18n/en.ts` and `src/i18n/th.ts` as two structurally parallel nested objects with 8
+  top-level namespaces: `app, auth, common, customer, merchant, personality, tutorial, validation`.
+- **Every user-facing string must go through `t('namespace.key')`** — never hardcode English text
+  in JSX, `placeholder` props, or `Alert.alert()` calls. Add a new key to `en.ts` and `th.ts`
+  **together, in the same change** — a key present in only one file is a bug (there's no automated
+  parity check, so verify manually or with a quick script diffing the two files' key sets).
+- Interpolation uses `{{value}}` placeholders: `t('customer.cart.purchaseNote', { merchant })`.
+  Plural forms use i18next's `_one`/`_other` suffixes (e.g. `reviewCount_one` / `reviewCount_other`)
+  — include both even for keys where Thai's plural rule wouldn't strictly need `_one`, to match the
+  existing convention in `th.ts`.
+- For locale-aware **dates, times, and numbers**, use the helpers in `src/lib/utils.ts`
+  (`formatCurrency`, `formatDistance`, `formatRelativeTime`, `formatPickupWindow`,
+  `formatCompactNumber`, `getMerchantOpenStatus`) — they all accept a `locale` param, pass
+  `i18n.language` (from `useTranslation()`). Never call `.toLocaleDateString('en-US', ...)` or
+  similar with a hardcoded locale.
+- **Zod validation messages** are localized via a global i18next-aware error map
+  (`src/i18n/zodErrorMap.ts`, registered in `initializeI18n()`) that reads the `validation.*`
+  namespace for built-in issue types (required/too-small/email/etc.). Business-rule `.refine()`
+  checks use the lazy message-function form (`.refine(fn, () => ({ message: i18n.t('validation.x') }))`)
+  so they stay reactive to a language switch — schemas themselves stay module-level singletons, no
+  per-component rebuild needed.
+
+## Accessibility
+
+- Every custom interactive component needs `accessibilityRole`, and either `accessibilityLabel`
+  (for icon-only controls) or rely on visible text content. Toggles/tabs/selectable chips also need
+  `accessibilityState={{ selected }}` or `{{ disabled }}` as appropriate. See `Button.tsx` for the
+  reference implementation (`accessibilityRole="button"`, `accessibilityState={{ disabled }}`,
+  forwards all `PressableProps` so callers can add `accessibilityLabel`/`accessibilityHint`).
+- `eslint-plugin-react-native-a11y` is registered in `eslint.config.mjs` at `warn` (not `error`) —
+  treat its warnings as a checklist to work through over time, not a hard gate. Run `pnpm lint` and
+  look for `react-native-a11y/*` warnings when touching a screen.
+- Accessibility labels are translated strings (`t('...')`), not hardcoded English — same rule as
+  any other user-facing text.
+
 ## State Management
 
 - **Server state**: TanStack Query hooks in `src/hooks/` call repositories. Default stale time is 5 minutes.
@@ -174,7 +212,11 @@ OTP verification in mock auth accepts `123456`.
 
 ## Testing
 
-The project does **not** currently use Jest or React Native Testing Library. E2E coverage is provided by Maestro.
+Unit/component tests use Jest + `jest-expo` + React Native Testing Library; E2E coverage is
+provided by Maestro. A pre-commit hook (Husky + lint-staged) runs ESLint/Prettier on staged files
+plus a full typecheck; CI (`.github/workflows/ci.yml`) runs typecheck/lint/format:check/test on
+every push and PR. See [`TESTING.md`](./TESTING.md) for full details — the setup notes below are
+just enough to get commands running.
 
 ```bash
 # Lint and typecheck
@@ -185,21 +227,27 @@ pnpm typecheck
 # Format
 pnpm format
 pnpm format:check
+
+# Unit/component tests
+pnpm test
+pnpm test:watch
+pnpm test:coverage
 ```
 
 ### Maestro E2E Flows
 
-Flow files live in `.maestro/` and reference `appId: com.jamyangperenchio.maithing`:
+Flow files live in `.maestro/` and reference `appId: com.jamyangperenchio.maithing`. Coverage
+spans auth (sign-up/sign-in validation and success), customer flows (welcome/onboarding, tab
+navigation, listing and merchant detail, buying a listing, cancelling/refunding an order, sold-out
+waitlist notify, wallet top-up, Thai-locale switch), merchant flows (role switch, dashboard
+settings, create-listing, analytics, personality setup, verification, coupons, staff invites,
+payouts/bank accounts, review replies), offline behavior (offline mode, offline sync), and deep
+links (`maithing://` listing/merchant/tab routes, including an unknown-route fallback check).
+`run-all.yaml` orchestrates the full suite. When adding a new flow, add its `runFlow:` line to
+`run-all.yaml` too — don't let this doc enumerate filenames, since that list goes stale; check
+`.maestro/` directly for the current set.
 
-- `customer-welcome-flow.yaml`
-- `customer-tab-navigation.yaml`
-- `customer-listing-detail.yaml`
-- `customer-merchant-detail.yaml`
-- `merchant-switch-flow.yaml`
-- `merchant-create-listing.yaml`
-- `run-all.yaml` — orchestrates all flows
-
-Run them with the Maestro CLI on a device or emulator.
+Run them with the Maestro CLI on a device or emulator (`maestro test .maestro/<flow>.yaml`).
 
 ## Security Considerations
 
