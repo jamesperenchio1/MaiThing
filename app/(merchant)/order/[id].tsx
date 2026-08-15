@@ -193,14 +193,19 @@ export default function MerchantOrderDetailScreen() {
 
   const handleCancel = () => {
     if (!order) return;
-    const reasons = ['Items sold out', 'Customer request', 'Shop closed / emergency', 'Other'];
+    const reasons = [
+      t('merchant.orders.cancelReasonSoldOut'),
+      t('merchant.orders.cancelReasonCustomerRequest'),
+      t('merchant.orders.cancelReasonShopClosed'),
+      t('customer.orders.detail.cancelReasonOther'),
+    ];
     Alert.alert(t('merchant.orders.cancel'), t('merchant.orders.cancelReason'), [
       ...reasons.map((reason) => ({
         text: reason,
         onPress: () => {
           Alert.alert(
             t('merchant.orders.cancel'),
-            `Refund ${formatCurrency(order.total)} to the customer?`,
+            t('merchant.orders.refundConfirmPrompt', { amount: formatCurrency(order.total) }),
             [
               { text: t('common.cancel'), style: 'cancel' },
               {
@@ -227,14 +232,18 @@ export default function MerchantOrderDetailScreen() {
 
   const handleRefund = () => {
     if (!order) return;
-    const reasons = ['Customer complaint', 'Items unavailable', 'Other'];
+    const reasons = [
+      t('merchant.orders.refundReasonComplaint'),
+      t('merchant.orders.refundReasonUnavailable'),
+      t('customer.orders.detail.cancelReasonOther'),
+    ];
     Alert.alert(t('merchant.orders.refund'), t('merchant.orders.refundReason'), [
       ...reasons.map((reason) => ({
         text: reason,
         onPress: () => {
           Alert.alert(
             t('merchant.orders.refund'),
-            `Refund ${formatCurrency(order.total)} to the customer?`,
+            t('merchant.orders.refundConfirmPrompt', { amount: formatCurrency(order.total) }),
             [
               { text: t('common.cancel'), style: 'cancel' },
               {
@@ -387,13 +396,13 @@ export default function MerchantOrderDetailScreen() {
           <View className="mt-4 border-t border-border pt-4">
             <View className="mb-2 flex-row justify-between">
               <Text variant="body-sm" className="text-muted">
-                Subtotal
+                {t('customer.cart.subtotal')}
               </Text>
               <Text variant="body-sm">{formatCurrency(order.subtotal)}</Text>
             </View>
             <View className="mb-2 flex-row justify-between">
               <Text variant="body-sm" className="text-muted">
-                Discount
+                {t('merchant.orders.discount')}
               </Text>
               <Text variant="body-sm">{formatCurrency(order.discount)}</Text>
             </View>
@@ -480,7 +489,7 @@ export default function MerchantOrderDetailScreen() {
               leftIcon={<MessageSquare size={18} color={colors.primary} />}
               onPress={() => router.push(`/(merchant)/messages/${order.customerId}` as never)}
             >
-              Chat with customer
+              {t('merchant.orders.chatWithCustomer')}
             </Button>
           )}
           {['pending', 'confirmed', 'preparing', 'ready'].includes(order.status) && (

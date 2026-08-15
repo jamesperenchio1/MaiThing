@@ -27,8 +27,8 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={i}
           size={14}
-          color={i < Math.round(rating) ? '#F59E0B' : colors.muted}
-          fill={i < Math.round(rating) ? '#F59E0B' : 'transparent'}
+          color={i < Math.round(rating) ? colors.warning : colors.muted}
+          fill={i < Math.round(rating) ? colors.warning : 'transparent'}
         />
       ))}
     </View>

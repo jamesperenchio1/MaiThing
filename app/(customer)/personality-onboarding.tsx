@@ -138,9 +138,7 @@ function SelectableChip({
       accessibilityLabel={accessibilityLabel ?? label}
     >
       <Icon size={16} color={selected ? colors.white : colors.foreground} />
-      <Text className={cn('ml-2', selected ? 'text-white' : 'text-foreground')}>
-        {label}
-      </Text>
+      <Text className={cn('ml-2', selected ? 'text-white' : 'text-foreground')}>{label}</Text>
     </PressableScale>
   );
 }
@@ -507,11 +505,7 @@ export default function PersonalityOnboardingScreen() {
         {/* Step content */}
         <Animated.View
           key={`step-${step}`}
-          entering={
-            direction === 'next'
-              ? FadeInRight.duration(300)
-              : FadeInLeft.duration(300)
-          }
+          entering={direction === 'next' ? FadeInRight.duration(300) : FadeInLeft.duration(300)}
           className="flex-1"
         >
           {renderStep()}
@@ -534,11 +528,7 @@ export default function PersonalityOnboardingScreen() {
               fullWidth={isFirstStep}
               className={isFirstStep ? 'w-full' : 'flex-1'}
               onPress={handleNext}
-              rightIcon={
-                !isLastStep ? (
-                  <ArrowRight size={18} color={colors.white} />
-                ) : undefined
-              }
+              rightIcon={!isLastStep ? <ArrowRight size={18} color={colors.white} /> : undefined}
             >
               {isLastStep
                 ? isEditMode

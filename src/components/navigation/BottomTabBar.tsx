@@ -92,6 +92,9 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
             className="flex-1 items-center justify-center pt-2"
             onPress={() => handlePress(tab)}
             android_ripple={{ color: colors.primary + '20' }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
+            accessibilityLabel={tab.label}
           >
             <Icon size={24} color={isActive ? colors.primary : colors.muted} />
             <Text

@@ -98,11 +98,17 @@ class MockAuthRepository implements AuthRepository {
     throw new Error('Invalid email or password');
   }
 
-  async signUp(email: string, password: string, name: string): Promise<User> {
+  async signUp(data: {
+    email: string;
+    password: string;
+    name: string;
+    phone?: string;
+  }): Promise<User> {
     const user: User = {
       id: `user-${Date.now()}`,
-      email,
-      name,
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
       roles: ['customer'],
       preferredLanguage: 'en',
       createdAt: new Date().toISOString(),

@@ -28,7 +28,7 @@ export default function SignUpScreen() {
   });
 
   const onSubmit = (data: SignUpForm) => {
-    signUp({ email: data.email, password: data.password, name: data.name });
+    signUp({ email: data.email, password: data.password, name: data.name, phone: data.phone });
   };
 
   return (
@@ -59,7 +59,7 @@ export default function SignUpScreen() {
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Input
                 label={t('auth.name')}
-                placeholder="Ariya Wong"
+                placeholder={t('auth.namePlaceholder')}
                 textContentType="name"
                 autoComplete="name"
                 leftIcon={<User size={20} color={colors.muted} />}

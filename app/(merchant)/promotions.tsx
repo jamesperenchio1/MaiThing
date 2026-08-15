@@ -63,7 +63,7 @@ function CouponItem({
   onDelete: (coupon: Coupon) => void;
   isLast?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const discountLabel =
     coupon.discountType === 'percentage'
@@ -118,8 +118,8 @@ function CouponItem({
         <View className="flex-row items-center">
           <Clock size={12} color={colors.muted} />
           <Text variant="caption" className="ml-1 text-muted">
-            {new Date(coupon.validFrom).toLocaleDateString()} –{' '}
-            {new Date(coupon.validUntil).toLocaleDateString()}
+            {new Date(coupon.validFrom).toLocaleDateString(i18n.language)} –{' '}
+            {new Date(coupon.validUntil).toLocaleDateString(i18n.language)}
           </Text>
         </View>
         <View className="flex-row items-center" style={{ gap: 8 }}>
@@ -356,11 +356,7 @@ export default function PromotionsScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
       />
 
-      <BottomSheet
-        isOpen={modalVisible}
-        onClose={() => setModalVisible(false)}
-        enableScroll={true}
-      >
+      <BottomSheet isOpen={modalVisible} onClose={() => setModalVisible(false)} enableScroll={true}>
         <Text variant="h3" className="mb-6">
           {t('merchant.coupons.create')}
         </Text>
@@ -391,21 +387,13 @@ export default function PromotionsScreen() {
               onPress={() => setDiscountType(type)}
               scale={0.97}
               className={`flex-1 flex-row items-center justify-center rounded-2xl border px-3 py-3 ${
-                discountType === type
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-card'
+                discountType === type ? 'border-primary bg-primary/10' : 'border-border bg-card'
               }`}
             >
               {type === 'percentage' ? (
-                <Percent
-                  size={16}
-                  color={discountType === type ? colors.primary : colors.muted}
-                />
+                <Percent size={16} color={discountType === type ? colors.primary : colors.muted} />
               ) : (
-                <Banknote
-                  size={16}
-                  color={discountType === type ? colors.primary : colors.muted}
-                />
+                <Banknote size={16} color={discountType === type ? colors.primary : colors.muted} />
               )}
               <Text
                 variant="caption"
@@ -438,7 +426,7 @@ export default function PromotionsScreen() {
         <Input
           testID="coupon-max-uses-input"
           label={t('merchant.coupons.maxUses')}
-          placeholder="Unlimited"
+          placeholder={t('customer.wallet.infinite')}
           value={maxUses}
           onChangeText={setMaxUses}
           keyboardType="number-pad"
@@ -455,7 +443,7 @@ export default function PromotionsScreen() {
           <Input
             testID="coupon-max-discount-input"
             label="Max discount cap (THB)"
-            placeholder="No cap"
+            placeholder={t('merchant.coupons.noCapPlaceholder')}
             value={maxDiscount}
             onChangeText={setMaxDiscount}
             keyboardType="numeric"
@@ -523,9 +511,7 @@ export default function PromotionsScreen() {
           <Text variant="body-sm" className="font-medium">
             First-time customers only
           </Text>
-          <View
-            className={`h-6 w-11 rounded-full ${firstTimeOnly ? 'bg-primary' : 'bg-muted/30'}`}
-          >
+          <View className={`h-6 w-11 rounded-full ${firstTimeOnly ? 'bg-primary' : 'bg-muted/30'}`}>
             <View
               className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ${
                 firstTimeOnly ? 'left-6' : 'left-0.5'

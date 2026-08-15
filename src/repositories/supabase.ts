@@ -458,20 +458,23 @@ const authRepo: AuthRepository = {
     return { ...mapProfile(profile as Record<string, unknown>), roles: ['customer', 'merchant'] };
   },
 
-  async signUp(email, password, name) {
-    pendingOtpEmail = email;
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
+  async signUp(data) {
+    pendingOtpEmail = data.email;
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
       options: { emailRedirectTo: getAuthRedirectUrl() },
     });
     if (error) throw error;
-    const userId = notNull(data.user?.id, 'user');
-    await supabase.from('profiles').upsert({ id: userId, display_name: name, role: 'buyer' });
+    const userId = notNull(authData.user?.id, 'user');
+    await supabase
+      .from('profiles')
+      .upsert({ id: userId, display_name: data.name, phone: data.phone, role: 'buyer' });
     return {
       id: userId,
-      email,
-      name,
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
       roles: ['customer'] as UserRole[],
       preferredLanguage: 'en' as const,
       createdAt: new Date().toISOString(),

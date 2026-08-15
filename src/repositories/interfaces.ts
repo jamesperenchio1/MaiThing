@@ -32,7 +32,7 @@ import type {
 
 export interface AuthRepository {
   signIn(email: string, password: string): Promise<User>;
-  signUp(email: string, password: string, name: string): Promise<User>;
+  signUp(data: { email: string; password: string; name: string; phone?: string }): Promise<User>;
   registerMerchant(data: {
     email: string;
     password: string;
@@ -88,13 +88,19 @@ export interface MerchantRepository {
   updatePickupInstructions(id: string, instructions: string): Promise<Merchant>;
   getReviews(merchantId: string): Promise<Review[]>;
   replyToReview(reviewId: string, reply: string): Promise<Review>;
-  submitReview(data: Omit<Review, 'id' | 'createdAt' | 'merchantReply' | 'merchantRepliedAt'>): Promise<Review>;
+  submitReview(
+    data: Omit<Review, 'id' | 'createdAt' | 'merchantReply' | 'merchantRepliedAt'>
+  ): Promise<Review>;
   getStaff(merchantId: string): Promise<StaffMember[]>;
   addStaff(
     merchantId: string,
     data: Omit<StaffMember, 'id' | 'merchantId' | 'createdAt'>
   ): Promise<StaffMember>;
-  updateStaff(merchantId: string, staffId: string, data: Partial<StaffMember>): Promise<StaffMember>;
+  updateStaff(
+    merchantId: string,
+    staffId: string,
+    data: Partial<StaffMember>
+  ): Promise<StaffMember>;
   removeStaff(merchantId: string, staffId: string): Promise<void>;
   setStoreClosure(merchantId: string, closedUntil: string | null): Promise<Merchant>;
   getMerchantNotificationPreferences(merchantId: string): Promise<MerchantNotificationPreferences>;
@@ -124,7 +130,8 @@ export interface ListingRepository {
     lng?: number;
     radius?: number;
     type?: string;
-    sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
+    sortBy?:
+      'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
     dietaryTags?: string[];
     allergens?: string[];
     minPrice?: number;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Megaphone, Users, CheckCircle2, Clock } from 'lucide-react-native';
@@ -55,6 +56,7 @@ function BroadcastHistoryRow({ broadcast }: { broadcast: BroadcastMessage }) {
 
 export default function BroadcastScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
 
@@ -144,7 +146,11 @@ export default function BroadcastScreen() {
                 <View className="flex-row items-start">
                   <Clock size={16} color={colors.warning} />
                   <View className="flex-1 ml-2">
-                    <Text variant="body-sm" className="font-semibold" style={{ color: colors.warning }}>
+                    <Text
+                      variant="body-sm"
+                      className="font-semibold"
+                      style={{ color: colors.warning }}
+                    >
                       Daily limit reached
                     </Text>
                     <Text variant="caption" className="mt-0.5 text-muted">
@@ -184,7 +190,7 @@ export default function BroadcastScreen() {
             {/* Message input */}
             <Input
               label="Your message"
-              placeholder="Write a message to your followers — e.g. tonight's special or a limited deal…"
+              placeholder={t('merchant.broadcast.messagePlaceholder')}
               multiline
               numberOfLines={5}
               value={content}
@@ -200,19 +206,18 @@ export default function BroadcastScreen() {
               <Text
                 variant="caption"
                 className={
-                  isOverLimit ? 'text-danger font-semibold' : charCount >= 120 ? 'text-amber-500' : 'text-muted'
+                  isOverLimit
+                    ? 'text-danger font-semibold'
+                    : charCount >= 120
+                      ? 'text-amber-500'
+                      : 'text-muted'
                 }
               >
                 {charCount}/{MAX_CHARS}
               </Text>
             </View>
 
-            <Button
-              variant="primary"
-              onPress={handleSend}
-              disabled={!canSend}
-              className="mb-3"
-            >
+            <Button variant="primary" onPress={handleSend} disabled={!canSend} className="mb-3">
               {sendBroadcast.isPending ? 'Sending…' : 'Send Broadcast'}
             </Button>
 

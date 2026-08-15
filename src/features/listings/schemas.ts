@@ -1,32 +1,46 @@
+import i18n from 'i18next';
 import { z } from 'zod';
 
 export const createListingSchema = z
   .object({
     type: z.enum(['mystery_box', 'fixed_item']),
-    title: z.string().min(2, 'Title is required'),
-    description: z.string().min(10, 'Description must be at least 10 characters'),
-    category: z.string().min(1, 'Category is required'),
+    title: z.string().min(2),
+    description: z.string().min(10),
+    category: z.string().min(1),
     boxSize: z.enum(['small', 'medium', 'large', 'xl']).optional(),
-    originalPrice: z.number().min(1, 'Original price must be greater than 0'),
-    salePrice: z.number().min(1, 'Sale price must be greater than 0'),
-    quantity: z.number().min(1, 'Quantity must be at least 1'),
+    originalPrice: z.number().min(1),
+    salePrice: z.number().min(1),
+    quantity: z.number().min(1),
     lowStockThreshold: z.coerce.number().int().min(1).max(100).optional().default(3),
-    pickupWindowStart: z.date({ required_error: 'Start time is required' }),
-    pickupWindowEnd: z.date({ required_error: 'End time is required' }),
+    pickupWindowStart: z.date({
+      errorMap: () => ({ message: i18n.t('validation.listing.pickupWindowRequired') }),
+    }),
+    pickupWindowEnd: z.date({
+      errorMap: () => ({ message: i18n.t('validation.listing.pickupWindowRequired') }),
+    }),
     dietaryTags: z.array(z.string()).default([]),
     allergens: z.array(z.string()).default([]),
   })
-  .refine((data) => data.salePrice < data.originalPrice, {
-    message: 'Sale price must be less than original price',
-    path: ['salePrice'],
-  })
-  .refine((data) => data.pickupWindowEnd > data.pickupWindowStart, {
-    message: 'End time must be after start time',
-    path: ['pickupWindowEnd'],
-  })
-  .refine((data) => data.salePrice <= data.originalPrice * 0.7, {
-    message: 'Listings must be at least 30% off the original price',
-    path: ['salePrice'],
-  });
+  .refine(
+    (data) => data.salePrice < data.originalPrice,
+    () => ({
+      message: i18n.t('validation.listing.salePriceLessThanOriginal'),
+      path: ['salePrice'],
+    })
+  )
+  .refine(
+    (data) => data.pickupWindowEnd > data.pickupWindowStart,
+    () => ({
+      message: i18n.t('validation.listing.pickupWindowOrder'),
+      path: ['pickupWindowEnd'],
+    })
+  )
+  .refine(
+    (data) => data.salePrice <= data.originalPrice * 0.7,
+    () => ({
+      message: i18n.t('validation.listing.discountMinimum'),
+      path: ['salePrice'],
+    })
+  );
 
 export type CreateListingForm = z.infer<typeof createListingSchema>;

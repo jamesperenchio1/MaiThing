@@ -136,17 +136,21 @@ function ReviewSection({ order }: { order: Order }) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (Platform.OS === 'web') {
-      Alert.alert('Photo picker unavailable', 'Add a placeholder image instead?', [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          onPress: () =>
-            setReviewImages((prev) => [
-              ...prev,
-              `https://placehold.co/300x300/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
-            ]),
-        },
-      ]);
+      Alert.alert(
+        t('customer.orders.review.photoPickerUnavailableTitle'),
+        t('customer.orders.review.addPlaceholderImagePrompt'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            onPress: () =>
+              setReviewImages((prev) => [
+                ...prev,
+                `https://placehold.co/300x300/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
+              ]),
+          },
+        ]
+      );
       return;
     }
 
@@ -161,17 +165,21 @@ function ReviewSection({ order }: { order: Order }) {
       }
 
       if (permissionResult.status !== 'granted') {
-        Alert.alert('Permission required', 'Add a placeholder image instead?', [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('common.confirm'),
-            onPress: () =>
-              setReviewImages((prev) => [
-                ...prev,
-                `https://placehold.co/300x300/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
-              ]),
-          },
-        ]);
+        Alert.alert(
+          t('customer.orders.review.permissionRequiredTitle'),
+          t('customer.orders.review.addPlaceholderImagePrompt'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('common.confirm'),
+              onPress: () =>
+                setReviewImages((prev) => [
+                  ...prev,
+                  `https://placehold.co/300x300/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
+                ]),
+            },
+          ]
+        );
         return;
       }
 
@@ -194,7 +202,7 @@ function ReviewSection({ order }: { order: Order }) {
         }
       }
     } catch {
-      Alert.alert('Error', 'Could not pick image. Please try again.');
+      Alert.alert(t('common.error'), t('customer.orders.review.imagePickError'));
     }
   };
 
@@ -206,9 +214,11 @@ function ReviewSection({ order }: { order: Order }) {
     return (
       <Card variant="outlined" className="mb-6 items-center">
         <View className="flex-row items-center justify-center">
-          <Star size={16} color="#F59E0B" fill="#F59E0B" />
+          <Star size={16} color={colors.warning} fill={colors.warning} />
           <Text variant="body-sm" className="ml-2 text-center text-muted">
-            {submitted ? 'Thank you for your review!' : 'You reviewed this order'}
+            {submitted
+              ? t('customer.orders.review.thankYou')
+              : t('customer.orders.review.alreadyReviewed')}
           </Text>
         </View>
       </Card>
@@ -218,21 +228,21 @@ function ReviewSection({ order }: { order: Order }) {
   return (
     <Card variant="outlined" className="mb-6">
       <Text variant="h3" className="mb-4">
-        Leave a review
+        {t('customer.orders.review.title')}
       </Text>
       <View className="mb-4 flex-row justify-center gap-2">
         {[1, 2, 3, 4, 5].map((star) => (
           <PressableScale key={star} onPress={() => setRating(star)} scale={0.85}>
             <Star
               size={32}
-              color={star <= rating ? '#F59E0B' : colors.muted}
-              fill={star <= rating ? '#F59E0B' : 'transparent'}
+              color={star <= rating ? colors.warning : colors.muted}
+              fill={star <= rating ? colors.warning : 'transparent'}
             />
           </PressableScale>
         ))}
       </View>
       <Input
-        placeholder="How was your order?"
+        placeholder={t('customer.orders.review.placeholder')}
         value={comment}
         onChangeText={setComment}
         multiline
@@ -270,7 +280,7 @@ function ReviewSection({ order }: { order: Order }) {
         >
           <Camera size={16} color={colors.primary} />
           <Text variant="caption" className="ml-1 text-primary">
-            Camera
+            {t('customer.orders.review.camera')}
           </Text>
         </PressableScale>
         <PressableScale
@@ -280,7 +290,7 @@ function ReviewSection({ order }: { order: Order }) {
         >
           <ImageIcon size={16} color={colors.primary} />
           <Text variant="caption" className="ml-1 text-primary">
-            Gallery
+            {t('customer.orders.review.gallery')}
           </Text>
         </PressableScale>
       </View>
@@ -305,7 +315,7 @@ function ReviewSection({ order }: { order: Order }) {
           );
         }}
       >
-        Submit review
+        {t('customer.orders.review.submit')}
       </Button>
     </Card>
   );
@@ -333,8 +343,11 @@ export default function OrderDetailScreen() {
       Platform.OS !== 'web'
     ) {
       scheduleLocalNotification(
-        'Your order is ready!',
-        `Pick up at ${order.merchantName} now. Code: ${order.pickupCode}`
+        t('customer.notifications.orderReady.title'),
+        t('customer.notifications.orderReady.body', {
+          merchant: order.merchantName,
+          code: order.pickupCode,
+        })
       );
     }
     if (order) {
@@ -407,7 +420,7 @@ export default function OrderDetailScreen() {
 
   return (
     <Screen scrollable>
-      <Header title={`Order #${order.id.split('-').pop()}`} />
+      <Header title={t('customer.orders.detail.orderNumber', { id: order.id.split('-').pop() })} />
       <View className="px-6 py-4">
         <Card variant="elevated" className="mb-6 items-center p-6">
           <View className="mb-3 flex-row">
@@ -421,7 +434,7 @@ export default function OrderDetailScreen() {
                 variant="body-sm"
                 className={`ml-1.5 font-semibold ${!showQR ? 'text-white' : 'text-muted'}`}
               >
-                Code
+                {t('customer.orders.detail.codeTab')}
               </Text>
             </PressableScale>
             <PressableScale
@@ -434,7 +447,7 @@ export default function OrderDetailScreen() {
                 variant="body-sm"
                 className={`ml-1.5 font-semibold ${showQR ? 'text-white' : 'text-muted'}`}
               >
-                QR
+                {t('customer.orders.detail.qrTab')}
               </Text>
             </PressableScale>
           </View>
@@ -444,7 +457,7 @@ export default function OrderDetailScreen() {
                 <QRCode value={order.pickupCode} size={160} />
               </View>
               <Text variant="caption" className="mt-3 text-muted">
-                Show QR code to merchant
+                {t('customer.orders.detail.showQrHint')}
               </Text>
             </View>
           ) : (
@@ -485,7 +498,7 @@ export default function OrderDetailScreen() {
 
         <Card variant="outlined" className="mb-6">
           <Text variant="h3" className="mb-4">
-            Order Summary
+            {t('customer.orders.detail.orderSummary')}
           </Text>
           {order.items.map((item) => (
             <View key={item.listingId} className="mb-3 flex-row items-center">
@@ -510,14 +523,15 @@ export default function OrderDetailScreen() {
           <View className="mt-4 border-t border-border pt-4">
             <View className="mb-2 flex-row justify-between">
               <Text variant="body-sm" className="text-muted">
-                Subtotal
+                {t('customer.cart.subtotal')}
               </Text>
               <Text variant="body-sm">{formatCurrency(order.subtotal)}</Text>
             </View>
             {order.couponDiscount > 0 && (
               <View className="mb-2 flex-row justify-between">
                 <Text variant="body-sm" className="text-muted">
-                  Coupon {order.couponCode ? `(${order.couponCode})` : ''}
+                  {t('customer.orders.detail.coupon')}{' '}
+                  {order.couponCode ? `(${order.couponCode})` : ''}
                 </Text>
                 <Text variant="body-sm" className="text-success">
                   -{formatCurrency(order.couponDiscount)}
@@ -526,7 +540,7 @@ export default function OrderDetailScreen() {
             )}
             <View className="flex-row justify-between">
               <Text variant="body" className="font-semibold">
-                Total
+                {t('customer.cart.total')}
               </Text>
               <Text className="font-bold">{formatCurrency(order.total)}</Text>
             </View>
@@ -547,7 +561,7 @@ export default function OrderDetailScreen() {
             <Clock size={20} color={colors.muted} className="mr-3 mt-0.5" />
             <View className="flex-1">
               <Text variant="body-sm" className="font-semibold">
-                Pickup Window
+                {t('customer.listing.pickupWindow')}
               </Text>
               <Text variant="body-sm" className="text-muted">
                 {formatPickupWindow(order.pickupWindowStart, order.pickupWindowEnd, i18n.language)}
@@ -564,13 +578,13 @@ export default function OrderDetailScreen() {
               onPress={handleAddToCalendar}
               leftIcon={<Calendar size={18} color={colors.primary} />}
             >
-              Add to Calendar
+              {t('customer.orders.detail.addToCalendar')}
             </Button>
             {calendarAdded && (
               <View className="mt-2 flex-row items-center justify-center">
                 <Check size={14} color={colors.success} />
                 <Text variant="caption" className="ml-1 text-success">
-                  Added to calendar
+                  {t('customer.orders.detail.addedToCalendar')}
                 </Text>
               </View>
             )}
@@ -586,7 +600,7 @@ export default function OrderDetailScreen() {
               leftIcon={<Navigation size={18} color={colors.primary} />}
               onPress={handleNavigate}
             >
-              Navigate to pickup
+              {t('customer.orders.detail.navigateToPickup')}
             </Button>
           )}
 
@@ -597,7 +611,7 @@ export default function OrderDetailScreen() {
             loading={reorder.isPending}
             onPress={() => reorder.mutate(order)}
           >
-            Reorder
+            {t('customer.orders.detail.reorder')}
           </Button>
         )}
 
@@ -609,7 +623,7 @@ export default function OrderDetailScreen() {
             leftIcon={<MessageCircle size={18} color={colors.primary} />}
             onPress={() => router.push(`/(customer)/messages/${order.merchantId}` as never)}
           >
-            Chat with merchant
+            {t('customer.orders.detail.chatWithMerchant')}
           </Button>
         )}
 
@@ -621,45 +635,51 @@ export default function OrderDetailScreen() {
             loading={cancelOrder.isPending}
             onPress={() => {
               const reasons = [
-                'Changed my mind',
-                'Ordered by mistake',
-                "Pickup time doesn't work",
-                'Other',
+                t('customer.orders.detail.cancelReasonChangedMind'),
+                t('customer.orders.detail.cancelReasonMistake'),
+                t('customer.orders.detail.cancelReasonPickupTime'),
+                t('customer.orders.detail.cancelReasonOther'),
               ];
-              Alert.alert('Cancel order', 'Why are you cancelling this order?', [
-                ...reasons.map((reason) => ({
-                  text: reason,
-                  onPress: () => {
-                    Alert.alert(
-                      'Confirm cancellation',
-                      `Your wallet will be refunded ${formatCurrency(order.total)}.`,
-                      [
-                        { text: 'Never mind', style: 'cancel' },
-                        {
-                          text: 'Confirm',
-                          style: 'destructive',
-                          onPress: () =>
-                            cancelOrder.mutate(
-                              { id: order.id, reason },
-                              { onSuccess: () => setCancelSuccess(true) }
-                            ),
-                        },
-                      ]
-                    );
-                  },
-                })),
-                { text: 'Cancel', style: 'cancel' },
-              ]);
+              Alert.alert(
+                t('customer.orders.detail.cancelOrder'),
+                t('customer.orders.detail.cancelOrderPrompt'),
+                [
+                  ...reasons.map((reason) => ({
+                    text: reason,
+                    onPress: () => {
+                      Alert.alert(
+                        t('customer.orders.detail.confirmCancellationTitle'),
+                        t('customer.orders.detail.confirmCancellationBody', {
+                          amount: formatCurrency(order.total),
+                        }),
+                        [
+                          { text: t('customer.orders.detail.neverMind'), style: 'cancel' },
+                          {
+                            text: t('common.confirm'),
+                            style: 'destructive',
+                            onPress: () =>
+                              cancelOrder.mutate(
+                                { id: order.id, reason },
+                                { onSuccess: () => setCancelSuccess(true) }
+                              ),
+                          },
+                        ]
+                      );
+                    },
+                  })),
+                  { text: t('common.cancel'), style: 'cancel' },
+                ]
+              );
             }}
           >
-            Cancel order
+            {t('customer.orders.detail.cancelOrder')}
           </Button>
         )}
 
         {cancelSuccess && (
           <Card variant="outlined" className="mt-4 border-success/30 bg-success/10">
             <Text variant="body-sm" className="text-center font-semibold text-success">
-              Order cancelled and refunded.
+              {t('customer.orders.detail.cancelledAndRefunded')}
             </Text>
           </Card>
         )}

@@ -29,7 +29,7 @@ import { useAuthStore } from '@/src/stores/auth';
 import { useMerchantAnalytics } from '@/src/hooks/useMerchantAnalytics';
 import { useOrders } from '@/src/hooks/useOrders';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
-import { formatCurrency } from '@/src/lib/utils';
+import { formatCurrency, formatCompactNumber } from '@/src/lib/utils';
 import type { Order } from '@/src/types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ function heatCellClass(count: number): string {
 export default function MerchantAnalyticsScreen() {
   const { metric } = useLocalSearchParams<{ metric?: MetricKey }>();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const merchantId = user?.id ?? '';
@@ -252,10 +252,7 @@ export default function MerchantAnalyticsScreen() {
     return { totalRevenue, totalOrders, totalItemsSaved, avgOrderValue, views, conversionRate };
   }, [rangeOrders, analytics]);
 
-  const dailySeries = useMemo(
-    () => computeWeeklySeries(completedOrders),
-    [completedOrders]
-  );
+  const dailySeries = useMemo(() => computeWeeklySeries(completedOrders), [completedOrders]);
   const weekly8Series = useMemo(() => computeWeekly8Series(completedOrders), [completedOrders]);
 
   const chartSeries = chartMode === 'daily' ? dailySeries : weekly8Series;
@@ -286,7 +283,7 @@ export default function MerchantAnalyticsScreen() {
   const followerHistory = analytics?.followerHistory ?? [];
   const followerChartData = followerHistory.map((h) => h.count);
   const followerChartLabels = followerHistory.map((h) =>
-    new Date(h.date).toLocaleDateString('en', { month: 'short' })
+    new Date(h.date).toLocaleDateString(i18n.language, { month: 'short' })
   );
 
   const topListingTitle = topListings[0]?.title ?? null;
@@ -357,7 +354,7 @@ export default function MerchantAnalyticsScreen() {
             {isError && (
               <ErrorState
                 title={t('common.error')}
-                message="We couldn't load your analytics."
+                message={t('merchant.analytics.loadError')}
                 onRetry={refetch}
                 retryLabel={t('common.retry')}
               />
@@ -443,7 +440,7 @@ export default function MerchantAnalyticsScreen() {
                   <Text variant="caption" className="mb-1 text-muted">
                     {t('merchant.analytics.views')}
                   </Text>
-                  <Text variant="h3">{rangeMetrics.views.toLocaleString()}</Text>
+                  <Text variant="h3">{formatCompactNumber(rangeMetrics.views, i18n.language)}</Text>
                 </Card>
               </View>
             </View>
@@ -539,11 +536,7 @@ export default function MerchantAnalyticsScreen() {
                 </View>
               </View>
               {analytics ? (
-                <BarChart
-                  data={chartSeries.revenue}
-                  labels={chartLabels}
-                  color={colors.primary}
-                />
+                <BarChart data={chartSeries.revenue} labels={chartLabels} color={colors.primary} />
               ) : (
                 <View className="h-40 rounded-2xl bg-muted/10" />
               )}
@@ -553,7 +546,7 @@ export default function MerchantAnalyticsScreen() {
             {aovTrendData.length > 0 && (
               <View className="mb-6">
                 <Text variant="h3" className="mb-4">
-                  AOV Trend (8 weeks)
+                  {t('merchant.analytics.aovTrendTitle')}
                 </Text>
                 <BarChart
                   data={aovTrendData}
@@ -563,7 +556,7 @@ export default function MerchantAnalyticsScreen() {
                 />
                 <View className="mt-2 flex-row items-center justify-between">
                   <Text variant="caption" className="text-muted">
-                    Avg this period
+                    {t('merchant.analytics.avgThisPeriod')}
                   </Text>
                   <Text variant="caption" className="font-semibold">
                     {formatCurrency(
@@ -578,7 +571,7 @@ export default function MerchantAnalyticsScreen() {
             {followerChartData.length > 1 && (
               <View className="mb-6">
                 <Text variant="h3" className="mb-4">
-                  Follower Growth
+                  {t('merchant.analytics.followerGrowthTitle')}
                 </Text>
                 <Card variant="elevated" className="p-4">
                   <BarChart
@@ -590,22 +583,26 @@ export default function MerchantAnalyticsScreen() {
                   <View className="mt-3 flex-row items-center justify-between">
                     <View>
                       <Text variant="caption" className="text-muted">
-                        Current followers
+                        {t('merchant.analytics.currentFollowers')}
                       </Text>
                       <Text variant="body-sm" className="font-semibold">
-                        {followerChartData[followerChartData.length - 1].toLocaleString()}
+                        {formatCompactNumber(
+                          followerChartData[followerChartData.length - 1],
+                          i18n.language
+                        )}
                       </Text>
                     </View>
                     <View className="items-end">
                       <Text variant="caption" className="text-muted">
-                        Growth
+                        {t('merchant.analytics.growth')}
                       </Text>
                       <Text variant="body-sm" className="font-semibold text-primary">
-                        +
-                        {(
-                          followerChartData[followerChartData.length - 1] - followerChartData[0]
-                        ).toLocaleString()}{' '}
-                        this period
+                        {t('merchant.analytics.growthAmount', {
+                          count: formatCompactNumber(
+                            followerChartData[followerChartData.length - 1] - followerChartData[0],
+                            i18n.language
+                          ),
+                        })}
                       </Text>
                     </View>
                   </View>
@@ -640,9 +637,7 @@ export default function MerchantAnalyticsScreen() {
                     </View>
                     {heatmap[slotIdx].map((count, dayIdx) => (
                       <View key={dayIdx} className="flex-1 items-center px-0.5">
-                        <View
-                          className={`h-8 w-full rounded-md ${heatCellClass(count)}`}
-                        />
+                        <View className={`h-8 w-full rounded-md ${heatCellClass(count)}`} />
                       </View>
                     ))}
                   </View>
@@ -650,13 +645,13 @@ export default function MerchantAnalyticsScreen() {
                 {/* Legend */}
                 <View className="mt-3 flex-row items-center gap-3">
                   <Text variant="caption" className="text-muted">
-                    Low
+                    {t('merchant.analytics.low')}
                   </Text>
                   <View className="h-3 w-6 rounded-sm bg-primary/20" />
                   <View className="h-3 w-6 rounded-sm bg-primary/50" />
                   <View className="h-3 w-6 rounded-sm bg-primary" />
                   <Text variant="caption" className="text-muted">
-                    High
+                    {t('merchant.analytics.high')}
                   </Text>
                 </View>
               </Card>
@@ -688,7 +683,11 @@ export default function MerchantAnalyticsScreen() {
                               {rank + 1}
                             </Text>
                           </View>
-                          <Text variant="body-sm" className="flex-1 font-semibold" numberOfLines={1}>
+                          <Text
+                            variant="body-sm"
+                            className="flex-1 font-semibold"
+                            numberOfLines={1}
+                          >
                             {listing.title}
                           </Text>
                           <View className="ml-2 items-end">
@@ -696,7 +695,7 @@ export default function MerchantAnalyticsScreen() {
                               {formatCurrency(listing.revenue)}
                             </Text>
                             <Text variant="caption" className="text-muted">
-                              {listing.orders} {listing.orders === 1 ? 'order' : 'orders'}
+                              {t('merchant.analytics.ordersCount', { count: listing.orders })}
                             </Text>
                           </View>
                         </View>
@@ -712,14 +711,24 @@ export default function MerchantAnalyticsScreen() {
                             <View className="flex-row items-center">
                               <Eye size={12} color={colors.muted} />
                               <Text variant="caption" className="ml-1 text-muted">
-                                {(listing as { views: number }).views.toLocaleString()} views
+                                {t('merchant.analytics.viewsCount', {
+                                  count: formatCompactNumber(
+                                    (listing as { views: number }).views,
+                                    i18n.language
+                                  ),
+                                })}
                               </Text>
                             </View>
                             {'clicks' in listing && (
                               <View className="flex-row items-center">
                                 <MousePointerClick size={12} color={colors.muted} />
                                 <Text variant="caption" className="ml-1 text-muted">
-                                  {(listing as { clicks: number }).clicks.toLocaleString()} clicks
+                                  {t('merchant.analytics.clicksCount', {
+                                    count: formatCompactNumber(
+                                      (listing as { clicks: number }).clicks,
+                                      i18n.language
+                                    ),
+                                  })}
                                 </Text>
                               </View>
                             )}
@@ -727,7 +736,10 @@ export default function MerchantAnalyticsScreen() {
                               <View className="flex-row items-center">
                                 <Search size={12} color={colors.muted} />
                                 <Text variant="caption" className="ml-1 text-muted">
-                                  {(listing as { searchAppearances: number }).searchAppearances.toLocaleString()}
+                                  {formatCompactNumber(
+                                    (listing as { searchAppearances: number }).searchAppearances,
+                                    i18n.language
+                                  )}
                                 </Text>
                               </View>
                             )}
@@ -735,7 +747,11 @@ export default function MerchantAnalyticsScreen() {
                               <View className="flex-row items-center">
                                 <Percent size={12} color={colors.muted} />
                                 <Text variant="caption" className="ml-1 text-muted">
-                                  {(listing as { conversionRate: number }).conversionRate.toFixed(1)}% conv
+                                  {t('merchant.analytics.convRate', {
+                                    value: (
+                                      listing as { conversionRate: number }
+                                    ).conversionRate.toFixed(1),
+                                  })}
                                 </Text>
                               </View>
                             )}
@@ -748,7 +764,7 @@ export default function MerchantAnalyticsScreen() {
               ) : (
                 <View className="rounded-2xl bg-muted/10 p-6">
                   <Text variant="body" className="text-center text-muted">
-                    No top listings for this range
+                    {t('merchant.analytics.noTopListings')}
                   </Text>
                 </View>
               )}

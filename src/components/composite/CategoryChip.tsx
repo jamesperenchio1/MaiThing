@@ -12,6 +12,7 @@ import {
 import { cn } from '@/src/lib/utils';
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 import type { Category } from '@/src/types';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -41,9 +42,18 @@ export function CategoryChip({
   className,
 }: CategoryChipProps) {
   const Icon = iconMap[category.icon] ?? Coffee;
+  const label = locale === 'th' ? category.nameTh : category.name;
+  const colors = useThemeColor();
 
   return (
-    <PressableScale testID={`category-chip-${category.id}`} onPress={onPress} scale={0.95}>
+    <PressableScale
+      testID={`category-chip-${category.id}`}
+      onPress={onPress}
+      scale={0.95}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isActive }}
+      accessibilityLabel={label}
+    >
       <View
         className={cn(
           'mr-3 items-center rounded-2xl border border-border px-4 py-3',
@@ -51,7 +61,7 @@ export function CategoryChip({
           className
         )}
       >
-        <Icon size={24} color={isActive ? '#10B981' : '#6B7280'} />
+        <Icon size={24} color={isActive ? colors.success : colors.muted} />
         <Text
           variant="caption"
           className={cn('mt-1.5 font-medium', isActive ? 'text-primary' : 'text-muted')}

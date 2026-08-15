@@ -1,7 +1,9 @@
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Star } from 'lucide-react-native';
 import { Text } from '@/src/components/ui/Text';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import { formatCompactNumber } from '@/src/lib/utils';
 
 interface ReviewSummaryProps {
   rating: number;
@@ -11,6 +13,7 @@ interface ReviewSummaryProps {
 
 export function ReviewSummary({ rating, reviewCount, size = 'sm' }: ReviewSummaryProps) {
   const colors = useThemeColor();
+  const { i18n } = useTranslation();
   const starSize = size === 'md' ? 18 : 14;
   const textVariant = size === 'md' ? 'body' : 'body-sm';
 
@@ -21,7 +24,7 @@ export function ReviewSummary({ rating, reviewCount, size = 'sm' }: ReviewSummar
         {rating.toFixed(1)}
       </Text>
       <Text variant={textVariant} className="ml-1 text-muted">
-        ({reviewCount.toLocaleString()})
+        ({formatCompactNumber(reviewCount, i18n.language)})
       </Text>
     </View>
   );

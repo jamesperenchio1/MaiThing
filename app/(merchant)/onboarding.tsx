@@ -37,7 +37,6 @@ import { TEST_MERCHANT_USER } from '@/src/repositories/seed';
 import { formatCurrency } from '@/src/lib/utils';
 
 const COMMISSION_RATE = 0.15;
-const PAYOUT_DAY = 'Tuesday';
 
 const STEPS = [
   { key: 'value', icon: HeartHandshake },
@@ -183,10 +182,14 @@ export default function MerchantOnboardingScreen() {
             <Card variant="outlined" className="w-full items-center py-8">
               <Text className="text-5xl font-bold text-primary">{COMMISSION_RATE * 100}%</Text>
               <Text variant="body" className="mt-2 text-muted">
-                commission per sale
+                {t('merchant.onboarding.commissionPerSale')}
               </Text>
               <View className="mt-6 w-full space-y-2">
-                {['No monthly fees', 'No setup costs', 'Cancel anytime'].map((item) => (
+                {[
+                  t('merchant.onboarding.noMonthlyFees'),
+                  t('merchant.onboarding.noSetupCosts'),
+                  t('merchant.onboarding.cancelAnytime'),
+                ].map((item) => (
                   <View key={item} className="flex-row items-center justify-center">
                     <BadgeCheck size={16} color={colors.success} />
                     <Text variant="body-sm" className="ml-2">
@@ -214,15 +217,15 @@ export default function MerchantOnboardingScreen() {
             <Card variant="outlined" className="w-full">
               <View className="mb-4 flex-row items-center justify-between border-b border-border pb-4">
                 <Text variant="body-sm" className="text-muted">
-                  Payout schedule
+                  {t('merchant.onboarding.payoutSchedule')}
                 </Text>
                 <Text variant="body-sm" className="font-semibold">
-                  Every {PAYOUT_DAY}
+                  {t('merchant.onboarding.everyTuesday')}
                 </Text>
               </View>
               <View className="mb-4 flex-row items-center justify-between border-b border-border pb-4">
                 <Text variant="body-sm" className="text-muted">
-                  Minimum payout
+                  {t('merchant.onboarding.minimumPayout')}
                 </Text>
                 <Text variant="body-sm" className="font-semibold">
                   {formatCurrency(500)}
@@ -230,10 +233,10 @@ export default function MerchantOnboardingScreen() {
               </View>
               <View className="flex-row items-center justify-between">
                 <Text variant="body-sm" className="text-muted">
-                  Settlement
+                  {t('merchant.onboarding.settlement')}
                 </Text>
                 <Text variant="body-sm" className="font-semibold">
-                  Bank transfer
+                  {t('merchant.onboarding.bankTransfer')}
                 </Text>
               </View>
             </Card>
@@ -247,28 +250,28 @@ export default function MerchantOnboardingScreen() {
               {t('merchant.onboarding.businessInfo')}
             </Text>
             <Text variant="body" className="mb-6 text-center text-muted">
-              Tell us about your shop so we can verify your partnership.
+              {t('merchant.onboarding.businessInfoDesc')}
             </Text>
             <Card variant="outlined" className="w-full p-5">
               <Input
-                label="Business Name"
-                placeholder="Sukhumvit Bakery"
+                label={t('merchant.onboarding.businessNameLabel')}
+                placeholder={t('merchant.onboarding.businessNamePlaceholder')}
                 value={businessName}
                 onChangeText={setBusinessName}
                 leftIcon={<Building2 size={20} color={colors.muted} />}
                 containerClassName="mb-4"
               />
               <Input
-                label="Owner Name"
-                placeholder="Kornchai Srisuk"
+                label={t('merchant.onboarding.ownerNameLabel')}
+                placeholder={t('merchant.onboarding.ownerNamePlaceholder')}
                 value={ownerName}
                 onChangeText={setOwnerName}
                 leftIcon={<User size={20} color={colors.muted} />}
                 containerClassName="mb-4"
               />
               <Input
-                label="Email"
-                placeholder="shop@example.com"
+                label={t('merchant.staff.email')}
+                placeholder={t('merchant.onboarding.emailPlaceholder')}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -277,8 +280,8 @@ export default function MerchantOnboardingScreen() {
                 containerClassName="mb-4"
               />
               <Input
-                label="Phone"
-                placeholder="081-234-5678"
+                label={t('merchant.staff.phone')}
+                placeholder={t('merchant.onboarding.phonePlaceholder')}
                 keyboardType="phone-pad"
                 value={phone}
                 onChangeText={setPhone}
@@ -287,7 +290,7 @@ export default function MerchantOnboardingScreen() {
               />
               {!user && (
                 <Input
-                  label="Create Password"
+                  label={t('merchant.onboarding.createPasswordLabel')}
                   placeholder="••••••••"
                   secureTextEntry
                   value={password}
@@ -306,25 +309,25 @@ export default function MerchantOnboardingScreen() {
               {t('merchant.onboarding.bankAccount')}
             </Text>
             <Text variant="body" className="mb-6 text-center text-muted">
-              Add the account where you want to receive payouts.
+              {t('merchant.onboarding.bankAccountDesc')}
             </Text>
             <Input
-              label="Bank Name"
-              placeholder="Siam Commercial Bank"
+              label={t('merchant.bankAccount.bankName')}
+              placeholder={t('merchant.onboarding.bankNamePlaceholder')}
               value={bankName}
               onChangeText={setBankName}
               leftIcon={<Landmark size={20} color={colors.muted} />}
             />
             <Input
-              label="Account Name"
-              placeholder="Kornchai Srisuk"
+              label={t('merchant.bankAccount.accountName')}
+              placeholder={t('merchant.onboarding.ownerNamePlaceholder')}
               value={accountName}
               onChangeText={setAccountName}
               leftIcon={<User size={20} color={colors.muted} />}
             />
             <Input
-              label="Account Number"
-              placeholder="123-4-56789-0"
+              label={t('merchant.bankAccount.accountNumber')}
+              placeholder={t('merchant.onboarding.accountNumberPlaceholder')}
               keyboardType="number-pad"
               value={accountNumber}
               onChangeText={setAccountNumber}
@@ -351,9 +354,9 @@ export default function MerchantOnboardingScreen() {
                   <PackagePlus size={28} color={colors.primary} />
                 </View>
                 <View className="flex-1">
-                  <Text variant="h4">Mystery Box</Text>
+                  <Text variant="h4">{t('customer.listing.mysteryBox')}</Text>
                   <Text variant="body-sm" className="text-muted">
-                    A surprise bag of surplus food — most popular with rescuers.
+                    {t('merchant.onboarding.mysteryBoxDesc')}
                   </Text>
                 </View>
               </View>
@@ -362,7 +365,7 @@ export default function MerchantOnboardingScreen() {
                 variant="outline"
                 onPress={() => finishOnboarding({ createListing: true })}
               >
-                Create your first listing
+                {t('merchant.onboarding.createFirstListing')}
               </Button>
             </Card>
           </View>
@@ -446,7 +449,7 @@ export default function MerchantOnboardingScreen() {
               leftIcon={<ArrowLeft size={18} color={colors.foreground} />}
               className="flex-1"
             >
-              Back
+              {t('merchant.onboarding.back')}
             </Button>
           )}
           <Button
@@ -456,14 +459,14 @@ export default function MerchantOnboardingScreen() {
             loading={isRegistering}
             rightIcon={!isLastStep ? <ArrowRight size={18} color={colors.white} /> : undefined}
           >
-            {isLastStep ? t('merchant.onboarding.goToDashboard') : 'Next'}
+            {isLastStep ? t('merchant.onboarding.goToDashboard') : t('merchant.onboarding.next')}
           </Button>
         </View>
 
         {isTestAccount && (
           <Button variant="ghost" className="mt-3" onPress={handleSkipToDashboard}>
             <Text variant="body-sm" className="text-muted">
-              Continue with test merchant account
+              {t('merchant.onboarding.continueTestAccount')}
             </Text>
           </Button>
         )}

@@ -140,7 +140,7 @@ export default function MapScreen() {
           }}
         >
           <SearchBar
-            placeholder="Search shops nearby..."
+            placeholder={t('customer.map.searchPlaceholder')}
             value={query}
             onChangeText={setQuery}
             onSubmit={setQuery}

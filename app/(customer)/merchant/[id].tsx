@@ -2,7 +2,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { View, Alert } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { MapPin, Phone, Navigation, AlertCircle, Calendar, Clock, Bell, BellOff } from 'lucide-react-native';
+import {
+  MapPin,
+  Phone,
+  Navigation,
+  AlertCircle,
+  Calendar,
+  Clock,
+  Bell,
+  BellOff,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Image } from '@/src/components/ui/Image';
 
@@ -48,10 +57,11 @@ export default function MerchantDetailScreen() {
   const { data: reviews } = useReviews(id);
   const isFollowingNotifications = useMerchantFollowNotification(user?.id ?? '', id ?? '');
   const toggleFollowNotification = useToggleMerchantFollowNotification();
-  const isTemporarilyClosed =
-    !!(merchant?.closedUntil && new Date(merchant.closedUntil) > new Date());
+  const isTemporarilyClosed = !!(
+    merchant?.closedUntil && new Date(merchant.closedUntil) > new Date()
+  );
   const closedUntilFormatted = merchant?.closedUntil
-    ? `${new Date(merchant.closedUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at midnight`
+    ? `${new Date(merchant.closedUntil).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })} at midnight`
     : '';
 
   const openStatus = merchant ? getMerchantOpenStatus(merchant, i18n.language) : null;
@@ -103,11 +113,7 @@ export default function MerchantDetailScreen() {
             <Text variant="h2" className="mb-1">
               {merchant.name}
             </Text>
-            <ReviewSummary
-              rating={merchant.rating}
-              reviewCount={merchant.reviewCount}
-              size="md"
-            />
+            <ReviewSummary rating={merchant.rating} reviewCount={merchant.reviewCount} size="md" />
             {openStatus && (
               <View className="mt-2 self-start">
                 <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{openStatusLabel}</Badge>
@@ -120,14 +126,20 @@ export default function MerchantDetailScreen() {
                 if (!user) return;
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 toggleFollowNotification.mutate(
-                  { userId: user.id, merchantId: merchant.id, isFollowing: isFollowingNotifications },
+                  {
+                    userId: user.id,
+                    merchantId: merchant.id,
+                    isFollowing: isFollowingNotifications,
+                  },
                   {
                     onSuccess: ({ isFollowing }) => {
                       Alert.alert(
                         '',
                         isFollowing
                           ? t('customer.merchant.followNotificationSet', { name: merchant.name })
-                          : t('customer.merchant.followNotificationRemoved', { name: merchant.name })
+                          : t('customer.merchant.followNotificationRemoved', {
+                              name: merchant.name,
+                            })
                       );
                     },
                   }
@@ -135,7 +147,11 @@ export default function MerchantDetailScreen() {
               }}
               scale={0.9}
               className="rounded-full p-2"
-              style={{ backgroundColor: isFollowingNotifications ? `${colors.primary}15` : `${colors.muted}15` }}
+              style={{
+                backgroundColor: isFollowingNotifications
+                  ? `${colors.primary}15`
+                  : `${colors.muted}15`,
+              }}
             >
               {isFollowingNotifications ? (
                 <Bell size={20} color={colors.primary} fill={colors.primary} />
@@ -164,9 +180,7 @@ export default function MerchantDetailScreen() {
         <View className="mb-4 flex-row flex-wrap">
           {merchant.isVerified && <TrustBadge type="verified" />}
           <TrustBadge type="guarantee" />
-          {merchant.hygieneRating && (
-            <TrustBadge type="hygiene" rating={merchant.hygieneRating} />
-          )}
+          {merchant.hygieneRating && <TrustBadge type="hygiene" rating={merchant.hygieneRating} />}
         </View>
 
         <View className="mb-4 flex-row items-center">

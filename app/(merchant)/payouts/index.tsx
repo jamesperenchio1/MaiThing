@@ -184,7 +184,7 @@ export default function PayoutsScreen() {
                 wallet?.nextPayoutDate
                   ? `${formatRelativeTime(wallet.nextPayoutDate, i18n.language)} (${new Date(
                       wallet.nextPayoutDate
-                    ).toLocaleDateString()})`
+                    ).toLocaleDateString(i18n.language)})`
                   : t('merchant.payouts.estimated')
               }
             />
@@ -194,7 +194,7 @@ export default function PayoutsScreen() {
                 wallet?.lastPayoutDate
                   ? `${formatRelativeTime(wallet.lastPayoutDate, i18n.language)} (${new Date(
                       wallet.lastPayoutDate
-                    ).toLocaleDateString()})`
+                    ).toLocaleDateString(i18n.language)})`
                   : '—'
               }
             />

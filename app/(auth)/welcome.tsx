@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Image } from '@/src/components/ui/Image';
 import {
   Leaf,
@@ -22,6 +22,7 @@ import * as Haptics from 'expo-haptics';
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
+import { Screen } from '@/src/components/layout/Screen';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -94,12 +95,8 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <ScrollView
-      testID="welcome-screen"
-      className="flex-1 bg-background"
-      showsVerticalScrollIndicator={false}
-    >
-      <View className="px-6 pt-16 pb-10">
+    <Screen testID="welcome-screen" className="bg-background">
+      <View className="px-6 pt-6 pb-10">
         <Animated.View entering={FadeInUp.duration(600).delay(100)} className="items-center">
           <View className="mb-6 h-24 w-24 items-center justify-center rounded-3xl bg-primary/10">
             <Leaf size={48} color={colors.primary} />
@@ -254,10 +251,10 @@ export default function WelcomeScreen() {
               </View>
               <View className="flex-1">
                 <Text variant="h4" className="mb-0.5">
-                  Sell on MaiThing
+                  {t('auth.sellOnMaithing')}
                 </Text>
                 <Text variant="body-sm" className="text-muted">
-                  Become a Partner and turn surplus food into revenue.
+                  {t('auth.sellOnMaithingDesc')}
                 </Text>
               </View>
               <ArrowRight size={20} color={colors.primary} />
@@ -265,6 +262,6 @@ export default function WelcomeScreen() {
           </PressableScale>
         </Animated.View>
       </View>
-    </ScrollView>
+    </Screen>
   );
 }

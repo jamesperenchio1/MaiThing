@@ -30,6 +30,7 @@ export default [
       'react/no-unescaped-entities': 'off',
       'react-native/no-unused-styles': 'warn',
       'react-native/split-platform-components': 'off',
+      'react-native/no-color-literals': 'warn',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',

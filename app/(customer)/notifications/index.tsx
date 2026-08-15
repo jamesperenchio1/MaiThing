@@ -28,6 +28,7 @@ function NotificationCard({
   const router = useRouter();
   const colors = useThemeColor();
   const markAsRead = useMarkNotificationRead();
+  const { i18n } = useTranslation();
 
   return (
     <PressableScale
@@ -60,7 +61,7 @@ function NotificationCard({
               {notification.body}
             </Text>
             <Text variant="caption" className="mt-2 text-muted">
-              {new Date(notification.createdAt).toLocaleString()}
+              {new Date(notification.createdAt).toLocaleString(i18n.language)}
             </Text>
           </View>
           {!notification.read && <View className="ml-2 h-2.5 w-2.5 rounded-full bg-primary" />}

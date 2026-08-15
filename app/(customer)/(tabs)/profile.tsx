@@ -162,37 +162,33 @@ export default function ProfileScreen() {
         onClose={() => setEditModalVisible(false)}
         snapPoints={['35%']}
       >
-                <Text variant="h3" className="mb-4">
-                  {t('customer.profile.editProfile')}
-                </Text>
-                <Text variant="label" className="mb-2 ml-1">
-                  {t('customer.profile.name')}
-                </Text>
-                <View className="mb-6 rounded-2xl border border-border bg-background px-4 py-3">
-                  <TextInput
-                    value={editName}
-                    onChangeText={setEditName}
-                    placeholder={t('customer.profile.yourName')}
-                    placeholderTextColor={colors.muted}
-                    style={{
-                      color: colors.foreground,
-                      fontSize: Math.round(16 * getFontScale(width, fontScale)),
-                    }}
-                    autoFocus
-                  />
-                </View>
-                <View className="flex-row space-x-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onPress={() => setEditModalVisible(false)}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                  <Button className="flex-1" onPress={handleSaveProfile}>
-                    {t('common.save')}
-                  </Button>
-                </View>
+        <Text variant="h3" className="mb-4">
+          {t('customer.profile.editProfile')}
+        </Text>
+        <Text variant="label" className="mb-2 ml-1">
+          {t('customer.profile.name')}
+        </Text>
+        <View className="mb-6 rounded-2xl border border-border bg-background px-4 py-3">
+          <TextInput
+            value={editName}
+            onChangeText={setEditName}
+            placeholder={t('customer.profile.yourName')}
+            placeholderTextColor={colors.muted}
+            style={{
+              color: colors.foreground,
+              fontSize: Math.round(16 * getFontScale(width, fontScale)),
+            }}
+            autoFocus
+          />
+        </View>
+        <View className="flex-row space-x-3">
+          <Button variant="outline" className="flex-1" onPress={() => setEditModalVisible(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button className="flex-1" onPress={handleSaveProfile}>
+            {t('common.save')}
+          </Button>
+        </View>
       </BottomSheet>
 
       <View className="px-6 pt-4 pb-2">
@@ -231,7 +227,11 @@ export default function ProfileScreen() {
 
         <Card testID="profile-card" variant="elevated" className="mb-6">
           <View className="flex-row items-center">
-            <Avatar uri={user?.avatarUrl} name={user?.name ?? t('customer.profile.guest')} size="lg" />
+            <Avatar
+              uri={user?.avatarUrl}
+              name={user?.name ?? t('customer.profile.guest')}
+              size="lg"
+            />
             <View className="ml-4 flex-1">
               <Text variant="h3">{user?.name ?? t('customer.profile.guest')}</Text>
               <Text variant="body-sm" className="text-muted">
@@ -376,7 +376,7 @@ export default function ProfileScreen() {
             <MenuItem
               testID="offline-simulation-toggle"
               icon={<WifiOff size={20} color={colors.muted} />}
-              label="Simulate offline mode"
+              label={t('customer.profile.simulateOfflineMode')}
               onPress={() => setForceOffline(!isOffline)}
               right={
                 <Switch

@@ -210,7 +210,7 @@ function OrderCard({
 }
 
 export default function MerchantOrdersScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
@@ -342,14 +342,15 @@ export default function MerchantOrdersScreen() {
     const toReady = selectedOrders.filter(
       (o) => o.status === 'confirmed' || o.status === 'preparing'
     );
-    await Promise.all(
-      toReady.map((o) => bulkUpdate.mutateAsync({ id: o.id, status: 'ready' }))
-    );
+    await Promise.all(toReady.map((o) => bulkUpdate.mutateAsync({ id: o.id, status: 'ready' })));
     exitSelectionMode();
   };
 
   const lastUpdated = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    ? new Date(dataUpdatedAt).toLocaleTimeString(i18n.language, {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
     : null;
 
   const handleRefresh = () => {

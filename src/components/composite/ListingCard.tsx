@@ -87,6 +87,8 @@ export const ListingCard = React.memo(function ListingCard({
   return (
     <PressableScale
       testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={`${listing.title}, ${formatCurrency(effectivePrice)}`}
       onPress={() => {
         if (navigating.current) return;
         navigating.current = true;
@@ -143,9 +145,7 @@ export const ListingCard = React.memo(function ListingCard({
             />
           </View>
         </View>
-        <View
-          className={cn('p-3 flex-1 justify-between', variant === 'horizontal' && 'flex-1')}
-        >
+        <View className={cn('p-3 flex-1 justify-between', variant === 'horizontal' && 'flex-1')}>
           <View>
             {urgency && (
               <View className="mb-1.5">

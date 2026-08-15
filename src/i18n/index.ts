@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from './en';
 import th from './th';
+import { registerZodI18nErrorMap } from './zodErrorMap';
 
 export const resources = {
   en: { translation: en },
@@ -23,6 +24,7 @@ export function initializeI18n(fallbackLng: Language = 'en') {
       useSuspense: false,
     },
   });
+  registerZodI18nErrorMap();
   return i18n;
 }
 

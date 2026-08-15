@@ -161,7 +161,7 @@ export default function CartScreen() {
   }
 
   return (
-    <Screen className="bg-background">
+    <Screen className="bg-background" keyboardAvoiding>
       <Header title={t('customer.cart.title')} />
       {merchantLoading ? (
         <View className="flex-1 items-center justify-center">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Pressable } from 'react-native';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -19,8 +20,8 @@ interface DateTimePickerFieldProps {
   error?: string;
 }
 
-function formatDateTime(date: Date) {
-  return date.toLocaleString(undefined, {
+function formatDateTime(date: Date, locale: string) {
+  return date.toLocaleString(locale, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -38,6 +39,7 @@ export function DateTimePickerField({
   error,
 }: DateTimePickerFieldProps) {
   const colors = useThemeColor();
+  const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
 
@@ -71,7 +73,9 @@ export function DateTimePickerField({
             )}
           >
             <CalendarClock size={18} color={colors.muted} />
-            <Text className="ml-3 flex-1 text-base text-foreground">{formatDateTime(value)}</Text>
+            <Text className="ml-3 flex-1 text-base text-foreground">
+              {formatDateTime(value, i18n.language)}
+            </Text>
           </View>
           {error && (
             <Text variant="caption" className="mt-1.5 ml-1 text-danger">
@@ -81,29 +85,25 @@ export function DateTimePickerField({
         </View>
       </Pressable>
 
-      <BottomSheet
-        isOpen={open}
-        onClose={handleCancel}
-        snapPoints={['40%']}
-      >
-            <View className="mb-4 flex-row items-center justify-between">
-              <Button variant="ghost" onPress={handleCancel}>
-                Cancel
-              </Button>
-              <Text variant="h3">{label}</Text>
-              <Button variant="ghost" onPress={handleConfirm}>
-                Done
-              </Button>
-            </View>
-            <DateTimePicker
-              value={draft}
-              mode="datetime"
-              display="spinner"
-              minimumDate={minimumDate}
-              maximumDate={maximumDate}
-              onChange={handleChange}
-              themeVariant="light"
-            />
+      <BottomSheet isOpen={open} onClose={handleCancel} snapPoints={['40%']}>
+        <View className="mb-4 flex-row items-center justify-between">
+          <Button variant="ghost" onPress={handleCancel}>
+            Cancel
+          </Button>
+          <Text variant="h3">{label}</Text>
+          <Button variant="ghost" onPress={handleConfirm}>
+            Done
+          </Button>
+        </View>
+        <DateTimePicker
+          value={draft}
+          mode="datetime"
+          display="spinner"
+          minimumDate={minimumDate}
+          maximumDate={maximumDate}
+          onChange={handleChange}
+          themeVariant="light"
+        />
       </BottomSheet>
     </>
   );

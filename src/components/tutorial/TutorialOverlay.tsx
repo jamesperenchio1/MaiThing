@@ -282,83 +282,82 @@ export function TutorialOverlay() {
     if (step.tooltipSide === 'center') {
       return (
         <View style={styles.centeredCardWrapper} pointerEvents="box-none">
-        <View style={[styles.centeredCard, { backgroundColor: colors.card }]}>
-          {/* Language toggle top-right of card */}
-          <Pressable
-            onPress={toggleLanguage}
-            style={styles.langToggle}
-            hitSlop={8}
-          >
-            <View style={[styles.langPill, { backgroundColor: colors.primary + '18' }]}>
-              <Text variant="caption" style={{ color: colors.primary, fontWeight: '700' }}>
-                {language === 'en' ? 'TH' : 'EN'}
+          <View style={[styles.centeredCard, { backgroundColor: colors.card }]}>
+            {/* Language toggle top-right of card */}
+            <Pressable onPress={toggleLanguage} style={styles.langToggle} hitSlop={8}>
+              <View style={[styles.langPill, { backgroundColor: colors.primary + '18' }]}>
+                <Text variant="caption" style={{ color: colors.primary, fontWeight: '700' }}>
+                  {language === 'en' ? 'TH' : 'EN'}
+                </Text>
+              </View>
+            </Pressable>
+
+            <View style={styles.centeredContent}>
+              {React.createElement(step.icon, {
+                size: 44,
+                color: colors.primary,
+                style: styles.icon,
+              })}
+              <Text variant="h3" className="text-center mb-2">
+                {step.title}
               </Text>
-            </View>
-          </Pressable>
+              <Text variant="body-sm" className="text-muted text-center mb-6" style={styles.desc}>
+                {step.description}
+              </Text>
 
-          <View style={styles.centeredContent}>
-            {React.createElement(step.icon, { size: 44, color: colors.primary, style: styles.icon })}
-            <Text variant="h3" className="text-center mb-2">
-              {step.title}
-            </Text>
-            <Text variant="body-sm" className="text-muted text-center mb-6" style={styles.desc}>
-              {step.description}
-            </Text>
+              {/* Progress dots */}
+              <View style={styles.dots}>
+                {steps.map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.dot,
+                      {
+                        backgroundColor: i === currentStep ? colors.primary : colors.muted + '40',
+                        width: i === currentStep ? 16 : 6,
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
 
-            {/* Progress dots */}
-            <View style={styles.dots}>
-              {steps.map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dot,
-                    {
-                      backgroundColor:
-                        i === currentStep ? colors.primary : colors.muted + '40',
-                      width: i === currentStep ? 16 : 6,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-
-            <View style={styles.buttonRow}>
-              {currentStep === 0 ? (
-                <>
+              <View style={styles.buttonRow}>
+                {currentStep === 0 ? (
+                  <>
+                    <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
+                      {t('tutorial.letsGo')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onPress={skipTutorial}
+                      textClassName="text-muted"
+                      style={{ marginLeft: 8 }}
+                    >
+                      {t('tutorial.skip')}
+                    </Button>
+                  </>
+                ) : currentStep === TUTORIAL_TOTAL_STEPS - 1 ? (
                   <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
-                    {t('tutorial.letsGo')}
+                    {t('tutorial.startRescuing')}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    onPress={skipTutorial}
-                    textClassName="text-muted"
-                    style={{ marginLeft: 8 }}
-                  >
-                    {t('tutorial.skip')}
-                  </Button>
-                </>
-              ) : currentStep === TUTORIAL_TOTAL_STEPS - 1 ? (
-                <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
-                  {t('tutorial.startRescuing')}
-                </Button>
-              ) : (
-                <>
-                  <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
-                    {t('tutorial.next')}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onPress={skipTutorial}
-                    textClassName="text-muted"
-                    style={{ marginLeft: 8 }}
-                  >
-                    {t('tutorial.skip')}
-                  </Button>
-                </>
-              )}
+                ) : (
+                  <>
+                    <Button variant="primary" onPress={handleAdvance} style={{ flex: 1 }}>
+                      {t('tutorial.next')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onPress={skipTutorial}
+                      textClassName="text-muted"
+                      style={{ marginLeft: 8 }}
+                    >
+                      {t('tutorial.skip')}
+                    </Button>
+                  </>
+                )}
+              </View>
             </View>
           </View>
-        </View>
         </View>
       );
     }
@@ -374,10 +373,7 @@ export function TutorialOverlay() {
       ? { top: y - 160, left: cardLeft, width: CARD_WIDTH }
       : { top: y + hh + 12, left: cardLeft, width: CARD_WIDTH };
 
-    const arrowLeft = Math.max(
-      16,
-      Math.min(x + hw / 2 - cardLeft - 8, CARD_WIDTH - 32)
-    );
+    const arrowLeft = Math.max(16, Math.min(x + hw / 2 - cardLeft - 8, CARD_WIDTH - 32));
 
     return (
       <View style={[styles.tooltipCard, cardStyle, { backgroundColor: colors.card }]}>
@@ -426,7 +422,10 @@ export function TutorialOverlay() {
 
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent>
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]} pointerEvents="box-none">
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}
+        pointerEvents="box-none"
+      >
         {/* Full dark overlay when no hotspot (center steps) */}
         {!hotspot && (
           <View style={[StyleSheet.absoluteFill, styles.dimRect]} pointerEvents="none" />

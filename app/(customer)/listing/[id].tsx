@@ -80,6 +80,7 @@ function ImageLightbox({
   initialIndex: number;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(initialIndex);
 
@@ -100,7 +101,7 @@ function ImageLightbox({
         onPress={onClose}
         className="absolute right-4 top-12 z-10 rounded-full bg-black/50 p-2"
         scale={0.9}
-        accessibilityLabel="Close image"
+        accessibilityLabel={t('customer.listing.closeImage')}
       >
         <X size={24} color="#fff" />
       </PressableScale>
@@ -211,7 +212,12 @@ export default function ListingDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const url = getListingUrl(listing.id);
     const title = listing.title;
-    const message = `"${listing.title}" — ${formatCurrency(listing.salePrice)} (-${discount}%) on Maithing`;
+    const message = t('customer.listing.shareMessage', {
+      title: listing.title,
+      price: formatCurrency(listing.salePrice),
+      discount,
+      appName: t('app.name'),
+    });
 
     if (Platform.OS === 'web') {
       if (navigator.share) {
@@ -250,13 +256,13 @@ export default function ListingDetailScreen() {
   return (
     <Screen testID="listing-detail-screen" scrollable={false}>
       <Header testID="listing-detail-header" />
-        {isOffline && (
-          <View className="mx-4 mt-2 rounded-lg bg-amber-100 px-3 py-2 dark:bg-amber-900">
-            <Text variant="body-sm" className="text-amber-800 dark:text-amber-200">
-              You are offline. Purchase requires an internet connection.
-            </Text>
-          </View>
-        )}
+      {isOffline && (
+        <View className="mx-4 mt-2 rounded-lg bg-amber-100 px-3 py-2 dark:bg-amber-900">
+          <Text variant="body-sm" className="text-amber-800 dark:text-amber-200">
+            {t('customer.listing.offlinePurchaseNotice')}
+          </Text>
+        </View>
+      )}
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -280,7 +286,7 @@ export default function ListingDetailScreen() {
                 className="h-full"
                 style={{ width: screenWidth }}
                 scale={0.98}
-                accessibilityLabel="View full-screen image"
+                accessibilityLabel={t('customer.listing.viewFullImage')}
               >
                 <Image
                   source={{ uri }}
@@ -293,7 +299,7 @@ export default function ListingDetailScreen() {
           </ScrollView>
           <View className="absolute left-4 top-4">
             <Badge variant={isMystery ? 'warning' : 'info'}>
-              {isMystery ? 'Mystery Box' : 'Fixed Item'}
+              {isMystery ? t('customer.listing.mysteryBox') : t('customer.listing.fixedItem')}
             </Badge>
           </View>
           {listing.images.length > 1 && (
@@ -321,11 +327,15 @@ export default function ListingDetailScreen() {
                 onPress={handleBookmark}
                 className="rounded-full bg-black/30 p-2"
                 scale={0.9}
-                accessibilityLabel={isSaved ? 'Remove from saved listings' : 'Save listing'}
+                accessibilityLabel={
+                  isSaved
+                    ? t('customer.listing.removeFromSaved')
+                    : t('customer.listing.saveListing')
+                }
                 accessibilityHint={
                   isSaved
-                    ? 'Removes this listing from your saved items'
-                    : 'Saves this listing for later'
+                    ? t('customer.listing.removeFromSavedHint')
+                    : t('customer.listing.saveListingHint')
                 }
                 hitSlop={8}
               >
@@ -340,8 +350,8 @@ export default function ListingDetailScreen() {
               onPress={handleShare}
               className="rounded-full bg-black/30 p-2"
               scale={0.9}
-              accessibilityLabel="Share listing"
-              accessibilityHint="Opens the share sheet for this listing"
+              accessibilityLabel={t('customer.listing.shareListing')}
+              accessibilityHint={t('customer.listing.shareListingHint')}
               hitSlop={8}
             >
               <Share2 size={20} color="#fff" />
@@ -390,7 +400,9 @@ export default function ListingDetailScreen() {
                 {isFlashSale ? (
                   <View className="flex-row items-center">
                     <Zap size={12} color={colors.white} fill={colors.white} />
-                    <Text className="ml-1 text-xs font-semibold text-white">Flash</Text>
+                    <Text className="ml-1 text-xs font-semibold text-white">
+                      {t('customer.listing.flash')}
+                    </Text>
                   </View>
                 ) : (
                   `-${discount}%`
@@ -423,13 +435,19 @@ export default function ListingDetailScreen() {
 
           {isFlashSale && listing.flashSaleEndsAt && (
             <View className="mb-4">
-              <CountdownTimer targetDate={listing.flashSaleEndsAt} label="Flash sale ends" />
+              <CountdownTimer
+                targetDate={listing.flashSaleEndsAt}
+                label={t('customer.listing.flashSaleEnds')}
+              />
             </View>
           )}
 
           {showCountdown && (
             <View className="mb-4">
-              <CountdownTimer targetDate={listing.pickupWindowEnd} label="Pickup ends" />
+              <CountdownTimer
+                targetDate={listing.pickupWindowEnd}
+                label={t('customer.listing.pickupEnds')}
+              />
             </View>
           )}
 
@@ -541,7 +559,7 @@ export default function ListingDetailScreen() {
                     Linking.openURL(url ?? '');
                   }}
                 >
-                  Open in Maps
+                  {t('customer.listing.openInMaps')}
                 </Button>
 
                 <View className="flex-row items-start">
@@ -566,7 +584,7 @@ export default function ListingDetailScreen() {
                     scale={0.98}
                   >
                     <Text variant="body-sm" className="text-primary">
-                      See all
+                      {t('common.seeAll')}
                     </Text>
                   </PressableScale>
                 )}
@@ -593,7 +611,7 @@ export default function ListingDetailScreen() {
               className="rounded-2xl bg-muted/10 p-3"
               scale={0.9}
               disabled={quantity <= 1}
-              accessibilityLabel="Decrease quantity"
+              accessibilityLabel={t('customer.cart.decreaseQuantity')}
               hitSlop={8}
             >
               <Minus size={18} color={colors.foreground} />
@@ -606,7 +624,7 @@ export default function ListingDetailScreen() {
               className="rounded-2xl bg-muted/10 p-3"
               scale={0.9}
               disabled={quantity >= listing.quantityRemaining}
-              accessibilityLabel="Increase quantity"
+              accessibilityLabel={t('customer.cart.increaseQuantity')}
               hitSlop={8}
             >
               <Plus size={18} color={colors.foreground} />
@@ -616,7 +634,7 @@ export default function ListingDetailScreen() {
             <View className="flex-1">
               {waitlistCount > 0 && (
                 <Text variant="caption" className="mb-2 text-center text-warning">
-                  {waitlistCount} people waiting for restock
+                  {t('customer.listing.waitingForRestock', { count: waitlistCount })}
                 </Text>
               )}
               <Button

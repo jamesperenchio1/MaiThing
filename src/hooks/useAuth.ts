@@ -31,8 +31,8 @@ export function useAuth() {
   });
 
   const signUpMutation = useMutation({
-    mutationFn: ({ email, password, name }: { email: string; password: string; name: string }) =>
-      repositories.auth.signUp(email, password, name),
+    mutationFn: (data: { email: string; password: string; name: string; phone?: string }) =>
+      repositories.auth.signUp(data),
     onSuccess: (user) => {
       setUser(user);
       const selectedRole = useAuthStore.getState().selectedRole;
@@ -65,8 +65,7 @@ export function useAuth() {
       }
 
       if (IS_SUPABASE) {
-        const email =
-          role === 'merchant' ? 'merchant@maithing.test' : 'customer@maithing.test';
+        const email = role === 'merchant' ? 'merchant@maithing.test' : 'customer@maithing.test';
         try {
           const user = await repositories.auth.signIn(email, 'password');
           setUser({ ...user, roles: ['customer', 'merchant'] as UserRole[] });
@@ -109,8 +108,7 @@ export function useAuth() {
       }
 
       setRole(role);
-      const targetRoute =
-        role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)';
+      const targetRoute = role === 'merchant' ? '/(merchant)/(tabs)' : '/(customer)/(tabs)';
       router.replace(targetRoute as any);
     },
     [setUser, setRole, router]
@@ -121,7 +119,10 @@ export function useAuth() {
       // In mock / dev mode we don't have real OAuth, so fall back to the test customer.
       if (!IS_SUPABASE) {
         if (!__DEV__) {
-          Alert.alert('Not available', 'Social sign-in is only available in production builds with Supabase.');
+          Alert.alert(
+            'Not available',
+            'Social sign-in is only available in production builds with Supabase.'
+          );
           return;
         }
         const user = await repositories.auth.signIn(TEST_CUSTOMER.email, 'password');
@@ -135,7 +136,9 @@ export function useAuth() {
       try {
         const redirectTo =
           Platform.OS === 'web'
-            ? (typeof window !== 'undefined' ? window.location.origin : '')
+            ? typeof window !== 'undefined'
+              ? window.location.origin
+              : ''
             : 'maithing://';
 
         if (Platform.OS === 'web') {

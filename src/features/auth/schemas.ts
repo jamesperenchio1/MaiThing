@@ -1,34 +1,49 @@
+import i18n from 'i18next';
 import { z } from 'zod';
 
+const PHONE_REGEX = /^[0-9+\-\s()]{9,15}$/;
+const phoneField = z
+  .string()
+  .optional()
+  .refine(
+    (val) => !val || PHONE_REGEX.test(val),
+    (val) => ({
+      message: i18n.t('validation.phoneInvalid'),
+    })
+  );
+
 export const signInSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email(),
+  password: z.string().min(1),
 });
 
 export const signUpSchema = z
   .object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Invalid email address'),
-    phone: z.string().optional(),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    name: z.string().min(2),
+    email: z.string().email(),
+    phone: phoneField,
+    password: z.string().min(8),
+    confirmPassword: z.string().min(1),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
+  .refine(
+    (data) => data.password === data.confirmPassword,
+    () => ({
+      message: i18n.t('validation.passwordMismatch'),
+      path: ['confirmPassword'],
+    })
+  );
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email(),
 });
 
 export const otpSchema = z.object({
-  code: z.string().length(6, 'OTP must be 6 digits'),
+  code: z.string().length(6),
 });
 
 export const profileSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  phone: z.string().optional(),
+  name: z.string().min(2),
+  phone: phoneField,
   preferredLanguage: z.enum(['en', 'th']),
 });
 

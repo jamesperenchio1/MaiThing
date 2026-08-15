@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TextInput, View, type TextInputProps } from 'react-native';
 import { cn } from '@/src/lib/utils';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { Text } from './Text';
 
 interface InputProps extends TextInputProps {
@@ -28,6 +29,7 @@ export function Input({
   ...props
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const colors = useThemeColor();
   const disabled = editable === false;
 
   const currentValue = value ?? defaultValue ?? '';
@@ -53,9 +55,10 @@ export function Input({
         {leftIcon && <View className="mr-3">{leftIcon}</View>}
         <TextInput
           className={cn('flex-1 py-2 text-base leading-7 text-foreground', inputClassName)}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.muted}
           value={value}
           defaultValue={defaultValue}
+          accessibilityLabel={label}
           onFocus={(e) => {
             setIsFocused(true);
             props.onFocus?.(e);

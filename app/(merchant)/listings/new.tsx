@@ -1,21 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, TextInput, Alert, Modal, Platform, Switch } from 'react-native';
-import { Image } from '@/src/components/ui/Image';
-import { useForm, Controller } from 'react-hook-form';
+import { View, Alert, Platform } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Camera,
-  Plus,
-  X,
-  Check,
-  Image as ImageIcon,
-  FileText,
-  ChevronDown,
-  AlertTriangle,
-  Zap,
-} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 let ImagePicker: typeof import('expo-image-picker') | null = null;
 try {
@@ -26,15 +14,8 @@ try {
 }
 
 import { Text } from '@/src/components/ui/Text';
-import { Button } from '@/src/components/ui/Button';
-import { Input } from '@/src/components/ui/Input';
-import { Card } from '@/src/components/ui/Card';
-import { Badge } from '@/src/components/ui/Badge';
 import { Screen } from '@/src/components/layout/Screen';
 import { Header } from '@/src/components/layout/Header';
-import { PressableScale } from '@/src/components/ui/PressableScale';
-import { DateTimePickerField } from '@/src/components/ui/DateTimePickerField';
-import { EmptyState } from '@/src/components/ui/EmptyState';
 import { createListingSchema, type CreateListingForm } from '@/src/features/listings/schemas';
 import { useCategories, useMerchantByOwner } from '@/src/hooks/useMerchants';
 import {
@@ -45,86 +26,21 @@ import {
   useCreateListingTemplate,
 } from '@/src/hooks/useListings';
 import { scheduleLocalNotification } from '@/src/services/notifications';
-import { CATEGORIES, DIETARY_TAGS, ALLERGENS, BOX_SIZES } from '@/src/lib/constants';
-import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
-import { cn, formatCurrency } from '@/src/lib/utils';
-import type { Listing } from '@/src/types';
-
-function ToggleChip({
-  label,
-  selected,
-  onPress,
-  testID,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  testID?: string;
-}) {
-  return (
-    <PressableScale testID={testID} onPress={onPress} scale={0.95}>
-      <View
-        className={`mr-2 mb-2 rounded-full px-4 py-2 ${
-          selected ? 'bg-primary' : 'bg-muted/10 border border-border'
-        }`}
-      >
-        <Text variant="body-sm" className={selected ? 'text-white' : 'text-foreground'}>
-          {label}
-        </Text>
-      </View>
-    </PressableScale>
-  );
-}
-
-function parseArrayParam(value: string | undefined): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return value ? value.split(',').filter(Boolean) : [];
-  }
-}
-
-function buildListingPayload(
-  data: CreateListingForm,
-  images: string[],
-  merchantId: string,
-  status: Listing['status']
-): Omit<Listing, 'id' | 'createdAt'> {
-  const base = {
-    merchantId,
-    type: data.type,
-    title: data.title,
-    description: data.description,
-    images:
-      images.length > 0
-        ? images
-        : [`https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent(data.title)}`],
-    category: data.category,
-    originalPrice: data.originalPrice,
-    salePrice: data.salePrice,
-    quantity: data.quantity,
-    quantityRemaining: data.quantity,
-    pickupWindowStart: data.pickupWindowStart.toISOString(),
-    pickupWindowEnd: data.pickupWindowEnd.toISOString(),
-    dietaryTags: data.dietaryTags,
-    allergens: data.allergens,
-    status,
-    lowStockThreshold: data.lowStockThreshold,
-  } as Omit<Listing, 'id' | 'createdAt'>;
-
-  if (data.type === 'mystery_box') {
-    return {
-      ...base,
-      boxSize: data.boxSize ?? 'medium',
-      estimatedRetailValue: data.originalPrice,
-    } as Omit<Listing, 'id' | 'createdAt'>;
-  }
-
-  return base;
-}
+import type { Listing, ListingTemplate } from '@/src/types';
+import { ListingTypeSection } from './_components/ListingTypeSection';
+import { PhotoUploadGrid } from './_components/PhotoUploadGrid';
+import { TitleDescriptionFields } from './_components/TitleDescriptionFields';
+import { CategoryPicker } from './_components/CategoryPicker';
+import { PricingFields } from './_components/PricingFields';
+import { QuantityFields } from './_components/QuantityFields';
+import { PickupWindowFields } from './_components/PickupWindowFields';
+import { AutoSettingsToggles } from './_components/AutoSettingsToggles';
+import { DietaryAllergenFields } from './_components/DietaryAllergenFields';
+import { PriceBumpWarning } from './_components/PriceBumpWarning';
+import { TemplateActionsBar, SubmitActionsBar } from './_components/ListingFormActionBars';
+import { TemplatePickerModal } from './_components/TemplatePickerModal';
+import { parseArrayParam, buildListingPayload } from './_components/helpers';
 
 export default function CreateListingScreen() {
   const router = useRouter();
@@ -152,7 +68,6 @@ export default function CreateListingScreen() {
   const merchantId = merchant?.id ?? '';
 
   const { data: categories } = useCategories();
-  const colors = useThemeColor();
   const [images, setImages] = useState<string[]>(parseArrayParam(params.images));
   const [isOriginalPriceFocused, setIsOriginalPriceFocused] = useState(false);
   const [isSalePriceFocused, setIsSalePriceFocused] = useState(false);
@@ -166,7 +81,6 @@ export default function CreateListingScreen() {
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const isEditMode = !!params.id;
-  const isDuplicateMode = !!params.duplicateId || !!params.templateId;
 
   const { data: existingListing } = useListing(params.id ?? '');
   const { data: templates } = useListingTemplates(merchantId);
@@ -262,23 +176,7 @@ export default function CreateListingScreen() {
   const isPriceBumpFlagged =
     sourceOriginalPrice !== null && currentOriginalPrice > sourceOriginalPrice * 1.1;
 
-  const loadTemplate = (template: {
-    name?: string;
-    type: Listing['type'];
-    title: string;
-    description: string;
-    category: string;
-    originalPrice: number;
-    salePrice: number;
-    quantity: number;
-    boxSize?: 'small' | 'medium' | 'large' | 'xl';
-    estimatedRetailValue?: number;
-    dietaryTags: string[];
-    allergens: string[];
-    images: string[];
-    pickupWindowDurationHours?: number;
-    autoExpiry?: boolean;
-  }) => {
+  const loadTemplate = (template: ListingTemplate) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const start = new Date();
     start.setMinutes(0, 0, 0);
@@ -309,17 +207,21 @@ export default function CreateListingScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (Platform.OS === 'web') {
-      Alert.alert('Photo picker unavailable', 'Add a placeholder image instead?', [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          onPress: () =>
-            setImages((prev) => [
-              ...prev,
-              `https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
-            ]),
-        },
-      ]);
+      Alert.alert(
+        t('customer.orders.review.photoPickerUnavailableTitle'),
+        t('customer.orders.review.addPlaceholderImagePrompt'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            onPress: () =>
+              setImages((prev) => [
+                ...prev,
+                `https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
+              ]),
+          },
+        ]
+      );
       return;
     }
 
@@ -334,17 +236,21 @@ export default function CreateListingScreen() {
       }
 
       if (permissionResult.status !== 'granted') {
-        Alert.alert('Permission required', 'Add a placeholder image instead?', [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('common.confirm'),
-            onPress: () =>
-              setImages((prev) => [
-                ...prev,
-                `https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
-              ]),
-          },
-        ]);
+        Alert.alert(
+          t('customer.orders.review.permissionRequiredTitle'),
+          t('customer.orders.review.addPlaceholderImagePrompt'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('common.confirm'),
+              onPress: () =>
+                setImages((prev) => [
+                  ...prev,
+                  `https://placehold.co/600x400/F97316/FFFFFF/png?text=${encodeURIComponent('Photo ' + (prev.length + 1))}`,
+                ]),
+            },
+          ]
+        );
         return;
       }
 
@@ -367,7 +273,7 @@ export default function CreateListingScreen() {
         }
       }
     } catch {
-      Alert.alert('Error', 'Could not pick image. Please try again.');
+      Alert.alert(t('common.errorTitle'), t('customer.orders.review.imagePickError'));
     }
   };
 
@@ -437,7 +343,10 @@ export default function CreateListingScreen() {
         {
           onSuccess: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Saved', 'Listing saved as template.');
+            Alert.alert(
+              t('merchant.createListing.savedTitle'),
+              t('merchant.createListing.savedAsTemplateMessage')
+            );
           },
         }
       );
@@ -525,625 +434,78 @@ export default function CreateListingScreen() {
           {t('merchant.createListing.chooseType')}
         </Text>
 
-        <Controller
-          control={control}
-          name="type"
-          render={({ field: { onChange, value } }) => (
-            <View className="mb-6 flex-row gap-3">
-              {(['mystery_box', 'fixed_item'] as const).map((item) => (
-                <PressableScale
-                  key={item}
-                  testID={item === 'mystery_box' ? 'mystery-box-option' : 'fixed-item-option'}
-                  onPress={() => onChange(item)}
-                  scale={0.98}
-                  className="flex-1"
-                >
-                  <Card
-                    variant={value === item ? 'elevated' : 'outlined'}
-                    className="items-center p-4"
-                    style={
-                      value === item ? { borderWidth: 2, borderColor: colors.primary } : undefined
-                    }
-                  >
-                    <View className="mb-2 rounded-full bg-primary/10 p-3">
-                      <Camera size={24} color={colors.primary} />
-                    </View>
-                    <Text variant="body-sm" className="font-semibold">
-                      {item === 'mystery_box'
-                        ? t('merchant.createListing.mysteryBox')
-                        : t('merchant.createListing.fixedItem')}
-                    </Text>
-                    <Text variant="caption" className="text-center text-muted">
-                      {item === 'mystery_box'
-                        ? t('merchant.createListing.mysteryBoxDesc')
-                        : t('merchant.createListing.fixedItemDesc')}
-                    </Text>
-                  </Card>
-                </PressableScale>
-              ))}
-            </View>
-          )}
+        <ListingTypeSection control={control} type={type} />
+
+        <PhotoUploadGrid
+          images={images}
+          onTakePhoto={() => handleImagePick('camera')}
+          onPickLibrary={() => handleImagePick('library')}
+          onRemoveImage={removeImage}
         />
 
-        {type === 'mystery_box' && (
-          <Controller
-            control={control}
-            name="boxSize"
-            render={({ field: { onChange, value } }) => (
-              <View className="mb-6">
-                <Text variant="h3" className="mb-3">
-                  {t('merchant.createListing.boxSize')}
-                </Text>
-                <View className="flex-row flex-wrap">
-                  {BOX_SIZES.map((size) => (
-                    <ToggleChip
-                      key={size.id}
-                      testID={`box-size-${size.id}`}
-                      label={size.name}
-                      selected={value === size.id}
-                      onPress={() => onChange(size.id)}
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
-          />
-        )}
+        <TitleDescriptionFields control={control} />
 
-        <View className="mb-6">
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text variant="h3">{t('merchant.createListing.photos')}</Text>
-            <View className="flex-row items-center">
-              <PressableScale
-                onPress={() => handleImagePick('camera')}
-                scale={0.95}
-                className="mr-3"
-              >
-                <View className="flex-row items-center">
-                  <Camera size={16} color={colors.primary} />
-                  <Text variant="caption" className="ml-1 text-primary">
-                    {t('merchant.createListing.takePhoto')}
-                  </Text>
-                </View>
-              </PressableScale>
-              <PressableScale onPress={() => handleImagePick('library')} scale={0.95}>
-                <View className="flex-row items-center">
-                  <ImageIcon size={16} color={colors.primary} />
-                  <Text variant="caption" className="ml-1 text-primary">
-                    {t('merchant.createListing.chooseFromLibrary')}
-                  </Text>
-                </View>
-              </PressableScale>
-            </View>
-          </View>
-          <View className="flex-row flex-wrap">
-            {images.map((uri, index) => (
-              <View key={`${uri}-${index}`} className="relative mr-2 mb-2">
-                <Image source={{ uri }} className="h-24 w-24 rounded-2xl" resizeMode="cover" />
-                <PressableScale
-                  onPress={() => removeImage(index)}
-                  className="absolute -right-1 -top-1 rounded-full bg-danger p-1"
-                  scale={0.9}
-                >
-                  <X size={12} color={colors.white} />
-                </PressableScale>
-              </View>
-            ))}
-            <PressableScale
-              onPress={() => handleImagePick('library')}
-              className="h-24 w-24 items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/10"
-              scale={0.95}
-            >
-              <Plus size={24} color={colors.muted} />
-            </PressableScale>
-          </View>
-        </View>
+        <CategoryPicker control={control} categories={categories} />
 
-        <Controller
+        <PricingFields
           control={control}
-          name="title"
-          render={({ field: { onChange, value }, fieldState: { error } }) => (
-            <Input
-              testID="listing-title-input"
-              label={t('merchant.createListing.listingDetails')}
-              placeholder="e.g., Surplus Bread Box"
-              value={value}
-              onChangeText={onChange}
-              onEndEditing={(e) => onChange(e.nativeEvent.text)}
-              error={error?.message}
-              maxLength={60}
-              showCharacterCount
-            />
-          )}
+          isOriginalPriceFocused={isOriginalPriceFocused}
+          setIsOriginalPriceFocused={setIsOriginalPriceFocused}
+          isSalePriceFocused={isSalePriceFocused}
+          setIsSalePriceFocused={setIsSalePriceFocused}
         />
 
-        <Controller
-          control={control}
-          name="description"
-          render={({ field: { onChange, value }, fieldState: { error } }) => {
-            const descriptionLength = value?.length ?? 0;
-            const descriptionNearLimit = descriptionLength >= 150;
-            const descriptionAtLimit = descriptionLength >= 300;
-            return (
-              <View className="mb-4">
-                <Text testID="listing-description-label" variant="label" className="mb-2 ml-1">
-                  Description
-                </Text>
-                <TextInput
-                  testID="listing-description-input"
-                  className="min-h-[100] rounded-2xl border border-border bg-card p-4 text-base text-foreground"
-                  placeholder="Describe what's inside..."
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  numberOfLines={4}
-                  value={value}
-                  onChangeText={onChange}
-                  onEndEditing={(e) => onChange(e.nativeEvent.text)}
-                  maxLength={300}
-                />
-                <View className="mt-1.5 ml-1 flex-row justify-between">
-                  {error ? (
-                    <Text variant="caption" className="text-danger">
-                      {error.message}
-                    </Text>
-                  ) : (
-                    <View />
-                  )}
-                  <Text
-                    variant="caption"
-                    className={cn(
-                      'text-right',
-                      descriptionAtLimit
-                        ? 'text-danger'
-                        : descriptionNearLimit
-                          ? 'text-amber-500'
-                          : 'text-muted'
-                    )}
-                  >
-                    {descriptionLength}/300
-                  </Text>
-                </View>
-              </View>
-            );
-          }}
+        <QuantityFields control={control} />
+
+        <PickupWindowFields control={control} />
+
+        <AutoSettingsToggles
+          autoExpiry={autoExpiry}
+          setAutoExpiry={setAutoExpiry}
+          autoDelistWhenSoldOut={autoDelistWhenSoldOut}
+          setAutoDelistWhenSoldOut={setAutoDelistWhenSoldOut}
+          flashSaleEnabled={flashSaleEnabled}
+          setFlashSaleEnabled={setFlashSaleEnabled}
+          flashSalePrice={flashSalePrice}
+          setFlashSalePrice={setFlashSalePrice}
+          flashSaleHours={flashSaleHours}
+          setFlashSaleHours={setFlashSaleHours}
         />
 
-        <Controller
-          control={control}
-          name="category"
-          render={({ field: { onChange, value }, fieldState: { error } }) => (
-            <View className="mb-6">
-              <Text variant="h3" className="mb-3">
-                {t('merchant.createListing.category')}
-              </Text>
-              <View className="flex-row flex-wrap">
-                {categories?.map((category) => (
-                  <ToggleChip
-                    key={category.id}
-                    testID={`category-${category.id}`}
-                    label={category.name}
-                    selected={value === category.id}
-                    onPress={() => onChange(category.id)}
-                  />
-                ))}
-                {!categories &&
-                  CATEGORIES.map((category) => (
-                    <ToggleChip
-                      key={category.id}
-                      testID={`category-${category.id}`}
-                      label={category.name}
-                      selected={value === category.id}
-                      onPress={() => onChange(category.id)}
-                    />
-                  ))}
-              </View>
-              {error && (
-                <Text variant="caption" className="mt-1 text-danger">
-                  {error.message}
-                </Text>
-              )}
-            </View>
-          )}
+        <DietaryAllergenFields
+          dietaryTags={dietaryTags}
+          allergens={allergens}
+          customTagInput={customTagInput}
+          setCustomTagInput={setCustomTagInput}
+          customAllergenInput={customAllergenInput}
+          setCustomAllergenInput={setCustomAllergenInput}
+          onToggleArray={toggleArray}
+          onAddCustomTag={addCustomTag}
+          onAddCustomAllergen={addCustomAllergen}
         />
 
-        <View className="mb-6 flex-row space-x-3">
-          <Controller
-            control={control}
-            name="originalPrice"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <Input
-                containerClassName="flex-1"
-                testID="original-price-input"
-                label={t('merchant.createListing.originalPrice')}
-                placeholder="300"
-                keyboardType="number-pad"
-                value={
-                  value ? (isOriginalPriceFocused ? String(value) : formatCurrency(value)) : ''
-                }
-                onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
-                onFocus={() => setIsOriginalPriceFocused(true)}
-                onBlur={() => setIsOriginalPriceFocused(false)}
-                error={error?.message}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="salePrice"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <Input
-                containerClassName="flex-1"
-                testID="sale-price-input"
-                label={t('merchant.createListing.salePrice')}
-                placeholder="99"
-                keyboardType="number-pad"
-                value={value ? (isSalePriceFocused ? String(value) : formatCurrency(value)) : ''}
-                onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
-                onFocus={() => setIsSalePriceFocused(true)}
-                onBlur={() => setIsSalePriceFocused(false)}
-                error={error?.message}
-              />
-            )}
-          />
-        </View>
+        <PriceBumpWarning visible={isPriceBumpFlagged} />
 
-        <Controller
-          control={control}
-          name="quantity"
-          render={({ field: { onChange, value }, fieldState: { error } }) => (
-            <Input
-              testID="quantity-input"
-              label={t('merchant.createListing.quantity')}
-              placeholder="5"
-              keyboardType="number-pad"
-              value={value ? String(value) : ''}
-              onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
-              error={error?.message}
-            />
-          )}
+        <TemplateActionsBar
+          onSaveAsTemplate={handleSaveAsTemplate}
+          isSavingTemplate={createTemplate.isPending}
+          onShowTemplatePicker={() => setShowTemplatePicker(true)}
         />
 
-        <Controller
-          control={control}
-          name="lowStockThreshold"
-          render={({ field: { onChange, value }, fieldState: { error } }) => (
-            <View className="mb-4">
-              <Input
-                testID="low-stock-threshold-input"
-                label="Low stock alert"
-                placeholder="3"
-                keyboardType="number-pad"
-                value={value ? String(value) : ''}
-                onChangeText={(text) => onChange(Number(text.replace(/\D/g, '')) || 0)}
-                error={error?.message}
-                maxLength={3}
-                containerClassName="mb-1.5"
-              />
-              {!error && (
-                <Text variant="caption" className="ml-1 text-muted">
-                  Alert when fewer than this many remain
-                </Text>
-              )}
-            </View>
-          )}
+        <SubmitActionsBar
+          onSaveDraft={handleSubmit((data) => onSubmit(data, 'draft'))}
+          onPublish={handleSubmit((data) => onSubmit(data, 'active'))}
+          isPending={isPending}
+          isEditMode={isEditMode}
         />
-
-        <View className="mb-6">
-          <Text variant="h3" className="mb-3">
-            {t('merchant.createListing.pickupWindow')}
-          </Text>
-          <View className="flex-row space-x-3">
-            <Controller
-              control={control}
-              name="pickupWindowStart"
-              render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <View className="flex-1">
-                  <DateTimePickerField
-                    testID="start-time-input"
-                    label="Start"
-                    value={value}
-                    onChange={onChange}
-                    minimumDate={new Date()}
-                    error={error?.message}
-                  />
-                </View>
-              )}
-            />
-            <Controller
-              control={control}
-              name="pickupWindowEnd"
-              render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <View className="flex-1">
-                  <DateTimePickerField
-                    testID="end-time-input"
-                    label="End"
-                    value={value}
-                    onChange={onChange}
-                    minimumDate={value}
-                    error={error?.message}
-                  />
-                </View>
-              )}
-            />
-          </View>
-        </View>
-
-        <View className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card p-4">
-          <View className="flex-1 pr-4">
-            <Text variant="body-sm" className="font-semibold">
-              {t('merchant.createListing.autoExpiry')}
-            </Text>
-            <Text variant="caption" className="text-muted">
-              Automatically mark as expired after pickup window ends
-            </Text>
-          </View>
-          <Switch
-            value={autoExpiry}
-            onValueChange={setAutoExpiry}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor={Platform.OS === 'ios' ? undefined : colors.white}
-          />
-        </View>
-
-        <View className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-card p-4">
-          <View className="flex-1 pr-4">
-            <Text variant="body-sm" className="font-semibold">
-              Auto-delist when sold out
-            </Text>
-            <Text variant="caption" className="text-muted">
-              Automatically remove listing when stock reaches zero
-            </Text>
-          </View>
-          <Switch
-            value={autoDelistWhenSoldOut}
-            onValueChange={setAutoDelistWhenSoldOut}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor={Platform.OS === 'ios' ? undefined : colors.white}
-          />
-        </View>
-
-        <View className="mb-6 rounded-2xl border border-border bg-card p-4">
-          <View className="mb-3 flex-row items-center justify-between">
-            <View className="flex-1 pr-4">
-              <View className="flex-row items-center">
-                <Zap size={16} color={colors.primary} fill={colors.primary} />
-                <Text variant="body-sm" className="ml-2 font-semibold">
-                  Flash Sale
-                </Text>
-              </View>
-              <Text variant="caption" className="text-muted">
-                Temporarily lower the price to boost last-minute sales
-              </Text>
-            </View>
-            <Switch
-              value={flashSaleEnabled}
-              onValueChange={setFlashSaleEnabled}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={Platform.OS === 'ios' ? undefined : colors.white}
-            />
-          </View>
-          {flashSaleEnabled && (
-            <View className="flex-row space-x-3">
-              <Input
-                containerClassName="flex-1"
-                label="Flash Price (฿)"
-                placeholder="59"
-                keyboardType="number-pad"
-                value={flashSalePrice}
-                onChangeText={setFlashSalePrice}
-                maxLength={6}
-              />
-              <Input
-                containerClassName="flex-1"
-                label="Duration (hours)"
-                placeholder="2"
-                keyboardType="number-pad"
-                value={flashSaleHours}
-                onChangeText={setFlashSaleHours}
-                maxLength={2}
-              />
-            </View>
-          )}
-        </View>
-
-        <View className="mb-6">
-          <Text variant="h3" className="mb-3">
-            {t('merchant.createListing.tags')}
-          </Text>
-          <View className="flex-row flex-wrap">
-            {DIETARY_TAGS.map((tag) => (
-              <ToggleChip
-                key={tag.id}
-                label={tag.name}
-                selected={dietaryTags.includes(tag.id)}
-                onPress={() => toggleArray('dietaryTags', tag.id)}
-              />
-            ))}
-            {dietaryTags
-              .filter((id) => !DIETARY_TAGS.some((t) => t.id === id))
-              .map((tag) => (
-                <ToggleChip
-                  key={tag}
-                  label={tag}
-                  selected
-                  onPress={() => toggleArray('dietaryTags', tag)}
-                />
-              ))}
-          </View>
-          <View className="mt-3 flex-row items-center space-x-2">
-            <Input
-              containerClassName="flex-1"
-              testID="custom-tag-input"
-              placeholder={t('merchant.createListing.customTag')}
-              value={customTagInput}
-              onChangeText={setCustomTagInput}
-              onSubmitEditing={addCustomTag}
-            />
-            <Button
-              testID="add-custom-tag-button"
-              variant="secondary"
-              size="sm"
-              onPress={addCustomTag}
-              disabled={!customTagInput.trim()}
-            >
-              Add
-            </Button>
-          </View>
-        </View>
-
-        <View className="mb-6">
-          <Text variant="h3" className="mb-3">
-            {t('merchant.createListing.allergens')}
-          </Text>
-          <View className="flex-row flex-wrap">
-            {ALLERGENS.map((allergen) => (
-              <ToggleChip
-                key={allergen.id}
-                label={allergen.name}
-                selected={allergens.includes(allergen.id)}
-                onPress={() => toggleArray('allergens', allergen.id)}
-              />
-            ))}
-            {allergens
-              .filter((id) => !ALLERGENS.some((a) => a.id === id))
-              .map((allergen) => (
-                <ToggleChip
-                  key={allergen}
-                  label={allergen}
-                  selected
-                  onPress={() => toggleArray('allergens', allergen)}
-                />
-              ))}
-          </View>
-          <View className="mt-3 flex-row items-center space-x-2">
-            <Input
-              containerClassName="flex-1"
-              testID="custom-allergen-input"
-              placeholder={t('merchant.createListing.customAllergen')}
-              value={customAllergenInput}
-              onChangeText={setCustomAllergenInput}
-              onSubmitEditing={addCustomAllergen}
-            />
-            <Button
-              testID="add-custom-allergen-button"
-              variant="secondary"
-              size="sm"
-              onPress={addCustomAllergen}
-              disabled={!customAllergenInput.trim()}
-            >
-              Add
-            </Button>
-          </View>
-        </View>
-
-        {isPriceBumpFlagged && (
-          <View className="mb-4 flex-row rounded-2xl border border-warning bg-warning/10 p-4">
-            <AlertTriangle size={18} color={colors.warning} style={{ marginTop: 1 }} />
-            <View className="ml-3 flex-1">
-              <Text variant="body-sm" className="font-semibold text-warning">
-                Price increase flagged
-              </Text>
-              <Text variant="caption" className="mt-0.5 text-warning">
-                Listings must offer genuine discounts. A significant price increase has been noted
-                and may be reviewed by our team.
-              </Text>
-            </View>
-          </View>
-        )}
-
-        <View className="mb-4 flex-row space-x-3">
-          <Button
-            testID="save-template-button"
-            variant="secondary"
-            className="flex-1"
-            onPress={handleSaveAsTemplate}
-            loading={createTemplate.isPending}
-            leftIcon={<FileText size={18} color={colors.foreground} />}
-          >
-            {t('merchant.inventory.saveAsTemplate')}
-          </Button>
-          <Button
-            testID="load-template-button"
-            variant="outline"
-            className="flex-1"
-            onPress={() => setShowTemplatePicker(true)}
-            leftIcon={<ChevronDown size={18} color={colors.foreground} />}
-          >
-            {t('merchant.inventory.useTemplate')}
-          </Button>
-        </View>
-
-        <View className="flex-row space-x-3">
-          <Button
-            testID="save-draft-button"
-            variant="outline"
-            className="flex-1"
-            onPress={handleSubmit((data) => onSubmit(data, 'draft'))}
-            disabled={isPending}
-          >
-            {t('merchant.createListing.saveDraft')}
-          </Button>
-          <Button
-            testID="publish-button"
-            className="flex-1"
-            loading={isPending}
-            onPress={handleSubmit((data) => onSubmit(data, 'active'))}
-            leftIcon={<Check size={18} color={colors.white} />}
-          >
-            {isEditMode ? t('common.save') : t('merchant.createListing.publish')}
-          </Button>
-        </View>
       </View>
 
-      <Modal
+      <TemplatePickerModal
         visible={showTemplatePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowTemplatePicker(false)}
-      >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[70%] rounded-t-3xl bg-card px-4 pb-8 pt-4">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Button variant="ghost" onPress={() => setShowTemplatePicker(false)}>
-                {t('common.cancel')}
-              </Button>
-              <Text variant="h3">{t('merchant.inventory.templates')}</Text>
-              <View className="w-12" />
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {templates && templates.length > 0 ? (
-                templates.map((template) => (
-                  <PressableScale
-                    key={template.id}
-                    onPress={() => loadTemplate(template)}
-                    scale={0.98}
-                  >
-                    <Card
-                      variant="outlined"
-                      className="mb-3 flex-row items-center justify-between p-3"
-                    >
-                      <View className="flex-1">
-                        <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
-                          {template.name || template.title}
-                        </Text>
-                        <Text variant="caption" className="text-muted">
-                          {formatCurrency(template.salePrice)} · {template.category}
-                        </Text>
-                      </View>
-                      <Badge variant="info">{t('merchant.inventory.useTemplate')}</Badge>
-                    </Card>
-                  </PressableScale>
-                ))
-              ) : (
-                <EmptyState
-                  icon={<FileText size={32} color={colors.muted} />}
-                  title={t('merchant.inventory.noListings')}
-                />
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowTemplatePicker(false)}
+        templates={templates}
+        onSelectTemplate={loadTemplate}
+      />
     </Screen>
   );
 }

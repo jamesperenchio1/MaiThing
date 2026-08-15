@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuthStore } from '@/src/stores/auth';
@@ -25,6 +26,7 @@ export function FavoriteButton({
 }: FavoriteButtonProps) {
   const user = useAuthStore((s) => s.user);
   const colors = useThemeColor();
+  const { t } = useTranslation();
   const { data: profile } = useCustomerProfile(user?.id ?? '');
   const toggle = useToggleFavorite();
 
@@ -47,8 +49,9 @@ export function FavoriteButton({
       )}
       scale={0.9}
       disabled={toggle.isPending}
-      accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      accessibilityLabel={t(isFavorite ? 'common.removeFromFavorites' : 'common.addToFavorites')}
       accessibilityRole="button"
+      accessibilityState={{ selected: isFavorite }}
       hitSlop={8}
     >
       <Heart

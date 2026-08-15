@@ -35,7 +35,7 @@ import { useWallet, useWalletTransactions, useWalletRewards } from '@/src/hooks/
 import { useNetworkState } from '@/src/hooks/useNetworkState';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
-import { formatCurrency } from '@/src/lib/utils';
+import { formatCurrency, formatCompactNumber } from '@/src/lib/utils';
 import { getFontScale } from '@/src/lib/responsive';
 import { repositories } from '@/src/repositories';
 import type { WalletReward, WalletTransaction } from '@/src/types';
@@ -47,6 +47,7 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
     transaction.type === 'top_up_bonus';
   const colors = useThemeColor();
   const router = useRouter();
+  const { i18n } = useTranslation();
 
   const onPress = () => {
     if (transaction.orderId) {
@@ -71,7 +72,7 @@ function TransactionItem({ transaction }: { transaction: WalletTransaction }) {
             {transaction.description}
           </Text>
           <Text variant="caption" className="mt-0.5 text-muted">
-            {new Date(transaction.createdAt).toLocaleDateString('en-GB', {
+            {new Date(transaction.createdAt).toLocaleDateString(i18n.language, {
               day: 'numeric',
               month: 'short',
               year: 'numeric',
@@ -244,14 +245,14 @@ function TopUpModal({
 }
 
 function RewardStrip({ rewards }: { rewards?: WalletReward }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   return (
     <View className="mx-4 mb-5 flex-row overflow-hidden rounded-2xl bg-card">
       <View className="flex-1 items-center py-4">
         <Sparkles size={16} color={colors.primary} />
         <Text className="mt-1 text-lg font-bold text-foreground">
-          {(rewards?.points ?? 0).toLocaleString()}
+          {formatCompactNumber(rewards?.points ?? 0, i18n.language)}
         </Text>
         <Text variant="caption" className="text-muted">
           {t('customer.wallet.points')}
@@ -269,7 +270,7 @@ function RewardStrip({ rewards }: { rewards?: WalletReward }) {
       <View className="flex-1 items-center py-4">
         <WalletIcon size={16} color={colors.muted} />
         <Text className="mt-1 text-lg font-bold text-foreground">
-          {(rewards?.lifetimePoints ?? 0).toLocaleString()}
+          {formatCompactNumber(rewards?.lifetimePoints ?? 0, i18n.language)}
         </Text>
         <Text variant="caption" className="text-muted">
           {t('customer.wallet.lifetime')}

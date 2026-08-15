@@ -28,7 +28,7 @@ import { getFontScale } from '@/src/lib/responsive';
 const isWeb = Platform.OS === 'web';
 
 export default function ScannerScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColor();
   const user = useAuthStore((s) => s.user);
   const { width, fontScale } = useWindowDimensions();
@@ -266,7 +266,7 @@ export default function ScannerScreen() {
                 </Text>
                 <Text variant="caption" className="text-muted">
                   {t('merchant.scanner.pickupBy')}{' '}
-                  {new Date(found.pickupWindowEnd).toLocaleTimeString([], {
+                  {new Date(found.pickupWindowEnd).toLocaleTimeString(i18n.language, {
                     hour: '2-digit',
                     minute: '2-digit',
                   })}

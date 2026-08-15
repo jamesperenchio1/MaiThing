@@ -16,7 +16,13 @@ import { Avatar } from '@/src/components/ui/Avatar';
 import { ErrorState } from '@/src/components/ui/ErrorState';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { useAuthStore } from '@/src/stores/auth';
-import { useMerchantByOwner, useStaff, useAddStaff, useUpdateStaff, useRemoveStaff } from '@/src/hooks/useMerchants';
+import {
+  useMerchantByOwner,
+  useStaff,
+  useAddStaff,
+  useUpdateStaff,
+  useRemoveStaff,
+} from '@/src/hooks/useMerchants';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatRelativeTime } from '@/src/lib/utils';
 import type { StaffRole, StaffMember } from '@/src/types';
@@ -152,10 +158,7 @@ function StaffItem({
           {member.permissions.length > 0 && member.permissions[0] !== 'all' && (
             <View className="mt-2 flex-row flex-wrap">
               {member.permissions.map((permission) => (
-                <View
-                  key={permission}
-                  className="mb-1 mr-1.5 rounded-md bg-muted/10 px-2 py-1"
-                >
+                <View key={permission} className="mb-1 mr-1.5 rounded-md bg-muted/10 px-2 py-1">
                   <Text variant="caption" className="text-muted">
                     {t(`merchant.staff.permission.${permission}`)}
                   </Text>
@@ -216,20 +219,24 @@ export default function StaffScreen() {
   };
 
   const handleDelete = (member: StaffMember) => {
-    Alert.alert(t('merchant.staff.removeTitle'), t('merchant.staff.removeConfirm', { name: member.name }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await removeStaff.mutateAsync(member.id);
-          } catch {
-            Alert.alert(t('common.error'), t('merchant.staff.removeError'));
-          }
+    Alert.alert(
+      t('merchant.staff.removeTitle'),
+      t('merchant.staff.removeConfirm', { name: member.name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeStaff.mutateAsync(member.id);
+            } catch {
+              Alert.alert(t('common.error'), t('merchant.staff.removeError'));
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const handleToggleActive = (member: StaffMember) => {
@@ -356,7 +363,7 @@ export default function StaffScreen() {
         <Input
           testID="staff-name-input"
           label={t('auth.name')}
-          placeholder="Somchai Jaidee"
+          placeholder={t('merchant.staff.namePlaceholder')}
           value={name}
           onChangeText={setName}
         />

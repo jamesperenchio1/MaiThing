@@ -55,15 +55,15 @@ export const MerchantCard = React.memo(function MerchantCard({
     if (merchant.distance != null) {
       parts.push(`${formatDistance(merchant.distance)} ${t('customer.merchant.away')}`);
     }
-    parts.push(
-      t('customer.merchant.followers', { count: merchant.followers })
-    );
+    parts.push(t('customer.merchant.followers', { count: merchant.followers }));
     return parts.join(' · ');
   }, [merchant.address.district, merchant.distance, merchant.followers, t]);
 
   return (
     <PressableScale
       testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={`${merchant.name}, ${statusLabel}`}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/(customer)/merchant/${merchant.id}`);

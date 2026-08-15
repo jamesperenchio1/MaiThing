@@ -151,7 +151,7 @@ export default function MerchantSettingsScreen() {
                 )}
               </View>
               <View className="mt-1 flex-row items-center">
-                <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                <Star size={14} color={colors.warning} fill={colors.warning} />
                 <Text variant="body-sm" className="ml-1 text-muted">
                   {merchant?.rating.toFixed(1)} · {merchant?.reviewCount}{' '}
                   {merchant?.reviewCount === 1 ? 'review' : 'reviews'}

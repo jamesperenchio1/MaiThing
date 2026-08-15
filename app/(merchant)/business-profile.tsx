@@ -101,7 +101,7 @@ export default function BusinessProfileScreen() {
             <Input
               testID="business-name-input"
               label="Business Name"
-              placeholder="After You Siam"
+              placeholder={t('merchant.businessProfile.namePlaceholder')}
               value={value}
               onChangeText={onChange}
               error={error?.message}
@@ -116,7 +116,7 @@ export default function BusinessProfileScreen() {
             <Input
               testID="business-description-input"
               label="Description"
-              placeholder="Tell customers about your shop..."
+              placeholder={t('merchant.businessProfile.descriptionPlaceholder')}
               value={value}
               onChangeText={onChange}
               multiline
@@ -150,7 +150,7 @@ export default function BusinessProfileScreen() {
             <Input
               testID="business-pickup-instructions-input"
               label="Pickup Instructions"
-              placeholder="Pick up at the counter and show your pickup code."
+              placeholder={t('merchant.businessProfile.pickupInstructionsPlaceholder')}
               value={value}
               onChangeText={onChange}
               multiline

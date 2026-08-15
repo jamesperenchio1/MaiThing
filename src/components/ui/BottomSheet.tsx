@@ -8,6 +8,7 @@ import {
   type BottomSheetModalProps,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
+import { useThemeColor } from '@/src/hooks/useThemeColor';
 
 interface BottomSheetProps extends Omit<BottomSheetModalProps, 'children'> {
   isOpen: boolean;
@@ -18,14 +19,7 @@ interface BottomSheetProps extends Omit<BottomSheetModalProps, 'children'> {
 }
 
 function SheetBackdrop(props: BottomSheetBackdropProps) {
-  return (
-    <BottomSheetBackdrop
-      {...props}
-      disappearsOnIndex={-1}
-      appearsOnIndex={0}
-      opacity={0.5}
-    />
-  );
+  return <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />;
 }
 
 export const BottomSheet = React.memo(function BottomSheet({
@@ -37,6 +31,7 @@ export const BottomSheet = React.memo(function BottomSheet({
   ...rest
 }: BottomSheetProps) {
   const sheetRef = useRef<BottomSheetModal>(null);
+  const colors = useThemeColor();
 
   useEffect(() => {
     if (isOpen) {
@@ -65,7 +60,7 @@ export const BottomSheet = React.memo(function BottomSheet({
       onChange={handleSheetChange}
       backdropComponent={SheetBackdrop}
       handleIndicatorStyle={{
-        backgroundColor: '#9CA3AF',
+        backgroundColor: colors.muted,
         width: 40,
         height: 4,
         borderRadius: 2,
@@ -77,12 +72,13 @@ export const BottomSheet = React.memo(function BottomSheet({
       }}
       enablePanDownToClose
       enableOverDrag
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
       {...rest}
     >
       <View className="flex-1 rounded-t-3xl bg-background">
-        <Container className="flex-1 px-6 pt-4 pb-8">
-          {children}
-        </Container>
+        <Container className="flex-1 px-6 pt-4 pb-8">{children}</Container>
       </View>
     </BottomSheetModal>
   );
