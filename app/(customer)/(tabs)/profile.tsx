@@ -68,6 +68,7 @@ function MenuItem({ icon, label, onPress, right, testID }: MenuItemProps) {
       }}
       className="flex-row items-center justify-between py-3 active:opacity-70"
       activeOpacity={0.7}
+      accessibilityRole="button"
     >
       <View className="flex-row items-center">
         <View className="mr-3 rounded-xl bg-muted/10 p-2">{icon}</View>
@@ -179,6 +180,8 @@ export default function ProfileScreen() {
               fontSize: Math.round(16 * getFontScale(width, fontScale)),
             }}
             autoFocus
+            accessibilityLabel={t('customer.profile.name')}
+            accessibilityHint={t('customer.profile.nameHint')}
           />
         </View>
         <View className="flex-row space-x-3">

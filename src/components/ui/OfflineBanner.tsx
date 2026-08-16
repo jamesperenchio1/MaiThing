@@ -33,6 +33,7 @@ export function OfflineBanner() {
       style={{ paddingTop: insets.top }}
       accessibilityRole="alert"
       accessibilityLabel={t('common.offlineBanner')}
+      accessibilityHint={t('common.offlineBannerHint')}
     >
       <WifiOff size={16} color={colors.white} />
       <Text className="ml-2 flex-1 text-white">{t('common.offlineBanner')}</Text>

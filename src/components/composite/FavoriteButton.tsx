@@ -50,6 +50,9 @@ export function FavoriteButton({
       scale={0.9}
       disabled={toggle.isPending}
       accessibilityLabel={t(isFavorite ? 'common.removeFromFavorites' : 'common.addToFavorites')}
+      accessibilityHint={t(
+        isFavorite ? 'common.removeFromFavoritesHint' : 'common.addToFavoritesHint'
+      )}
       accessibilityRole="button"
       accessibilityState={{ selected: isFavorite }}
       hitSlop={8}

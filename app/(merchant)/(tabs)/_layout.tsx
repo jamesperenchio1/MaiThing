@@ -74,6 +74,9 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         accessibilityRole="button"
         accessibilityState={isFocused ? { selected: true } : {}}
         accessibilityLabel={options.tabBarAccessibilityLabel}
+        accessibilityHint={
+          options.title ? t('common.switchToTabHint', { tab: String(options.title) }) : undefined
+        }
         testID={options.tabBarButtonTestID}
         onPress={onPress}
         onLongPress={onLongPress}
@@ -144,6 +147,7 @@ function MerchantTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         <PressableScale
           onPress={handleQRPress}
           scale={0.92}
+          // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
           style={{
             width: fabSize,
             height: fabSize,
@@ -176,8 +180,7 @@ export default function MerchantTabsLayout() {
   const pendingCount = orders?.filter((o) => ACTIONABLE_STATUSES.has(o.status)).length ?? 0;
 
   const { data: conversations } = useConversations(user?.id ?? '');
-  const unreadCount =
-    conversations?.filter((c) => !c.read && c.sentBy === 'customer').length ?? 0;
+  const unreadCount = conversations?.filter((c) => !c.read && c.sentBy === 'customer').length ?? 0;
 
   return (
     <Tabs

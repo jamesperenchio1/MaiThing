@@ -65,6 +65,7 @@ export const BottomSheet = React.memo(function BottomSheet({
         height: 4,
         borderRadius: 2,
       }}
+      // eslint-disable-next-line react-native/no-color-literals -- sheet background is intentionally transparent; the themed surface color comes from the content view inside
       backgroundStyle={{
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,

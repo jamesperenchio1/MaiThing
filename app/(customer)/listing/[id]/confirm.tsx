@@ -5,7 +5,19 @@ import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { Image } from '@/src/components/ui/Image';
 import { BottomSheet } from '@/src/components/ui/BottomSheet';
-import { Minus, Plus, Clock, MapPin, AlertCircle, CheckCircle, Calendar, Globe, Check, Tag, X } from 'lucide-react-native';
+import {
+  Minus,
+  Plus,
+  Clock,
+  MapPin,
+  AlertCircle,
+  CheckCircle,
+  Calendar,
+  Globe,
+  Check,
+  Tag,
+  X,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 // Lazy-loaded so Expo Go doesn't crash on missing native CalendarNext module
 let ExpoCalendar: typeof import('expo-calendar') | null = null;
@@ -70,7 +82,11 @@ export default function ConfirmOrderScreen() {
   const [upsellListings, setUpsellListings] = useState<Listing[]>([]);
   const [showUpsell, setShowUpsell] = useState(false);
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; discount: number } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string;
+    code: string;
+    discount: number;
+  } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const { mutateAsync: validateCoupon, isPending: validatingCoupon } = useValidateCoupon();
 
@@ -221,70 +237,58 @@ export default function ConfirmOrderScreen() {
     return (
       <Screen className="bg-background">
         <Header title="Order confirmed" />
-        <BottomSheet
-          isOpen={showUpsell}
-          onClose={() => setShowUpsell(false)}
-          enableScroll={true}
-        >
-              <View className="mb-4 flex-row items-center justify-center">
-                <Globe size={24} color={colors.primary} />
-                <Text variant="h3" className="ml-2">
-                  Rescue more food nearby
-                </Text>
-              </View>
-              {upsellListings.map((item) => {
-                const discountPct = Math.round(
-                  ((item.originalPrice - item.salePrice) / item.originalPrice) * 100
-                );
-                return (
-                  <PressableScale
-                    key={item.id}
-                    scale={0.97}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setShowUpsell(false);
-                      router.push(`/(customer)/listing/${item.id}`);
-                    }}
-                    className="mb-3 flex-row items-center rounded-2xl border border-border bg-card p-3"
-                  >
-                    <Image
-                      source={{ uri: item.images[0] }}
-                      className="h-16 w-16 rounded-xl"
-                      resizeMode="cover"
-                    />
-                    <View className="ml-3 flex-1">
-                      <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
-                        {item.title}
-                      </Text>
-                      <Text variant="caption" className="text-muted" numberOfLines={1}>
-                        {item.category}
-                      </Text>
-                      <View className="mt-1 flex-row items-center">
-                        <Text variant="body-sm" className="font-bold text-primary">
-                          {formatCurrency(item.salePrice)}
-                        </Text>
-                        <Text
-                          variant="caption"
-                          className="ml-2 text-muted line-through"
-                        >
-                          {formatCurrency(item.originalPrice)}
-                        </Text>
-                        <Badge variant="success" className="ml-2">
-                          -{discountPct}%
-                        </Badge>
-                      </View>
-                    </View>
-                  </PressableScale>
-                );
-              })}
-              <Button
-                variant="outline"
-                fullWidth
-                onPress={() => setShowUpsell(false)}
-                className="mt-2"
+        <BottomSheet isOpen={showUpsell} onClose={() => setShowUpsell(false)} enableScroll={true}>
+          <View className="mb-4 flex-row items-center justify-center">
+            <Globe size={24} color={colors.primary} />
+            <Text variant="h3" className="ml-2">
+              Rescue more food nearby
+            </Text>
+          </View>
+          {upsellListings.map((item) => {
+            const discountPct = Math.round(
+              ((item.originalPrice - item.salePrice) / item.originalPrice) * 100
+            );
+            return (
+              <PressableScale
+                key={item.id}
+                scale={0.97}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowUpsell(false);
+                  router.push(`/(customer)/listing/${item.id}`);
+                }}
+                className="mb-3 flex-row items-center rounded-2xl border border-border bg-card p-3"
               >
-                No thanks
-              </Button>
+                <Image
+                  source={{ uri: item.images[0] }}
+                  className="h-16 w-16 rounded-xl"
+                  resizeMode="cover"
+                />
+                <View className="ml-3 flex-1">
+                  <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text variant="caption" className="text-muted" numberOfLines={1}>
+                    {item.category}
+                  </Text>
+                  <View className="mt-1 flex-row items-center">
+                    <Text variant="body-sm" className="font-bold text-primary">
+                      {formatCurrency(item.salePrice)}
+                    </Text>
+                    <Text variant="caption" className="ml-2 text-muted line-through">
+                      {formatCurrency(item.originalPrice)}
+                    </Text>
+                    <Badge variant="success" className="ml-2">
+                      -{discountPct}%
+                    </Badge>
+                  </View>
+                </View>
+              </PressableScale>
+            );
+          })}
+          <Button variant="outline" fullWidth onPress={() => setShowUpsell(false)} className="mt-2">
+            No thanks
+          </Button>
         </BottomSheet>
         <View className="flex-1 items-center justify-center px-6">
           <View className="mb-6 rounded-full bg-primary/10 p-4">
@@ -429,13 +433,13 @@ export default function ConfirmOrderScreen() {
               )}
             </View>
 
-      {isOffline && (
-        <View className="bg-amber-100 px-6 py-3 dark:bg-amber-900">
-          <Text variant="body-sm" className="text-amber-800 dark:text-amber-200">
-            You are offline. Connect to the internet to place your order.
-          </Text>
-        </View>
-      )}
+            {isOffline && (
+              <View className="bg-amber-100 px-6 py-3 dark:bg-amber-900">
+                <Text variant="body-sm" className="text-amber-800 dark:text-amber-200">
+                  You are offline. Connect to the internet to place your order.
+                </Text>
+              </View>
+            )}
             <View className="border-t border-border pt-3 flex-row items-center justify-between">
               <Text className="font-semibold">Total</Text>
               <Text className="text-xl font-bold text-primary">{formatCurrency(total)}</Text>

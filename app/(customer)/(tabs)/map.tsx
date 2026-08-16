@@ -131,6 +131,7 @@ export default function MapScreen() {
         </Text>
         <View
           className="rounded-2xl bg-background"
+          // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
           style={{
             shadowColor: '#000',
             shadowOpacity: 0.12,
@@ -197,6 +198,7 @@ export default function MapScreen() {
             size="icon"
             onPress={request}
             accessibilityLabel={t('customer.map.myLocation')}
+            accessibilityHint={t('customer.map.myLocationHint')}
           >
             {locationDenied ? (
               <LocateOff size={20} color={colors.muted} />
@@ -225,7 +227,9 @@ export default function MapScreen() {
                       onPress={() => setSelectedMerchantId(undefined)}
                       className="ml-2 rounded-full bg-muted/20 p-1.5"
                       scale={0.9}
-                      accessibilityLabel="Close merchant preview"
+                      accessibilityRole="button"
+                      accessibilityLabel={t('customer.map.closeMerchantPreview')}
+                      accessibilityHint={t('customer.map.closeMerchantPreviewHint')}
                       hitSlop={8}
                     >
                       <X size={14} color={colors.muted} />

@@ -102,6 +102,7 @@ function ImageLightbox({
         className="absolute right-4 top-12 z-10 rounded-full bg-black/50 p-2"
         scale={0.9}
         accessibilityLabel={t('customer.listing.closeImage')}
+        accessibilityHint={t('customer.listing.closeImageHint')}
       >
         <X size={24} color="#fff" />
       </PressableScale>
@@ -287,6 +288,7 @@ export default function ListingDetailScreen() {
                 style={{ width: screenWidth }}
                 scale={0.98}
                 accessibilityLabel={t('customer.listing.viewFullImage')}
+                accessibilityHint={t('customer.listing.viewFullImageHint')}
               >
                 <Image
                   source={{ uri }}
@@ -612,6 +614,7 @@ export default function ListingDetailScreen() {
               scale={0.9}
               disabled={quantity <= 1}
               accessibilityLabel={t('customer.cart.decreaseQuantity')}
+              accessibilityHint={t('customer.cart.decreaseQuantityHint')}
               hitSlop={8}
             >
               <Minus size={18} color={colors.foreground} />
@@ -625,6 +628,7 @@ export default function ListingDetailScreen() {
               scale={0.9}
               disabled={quantity >= listing.quantityRemaining}
               accessibilityLabel={t('customer.cart.increaseQuantity')}
+              accessibilityHint={t('customer.cart.increaseQuantityHint')}
               hitSlop={8}
             >
               <Plus size={18} color={colors.foreground} />

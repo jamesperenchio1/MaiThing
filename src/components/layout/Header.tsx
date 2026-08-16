@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/src/lib/utils';
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -16,9 +17,18 @@ interface HeaderProps {
   testID?: string;
 }
 
-export function Header({ title, titleTestID, showBack = true, right, className, onBack, testID }: HeaderProps) {
+export function Header({
+  title,
+  titleTestID,
+  showBack = true,
+  right,
+  className,
+  onBack,
+  testID,
+}: HeaderProps) {
   const router = useRouter();
   const colors = useThemeColor();
+  const { t } = useTranslation();
 
   return (
     <View
@@ -38,7 +48,8 @@ export function Header({ title, titleTestID, showBack = true, right, className, 
             hitSlop={8}
             className="h-10 w-10 items-center justify-center rounded-full bg-muted/10"
             accessibilityRole="button"
-            accessibilityLabel="Go back"
+            accessibilityLabel={t('common.goBack')}
+            accessibilityHint={t('common.goBackHint')}
           >
             <ChevronLeft size={24} color={colors.foreground} />
           </PressableScale>

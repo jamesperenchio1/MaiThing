@@ -77,7 +77,9 @@ export function useToggleFavorite() {
 
 export function useMerchantFollowNotification(userId: string, merchantId: string) {
   const { data: profile } = useCustomerProfile(userId);
-  return profile?.notificationPreferences?.followedMerchantNotifications?.includes(merchantId) ?? false;
+  return (
+    profile?.notificationPreferences?.followedMerchantNotifications?.includes(merchantId) ?? false
+  );
 }
 
 export function useToggleMerchantFollowNotification() {

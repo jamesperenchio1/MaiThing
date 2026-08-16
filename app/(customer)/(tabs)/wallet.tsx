@@ -159,7 +159,9 @@ function TopUpModal({
                 <PressableScale
                   onPress={onClose}
                   scale={0.9}
-                  accessibilityLabel="Close"
+                  accessibilityRole="button"
+                  accessibilityLabel={t('customer.wallet.closeTopUp')}
+                  accessibilityHint={t('customer.wallet.closeTopUpHint')}
                   hitSlop={8}
                 >
                   <View className="rounded-full bg-muted/10 p-2">
@@ -331,6 +333,7 @@ export default function WalletScreen() {
       <View testID="balance-card" className="mx-4 mb-5 overflow-hidden rounded-3xl bg-primary">
         {/* Decorative circles */}
         <View
+          // eslint-disable-next-line react-native/no-color-literals -- decorative accent on the wallet balance card, deliberately colored regardless of theme
           style={{
             position: 'absolute',
             top: -40,
@@ -342,6 +345,7 @@ export default function WalletScreen() {
           }}
         />
         <View
+          // eslint-disable-next-line react-native/no-color-literals -- decorative accent on the wallet balance card, deliberately colored regardless of theme
           style={{
             position: 'absolute',
             bottom: -20,
@@ -360,6 +364,7 @@ export default function WalletScreen() {
                 <WalletIcon size={18} color="#fff" />
               </View>
               <Text
+                // eslint-disable-next-line react-native/no-color-literals -- white text on the wallet balance card, deliberately colored regardless of theme
                 style={{
                   color: 'rgba(255,255,255,0.75)',
                   fontSize: Math.round(14 * fontScaleFactor),
@@ -370,6 +375,7 @@ export default function WalletScreen() {
               </Text>
             </View>
             <Text
+              // eslint-disable-next-line react-native/no-color-literals -- white text on the wallet balance card, deliberately colored regardless of theme
               style={{ color: 'rgba(255,255,255,0.5)', fontSize: Math.round(12 * fontScaleFactor) }}
             >
               {wallet?.currency ?? 'THB'}
@@ -380,6 +386,7 @@ export default function WalletScreen() {
             adjustsFontSizeToFit
             numberOfLines={1}
             minimumFontScale={0.5}
+            // eslint-disable-next-line react-native/no-color-literals -- white text on the wallet balance card, deliberately colored regardless of theme
             style={{
               color: '#fff',
               fontSize: Math.round(40 * fontScaleFactor),

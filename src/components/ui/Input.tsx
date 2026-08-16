@@ -26,6 +26,7 @@ export function Input({
   maxLength,
   value,
   defaultValue,
+  accessibilityHint,
   ...props
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -59,6 +60,7 @@ export function Input({
           value={value}
           defaultValue={defaultValue}
           accessibilityLabel={label}
+          accessibilityHint={accessibilityHint}
           onFocus={(e) => {
             setIsFocused(true);
             props.onFocus?.(e);

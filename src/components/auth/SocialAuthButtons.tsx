@@ -27,6 +27,7 @@ export function SocialAuthButtons({ onPress }: Props) {
           className="flex-row items-center rounded-2xl border border-border bg-card px-4 py-3 active:opacity-60"
           accessibilityRole="button"
           accessibilityLabel={t('auth.continueWith', { provider: p.label })}
+          accessibilityHint={t('auth.continueWithHint', { provider: p.label })}
         >
           <View
             className="mr-3 items-center justify-center rounded-lg"

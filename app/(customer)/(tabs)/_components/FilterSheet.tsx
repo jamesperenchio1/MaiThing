@@ -1,5 +1,6 @@
 import { View, ScrollView, Modal, Switch, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { Button } from '@/src/components/ui/Button';
@@ -83,11 +84,13 @@ export function FilterSheet({
   onReset,
 }: FilterSheetProps) {
   const colors = useThemeColor();
+  const { t } = useTranslation();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View className="flex-1 justify-end">
         <Pressable
+          // eslint-disable-next-line react-native/no-color-literals -- modal backdrop scrim is deliberately dark in both themes
           style={{
             position: 'absolute',
             top: 0,
@@ -97,6 +100,9 @@ export function FilterSheet({
             backgroundColor: 'rgba(0,0,0,0.4)',
           }}
           onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('customer.discover.closeFilters')}
+          accessibilityHint={t('customer.discover.closeFiltersHint')}
         />
         <View className="max-h-[85%] rounded-t-3xl bg-background px-6 pb-10 pt-6">
           <View className="mb-4 flex-row items-center justify-between">

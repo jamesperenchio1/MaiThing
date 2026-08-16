@@ -98,6 +98,7 @@ export function PriceRangeSlider({
           {/* Min thumb */}
           <View
             {...minPR.panHandlers}
+            // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
             style={{
               position: 'absolute',
               left: `${minPct * 100}%`,
@@ -118,6 +119,7 @@ export function PriceRangeSlider({
           {/* Max thumb */}
           <View
             {...maxPR.panHandlers}
+            // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
             style={{
               position: 'absolute',
               left: `${maxPct * 100}%`,

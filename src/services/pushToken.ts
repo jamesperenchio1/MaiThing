@@ -12,8 +12,7 @@ export async function registerPushToken(userId: string): Promise<void> {
   if (Platform.OS === 'web') return;
 
   try {
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
     const tokenData = await Notifications.getExpoPushTokenAsync(
       projectId ? { projectId } : undefined
@@ -79,9 +78,7 @@ export async function syncRestockAlert(
 ): Promise<void> {
   try {
     if (enabled) {
-      await supabase
-        .from('restock_alerts')
-        .upsert({ user_id: userId, listing_id: listingId });
+      await supabase.from('restock_alerts').upsert({ user_id: userId, listing_id: listingId });
     } else {
       await supabase
         .from('restock_alerts')

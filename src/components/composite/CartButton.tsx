@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { ShoppingCart } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
@@ -15,6 +16,7 @@ interface CartButtonProps {
 export function CartButton({ testID }: CartButtonProps) {
   const router = useRouter();
   const colors = useThemeColor();
+  const { t } = useTranslation();
   const totalItems = useCartStore((s) => s.totalItems());
 
   const handlePress = () => {
@@ -28,7 +30,8 @@ export function CartButton({ testID }: CartButtonProps) {
       variant="ghost"
       size="icon"
       onPress={handlePress}
-      accessibilityLabel="Open cart"
+      accessibilityLabel={t('customer.cart.openCart')}
+      accessibilityHint={t('customer.cart.openCartHint')}
       hitSlop={8}
     >
       <View className="relative">

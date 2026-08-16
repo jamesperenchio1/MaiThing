@@ -1,6 +1,5 @@
 import qrcode from 'qrcode-generator';
 import { View } from 'react-native';
-import { useThemeColor } from '@/src/hooks/useThemeColor';
 
 interface QRCodeProps {
   value: string;
@@ -8,8 +7,6 @@ interface QRCodeProps {
 }
 
 export function QRCode({ value, size = 160 }: QRCodeProps) {
-  const colors = useThemeColor();
-
   const qr = qrcode(0, 'M');
   qr.addData(value);
   qr.make();
@@ -33,10 +30,11 @@ export function QRCode({ value, size = 160 }: QRCodeProps) {
           {row.map((dark, c) => (
             <View
               key={c}
+              // eslint-disable-next-line react-native/no-color-literals -- QR modules must stay fixed black/transparent regardless of theme or scanners can't read them
               style={{
                 width: cellSize,
                 height: cellSize,
-                backgroundColor: dark ? colors.foreground : 'transparent',
+                backgroundColor: dark ? '#000000' : 'transparent',
               }}
             />
           ))}

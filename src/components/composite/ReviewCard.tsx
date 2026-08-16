@@ -25,6 +25,7 @@ function ReviewImageLightbox({
   initialIndex: number;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(initialIndex);
 
@@ -35,7 +36,8 @@ function ReviewImageLightbox({
           onPress={onClose}
           className="absolute right-4 top-12 z-10 rounded-full bg-black/50 p-2"
           scale={0.9}
-          accessibilityLabel="Close image"
+          accessibilityLabel={t('customer.listing.closeImage')}
+          accessibilityHint={t('customer.listing.closeImageHint')}
         >
           <X size={24} color="#fff" />
         </PressableScale>
@@ -84,7 +86,7 @@ function ReviewImageLightbox({
 
 export function ReviewCard({ review }: ReviewCardProps) {
   const colors = useThemeColor();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [lightboxVisible, setLightboxVisible] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -125,7 +127,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
                 setLightboxVisible(true);
               }}
               scale={0.97}
-              accessibilityLabel="View full-screen image"
+              accessibilityLabel={t('customer.listing.viewFullImage')}
+              accessibilityHint={t('customer.listing.viewFullImageHint')}
             >
               <Image source={{ uri }} className="h-16 w-16 rounded-xl" resizeMode="cover" />
             </PressableScale>

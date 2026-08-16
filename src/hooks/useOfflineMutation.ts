@@ -12,8 +12,10 @@ export interface OfflineOperationInput<TVariables> {
   payload: (variables: TVariables) => Record<string, unknown>;
 }
 
-export interface UseOfflineMutationOptions<TData, TError, TVariables, TContext>
-  extends Omit<MutationOptions<TData, TError, TVariables, TContext>, 'mutationFn'> {
+export interface UseOfflineMutationOptions<TData, TError, TVariables, TContext> extends Omit<
+  MutationOptions<TData, TError, TVariables, TContext>,
+  'mutationFn'
+> {
   mutationFn: MutationFunction<TData, TVariables>;
   offlineOperation: OfflineOperationInput<TVariables>;
 }
@@ -32,7 +34,12 @@ export interface UseOfflineMutationOptions<TData, TError, TVariables, TContext>
  * so that the optimistic update is not overwritten by a refetch while still
  * offline. The queue replay updates the real backend when connectivity returns.
  */
-export function useOfflineMutation<TData = unknown, TError = Error, TVariables = void, TContext = unknown>(
+export function useOfflineMutation<
+  TData = unknown,
+  TError = Error,
+  TVariables = void,
+  TContext = unknown,
+>(
   options: UseOfflineMutationOptions<TData, TError, TVariables, TContext>
 ): UseMutationResult<TData, TError, TVariables, TContext> {
   const { isOnline } = useNetworkState();

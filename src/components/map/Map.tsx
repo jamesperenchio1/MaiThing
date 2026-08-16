@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Navigation, Heart, Star } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -27,6 +28,7 @@ export function Map({
   onSelectMerchant,
 }: MapProps) {
   const colors = useThemeColor();
+  const { t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const [mapReady, setMapReady] = useState(false);
 
@@ -133,7 +135,10 @@ export function Map({
                   onPress={() => openDirections(merchant.coordinates, merchant.name)}
                   className="mt-3 flex-row items-center justify-center rounded-xl bg-primary/10 py-2"
                   scale={0.97}
-                  accessibilityLabel={`Get directions to ${merchant.name}`}
+                  accessibilityLabel={t('customer.map.getDirectionsTo', {
+                    merchant: merchant.name,
+                  })}
+                  accessibilityHint={t('customer.map.getDirectionsToHint')}
                   hitSlop={8}
                 >
                   <Navigation size={14} color={colors.primary} />

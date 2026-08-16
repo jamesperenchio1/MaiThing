@@ -221,7 +221,7 @@ export default function OrdersScreen() {
                 <Text
                   variant="body-sm"
                   className="font-semibold"
-                  style={{ color: active ? '#fff' : colors.primary }}
+                  style={{ color: active ? colors.white : colors.primary }}
                 >
                   {t(`customer.orders.statusFilter.${filter}`)}
                 </Text>

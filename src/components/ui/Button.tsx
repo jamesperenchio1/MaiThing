@@ -3,12 +3,17 @@ import { ActivityIndicator, Pressable, type PressableProps, View } from 'react-n
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import { cssInterop } from 'nativewind';
 import { cn } from '@/src/lib/utils';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useReducedMotion } from '@/src/hooks/useReducedMotion';
 import { Text } from './Text';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+// Animated.createAnimatedComponent() produces a component NativeWind's babel
+// transform can't recognize by import binding, so `className` is silently
+// dropped (renders unstyled on web) unless explicitly registered here.
+cssInterop(AnimatedPressable, { className: 'style' });
 
 const buttonVariants = cva('flex-row items-center justify-center rounded-2xl px-5 py-3.5', {
   variants: {
