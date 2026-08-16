@@ -134,11 +134,7 @@ export const analytics = {
   savedListingToggled: (listingId: string, isSaved: boolean, userId?: string) =>
     trackEvent('saved_listing_toggled', { listing_id: listingId, is_saved: isSaved }, userId),
 
-  merchantFollowNotificationToggled: (
-    merchantId: string,
-    isFollowing: boolean,
-    userId?: string
-  ) =>
+  merchantFollowNotificationToggled: (merchantId: string, isFollowing: boolean, userId?: string) =>
     trackEvent(
       'merchant_follow_notification_toggled',
       { merchant_id: merchantId, is_following: isFollowing },

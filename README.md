@@ -6,21 +6,21 @@ Thailand's surplus-food marketplace — a Too Good To Go / Yindii-style mobile a
 
 ## Stack
 
-| Layer | Library / Version |
-|---|---|
-| Runtime | Expo SDK 57 · React 19 · React Native 0.86 |
-| Routing | Expo Router 4 (file-system, typed routes) |
-| Language | TypeScript 6 (strict mode) |
-| Styling | NativeWind 4 + Tailwind CSS 3 |
-| Server state | TanStack Query 5 |
-| Global state | Zustand 5 |
-| Forms | React Hook Form 7 + Zod |
-| Animation | Reanimated 4 + expo-haptics |
-| Localization | i18next (English + Thai) |
-| Icons | lucide-react-native |
-| Maps | react-native-maps (native) / Leaflet (web) |
-| Package manager | pnpm |
-| Data layer | Mock repositories (Supabase-ready interfaces) |
+| Layer           | Library / Version                             |
+| --------------- | --------------------------------------------- |
+| Runtime         | Expo SDK 57 · React 19 · React Native 0.86    |
+| Routing         | Expo Router 4 (file-system, typed routes)     |
+| Language        | TypeScript 6 (strict mode)                    |
+| Styling         | NativeWind 4 + Tailwind CSS 3                 |
+| Server state    | TanStack Query 5                              |
+| Global state    | Zustand 5                                     |
+| Forms           | React Hook Form 7 + Zod                       |
+| Animation       | Reanimated 4 + expo-haptics                   |
+| Localization    | i18next (English + Thai)                      |
+| Icons           | lucide-react-native                           |
+| Maps            | react-native-maps (native) / Leaflet (web)    |
+| Package manager | pnpm                                          |
+| Data layer      | Mock repositories (Supabase-ready interfaces) |
 
 ---
 
@@ -42,8 +42,8 @@ Press `w` in the terminal to open the web build. Scan the QR code with **Expo Go
 
 Tap on the welcome screen or use these credentials:
 
-| Role | Email | Password | OTP |
-|---|---|---|---|
+| Role     | Email                    | Password   | OTP      |
+| -------- | ------------------------ | ---------- | -------- |
 | Customer | `customer@maithing.test` | `password` | `123456` |
 | Merchant | `merchant@maithing.test` | `password` | `123456` |
 

@@ -39,6 +39,7 @@ Every single repository method `await sleep(50)` before returning. The home scre
 TanStack Query's default `staleTime` is `0`, so every focus event (switching tabs, backgrounding/foregrounding) triggers a background refetch. Screens with 6+ queries = 6 concurrent network calls on every tab switch.
 
 **Fix:** Set a project-wide default in `src/services/queryClient.ts`:
+
 ```ts
 defaultOptions: {
   queries: {
@@ -47,6 +48,7 @@ defaultOptions: {
   },
 },
 ```
+
 Verify this is applied to the actual `QueryClient` instance (check `queryClient.ts`).
 
 ---

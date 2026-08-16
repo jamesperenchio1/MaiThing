@@ -39,11 +39,7 @@ function subscribeToForceOffline(callback: () => void): () => void {
 }
 
 export function useNetworkState(): NetworkState & { checkNetwork: () => Promise<void> } {
-  const forceOffline = useSyncExternalStore(
-    subscribeToForceOffline,
-    getForceOffline,
-    () => false
-  );
+  const forceOffline = useSyncExternalStore(subscribeToForceOffline, getForceOffline, () => false);
   const [isOnline, setIsOnline] = useState(!forceOffline);
   const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(new Date());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);

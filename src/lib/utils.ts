@@ -46,7 +46,8 @@ export function formatRelativeTime(date: string | Date, locale = 'en') {
     return diffMins > 0 ? `in ${diffMins}m` : `${abs(diffMins)}m ago`;
   }
   if (abs(diffHours) < 24) {
-    if (isThai) return diffHours > 0 ? `อีก ${diffHours} ชั่วโมง` : `${abs(diffHours)} ชั่วโมงที่แล้ว`;
+    if (isThai)
+      return diffHours > 0 ? `อีก ${diffHours} ชั่วโมง` : `${abs(diffHours)} ชั่วโมงที่แล้ว`;
     return diffHours > 0 ? `in ${diffHours}h` : `${abs(diffHours)}h ago`;
   }
   if (isThai) return diffDays > 0 ? `อีก ${diffDays} วัน` : `${abs(diffDays)} วันที่แล้ว`;

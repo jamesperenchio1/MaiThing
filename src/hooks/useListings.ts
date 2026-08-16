@@ -21,7 +21,8 @@ export interface ListingFilters {
   lng?: number;
   radius?: number;
   type?: string;
-  sortBy?: 'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
+  sortBy?:
+    'distance' | 'price_asc' | 'price_desc' | 'discount' | 'newest' | 'top_rated' | 'going_fast';
   dietaryTags?: string[];
   allergens?: string[];
   minPrice?: number;
@@ -104,12 +105,15 @@ export function useUpdateListing() {
       const previousListings = queryClient.getQueriesData<Listing[]>({ queryKey: ['listings'] });
       const previousListing = queryClient.getQueryData<Listing>(['listing', id]);
 
-      queryClient.setQueriesData<Listing[]>({ queryKey: ['listings'] }, (old): Listing[] | undefined => {
-        if (!old) return old;
-        return old.map((listing): Listing =>
-          listing.id === id ? ({ ...listing, ...data } as Listing) : listing
-        );
-      });
+      queryClient.setQueriesData<Listing[]>(
+        { queryKey: ['listings'] },
+        (old): Listing[] | undefined => {
+          if (!old) return old;
+          return old.map((listing): Listing =>
+            listing.id === id ? ({ ...listing, ...data } as Listing) : listing
+          );
+        }
+      );
 
       queryClient.setQueryData<Listing>(['listing', id], (old): Listing | undefined => {
         if (!old) return old;

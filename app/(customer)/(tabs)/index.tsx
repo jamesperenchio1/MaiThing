@@ -59,7 +59,10 @@ const CATEGORY_MAP: Record<string, string> = {
   halal: 'halal',
 };
 
-function filterByPersonality(listings: Listing[], personality: ReturnType<typeof usePersonalityStore.getState>) {
+function filterByPersonality(
+  listings: Listing[],
+  personality: ReturnType<typeof usePersonalityStore.getState>
+) {
   if (!personality.onboardingCompleted) return null;
 
   return listings.filter((l) => {

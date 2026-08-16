@@ -145,10 +145,7 @@ export function useRequestPayout(merchantId: string) {
         queryClient.setQueryData(['merchant-wallet', merchantId], context.previousWallet);
       }
       if (context?.previousTransactions) {
-        queryClient.setQueryData(
-          ['payout-transactions', merchantId],
-          context.previousTransactions
-        );
+        queryClient.setQueryData(['payout-transactions', merchantId], context.previousTransactions);
       }
     },
     onSettled: () => {

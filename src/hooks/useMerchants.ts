@@ -225,9 +225,7 @@ export function useUpdateStaff(merchantId: string) {
 
       queryClient.setQueryData<StaffMember[]>(queryKey, (old) => {
         if (!old) return old;
-        return old.map((member) =>
-          member.id === staffId ? { ...member, ...data } : member
-        );
+        return old.map((member) => (member.id === staffId ? { ...member, ...data } : member));
       });
 
       return { previous };
@@ -341,11 +339,16 @@ export function useUpdateMerchantNotificationPreferences(merchantId: string) {
     },
     onError: (_err, _variables, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['merchant-notification-preferences', merchantId], context.previous);
+        queryClient.setQueryData(
+          ['merchant-notification-preferences', merchantId],
+          context.previous
+        );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['merchant-notification-preferences', merchantId] });
+      queryClient.invalidateQueries({
+        queryKey: ['merchant-notification-preferences', merchantId],
+      });
     },
   });
 }

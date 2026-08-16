@@ -24,9 +24,7 @@ export function ReviewNudgeBanner({ orders }: ReviewNudgeBannerProps) {
   const [dismissed, setDismissed] = useState<string | null>(null);
 
   const reviewableOrder = orders.find(
-    (o) =>
-      (o.status === 'completed' || o.status === 'picked_up') &&
-      o.id !== dismissed
+    (o) => (o.status === 'completed' || o.status === 'picked_up') && o.id !== dismissed
   );
 
   const { data: reviews } = useReviews(reviewableOrder?.merchantId ?? '');
