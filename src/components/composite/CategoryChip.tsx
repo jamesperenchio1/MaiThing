@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   Cake,
   Coffee,
@@ -44,6 +45,7 @@ export function CategoryChip({
   const Icon = iconMap[category.icon] ?? Coffee;
   const label = locale === 'th' ? category.nameTh : category.name;
   const colors = useThemeColor();
+  const { t } = useTranslation();
 
   return (
     <PressableScale
@@ -53,6 +55,11 @@ export function CategoryChip({
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
       accessibilityLabel={label}
+      accessibilityHint={
+        isActive
+          ? t('customer.home.categoryFilterActiveHint', { category: label })
+          : t('customer.home.categoryFilterInactiveHint', { category: label })
+      }
     >
       <View
         className={cn(

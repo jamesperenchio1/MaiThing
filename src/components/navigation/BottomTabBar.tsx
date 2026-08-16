@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import type { LucideIcon } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -26,6 +27,7 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const colors = useThemeColor();
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const [containerWidth, setContainerWidth] = React.useState(0);
 
@@ -95,6 +97,7 @@ export function BottomTabBar({ tabs }: BottomTabBarProps) {
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={tab.label}
+            accessibilityHint={t('common.switchToTabHint', { tab: tab.label })}
           >
             <Icon size={24} color={isActive ? colors.primary : colors.muted} />
             <Text

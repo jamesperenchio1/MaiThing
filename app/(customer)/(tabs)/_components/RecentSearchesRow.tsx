@@ -1,5 +1,6 @@
 import { View, Pressable } from 'react-native';
 import { Clock, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -14,6 +15,7 @@ interface RecentSearchesRowProps {
 
 export function RecentSearchesRow({ recent, onSelect, onRemove, onClear }: RecentSearchesRowProps) {
   const colors = useThemeColor();
+  const { t } = useTranslation();
 
   return (
     <View className="mb-2 px-4">
@@ -24,7 +26,12 @@ export function RecentSearchesRow({ recent, onSelect, onRemove, onClear }: Recen
             Recent searches
           </Text>
         </View>
-        <Pressable onPress={onClear}>
+        <Pressable
+          onPress={onClear}
+          accessibilityRole="button"
+          accessibilityLabel={t('customer.discover.clearRecentSearches')}
+          accessibilityHint={t('customer.discover.clearRecentSearchesHint')}
+        >
           <Text variant="caption" className="text-primary">
             Clear
           </Text>
@@ -42,6 +49,9 @@ export function RecentSearchesRow({ recent, onSelect, onRemove, onClear }: Recen
                 }}
                 className="ml-1.5"
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('customer.discover.removeRecentSearch', { query: item })}
+                accessibilityHint={t('customer.discover.removeRecentSearchHint')}
               >
                 <X size={12} color={colors.muted} />
               </Pressable>

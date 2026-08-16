@@ -4,6 +4,7 @@ import { View, ScrollView, Text, Pressable } from 'react-native';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { DivIcon, LatLngBounds, latLng } from 'leaflet';
 import { MapPin, Navigation } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { MerchantCard } from '@/src/components/composite/MerchantCard';
 import { useAuthStore } from '@/src/stores/auth';
@@ -77,6 +78,7 @@ function WebFavoriteButton({ merchantId }: { merchantId: string }) {
       type="button"
       onClick={() => user && toggle.mutate({ userId: user.id, merchantId, isFavorite })}
       disabled={!user || toggle.isPending}
+      // eslint-disable-next-line react-native/no-color-literals -- Leaflet popup renders as a fixed light-themed overlay over map tiles, independent of app dark/light mode
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -104,6 +106,7 @@ export function LeafletMap({
   onSelectMerchant,
 }: MapProps) {
   const colors = useThemeColor();
+  const { t } = useTranslation();
 
   const merchantIcon = useMemo(
     () =>
@@ -171,12 +174,18 @@ export function LeafletMap({
                   <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
                     {merchant.name}
                   </div>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>
+                  <div
+                    // eslint-disable-next-line react-native/no-color-literals -- Leaflet popup renders as a fixed light-themed overlay over map tiles, independent of app dark/light mode
+                    style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}
+                  >
                     {merchant.address.street}, {merchant.address.district}
                   </div>
                   {merchant.distance != null && (
-                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>
-                      {formatDistance(merchant.distance)} away
+                    <div
+                      // eslint-disable-next-line react-native/no-color-literals -- Leaflet popup renders as a fixed light-themed overlay over map tiles, independent of app dark/light mode
+                      style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}
+                    >
+                      {formatDistance(merchant.distance)} {t('customer.merchant.away')}
                     </div>
                   )}
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -215,6 +224,9 @@ export function LeafletMap({
             onPress={() => onSelectMerchant?.(selected)}
             className="rounded-2xl bg-card p-4 shadow-sm"
             style={{ borderWidth: 1, borderColor: colors.border }}
+            accessibilityRole="button"
+            accessibilityLabel={selected.name}
+            accessibilityHint={t('customer.merchant.viewMerchantHint')}
           >
             <View className="flex-row items-center justify-between">
               <View className="flex-1">

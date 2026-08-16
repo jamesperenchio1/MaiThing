@@ -7,7 +7,7 @@ import reactNativeA11yPlugin from 'eslint-plugin-react-native-a11y';
 
 export default [
   {
-    ignores: ['supabase/functions/**/*'],
+    ignores: ['supabase/functions/**/*', '.expo/**/*'],
   },
   {
     files: ['**/*.{ts,tsx}'],

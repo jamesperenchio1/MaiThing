@@ -216,6 +216,8 @@ export default function ScannerScreen() {
                 }}
                 returnKeyType="search"
                 onSubmitEditing={handleManualSearch}
+                accessibilityLabel={t('merchant.scanner.manualEntry')}
+                accessibilityHint={t('merchant.scanner.manualEntryHint')}
               />
             </View>
             <Button onPress={handleManualSearch} size="icon" disabled={!manualCode.trim()}>

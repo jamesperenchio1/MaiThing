@@ -103,10 +103,9 @@ summary, not an index to keep in sync by hand):
 ## CI
 
 `.github/workflows/ci.yml` runs on every push to `main` and every PR: install (frozen lockfile),
-`pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`. Maestro is **not** part of CI — it
-needs a real device/emulator and a built app, which is a heavier setup than a standard GitHub-hosted
-runner; running it in CI (e.g. via Maestro Cloud or an EAS-built artifact) is a reasonable follow-up
-but out of scope for now.
+`pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`. Maestro is **not** part of CI —
+it needs a real device/emulator and a built app, which a standard GitHub-hosted runner can't
+provide, so E2E stays a manual step run locally against a simulator/emulator (see above).
 
 ## Pre-commit hook
 

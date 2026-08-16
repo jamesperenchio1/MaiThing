@@ -2,34 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Color values are space-separated RGB triplets (not hex) so Tailwind's
+   `rgb(var(--x) / <alpha-value>)` pattern in tailwind.config.js can substitute
+   an alpha channel for opacity-modifier utilities like `bg-primary/10`. */
 @layer base {
   :root {
     color-scheme: light;
-    --background: #FFFBF7;
-    --foreground: #1F2937;
-    --card: #FFFFFF;
-    --border: #F0EAE3;
-    --muted: #7C6F64;
-    --danger: #EF4444;
-    --warning: #F59E0B;
-    --info: #3B82F6;
-    --primary: #16A34A;
-    --primary-foreground: #FFFFFF;
-    --success: #16A34A;
+    --background: 255 251 247;
+    --foreground: 31 41 55;
+    --card: 255 255 255;
+    --border: 240 234 227;
+    --muted: 124 111 100;
+    --danger: 239 68 68;
+    --warning: 245 158 11;
+    --info: 59 130 246;
+    --primary: 22 163 74;
+    --primary-foreground: 255 255 255;
+    --success: 22 163 74;
   }
 
   .dark {
     color-scheme: dark;
-    --background: #0F1419;
-    --foreground: #F9FAFB;
-    --card: #1A1F24;
-    --border: #2A2F35;
-    --muted: #9CA3AF;
-    --danger: #F87171;
-    --warning: #FBBF24;
-    --info: #60A5FA;
-    --primary: #4ADE80;
-    --primary-foreground: #0F1419;
-    --success: #4ADE80;
+    --background: 15 20 25;
+    --foreground: 249 250 251;
+    --card: 26 31 36;
+    --border: 42 47 53;
+    --muted: 156 163 175;
+    --danger: 248 113 113;
+    --warning: 251 191 36;
+    --info: 96 165 250;
+    --primary: 74 222 128;
+    --primary-foreground: 15 20 25;
+    --success: 74 222 128;
   }
 }

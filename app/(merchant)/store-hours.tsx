@@ -45,7 +45,9 @@ export default function StoreHoursScreen() {
   const toggleDay = (day: number) => {
     setHours((prev) =>
       prev.map((h) =>
-        h.day === day ? { ...h, open: h.open ? '' : DEFAULT_OPEN, close: h.close ? '' : DEFAULT_CLOSE } : h
+        h.day === day
+          ? { ...h, open: h.open ? '' : DEFAULT_OPEN, close: h.close ? '' : DEFAULT_CLOSE }
+          : h
       )
     );
     setSelectedDay(day);
@@ -64,9 +66,7 @@ export default function StoreHoursScreen() {
     if (!source) return;
     setHours((prev) =>
       prev.map((h) =>
-        h.day === selectedDay
-          ? h
-          : { ...h, open: source.open, close: source.close }
+        h.day === selectedDay ? h : { ...h, open: source.open, close: source.close }
       )
     );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -77,7 +77,9 @@ export default function StoreHoursScreen() {
     if (!monday) return;
     setHours((prev) =>
       prev.map((h) =>
-        h.day === 1 || !WEEKDAYS.includes(h.day) ? h : { ...h, open: monday.open, close: monday.close }
+        h.day === 1 || !WEEKDAYS.includes(h.day)
+          ? h
+          : { ...h, open: monday.open, close: monday.close }
       )
     );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -145,8 +147,8 @@ export default function StoreHoursScreen() {
       <Header title={t('merchant.businessProfile.storeHours')} />
       <View className="px-6 py-4 pb-12">
         <Text variant="body" className="mb-2 text-muted">
-          Set open and close times for each day. Toggle a day off when your shop is closed. Tap a day to
-          select it for bulk actions.
+          Set open and close times for each day. Toggle a day off when your shop is closed. Tap a
+          day to select it for bulk actions.
         </Text>
 
         <View className="mb-4">
@@ -207,6 +209,8 @@ export default function StoreHoursScreen() {
               key={h.day}
               testID={`store-hours-day-${h.day}-card`}
               onPress={() => setSelectedDay(h.day)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
             >
               <Card
                 variant="outlined"

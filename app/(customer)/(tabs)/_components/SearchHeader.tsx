@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { SlidersHorizontal } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { SearchBar } from '@/src/components/layout/SearchBar';
@@ -27,6 +28,7 @@ export function SearchHeader({
   filterAccessibilityLabel,
 }: SearchHeaderProps) {
   const colors = useThemeColor();
+  const { t } = useTranslation();
 
   return (
     <View className="mb-4 flex-row items-center gap-3 px-4">
@@ -44,6 +46,7 @@ export function SearchHeader({
         scale={0.95}
         accessibilityRole="button"
         accessibilityLabel={filterAccessibilityLabel}
+        accessibilityHint={t('common.filterHint')}
         accessibilityState={{ selected: activeFilterCount > 0 }}
       >
         <View

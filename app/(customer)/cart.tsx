@@ -242,6 +242,7 @@ export default function CartScreen() {
                               scale={0.9}
                               disabled={item.quantity <= 1}
                               accessibilityLabel={t('customer.cart.decreaseQuantity')}
+                              accessibilityHint={t('customer.cart.decreaseQuantityHint')}
                               hitSlop={8}
                             >
                               <Minus size={16} color={colors.foreground} />
@@ -260,6 +261,7 @@ export default function CartScreen() {
                               scale={0.9}
                               disabled={item.quantity >= item.listing.quantityRemaining}
                               accessibilityLabel={t('customer.cart.increaseQuantity')}
+                              accessibilityHint={t('customer.cart.increaseQuantityHint')}
                               hitSlop={8}
                             >
                               <Plus size={16} color={colors.foreground} />
@@ -270,6 +272,7 @@ export default function CartScreen() {
                             className="rounded-xl bg-danger/10 p-2"
                             scale={0.9}
                             accessibilityLabel={t('customer.cart.removeItem')}
+                            accessibilityHint={t('customer.cart.removeItemHint')}
                             hitSlop={8}
                           >
                             <Trash2 size={16} color={colors.danger} />
@@ -342,6 +345,8 @@ export default function CartScreen() {
                 placeholderTextColor={colors.muted}
                 multiline
                 maxLength={200}
+                accessibilityLabel={t('customer.cart.orderNote')}
+                accessibilityHint={t('customer.cart.orderNoteHint')}
                 style={{
                   minHeight: 60,
                   textAlignVertical: 'top',

@@ -138,6 +138,8 @@ export default function MerchantMessageThreadScreen() {
             returnKeyType="send"
             blurOnSubmit={false}
             onSubmitEditing={handleSend}
+            accessibilityLabel={t('merchant.messages.messageInputLabel')}
+            accessibilityHint={t('merchant.messages.messageInputHint')}
           />
           <Button
             testID="send-message-button"

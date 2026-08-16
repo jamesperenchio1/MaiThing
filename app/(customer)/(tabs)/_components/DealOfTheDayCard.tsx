@@ -24,6 +24,7 @@ export function DealOfTheDayCard({ deal, onPress }: DealOfTheDayCardProps) {
         <View className="absolute inset-0 bg-black/40" />
         <View
           className="absolute bottom-0 left-0 right-0"
+          // eslint-disable-next-line react-native/no-color-literals -- darkening scrim over the photo behind white text, independent of app theme
           style={{ height: '60%', backgroundColor: 'rgba(0,0,0,0.35)' }}
         />
         <View className="absolute inset-0 p-4 justify-between">

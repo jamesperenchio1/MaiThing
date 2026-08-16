@@ -45,6 +45,7 @@ export function TopRatedShopsRow({ merchants, onSeeMap, onMerchantPress }: TopRa
               <View className="absolute inset-0 bg-black/30" />
               <View
                 className="absolute bottom-0 left-0 right-0"
+                // eslint-disable-next-line react-native/no-color-literals -- darkening scrim over the photo behind white text, independent of app theme
                 style={{ height: '65%', backgroundColor: 'rgba(0,0,0,0.35)' }}
               />
               <View className="absolute bottom-0 left-0 right-0 p-2.5">
@@ -53,7 +54,10 @@ export function TopRatedShopsRow({ merchants, onSeeMap, onMerchantPress }: TopRa
                 </Text>
                 <View className="flex-row items-center mt-0.5">
                   <Star size={10} color="#FBBF24" fill="#FBBF24" />
-                  <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 11, marginLeft: 2 }}>
+                  <Text
+                    // eslint-disable-next-line react-native/no-color-literals -- white text over the photo overlay, independent of app theme
+                    style={{ color: 'rgba(255,255,255,0.9)', fontSize: 11, marginLeft: 2 }}
+                  >
                     {merchant.rating.toFixed(1)}
                   </Text>
                 </View>

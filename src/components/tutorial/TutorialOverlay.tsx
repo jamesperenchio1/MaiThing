@@ -272,6 +272,9 @@ export function TutorialOverlay() {
           <Pressable
             style={[styles.tapZone, { top: y, left: x, width: hw, height: hh, borderRadius }]}
             onPress={handleAdvance}
+            accessibilityRole="button"
+            accessibilityLabel={step.title}
+            accessibilityHint={step.tapHint ?? t('tutorial.tapHint.fallback')}
           />
         )}
       </>
@@ -284,7 +287,14 @@ export function TutorialOverlay() {
         <View style={styles.centeredCardWrapper} pointerEvents="box-none">
           <View style={[styles.centeredCard, { backgroundColor: colors.card }]}>
             {/* Language toggle top-right of card */}
-            <Pressable onPress={toggleLanguage} style={styles.langToggle} hitSlop={8}>
+            <Pressable
+              onPress={toggleLanguage}
+              style={styles.langToggle}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.language')}
+              accessibilityHint={t('tutorial.toggleLanguageHint')}
+            >
               <View style={[styles.langPill, { backgroundColor: colors.primary + '18' }]}>
                 <Text variant="caption" style={{ color: colors.primary, fontWeight: '700' }}>
                   {language === 'en' ? 'TH' : 'EN'}
@@ -437,14 +447,27 @@ export function TutorialOverlay() {
         {/* Skip button + language toggle always visible at top-right (except center cards which have inline skip) */}
         {hotspot && (
           <View style={[styles.topRight, { top: insets.top + 12 }]}>
-            <Pressable onPress={toggleLanguage} hitSlop={8} style={{ marginRight: 8 }}>
+            <Pressable
+              onPress={toggleLanguage}
+              hitSlop={8}
+              style={{ marginRight: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.language')}
+              accessibilityHint={t('tutorial.toggleLanguageHint')}
+            >
               <View style={[styles.skipPill, { backgroundColor: colors.card }]}>
                 <Text variant="caption" style={{ color: colors.primary, fontWeight: '700' }}>
                   {language === 'en' ? 'TH' : 'EN'}
                 </Text>
               </View>
             </Pressable>
-            <Pressable onPress={skipTutorial} hitSlop={12}>
+            <Pressable
+              onPress={skipTutorial}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={t('tutorial.skip')}
+              accessibilityHint={t('tutorial.skipHint')}
+            >
               <View style={[styles.skipPill, { backgroundColor: colors.card }]}>
                 <X size={14} color={colors.muted} />
                 <Text variant="caption" className="text-muted ml-1">
@@ -458,7 +481,11 @@ export function TutorialOverlay() {
         {/* Step counter at top-left */}
         {hotspot && (
           <View style={[styles.stepCounter, { top: insets.top + 12 }]}>
-            <Text variant="caption" style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '600' }}>
+            <Text
+              variant="caption"
+              // eslint-disable-next-line react-native/no-color-literals -- white text on the dark tutorial spotlight scrim, deliberately colored regardless of theme
+              style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '600' }}
+            >
               {t('tutorial.stepCounter', {
                 current: currentStep,
                 total: TUTORIAL_TOTAL_STEPS - 1,
@@ -472,6 +499,7 @@ export function TutorialOverlay() {
 }
 
 const styles = StyleSheet.create({
+  // eslint-disable-next-line react-native/no-color-literals -- tutorial spotlight scrim is deliberately dark in both themes
   dimRect: {
     position: 'absolute',
     backgroundColor: 'rgba(0,0,0,0.72)',
@@ -493,6 +521,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+  // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
   centeredCard: {
     width: '100%',
     borderRadius: 28,
@@ -502,6 +531,7 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 16,
   },
+  // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
   tooltipCard: {
     position: 'absolute',
     borderRadius: 20,
@@ -559,6 +589,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
+  // eslint-disable-next-line react-native/no-color-literals -- transparent sides form the tooltip arrow triangle shape, not a themed color
   arrowUp: {
     position: 'absolute',
     top: -10,
@@ -570,6 +601,7 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
   },
+  // eslint-disable-next-line react-native/no-color-literals -- transparent sides form the tooltip arrow triangle shape, not a themed color
   arrowDown: {
     position: 'absolute',
     bottom: -10,
@@ -587,6 +619,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
   skipPill: {
     flexDirection: 'row',
     alignItems: 'center',

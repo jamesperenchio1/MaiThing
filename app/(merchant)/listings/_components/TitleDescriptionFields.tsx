@@ -54,6 +54,8 @@ export function TitleDescriptionFields({ control }: { control: Control<CreateLis
                 onChangeText={onChange}
                 onEndEditing={(e) => onChange(e.nativeEvent.text)}
                 maxLength={300}
+                accessibilityLabel={t('customer.listing.description')}
+                accessibilityHint={t('merchant.createListing.descriptionHint')}
               />
               <View className="mt-1.5 ml-1 flex-row justify-between">
                 {error ? (

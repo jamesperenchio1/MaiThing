@@ -125,6 +125,7 @@ function SelectableChip({
   accessibilityLabel,
 }: SelectableChipProps) {
   const colors = useThemeColor();
+  const { t } = useTranslation();
 
   return (
     <PressableScale
@@ -136,6 +137,9 @@ function SelectableChip({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityHint={
+        selected ? t('personality.chipSelectedHint') : t('personality.chipUnselectedHint')
+      }
     >
       <Icon size={16} color={selected ? colors.white : colors.foreground} />
       <Text className={cn('ml-2', selected ? 'text-white' : 'text-foreground')}>{label}</Text>
@@ -162,6 +166,7 @@ function SelectableCard({
 }: SelectableCardProps) {
   const colors = useThemeColor();
   const { s } = useScaledSize();
+  const { t } = useTranslation();
 
   return (
     <PressableScale
@@ -173,6 +178,7 @@ function SelectableCard({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint={t('personality.cardSelectHint')}
     >
       <View className="flex-row items-center">
         <View

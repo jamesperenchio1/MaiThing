@@ -1,7 +1,13 @@
 import { Stack, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { LayoutDashboard, ClipboardList, Package, MessageSquare, QrCode } from 'lucide-react-native';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  Package,
+  MessageSquare,
+  QrCode,
+} from 'lucide-react-native';
 
 import { BottomTabBar } from '@/src/components/navigation/BottomTabBar';
 import type { TabItem } from '@/src/components/navigation/BottomTabBar';
@@ -52,6 +58,7 @@ export default function MerchantTabsWebLayout() {
         <PressableScale
           onPress={handleQRPress}
           scale={0.92}
+          // eslint-disable-next-line react-native/no-color-literals -- shadow is deliberately black in both themes
           style={{
             width: 60,
             height: 60,

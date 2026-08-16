@@ -1,5 +1,6 @@
 import { ScrollView, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { PressableScale } from '@/src/components/ui/PressableScale';
@@ -12,6 +13,7 @@ interface QuickSortChipsProps {
 }
 
 export function QuickSortChips({ sortBy, onChange }: QuickSortChipsProps) {
+  const { t } = useTranslation();
   return (
     <ScrollView
       horizontal
@@ -31,6 +33,7 @@ export function QuickSortChips({ sortBy, onChange }: QuickSortChipsProps) {
           accessibilityRole="button"
           accessibilityState={{ selected: sortBy === opt.id }}
           accessibilityLabel={opt.label}
+          accessibilityHint={t('customer.home.quickSortHint')}
         >
           <View
             className={cn(

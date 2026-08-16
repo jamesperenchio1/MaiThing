@@ -19,13 +19,7 @@ import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { formatRelativeTime } from '@/src/lib/utils';
 import type { MerchantMessage } from '@/src/types';
 
-function MessageBubble({
-  message,
-  isCustomer,
-}: {
-  message: MerchantMessage;
-  isCustomer: boolean;
-}) {
+function MessageBubble({ message, isCustomer }: { message: MerchantMessage; isCustomer: boolean }) {
   const { i18n } = useTranslation();
   return (
     <View className={`mb-3 max-w-[80%] ${isCustomer ? 'self-end' : 'self-start'}`}>
@@ -47,6 +41,7 @@ function MessageBubble({
 }
 
 export default function CustomerMessageThreadScreen() {
+  const { t } = useTranslation();
   const { merchantId } = useLocalSearchParams<{ merchantId: string }>();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -87,7 +82,8 @@ export default function CustomerMessageThreadScreen() {
             variant="ghost"
             size="icon"
             onPress={() => router.push(`/(customer)/merchant/${merchantId}` as any)}
-            accessibilityLabel="View merchant profile"
+            accessibilityLabel={t('customer.messages.viewMerchantProfile')}
+            accessibilityHint={t('customer.messages.viewMerchantProfileHint')}
           >
             <Store size={20} color={colors.primary} />
           </Button>
@@ -146,6 +142,8 @@ export default function CustomerMessageThreadScreen() {
             returnKeyType="send"
             blurOnSubmit={false}
             onSubmitEditing={handleSend}
+            accessibilityLabel={t('customer.messages.messageInputLabel')}
+            accessibilityHint={t('customer.messages.messageInputHint')}
           />
           <Button
             size="icon"

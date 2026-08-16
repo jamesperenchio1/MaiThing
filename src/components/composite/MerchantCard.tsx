@@ -60,67 +60,73 @@ export const MerchantCard = React.memo(function MerchantCard({
   }, [merchant.address.district, merchant.distance, merchant.followers, t]);
 
   return (
-    <PressableScale
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={`${merchant.name}, ${statusLabel}`}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push(`/(customer)/merchant/${merchant.id}`);
-      }}
-      className={cn('mb-3', className)}
-      scale={0.98}
-    >
-      <Card variant="elevated" className="overflow-hidden p-0">
-        <View className="relative">
-          <Image source={{ uri: merchant.coverUrl }} className="h-32 w-full" resizeMode="cover" />
-          <View className="absolute inset-0 bg-black/10" />
-          <View className="absolute left-2 top-2 flex-row gap-1.5">
-            <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{statusLabel}</Badge>
-            {isNew && <Badge variant="info">{t('customer.merchant.new')}</Badge>}
-          </View>
-          <View className="absolute right-2 top-2">
-            <FavoriteButton
-              merchantId={merchant.id}
-              size={18}
-              variant="overlay"
-              className="bg-black/30 p-1.5"
-            />
-          </View>
-        </View>
-        <View className="p-3">
-          <View className="mb-3 flex-row items-center">
-            <Image
-              source={{ uri: merchant.logoUrl }}
-              className="mr-3 h-12 w-12 rounded-xl"
-              resizeMode="cover"
-            />
-            <View className="flex-1">
-              <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
-                {merchant.name}
-              </Text>
-              <ReviewSummary rating={merchant.rating} reviewCount={merchant.reviewCount} />
+    // FavoriteButton renders its own accessibilityRole="button" element and must NOT be a
+    // descendant of this card's own button — nested interactive elements are invalid HTML
+    // (react-native-web renders both as literal <button> tags) and an a11y anti-pattern on
+    // native. It's positioned as an absolute sibling instead, layered on top via paint order.
+    <View className={cn('relative mb-3', className)}>
+      <PressableScale
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={`${merchant.name}, ${statusLabel}`}
+        accessibilityHint={t('customer.merchant.viewMerchantHint')}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push(`/(customer)/merchant/${merchant.id}`);
+        }}
+        scale={0.98}
+      >
+        <Card variant="elevated" className="overflow-hidden p-0">
+          <View className="relative">
+            <Image source={{ uri: merchant.coverUrl }} className="h-32 w-full" resizeMode="cover" />
+            <View className="absolute inset-0 bg-black/10" />
+            <View className="absolute left-2 top-2 flex-row gap-1.5">
+              <Badge variant={openStatus.isOpen ? 'success' : 'muted'}>{statusLabel}</Badge>
+              {isNew && <Badge variant="info">{t('customer.merchant.new')}</Badge>}
             </View>
           </View>
-
-          <View className="mb-2 flex-row flex-wrap items-center">
-            {merchant.isVerified && <TrustBadge type="verified" />}
-            {merchant.hygieneRating && merchant.hygieneRating >= 4.5 && (
-              <TrustBadge
-                type="hygiene"
-                label={t('customer.merchant.hygieneRated', { rating: merchant.hygieneRating })}
+          <View className="p-3">
+            <View className="mb-3 flex-row items-center">
+              <Image
+                source={{ uri: merchant.logoUrl }}
+                className="mr-3 h-12 w-12 rounded-xl"
+                resizeMode="cover"
               />
-            )}
-          </View>
+              <View className="flex-1">
+                <Text variant="body-sm" className="font-semibold" numberOfLines={1}>
+                  {merchant.name}
+                </Text>
+                <ReviewSummary rating={merchant.rating} reviewCount={merchant.reviewCount} />
+              </View>
+            </View>
 
-          <View className="flex-row items-center">
-            <MapPin size={14} color={colors.muted} />
-            <Text variant="caption" className="ml-1.5 flex-1 text-muted" numberOfLines={1}>
-              {locationLabel}
-            </Text>
+            <View className="mb-2 flex-row flex-wrap items-center">
+              {merchant.isVerified && <TrustBadge type="verified" />}
+              {merchant.hygieneRating && merchant.hygieneRating >= 4.5 && (
+                <TrustBadge
+                  type="hygiene"
+                  label={t('customer.merchant.hygieneRated', { rating: merchant.hygieneRating })}
+                />
+              )}
+            </View>
+
+            <View className="flex-row items-center">
+              <MapPin size={14} color={colors.muted} />
+              <Text variant="caption" className="ml-1.5 flex-1 text-muted" numberOfLines={1}>
+                {locationLabel}
+              </Text>
+            </View>
           </View>
-        </View>
-      </Card>
-    </PressableScale>
+        </Card>
+      </PressableScale>
+      <View className="absolute right-2 top-2">
+        <FavoriteButton
+          merchantId={merchant.id}
+          size={18}
+          variant="overlay"
+          className="bg-black/30 p-1.5"
+        />
+      </View>
+    </View>
   );
 });

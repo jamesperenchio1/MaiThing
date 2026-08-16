@@ -39,7 +39,7 @@ export function DateTimePickerField({
   error,
 }: DateTimePickerFieldProps) {
   const colors = useThemeColor();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
 
@@ -59,7 +59,13 @@ export function DateTimePickerField({
 
   return (
     <>
-      <Pressable testID={testID} onPress={() => setOpen(true)}>
+      <Pressable
+        testID={testID}
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}, ${formatDateTime(value, i18n.language)}`}
+        accessibilityHint={t('common.editDateTimeHint')}
+      >
         <View className={cn('mb-4', error && 'mb-2')}>
           {label && (
             <Text variant="label" className="mb-2 ml-1">
