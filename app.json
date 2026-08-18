@@ -10,7 +10,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jamyangperenchio.maithing",
-      "newArchEnabled": false
+      "newArchEnabled": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow MaiThing to use your location to show nearby merchants and listings.",
+        "NSPhotoLibraryUsageDescription": "Allow MaiThing to access your photos to upload listing images.",
+        "NSPhotoLibraryAddUsageDescription": "Allow MaiThing to save images to your photo library."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +26,12 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.jamyangperenchio.maithing",
-      "newArchEnabled": false
+      "newArchEnabled": false,
+      "permissions": [
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -59,6 +69,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "70293565-7df3-4f07-848f-7e0cbf2f11a0"
+      }
+    },
+    "owner": "jamyangperenchio"
   }
 }
