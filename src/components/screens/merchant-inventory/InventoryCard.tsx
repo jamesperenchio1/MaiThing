@@ -131,27 +131,25 @@ export function InventoryCard({
         )}
         <Image
           source={{ uri: listing.images[0] }}
-          className="h-full w-28"
+          className="w-28 self-stretch"
           resizeMode="cover"
           style={{ backgroundColor: colors.border }}
         />
         <View className="flex-1 p-3">
-          <View className="mb-1 flex-row items-center justify-between">
-            <Text variant="body-sm" className="flex-1 font-semibold" numberOfLines={1}>
-              {listing.title}
-            </Text>
-            <View className="ml-2 flex-row items-center gap-1.5">
-              {sellThrough !== null && (
-                <Badge
-                  variant={sellThrough >= 80 ? 'success' : sellThrough >= 50 ? 'warning' : 'muted'}
-                >
-                  {t('merchant.inventory.sellThrough', { pct: sellThrough })}
-                </Badge>
-              )}
-              <Badge variant={statusVariantMap[listing.status]}>
-                {t(`merchant.inventory.${statusLabelKey[listing.status]}`)}
+          <Text variant="body-sm" className="mb-1 font-semibold" numberOfLines={1}>
+            {listing.title}
+          </Text>
+          <View className="mb-1 flex-row items-center gap-1.5">
+            {sellThrough !== null && (
+              <Badge
+                variant={sellThrough >= 80 ? 'success' : sellThrough >= 50 ? 'warning' : 'muted'}
+              >
+                {t('merchant.inventory.sellThrough', { pct: sellThrough })}
               </Badge>
-            </View>
+            )}
+            <Badge variant={statusVariantMap[listing.status]}>
+              {t(`merchant.inventory.${statusLabelKey[listing.status]}`)}
+            </Badge>
           </View>
           <View className="mb-1 flex-row items-center justify-between">
             <Text variant="body-sm" className="text-muted">

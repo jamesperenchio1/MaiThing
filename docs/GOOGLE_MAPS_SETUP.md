@@ -2,6 +2,8 @@
 
 MaiThing uses Google Maps across native and web, but the architecture is deliberately optimized so the **biggest cost drivers are cached or avoided**.
 
+> **Current state:** `app.json` already has real (non-placeholder) Android/iOS Google Maps API keys committed — this isn't a "create keys from scratch" setup guide anymore for this project, it's a reference for how the keys are used and how to verify/rotate them. Confirm in the Google Cloud Console that both keys are still restricted per step 5 below before trusting them in a production build; rotate them if that's ever in doubt.
+
 ## Cost overview (current Google Maps Platform pricing)
 
 Google changed its pricing in March 2025: the old universal $200 monthly credit was replaced with **per-SKU free tiers**. The most relevant SKUs for this app are:

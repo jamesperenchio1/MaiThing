@@ -1,55 +1,43 @@
 # Performance Issues — Maithing
 
-Documented findings from profiling the mock-data dev build. Ordered by estimated impact.
+Documented findings from profiling the mock-data dev build. Ordered by estimated impact. This is a
+living list, not a fixed audit — re-verify against the current code before trusting an item, and
+update it as fixes land or new issues surface.
+
+**Last refreshed:** 2026-08-19. Several items below (marked ✅ Fixed) have already been resolved
+since this list was first written; they're kept for history/context rather than deleted.
 
 ---
 
-## 1. 50 ms artificial sleep per repository call (HIGH)
+## 1. ~~50 ms artificial sleep per repository call~~ ✅ Fixed
 
-**File:** `src/repositories/mock.ts`, top of file — `const sleep = (ms: number) => …`
-
-Every single repository method `await sleep(50)` before returning. The home screen triggers ≥ 6 concurrent queries on mount (listings, merchants, categories, impact, profile, notifications). That's 300 ms of pure sleep before a single byte of data is available, plus React re-renders after each settles.
-
-**Fix:** Remove `sleep()` from all mock methods. If you want realistic latency during demo, add a single 100 ms sleep only to `getListings` / `getMerchants`, controlled by an env flag.
+`src/repositories/mock.ts` no longer has a `sleep()` call in its methods — verified by grep, no
+matches remain. (This item only ever applied to mock mode; the app now also runs against a real
+Supabase backend by default in this repo, which has its own real network latency instead.)
 
 ---
 
-## 2. FlashList `ListHeaderComponent` recreated every render (MEDIUM)
+## 2. FlashList `ListHeaderComponent` recreated every render (MEDIUM — still open on home)
 
-**Files:** `app/(customer)/(tabs)/index.tsx`, `wallet.tsx`, `orders.tsx`
+**Files:** `app/(customer)/(tabs)/index.tsx` (still a plain `const listHeader = (...)` as of this refresh — confirm with `grep -n listHeader`), `wallet.tsx`, `orders.tsx`.
 
-`listHeader` was defined as a plain `const` inside the component body, meaning a new React element is created on every render. FlashList treats a changed `ListHeaderComponent` reference as a full unmount+remount — which kills entering animations and causes an extra layout pass.
+`listHeader` is defined as a plain `const` inside the component body, meaning a new React element is created on every render. FlashList treats a changed `ListHeaderComponent` reference as a full unmount+remount — which kills entering animations and causes an extra layout pass.
 
-**Fix (done for carousel):** Wrap in `useMemo`. For wallet/orders, either memoize or extract to a named component outside the render function.
-
----
-
-## 3. `Dimensions.get('window')` at module level for carousel width (MEDIUM)
-
-**File:** `app/(customer)/(tabs)/index.tsx`
-
-`slideWidth` was captured once at module load. On tablets and during orientation changes the value is stale, causing carousel slides to be the wrong width.
-
-**Fix (done):** Use `useState(Dimensions.get('window').width)` with an `onLayout` callback on the ScrollView to re-measure.
+**Fix:** Wrap in `useMemo`, or extract to a named component outside the render function.
 
 ---
 
-## 4. No `staleTime` on hot queries (MEDIUM)
+## 3. ~~`Dimensions.get('window')` at module level for carousel width~~ ✅ Fixed
 
-TanStack Query's default `staleTime` is `0`, so every focus event (switching tabs, backgrounding/foregrounding) triggers a background refetch. Screens with 6+ queries = 6 concurrent network calls on every tab switch.
+`app/(customer)/(tabs)/index.tsx` now uses `useState(Dimensions.get('window').width)` for
+`slideWidth`, re-measured via an `onLayout` callback — confirmed current.
 
-**Fix:** Set a project-wide default in `src/services/queryClient.ts`:
+---
 
-```ts
-defaultOptions: {
-  queries: {
-    staleTime: 5 * 60 * 1000,   // 5 minutes — already in the file for mock
-    gcTime: 10 * 60 * 1000,
-  },
-},
-```
+## 4. ~~No `staleTime` on hot queries~~ ✅ Fixed
 
-Verify this is applied to the actual `QueryClient` instance (check `queryClient.ts`).
+`src/services/queryClient.ts` sets `staleTime: 1000 * 60 * 5` and `gcTime: 1000 * 60 * 60 * 24` on
+the `QueryClient` instance — confirmed current, applies to both mock and Supabase mode.
 
 ---
 
@@ -79,17 +67,18 @@ Suppressing all logs hides legitimate performance warnings (e.g. FlashList missi
 
 ---
 
-## 8. No React.memo on heavy list items (LOW)
+## 8. ~~No React.memo on heavy list items~~ ✅ Mostly fixed
 
-`ListingCard`, `MerchantCard`, and `TransactionItem` are re-created on every parent render even when their props haven't changed. With FlashList rendering 20+ items, this adds up.
-
-**Fix:** Wrap with `React.memo` and ensure stable callback props (use `useCallback`).
+`src/components/composite/ListingCard.tsx` and `MerchantCard.tsx` are both wrapped in
+`React.memo` — confirmed current. There's no separate `TransactionItem` component in the current
+codebase (wallet transaction rows are rendered inline) — if a dedicated component gets extracted
+later, memoize it too.
 
 ---
 
-## Quick wins (can be done in one session)
+## Remaining open items
 
-1. Remove 50 ms sleep from mock (or gate it behind `EXPO_PUBLIC_MOCK_LATENCY=1`)
-2. Confirm `staleTime: 5min` in QueryClient
-3. Replace `<Image>` with `<ExpoImage>` in ListingCard and carousel
-4. `React.memo` on ListingCard and MerchantCard
+1. Wrap `listHeader` in `useMemo` on the home screen (#2).
+2. Replace `<Image>` with `expo-image` in `ListingCard` and the home carousel for placeholder/shimmer support (#6).
+3. Remove/narrow `LogBox.ignoreAllLogs(true)` so real warnings surface again (#7).
+4. Pre-compute or memoize derived arrays over the mock seed data if mock mode's synchronous filtering becomes a bottleneck (#5) — lower priority now that Supabase mode is the default in this repo and the sleep from #1 is gone.

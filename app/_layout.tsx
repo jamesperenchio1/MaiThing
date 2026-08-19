@@ -30,6 +30,7 @@ import { persister } from '@/src/services/offlineCache';
 import { initializeI18n } from '@/src/i18n';
 import { useThemeStore } from '@/src/stores/theme';
 import { useAuthStore } from '@/src/stores/auth';
+import { useLanguageStore } from '@/src/stores/language';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { repositories } from '@/src/repositories';
 import {
@@ -53,7 +54,7 @@ import { useBackgroundNotifications } from '@/src/hooks/useBackgroundNotificatio
 configureReanimatedLogger({ level: ReanimatedLogLevel.error });
 LogBox.ignoreAllLogs(true);
 
-initializeI18n();
+initializeI18n(useLanguageStore.getState().language);
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

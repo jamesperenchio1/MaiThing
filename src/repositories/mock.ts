@@ -1,6 +1,7 @@
 import { calculateDistance, generatePickupCode } from '@/src/lib/utils';
 import { syncFollowNotification, syncRestockAlert } from '@/src/services/pushToken';
 import { triggerPushEvent } from '@/src/lib/supabase';
+import { useAuthStore } from '@/src/stores/auth';
 import type {
   AuthRepository,
   UserRepository,
@@ -191,7 +192,10 @@ class MockAuthRepository implements AuthRepository {
 
 class MockUserRepository implements UserRepository {
   async getCurrentUser(): Promise<User | null> {
-    return null;
+    // Mock mode has no server-side session; the persisted Zustand auth store
+    // *is* the session, so reflect it back instead of always reporting signed-out
+    // (app/_layout.tsx calls this on every boot and overwrites the store with the result).
+    return useAuthStore.getState().user ?? null;
   }
 
   async updateProfile(userId: string, data: Partial<User>): Promise<User> {
@@ -939,11 +943,19 @@ class MockWalletRepository implements WalletRepository {
 
   private getOrInitReward(userId: string): WalletReward {
     if (!walletRewards.has(userId)) {
+      // Backfill points for the seeded test account's existing purchase history so the
+      // rewards strip isn't stuck at 0 despite 20 seeded wallet transactions being visible.
+      const backfilledPoints =
+        userId === TEST_CUSTOMER.id
+          ? WALLET_TRANSACTIONS.filter(
+              (tx) => tx.userId === userId && tx.type === 'purchase'
+            ).reduce((sum, tx) => sum + Math.floor(tx.amount), 0)
+          : 0;
       walletRewards.set(userId, {
         userId,
-        points: 0,
+        points: backfilledPoints,
         bonusBalance: 0,
-        lifetimePoints: 0,
+        lifetimePoints: backfilledPoints,
       });
     }
     return walletRewards.get(userId)!;

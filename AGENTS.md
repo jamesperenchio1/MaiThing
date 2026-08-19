@@ -9,7 +9,7 @@ Maithing is a surplus-food marketplace for Thailand — a Too Good To Go / Yindi
 - **Customer** — browse listings, discover merchants, place orders, manage wallet, view profile.
 - **Merchant** — onboarding, dashboard, inventory, create/edit listings with templates and image upload, orders & QR scanner, payouts & bank accounts, team & staff, promotions/coupons, customer messaging, reviews, analytics, and settings.
 
-The app ships with **mock repositories** by default (`EXPO_PUBLIC_REPOSITORY_MODE` unset or not `supabase`) so developers can run it without a live backend. A full **Supabase repository implementation** exists in `src/repositories/supabase.ts` and is wired up for every repository interface (auth, users, merchants, listings, orders, wallet, payouts, coupons, messages, notifications, analytics). Flip to the live backend by setting `EXPO_PUBLIC_REPOSITORY_MODE=supabase` plus your Supabase URL/anon key. UI code never imports backend clients directly; it always goes through the repository switcher in `src/repositories/index.ts`.
+The app ships with **mock repositories** by default (`EXPO_PUBLIC_REPOSITORY_MODE` unset or not `supabase`) so developers can run it without a live backend. A full **Supabase repository implementation** exists in `src/repositories/supabase.ts` and is wired up for every repository interface (auth, users, merchants, listings, orders, wallet, payouts, coupons, messages, notifications, analytics). Flip to the live backend by setting `EXPO_PUBLIC_REPOSITORY_MODE=supabase` plus your Supabase URL/anon key — this project's own `.env.local` (gitignored) already has it set to `supabase`, so a fresh checkout with a copied `.env.local` runs against the real backend, not the mock one. UI code never imports backend clients directly; it always goes through the repository switcher in `src/repositories/index.ts`. Nothing about this split is fixed — swap the default, add a third repository implementation, or collapse the mock path entirely if the project no longer needs it.
 
 ## Technology Stack
 
@@ -182,11 +182,12 @@ OTP verification in mock auth accepts `123456`.
 ## State Management
 
 - **Server state**: TanStack Query hooks in `src/hooks/` call repositories. Default stale time is 5 minutes.
-- **Global client state**: Zustand stores in `src/stores/`:
+- **Global client state**: Zustand stores in `src/stores/`, all persisted via `mmkvZustandStorage`
+  (`src/lib/mmkvStorage.ts` — real MMKV on native, a synchronous `localStorage`-backed shim on web):
   - `auth` — current user, selected role, login/logout helpers.
-  - `theme` — light / dark / system, persisted in AsyncStorage.
-  - `language` — `en` or `th`, persisted and synced with i18next.
-  - `cart` — in-memory cart (not persisted).
+  - `theme` — light / dark / system.
+  - `language` — `en` or `th`, synced with i18next on rehydration.
+  - `cart` — cart items, grouped by merchant; survives app restarts (expired listings are pruned on rehydration).
 
 ## Forms and Validation
 
@@ -251,45 +252,47 @@ Run them with the Maestro CLI on a device or emulator (`maestro test .maestro/<f
 
 ## Security Considerations
 
-- **No real auth backend**: passwords are compared locally in mock repositories. Do not ship this to production without replacing auth with a secure backend.
-- **API keys**: the only API key in `app.json` is a dummy Google Maps key. Replace it before releasing native builds.
-- **Secrets**: store production secrets in environment variables or a secrets manager, not in `app.json`. `.env*.local` is already ignored.
-- **Secure storage**: `expo-secure-store` is installed and configured as a plugin. Use it for tokens rather than AsyncStorage before production.
+- **Real auth backend (Supabase mode)**: `src/repositories/supabase.ts` calls `supabase.auth.signInWithPassword` / `signUp` / `resetPasswordForEmail` / `verifyOtp` for real — passwords are never compared client-side in this mode. Mock mode (`src/repositories/mock.ts`) still compares passwords in-memory and must never be shipped as the production build's default.
+- **API keys**: `app.json` contains real (non-placeholder) Google Maps API keys for Android and iOS. Verify in the Google Cloud Console that each key is restricted to its bundle ID/package + SHA-1 fingerprint (see [`docs/GOOGLE_MAPS_SETUP.md`](docs/GOOGLE_MAPS_SETUP.md)) rather than assuming they're safe because they're already committed.
+- **Secrets**: store production secrets in environment variables or a secrets manager, not in `app.json`. `.env*.local` is already ignored; this repo's own `.env.local` holds the live Supabase URL/anon key and is not committed.
+- **Secure storage**: `expo-secure-store` is wired up as the Supabase auth session storage adapter (`src/lib/supabase.ts`) on native. Web has no `SecureStore` equivalent, so the Supabase JS client falls back to in-memory session persistence there (no `AsyncStorage` fallback is used, deliberately — plain `AsyncStorage` is not encrypted).
 - **Deep links**: app scheme is `maithing://` (configured in `app.json`). Deep-link handlers should validate incoming URLs.
-- **Input validation**: always use Zod schemas for form data on both client and (future) server.
+- **Input validation**: always use Zod schemas for form data on the client; row-level security policies on the Supabase side are the actual server-side boundary — check `supabase/migrations/` before assuming client validation alone is sufficient.
 
 ## Known Limitations
 
-- Web build works; native builds need verification on device/emulator (see `HANDOFF.md`).
-- Camera / photo picker is simulated with placeholder URLs on web and in create-listing.
-- Push notifications are mocked/no-ops on web.
+- Camera / photo picker is simulated with placeholder URLs on web and in create-listing — no `expo-image-picker` wiring yet.
+- Push notifications are no-ops on web; native delivery goes through the `supabase/functions/` Edge Function + Expo Push Service (see [`docs/PUSH_NOTIFICATIONS.md`](docs/PUSH_NOTIFICATIONS.md)).
 - Native haptics are no-ops on web.
-- Some screens still use `ScrollView` instead of `FlashList` for large lists.
+- Some screens still use `ScrollView` instead of `FlashList` for large lists (see [`QUALITY_OF_LIFE_IMPROVEMENTS.md`](QUALITY_OF_LIFE_IMPROVEMENTS.md) for the current per-screen breakdown).
 - `LogBox.ignoreAllLogs(true)` is enabled in `app/_layout.tsx` — suppresses all React Native warnings in development.
-- The Supabase repository expects a specific set of tables (listed at the top of `src/repositories/supabase.ts`). They are not created automatically; set them up in your Supabase project before using `EXPO_PUBLIC_REPOSITORY_MODE=supabase`.
+- The Supabase repository expects a specific set of tables; `supabase/migrations/` now contains the schema migrations for this project's own Supabase instance, so a fresh project just needs those migrations applied rather than the tables hand-built.
+- Stripe Connect / PromptPay are not integrated yet — payouts UI exists without a live payment processor behind it.
+- No Sentry or other crash/error-tracking service is wired in.
 
 ## Deployment
 
 - **Web**: run `npx expo export --platform web` to produce a static site in `dist/`.
-- **Native**: use EAS Build (`eas build --platform android|ios`) or run `pnpm android` / `pnpm ios` locally. The bundle identifiers are:
+- **Native**: use EAS Build (`eas build --platform android|ios`) via the profiles in `eas.json` (`development`, `preview`, `production`), or run `pnpm android` / `pnpm ios` locally. The bundle identifiers are:
   - iOS: `com.jamyangperenchio.maithing`
   - Android: `com.jamyangperenchio.maithing`
-- **EAS / Expo**: not configured yet; add `eas.json` when ready for production builds.
+- **CI**: `.github/workflows/ci.yml` runs typecheck, lint, format:check, and test on every push to `main` and every PR. Maestro E2E is intentionally not in CI (needs a real device/emulator) — run it manually.
 
-## Health Checks (verified)
+## Health Checks
 
-As of the latest check:
+Everything below is a point-in-time snapshot, not a guarantee — re-run the commands yourself before relying on them:
 
 - `pnpm typecheck` passes (`tsc --noEmit`).
-- `pnpm lint` passes with warnings only on generated `.expo/types/router.d.ts` files and an unused style in `TutorialOverlay.tsx`. These are auto-generated or pre-existing and can be ignored.
-- Web export previously produced 56 static routes successfully.
+- `pnpm lint`, `pnpm format:check`, and `pnpm test` are all gated in CI on every push/PR.
+- Nothing here — file locations, the mock/Supabase split, naming, or any convention in this doc — is a fixed rule. Update this file (and the others in the repo) whenever the codebase changes; treat it as a description of current state, not a constraint on what comes next.
 
 ## Useful Files to Read First
 
 - `app/_layout.tsx` — root providers, fonts, splash, theme, notifications.
 - `src/repositories/interfaces.ts` — data access contracts.
-- `src/repositories/mock.ts` — current data implementation.
-- `src/repositories/seed.ts` — demo merchants, listings, orders, wallet, notifications.
+- `src/repositories/supabase.ts` — live backend implementation (default in this repo).
+- `src/repositories/mock.ts` — offline/no-backend fallback implementation.
+- `src/repositories/seed.ts` — demo merchants, listings, orders, wallet, notifications (used by the mock implementation).
 - `src/stores/auth.ts` — auth state shape.
 - `src/lib/utils.ts` — `cn()` helper and formatting utilities.
 - `src/components/ui/Button.tsx` — CVA-based button component pattern.

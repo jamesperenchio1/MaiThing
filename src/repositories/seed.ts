@@ -438,7 +438,7 @@ function getFoodImage(category: string, seed: string): string {
       'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop',
     ],
     dessert: [
-      'https://images.unsplash.com/photo-1563729784474-d8b8c88a8b5f?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1587314168485-3236d6710814?w=600&h=400&fit=crop',
       'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&h=400&fit=crop',
       'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&h=400&fit=crop',
     ],
@@ -448,7 +448,7 @@ function getFoodImage(category: string, seed: string): string {
       'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=600&h=400&fit=crop',
     ],
     street_food: [
-      'https://images.unsplash.com/photo-1606491956689-2ea866820c96?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1559847844-5315695dadae?w=600&h=400&fit=crop',
       'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?w=600&h=400&fit=crop',
       'https://images.unsplash.com/photo-1555126634-323283e090fa?w=600&h=400&fit=crop',
     ],
@@ -850,7 +850,7 @@ const REVIEWER_NAMES = [
 
 const REVIEW_SAMPLE_IMAGES = [
   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1563729784474-d8b8c88a8b5f?w=300&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1587314168485-3236d6710814?w=300&h=300&fit=crop',
   'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=300&h=300&fit=crop',
 ];
 

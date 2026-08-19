@@ -276,6 +276,7 @@ export default {
       locationDeniedTitle: 'Location access is off',
       locationDeniedBody: 'Enable location to see shops near you.',
       openSettings: 'Open Settings',
+      nearbyMerchants: 'Nearby merchants',
       navigate: 'Navigate',
       call: 'Call',
       share: 'Share',

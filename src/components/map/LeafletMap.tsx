@@ -1,12 +1,10 @@
 import 'leaflet/dist/leaflet.css';
 import React, { useEffect, useMemo } from 'react';
-import { View, ScrollView, Text, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { DivIcon, LatLngBounds, latLng } from 'leaflet';
-import { MapPin, Navigation } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-import { MerchantCard } from '@/src/components/composite/MerchantCard';
 import { useAuthStore } from '@/src/stores/auth';
 import { useCustomerProfile, useToggleFavorite } from '@/src/hooks/useFavorites';
 import { useThemeColor } from '@/src/hooks/useThemeColor';
@@ -141,8 +139,6 @@ export function LeafletMap({
     []
   );
 
-  const selected = merchants.find((m) => m.id === selectedMerchantId);
-
   const center: [number, number] = userLocation
     ? [userLocation.latitude, userLocation.longitude]
     : [13.7462, 100.5347];
@@ -216,43 +212,6 @@ export function LeafletMap({
             </Marker>
           ))}
         </MapContainer>
-      </View>
-
-      {selected && (
-        <View className="px-4 py-3">
-          <Pressable
-            onPress={() => onSelectMerchant?.(selected)}
-            className="rounded-2xl bg-card p-4 shadow-sm"
-            style={{ borderWidth: 1, borderColor: colors.border }}
-            accessibilityRole="button"
-            accessibilityLabel={selected.name}
-            accessibilityHint={t('customer.merchant.viewMerchantHint')}
-          >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Text className="font-semibold text-foreground">{selected.name}</Text>
-                <Text className="text-sm text-muted" numberOfLines={1}>
-                  {selected.address.street}, {selected.address.district}
-                </Text>
-              </View>
-              <Navigation size={20} color={colors.primary} />
-            </View>
-          </Pressable>
-        </View>
-      )}
-
-      <View className="px-4 pb-4">
-        <Text className="mb-2 text-sm font-semibold text-muted">Nearby merchants</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
-          {merchants.map((merchant) => (
-            <View key={merchant.id} className="mr-3 w-72">
-              <MerchantCard
-                merchant={merchant}
-                testID={selectedMerchantId === merchant.id ? 'selected-merchant-card' : undefined}
-              />
-            </View>
-          ))}
-        </ScrollView>
       </View>
     </View>
   );

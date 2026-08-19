@@ -13,10 +13,11 @@ export type Language = 'en' | 'th';
 
 export const SUPPORTED_LANGUAGES: Language[] = ['en', 'th'];
 
-export function initializeI18n(fallbackLng: Language = 'en') {
+export function initializeI18n(lng: Language = 'en') {
   i18n.use(initReactI18next).init({
     resources,
-    fallbackLng,
+    lng,
+    fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
     },

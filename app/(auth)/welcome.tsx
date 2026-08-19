@@ -33,7 +33,7 @@ import { formatCompactNumber } from '@/src/lib/utils';
 const FOOD_HERO_IMAGES = [
   'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=400&fit=crop',
   'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1563729784474-d8b7fc59eb4?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1517244683847-7456b63c5969?w=400&h=400&fit=crop',
   'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=400&fit=crop',
 ];
 

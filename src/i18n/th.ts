@@ -275,6 +275,7 @@ export default {
       locationDeniedTitle: 'ไม่ได้รับสิทธิ์ตำแหน่ง',
       locationDeniedBody: 'เปิดตำแหน่งเพื่อดูร้านค้าใกล้คุณ',
       openSettings: 'เปิดการตั้งค่า',
+      nearbyMerchants: 'ร้านค้าใกล้เคียง',
       navigate: 'นำทาง',
       call: 'โทร',
       share: 'แชร์',

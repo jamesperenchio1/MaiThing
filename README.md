@@ -6,21 +6,23 @@ Thailand's surplus-food marketplace — a Too Good To Go / Yindii-style mobile a
 
 ## Stack
 
-| Layer           | Library / Version                             |
-| --------------- | --------------------------------------------- |
-| Runtime         | Expo SDK 57 · React 19 · React Native 0.86    |
-| Routing         | Expo Router 4 (file-system, typed routes)     |
-| Language        | TypeScript 6 (strict mode)                    |
-| Styling         | NativeWind 4 + Tailwind CSS 3                 |
-| Server state    | TanStack Query 5                              |
-| Global state    | Zustand 5                                     |
-| Forms           | React Hook Form 7 + Zod                       |
-| Animation       | Reanimated 4 + expo-haptics                   |
-| Localization    | i18next (English + Thai)                      |
-| Icons           | lucide-react-native                           |
-| Maps            | react-native-maps (native) / Leaflet (web)    |
-| Package manager | pnpm                                          |
-| Data layer      | Mock repositories (Supabase-ready interfaces) |
+| Layer           | Library / Version                                                    |
+| --------------- | -------------------------------------------------------------------- |
+| Runtime         | Expo SDK 57 · React 19 · React Native 0.86                           |
+| Routing         | Expo Router 4 (file-system, typed routes)                            |
+| Language        | TypeScript 6 (strict mode)                                           |
+| Styling         | NativeWind 4 + Tailwind CSS 3                                        |
+| Server state    | TanStack Query 5                                                     |
+| Global state    | Zustand 5                                                            |
+| Forms           | React Hook Form 7 + Zod                                              |
+| Animation       | Reanimated 4 + expo-haptics                                          |
+| Localization    | i18next (English + Thai)                                             |
+| Icons           | lucide-react-native                                                  |
+| Maps            | react-native-maps (native) / Leaflet (web)                           |
+| Package manager | pnpm                                                                 |
+| Data layer      | Supabase (live) with a mock-repository fallback for offline dev      |
+| Backend         | Supabase — Postgres, Auth, Realtime, Storage, Edge Functions         |
+| Build/CI        | EAS Build (`eas.json`) + GitHub Actions (`.github/workflows/ci.yml`) |
 
 ---
 
@@ -36,11 +38,15 @@ pnpm android        # expo run:android
 
 Press `w` in the terminal to open the web build. Scan the QR code with **Expo Go** for iOS/Android.
 
+### Backend mode
+
+The app talks to a live Supabase project by default in this repo (`EXPO_PUBLIC_REPOSITORY_MODE=supabase` in `.env.local`, alongside `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`). Unset `EXPO_PUBLIC_REPOSITORY_MODE` (or set it to anything other than `supabase`) to fall back to the in-memory mock repositories — useful for offline UI work with no backend dependency. UI code never imports either backend directly; both implement the same interfaces in `src/repositories/interfaces.ts` and are selected in `src/repositories/index.ts`.
+
 ---
 
 ## Test Accounts
 
-Tap on the welcome screen or use these credentials:
+**Mock mode** — tap on the welcome screen or use these credentials:
 
 | Role     | Email                    | Password   | OTP      |
 | -------- | ------------------------ | ---------- | -------- |
@@ -48,6 +54,8 @@ Tap on the welcome screen or use these credentials:
 | Merchant | `merchant@maithing.test` | `password` | `123456` |
 
 Or tap **Continue as Test Customer / Test Merchant** — no credentials needed.
+
+**Supabase mode** — sign up for a real account (real email/password auth, OTP emails sent by Supabase); the mock shortcuts and canned credentials above only work in mock mode.
 
 ---
 
@@ -92,13 +100,19 @@ maithing/
 │   │   └── navigation/           # BottomTabBar (animated pill)
 │   ├── features/                 # Zod schemas (auth, listings)
 │   ├── hooks/                    # TanStack Query hooks
-│   ├── repositories/             # Interfaces + mock implementation + seed data
+│   ├── repositories/             # Interfaces + Supabase (live) + mock implementation + seed data
 │   ├── services/                 # Query client, notifications
 │   ├── stores/                   # Zustand: auth, cart, language, theme
 │   ├── i18n/                     # en.ts, th.ts, index.ts
 │   ├── lib/                      # utils, constants, formatters, maps helper
 │   └── types/                    # Shared TypeScript types
 ├── .maestro/                     # E2E flows
+├── .github/workflows/ci.yml      # Lint, typecheck, format, test on every push/PR
+├── supabase/
+│   ├── migrations/                # SQL schema migrations
+│   └── functions/                 # Edge Functions (push notifications, etc.)
+├── legal-site/                    # Static privacy/support pages
+├── eas.json                       # EAS Build profiles (development/preview/production)
 ├── global.css                    # Tailwind directives + CSS variables
 ├── tailwind.config.js
 └── app.json
@@ -123,8 +137,8 @@ pnpm format:check       # Prettier --check
 ### Auth
 
 - Welcome screen with role picker
-- Sign-in / sign-up / forgot-password (mock)
-- OTP verification (mock — accepts `123456`)
+- Sign-in / sign-up / forgot-password — real Supabase auth by default in this repo; falls back to mock auth (in-memory, accepts password `password`) when `EXPO_PUBLIC_REPOSITORY_MODE` isn't `supabase`
+- OTP verification — real email OTP via Supabase in Supabase mode; mock mode accepts `123456`
 - Password visibility toggle on sign-in
 - Deep-link session handler for OAuth flows (LINE/Google scaffold)
 
@@ -303,39 +317,29 @@ pnpm format:check       # Prettier --check
 ## Architecture Notes
 
 - All data access goes through repository interfaces in `src/repositories/interfaces.ts`.
-- Mock implementations in `src/repositories/mock.ts` with realistic Thai seed data in `seed.ts`.
-- UI code never imports a backend client directly — swap to Supabase by replacing the mock import in each hook file.
-- No live Supabase client or real backend exists yet — this is a fully-functional demo.
+- `src/repositories/supabase.ts` is the live implementation (auth, users, merchants, listings, orders, wallet, payouts, coupons, messages, notifications, analytics) — this is what runs by default in this repo.
+- `src/repositories/mock.ts` + `seed.ts` provide an in-memory fallback with realistic Thai seed data, for offline UI work with no backend.
+- UI code never imports a backend client directly — both implementations satisfy the same interface, selected once in `src/repositories/index.ts` based on `EXPO_PUBLIC_REPOSITORY_MODE`.
+- Auth tokens are persisted via `expo-secure-store` on native (`src/lib/supabase.ts`); web falls back to in-memory session only (no `SecureStore` on web).
 
 ---
 
 ## Known Limitations
 
-- Camera / photo picker in create listing is simulated with placeholder URLs (web and Expo Go).
-- Push notifications are no-ops on web.
+- Camera / photo picker in create listing is simulated with placeholder URLs (web and Expo Go) — no `expo-image-picker` wiring yet.
+- Push notifications are no-ops on web; native delivery goes through a Supabase Edge Function (`supabase/functions/`) + Expo Push Service — see [`docs/PUSH_NOTIFICATIONS.md`](docs/PUSH_NOTIFICATIONS.md).
 - Native haptics are no-ops on web.
-- `react-native-maps` requires native — web map falls back to a merchant list.
-- Google Maps API key in `app.json` is a placeholder — replace before native production builds.
-- `LogBox.ignoreAllLogs(true)` suppresses all RN warnings in development (see `app/_layout.tsx`).
-- No Jest / unit tests — E2E coverage is via Maestro only.
-- Mock auth compares passwords in-memory — replace with Supabase Auth before production.
+- `react-native-maps` requires native — web map falls back to a merchant list; see [`docs/GOOGLE_MAPS_SETUP.md`](docs/GOOGLE_MAPS_SETUP.md) for the cost-aware architecture.
+- Real Google Maps API keys are committed in `app.json` — verify they're restricted (bundle ID / package + SHA-1 / HTTP referrer) in the Google Cloud Console rather than treating them as safe-to-ignore placeholders.
+- `LogBox.ignoreAllLogs(true)` suppresses all RN warnings in development (see `app/_layout.tsx`) — worth narrowing before shipping if it's hiding real warnings.
+- Jest unit/component coverage is a starting point (`src/lib/utils.test.ts`, `Button.test.tsx`, `Input.test.tsx`) — most of the app is only covered by Maestro E2E flows.
+- Stripe Connect / PromptPay payments are not integrated — payouts screens exist but there's no live payment processor behind them yet.
 
 ---
 
-## Production Checklist (Not Yet Done)
+## Everything here is up for change
 
-- [ ] Replace mock repositories with Supabase repositories
-- [ ] Replace mock auth with Supabase Auth + secure token storage (`expo-secure-store`)
-- [ ] Real Google Maps / Apple Maps API keys
-- [ ] Real image upload via `expo-image-picker` + storage (Supabase Storage or S3)
-- [ ] Stripe Connect for merchant payouts and PromptPay / card payments
-- [ ] Real-time order status updates via Supabase Realtime
-- [ ] Push notification delivery via Expo Push Notifications + backend scheduler
-- [ ] EAS Build config (`eas.json`)
-- [ ] CI pipeline (lint + typecheck + Maestro on every PR)
-- [ ] Sentry / error tracking
-- [ ] Remove `LogBox.ignoreAllLogs(true)`
-- [ ] Replace dummy Google Maps API key
+Nothing in this repo — including the repository-pattern boundary, the mock/Supabase split, file locations, or any convention documented above — is fixed in stone. Refactor, rename, restructure, or replace any of it whenever it serves the app better; treat this file (and the others in the repo) as documentation of the current state, not a constraint on the next one.
 
 ---
 
