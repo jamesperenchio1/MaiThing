@@ -34,8 +34,8 @@ import {
   LowStockAlerts,
   ClosureBottomSheet,
   ReopenConfirmSheet,
-} from './_components';
-import type { QuickAction, ClosureOption } from './_components';
+} from '@/src/components/screens/merchant-dashboard';
+import type { QuickAction, ClosureOption } from '@/src/components/screens/merchant-dashboard';
 
 type MetricKey =
   | 'todayRevenue'

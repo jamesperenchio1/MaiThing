@@ -17,14 +17,18 @@ import { useAnalytics } from '@/src/hooks/useAnalytics';
 import { useFocusEffect } from 'expo-router';
 import { CartButton } from '@/src/components/composite/CartButton';
 
-import { SearchHeader } from './_components/SearchHeader';
-import { QuickSortChips } from './_components/QuickSortChips';
-import { DealOfTheDayCard } from './_components/DealOfTheDayCard';
-import { TopRatedShopsRow } from './_components/TopRatedShopsRow';
-import { RecentSearchesRow } from './_components/RecentSearchesRow';
-import { CategoryChipsRow } from './_components/CategoryChipsRow';
-import { FilterSheet } from './_components/FilterSheet';
-import { PRICE_MIN, PRICE_MAX, type SortOption } from './_components/constants';
+import { SearchHeader } from '@/src/components/screens/customer-discover/SearchHeader';
+import { QuickSortChips } from '@/src/components/screens/customer-discover/QuickSortChips';
+import { DealOfTheDayCard } from '@/src/components/screens/customer-discover/DealOfTheDayCard';
+import { TopRatedShopsRow } from '@/src/components/screens/customer-discover/TopRatedShopsRow';
+import { RecentSearchesRow } from '@/src/components/screens/customer-discover/RecentSearchesRow';
+import { CategoryChipsRow } from '@/src/components/screens/customer-discover/CategoryChipsRow';
+import { FilterSheet } from '@/src/components/screens/customer-discover/FilterSheet';
+import {
+  PRICE_MIN,
+  PRICE_MAX,
+  type SortOption,
+} from '@/src/components/screens/customer-discover/constants';
 
 export default function DiscoverScreen() {
   const router = useRouter();

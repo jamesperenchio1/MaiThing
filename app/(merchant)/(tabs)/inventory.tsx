@@ -28,15 +28,15 @@ import { useThemeColor } from '@/src/hooks/useThemeColor';
 import { useAuthStore } from '@/src/stores/auth';
 import type { Listing, ListingStatus } from '@/src/types';
 
-import { InventoryCard } from './_components-inventory/InventoryCard';
-import { InventoryTabs } from './_components-inventory/InventoryTabs';
-import { TemplateSheet } from './_components-inventory/TemplateSheet';
-import { DuplicatePickupSheet } from './_components-inventory/DuplicatePickupSheet';
-import { BulkAdjustPriceSheet } from './_components-inventory/BulkAdjustPriceSheet';
-import { BulkActionBar } from './_components-inventory/BulkActionBar';
-import { PendingActionBanner } from './_components-inventory/PendingActionBanner';
-import { shiftWindowToToday } from './_components-inventory/utils';
-import type { PendingAction } from './_components-inventory/types';
+import { InventoryCard } from '@/src/components/screens/merchant-inventory/InventoryCard';
+import { InventoryTabs } from '@/src/components/screens/merchant-inventory/InventoryTabs';
+import { TemplateSheet } from '@/src/components/screens/merchant-inventory/TemplateSheet';
+import { DuplicatePickupSheet } from '@/src/components/screens/merchant-inventory/DuplicatePickupSheet';
+import { BulkAdjustPriceSheet } from '@/src/components/screens/merchant-inventory/BulkAdjustPriceSheet';
+import { BulkActionBar } from '@/src/components/screens/merchant-inventory/BulkActionBar';
+import { PendingActionBanner } from '@/src/components/screens/merchant-inventory/PendingActionBanner';
+import { shiftWindowToToday } from '@/src/components/screens/merchant-inventory/utils';
+import type { PendingAction } from '@/src/components/screens/merchant-inventory/types';
 
 export default function InventoryScreen() {
   const router = useRouter();

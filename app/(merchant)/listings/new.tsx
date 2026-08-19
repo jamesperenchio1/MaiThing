@@ -28,19 +28,25 @@ import {
 import { scheduleLocalNotification } from '@/src/services/notifications';
 import { useAuthStore } from '@/src/stores/auth';
 import type { Listing, ListingTemplate } from '@/src/types';
-import { ListingTypeSection } from './_components/ListingTypeSection';
-import { PhotoUploadGrid } from './_components/PhotoUploadGrid';
-import { TitleDescriptionFields } from './_components/TitleDescriptionFields';
-import { CategoryPicker } from './_components/CategoryPicker';
-import { PricingFields } from './_components/PricingFields';
-import { QuantityFields } from './_components/QuantityFields';
-import { PickupWindowFields } from './_components/PickupWindowFields';
-import { AutoSettingsToggles } from './_components/AutoSettingsToggles';
-import { DietaryAllergenFields } from './_components/DietaryAllergenFields';
-import { PriceBumpWarning } from './_components/PriceBumpWarning';
-import { TemplateActionsBar, SubmitActionsBar } from './_components/ListingFormActionBars';
-import { TemplatePickerModal } from './_components/TemplatePickerModal';
-import { parseArrayParam, buildListingPayload } from './_components/helpers';
+import { ListingTypeSection } from '@/src/components/screens/merchant-listing-form/ListingTypeSection';
+import { PhotoUploadGrid } from '@/src/components/screens/merchant-listing-form/PhotoUploadGrid';
+import { TitleDescriptionFields } from '@/src/components/screens/merchant-listing-form/TitleDescriptionFields';
+import { CategoryPicker } from '@/src/components/screens/merchant-listing-form/CategoryPicker';
+import { PricingFields } from '@/src/components/screens/merchant-listing-form/PricingFields';
+import { QuantityFields } from '@/src/components/screens/merchant-listing-form/QuantityFields';
+import { PickupWindowFields } from '@/src/components/screens/merchant-listing-form/PickupWindowFields';
+import { AutoSettingsToggles } from '@/src/components/screens/merchant-listing-form/AutoSettingsToggles';
+import { DietaryAllergenFields } from '@/src/components/screens/merchant-listing-form/DietaryAllergenFields';
+import { PriceBumpWarning } from '@/src/components/screens/merchant-listing-form/PriceBumpWarning';
+import {
+  TemplateActionsBar,
+  SubmitActionsBar,
+} from '@/src/components/screens/merchant-listing-form/ListingFormActionBars';
+import { TemplatePickerModal } from '@/src/components/screens/merchant-listing-form/TemplatePickerModal';
+import {
+  parseArrayParam,
+  buildListingPayload,
+} from '@/src/components/screens/merchant-listing-form/helpers';
 
 export default function CreateListingScreen() {
   const router = useRouter();

@@ -146,7 +146,9 @@ export default function PayoutsScreen() {
                   <Wallet size={20} color={colors.white} />
                 </View>
                 <Text variant="caption" className="text-white/80">
-                  {t('merchant.payouts.commission', { rate: wallet?.commissionRate ?? 0 })}
+                  {t('merchant.payouts.commission', {
+                    rate: Math.round((wallet?.commissionRate ?? 0) * 100),
+                  })}
                 </Text>
               </View>
               <Text variant="caption" className="mb-1 text-white/70">

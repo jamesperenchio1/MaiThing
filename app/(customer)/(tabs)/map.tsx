@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Share, Linking, ScrollView } from 'react-native';
+import { View, Share, Linking, ScrollView, Platform } from 'react-native';
 import { Image } from '@/src/components/ui/Image';
 import { useRouter } from 'expo-router';
 import {
@@ -24,6 +24,7 @@ import { SearchBar } from '@/src/components/layout/SearchBar';
 import { PressableScale } from '@/src/components/ui/PressableScale';
 import { FavoriteButton } from '@/src/components/composite/FavoriteButton';
 import { CategoryChip } from '@/src/components/composite/CategoryChip';
+import { MerchantCard } from '@/src/components/composite/MerchantCard';
 import { Map } from '@/src/components/map/Map';
 import { useMerchants, useCategories } from '@/src/hooks/useMerchants';
 import { useListings } from '@/src/hooks/useListings';
@@ -376,6 +377,24 @@ export default function MapScreen() {
           </View>
         )}
       </View>
+
+      {Platform.OS === 'web' && filteredMerchants.length > 0 && (
+        <View className="px-4 pb-4 pt-3">
+          <Text variant="body-sm" className="mb-2 font-semibold text-muted">
+            {t('customer.map.nearbyMerchants')}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
+            {filteredMerchants.map((merchant) => (
+              <View key={merchant.id} className="mr-3 w-72">
+                <MerchantCard
+                  merchant={merchant}
+                  testID={selectedMerchantId === merchant.id ? 'selected-merchant-card' : undefined}
+                />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </Screen>
   );
 }
